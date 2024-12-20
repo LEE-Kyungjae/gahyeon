@@ -27,6 +27,14 @@ public class ConfigLoader {
     public String getToken() {
         return getValue("TOKEN");
     }
+    public String getSpotifyClientId() {
+        return getValue("SPOTIFY_CLIENT_ID");
+    }
+
+    public String getSpotifyClientSecret() {
+        return getValue("SPOTIFY_CLIENT_SECRET");
+    }
+
     public String getValue(String key) {
         String value = config.get(key);
         if (value == null || value.isEmpty()) {

@@ -3,9 +3,11 @@ package com.gahyeonbot.commands.music;
 import com.gahyeonbot.ICommand;
 import com.gahyeonbot.config.Description;
 import com.gahyeonbot.manager.GuildMusicManager;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
+import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +58,12 @@ public class Stop implements ICommand {
         musicManager.player.stopTrack();
         musicManager.scheduler.clearQueue();
         guild.getAudioManager().closeAudioConnection();
+        EmbedBuilder embed = new EmbedBuilder();
+        embed.setTitle("🛑 재생 종료")
+                .setDescription("음악 재생이 종료되었습니다.")
+                .setColor(Color.RED)
+                .setFooter("요청자: " + event.getUser().getName(), event.getUser().getAvatarUrl());
 
-        event.reply("🎵 음악 재생을 중지하고 대기열을 초기화했습니다.").queue();
+        event.replyEmbeds(embed.build()).queue();
     }
 }
