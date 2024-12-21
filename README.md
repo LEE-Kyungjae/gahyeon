@@ -20,7 +20,7 @@
 ### 1. 봇 초대
 가현봇을 디스코드 서버에 초대하세요.
 [가현봇 초대 링크](https://discord.com/oauth2/authorize?client_id=1220338955082399845)
-[가현봇 위키][https://github.com/LEE-Kyungjae/gahyeonbot/wiki/%EA%B0%80%ED%98%84%EB%B4%87-%EA%B5%AC%EC%84%B1-%EC%84%A4%EB%AA%85](https://github.com/LEE-Kyungjae/gahyeonbot/wiki)
+[가현봇 위키](https://github.com/LEE-Kyungjae/gahyeonbot/wiki)
 ### 2. 명령어 사용
 디스코드 채팅 창에 다음과 같은 명령어를 입력하세요:
 
