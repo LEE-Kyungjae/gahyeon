@@ -1,5 +1,6 @@
-package com.gahyeonbot.manager;
+package com.gahyeonbot.manager.music;
 
+import net.dv8tion.jda.api.managers.AudioManager;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -19,9 +20,11 @@ public class TrackScheduler extends AudioEventAdapter {
 
     private final AudioPlayer player;
     private final BlockingQueue<AudioTrack> queue;
+    private final AudioManager audioManager; // JDA AudioManager
 
-    public TrackScheduler(AudioPlayer player) {
+    public TrackScheduler(AudioPlayer player, AudioManager audioManager) {
         this.player = player;
+        this.audioManager = audioManager;
         this.queue = new LinkedBlockingQueue<>();
     }
 
@@ -42,9 +45,13 @@ public class TrackScheduler extends AudioEventAdapter {
     public void nextTrack() {
         AudioTrack nextTrack = queue.poll();
         if (nextTrack != null) {
-            System.out.println("다음 트랙 재생: " + nextTrack.getInfo().title);
+            player.startTrack(nextTrack, false);
+        } else {
+            if (audioManager != null && audioManager.getConnectedChannel() != null) {
+                audioManager.closeAudioConnection(); // 보이스 채널 연결 종료
+                System.out.println("보이스 채널 연결이 종료되었습니다.");
+            }
         }
-        player.startTrack(nextTrack, false);
     }
     public void clearQueue() {
         queue.clear();
@@ -55,6 +62,7 @@ public class TrackScheduler extends AudioEventAdapter {
             nextTrack();
         } else {
             System.out.println("트랙 종료: " + track.getInfo().title + " (이유: " + endReason + ")");
+            nextTrack();
         }
     }
 }

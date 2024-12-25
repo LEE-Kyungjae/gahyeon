@@ -1,4 +1,4 @@
-package com.gahyeonbot.manager;
+package com.gahyeonbot.manager.scheduler;
 import com.gahyeonbot.models.Reservation;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;

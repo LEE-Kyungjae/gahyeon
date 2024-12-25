@@ -1,7 +1,7 @@
 package com.gahyeonbot.commands.out;
 
-import com.gahyeonbot.ICommand;
-import com.gahyeonbot.config.Description;
+import com.gahyeonbot.commands.base.ICommand;
+import com.gahyeonbot.commands.base.Description;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;

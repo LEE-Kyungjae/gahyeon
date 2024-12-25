@@ -1,8 +1,7 @@
 package com.gahyeonbot.commands;
 
-import com.gahyeonbot.ICommand;
-import com.gahyeonbot.config.Description;
-import net.dv8tion.jda.api.Permission;
+import com.gahyeonbot.commands.base.ICommand;
+import com.gahyeonbot.commands.base.Description;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -14,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class Allhere implements ICommand { 
+public class Allhere implements ICommand {
     @Override
     public String getName() {
         return Description.ALLHERE_NAME;

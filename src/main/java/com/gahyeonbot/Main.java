@@ -2,17 +2,18 @@ package com.gahyeonbot;
 
 import com.gahyeonbot.commands.*;
 import com.gahyeonbot.commands.SearchOut;
-import com.gahyeonbot.commands.music.Play;
+import com.gahyeonbot.commands.base.ICommand;
+import com.gahyeonbot.commands.music.Add;
 import com.gahyeonbot.commands.music.Queue;
-import com.gahyeonbot.commands.music.Stop;
+import com.gahyeonbot.commands.music.Clear;
 import com.gahyeonbot.commands.out.*;
 import com.gahyeonbot.config.ConfigLoader;
 import com.gahyeonbot.listeners.CommandManager;
 import com.gahyeonbot.listeners.EventListeners;
-import com.gahyeonbot.manager.AudioManager;
-import com.gahyeonbot.manager.GuildMusicManager;
-import com.gahyeonbot.manager.LeaveSchedulerManager;
-import com.gahyeonbot.manager.LeaveSchedulerManagerImpl;
+import com.gahyeonbot.manager.music.AudioManager;
+import com.gahyeonbot.manager.music.GuildMusicManager;
+import com.gahyeonbot.manager.scheduler.LeaveSchedulerManager;
+import com.gahyeonbot.manager.scheduler.LeaveSchedulerManagerImpl;
 import com.gahyeonbot.service.SpotifySearchService;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
@@ -97,9 +98,9 @@ public class Main {
 
 
         // 음악 관련 명령어 추가
-        commandList.add(new Play(audioManager, musicManagers, spotifySearchService));
+        commandList.add(new Add(audioManager, musicManagers, spotifySearchService));
         commandList.add(new Queue(musicManagers));
-        commandList.add(new Stop(musicManagers));
+        commandList.add(new Clear(musicManagers));
 
         // 예약 관련 명령어 추가
         commandList.add(new BotOut());

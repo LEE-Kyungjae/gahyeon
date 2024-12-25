@@ -1,5 +1,5 @@
 // 예약 관리 시스템 구현
-package com.gahyeonbot.manager;
+package com.gahyeonbot.manager.scheduler;
 
 import com.gahyeonbot.models.Reservation;
 

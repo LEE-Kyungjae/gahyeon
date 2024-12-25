@@ -1,10 +1,9 @@
 package com.gahyeonbot.listeners;
 
-import com.gahyeonbot.ICommand;
+import com.gahyeonbot.commands.base.ICommand;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.jetbrains.annotations.NotNull;
@@ -21,8 +20,8 @@ public class CommandManager extends ListenerAdapter {
     }
 
     //전역 커멘드 : 한계없음. 업데이트까지 시간이걸림
-    @Override
-    public void onReady(@NotNull ReadyEvent event) {
+//    @Override
+//    public void onReady(@NotNull ReadyEvent event) {
 //        //  커멘드를 삭제하고 재등록할떄만 한번 작동시키면 됨
 //        shardManager.getGuilds().forEach(guild -> {
 //            // 모든 길드에 대해 커맨드 조회 후 삭제
@@ -38,12 +37,12 @@ public class CommandManager extends ListenerAdapter {
 //                });
 //            });
 //        });
-        for (Guild guild : event.getJDA().getGuilds()) {
-            for (ICommand command : commands) {
-                guild.upsertCommand(command.getName(), command.getDescription()).addOptions(command.getOptions()).queue();
-            }
-        }
-    }
+//        for (Guild guild : event.getJDA().getGuilds()) {
+//            for (ICommand command : commands) {
+//                guild.upsertCommand(command.getName(), command.getDescription()).addOptions(command.getOptions()).queue();
+//            }
+//        }
+//    }
 
     //길드 커멘드 : 최대 100개까지 제한
     @Override

@@ -1,8 +1,8 @@
 package com.gahyeonbot.commands.music;
 
-import com.gahyeonbot.ICommand;
-import com.gahyeonbot.config.Description;
-import com.gahyeonbot.manager.GuildMusicManager;
+import com.gahyeonbot.commands.base.ICommand;
+import com.gahyeonbot.commands.base.Description;
+import com.gahyeonbot.manager.music.GuildMusicManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -11,27 +11,27 @@ import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
-public class Stop implements ICommand {
+public class Clear implements ICommand {
 
     private final Map<Long, GuildMusicManager> musicManagers;
 
-    public Stop(Map<Long, GuildMusicManager> musicManagers) {
+    public Clear(Map<Long, GuildMusicManager> musicManagers) {
         this.musicManagers = musicManagers;
     }
 
     @Override
     public String getName() {
-        return Description.STOP_NAME;
+        return Description.CLEAR_NAME;
     }
 
     @Override
     public String getDescription() {
-        return Description.STOP_DESC;
+        return Description.CLEAR_DESC;
     }
 
     @Override
     public String getDetailedDescription() {
-        return Description.STOP_DETAIL;
+        return Description.CLEAR_DETAIL;
     }
 
     @Override

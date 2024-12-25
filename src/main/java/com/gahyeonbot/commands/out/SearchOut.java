@@ -1,7 +1,7 @@
 package com.gahyeonbot.commands;
 
-import com.gahyeonbot.ICommand;
-import com.gahyeonbot.manager.LeaveSchedulerManager;
+import com.gahyeonbot.commands.base.ICommand;
+import com.gahyeonbot.manager.scheduler.LeaveSchedulerManager;
 import com.gahyeonbot.models.Reservation;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;

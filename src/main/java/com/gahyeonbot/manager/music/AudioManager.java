@@ -1,4 +1,4 @@
-package com.gahyeonbot.manager;
+package com.gahyeonbot.manager.music;
 
 import com.wrapper.spotify.SpotifyApi;
 import com.wrapper.spotify.model_objects.specification.Track;

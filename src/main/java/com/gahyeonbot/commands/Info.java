@@ -1,7 +1,7 @@
 package com.gahyeonbot.commands;
 
-import com.gahyeonbot.ICommand;
-import com.gahyeonbot.config.Description;
+import com.gahyeonbot.commands.base.ICommand;
+import com.gahyeonbot.commands.base.Description;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;

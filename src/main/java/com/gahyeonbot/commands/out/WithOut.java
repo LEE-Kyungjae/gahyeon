@@ -1,8 +1,8 @@
 package com.gahyeonbot.commands.out;
 
-import com.gahyeonbot.ICommand;
-import com.gahyeonbot.config.Description;
-import com.gahyeonbot.manager.LeaveSchedulerManager;
+import com.gahyeonbot.commands.base.ICommand;
+import com.gahyeonbot.commands.base.Description;
+import com.gahyeonbot.manager.scheduler.LeaveSchedulerManager;
 import com.gahyeonbot.models.Reservation;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
@@ -12,7 +12,6 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 

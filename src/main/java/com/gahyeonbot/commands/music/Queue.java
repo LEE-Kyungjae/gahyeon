@@ -1,8 +1,8 @@
 package com.gahyeonbot.commands.music;
 
-import com.gahyeonbot.ICommand;
-import com.gahyeonbot.config.Description;
-import com.gahyeonbot.manager.GuildMusicManager;
+import com.gahyeonbot.commands.base.ICommand;
+import com.gahyeonbot.commands.base.Description;
+import com.gahyeonbot.manager.music.GuildMusicManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
