@@ -14,23 +14,31 @@ public class Description {
     public static final String INFO_DESC = "명령어 사용법 안내서";
     public static final String INFO_DETAIL = "봇의 명령어 목록과 사용법을 안내합니다.";
 
-    public static final String WITHOUT_NAME = "같이나가기";
-    public static final String WITHOUT_DESC = "현재 보이스 채널에 있는 모든 사용자를 지정된 시간에 내보냅니다.";
-    public static final String WITHOUT_DETAIL = """
+    //내보내기
+    public static final String BOTOUT_NAME = "봇내보내기";
+    public static final String BOTOUT_DESC = "현재 보이스 채널에서 모든 봇을 내보냅니다.";
+    public static final String BOTOUT_DETAIL = "보이스 채널의 모든 봇을 내보내므로 필요한 봇이 있는지 확인하세요.";
+
+    public static final String CANCLEOUT_NAME="나가기취소";
+    public static final String CANCLEOUT_DESC="예약된 작업을 취소합니다.";
+    public static final String CANCLEOUT_DETAIL="예약된 나가기 작업을 취소합니다. 예약 ID를 입력하세요.";
+
+    public static final String OUT_NAME = "혼자나가기";
+    public static final String OUT_DESC = "지정한 시간 후 보이스 채널 사용자를 내보냅니다.";
+    public static final String OUT_DETAIL = """
         - **preset**: 미리 정의된 시간 옵션 (예: 1시간, 2시간).
         - **time**: 사용자가 직접 입력한 시간 (1~4자리 숫자 가능).
           - 4자리 숫자: 시간(2자리) + 분(2자리)
           - 3자리 숫자: 시간(1자리) + 분(2자리)
           - 1~2자리 숫자: 분(최대 99분)
         """;
+    public static final String SEARCHOUT_NAME="나기기예약조회";
+    public static final String SEARCHOUT_DESC="예약된 작업 목록을 조회합니다.";
+    public static final String SEARCHOUT_DETAIL="사용자의 예약된 나가기 작업 목록을 확인합니다.";
 
-    public static final String BOTOUT_NAME = "봇내보내기";
-    public static final String BOTOUT_DESC = "현재 보이스 채널에서 모든 봇을 내보냅니다.";
-    public static final String BOTOUT_DETAIL = "보이스 채널의 모든 봇을 내보내므로 필요한 봇이 있는지 확인하세요.";
-
-    public static final String OUT_NAME = "혼자나가기";
-    public static final String OUT_DESC = "지정한 시간 후 보이스 채널 사용자를 내보냅니다.";
-    public static final String OUT_DETAIL = """
+    public static final String WITHOUT_NAME = "같이나가기";
+    public static final String WITHOUT_DESC = "현재 보이스 채널에 있는 모든 사용자를 지정된 시간에 내보냅니다.";
+    public static final String WITHOUT_DETAIL = """
         - **preset**: 미리 정의된 시간 옵션 (예: 1시간, 2시간).
         - **time**: 사용자가 직접 입력한 시간 (1~4자리 숫자 가능).
           - 4자리 숫자: 시간(2자리) + 분(2자리)

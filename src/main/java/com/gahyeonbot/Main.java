@@ -1,11 +1,8 @@
 package com.gahyeonbot;
 
 import com.gahyeonbot.commands.*;
-import com.gahyeonbot.commands.SearchOut;
 import com.gahyeonbot.commands.base.ICommand;
-import com.gahyeonbot.commands.music.Add;
-import com.gahyeonbot.commands.music.Queue;
-import com.gahyeonbot.commands.music.Clear;
+import com.gahyeonbot.commands.music.*;
 import com.gahyeonbot.commands.out.*;
 import com.gahyeonbot.config.ConfigLoader;
 import com.gahyeonbot.listeners.CommandManager;
@@ -99,8 +96,10 @@ public class Main {
 
         // 음악 관련 명령어 추가
         commandList.add(new Add(audioManager, musicManagers, spotifySearchService));
-        commandList.add(new Queue(musicManagers));
         commandList.add(new Clear(musicManagers));
+        commandList.add(new Pause(musicManagers));
+        commandList.add(new Queue(musicManagers));
+        commandList.add(new Resume(musicManagers));
 
         // 예약 관련 명령어 추가
         commandList.add(new BotOut());
@@ -112,7 +111,6 @@ public class Main {
         // 기타 명령어 추가
         commandList.add(new Allhere());
         commandList.add(new Clean());
-
         // Info 명령어 등록 (명령어 목록 제공)
         manager.add(new Info(commandList));
 

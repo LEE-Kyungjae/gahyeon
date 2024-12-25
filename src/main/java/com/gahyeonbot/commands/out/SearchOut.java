@@ -1,5 +1,6 @@
-package com.gahyeonbot.commands;
+package com.gahyeonbot.commands.out;
 
+import com.gahyeonbot.commands.base.Description;
 import com.gahyeonbot.commands.base.ICommand;
 import com.gahyeonbot.manager.scheduler.LeaveSchedulerManager;
 import com.gahyeonbot.models.Reservation;
@@ -18,17 +19,17 @@ public class SearchOut implements ICommand {
 
     @Override
     public String getName() {
-        return "searchout";
+        return Description.SEARCHOUT_NAME;
     }
 
     @Override
     public String getDescription() {
-        return "예약된 작업 목록을 조회합니다.";
+        return Description.SEARCHOUT_DESC;
     }
 
     @Override
     public String getDetailedDescription() {
-        return "사용자의 예약된 나가기 작업 목록을 확인합니다.";
+        return Description.SEARCHOUT_DETAIL;
     }
 
     @Override

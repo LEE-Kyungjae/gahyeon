@@ -1,5 +1,6 @@
 package com.gahyeonbot.commands.out;
 
+import com.gahyeonbot.commands.base.Description;
 import com.gahyeonbot.commands.base.ICommand;
 import com.gahyeonbot.manager.scheduler.LeaveSchedulerManager;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -19,17 +20,17 @@ public class CancelOut implements ICommand {
 
     @Override
     public String getName() {
-        return "cancelout";
+        return Description.CANCLEOUT_NAME;
     }
 
     @Override
     public String getDescription() {
-        return "예약된 작업을 취소합니다.";
+        return Description.CANCLEOUT_DESC;
     }
 
     @Override
     public String getDetailedDescription() {
-        return "예약된 나가기 작업을 취소합니다. 예약 ID를 입력하세요.";
+        return Description.CANCLEOUT_DETAIL;
     }
 
     @Override
