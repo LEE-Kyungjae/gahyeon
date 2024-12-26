@@ -26,31 +26,6 @@ public class EventListeners extends ListenerAdapter {
             "dnd", "방해금지"
     );
 
-    //봇 강제종류 알림
-//    @Override
-//    public void onShutdown(ShutdownEvent event) {
-//        notifyAllServers(event);
-//    }
-
-    /**
-     * 메시지 반응이모지 리스너
-     */
-//    @Override
-//    public void onMessageReactionAdd(@NotNull MessageReactionAddEvent event) {
-//        User user = event.getUser();
-//        if (user == null || user.isBot()) return;
-//
-//        String emoji = event.getReaction().getEmoji().getAsReactionCode();
-//        String message = String.format("%s 님이 %s 메시지에 %s 반응을 추가했습니다!",
-//                user.getAsMention(),
-//                event.getChannel().getAsMention(),
-//                emoji
-//        );
-//
-//        Objects.requireNonNull(event.getGuild().getDefaultChannel())
-//                .asTextChannel()
-//                .sendMessage(message).queue();
-//    }
 
 
     /**
@@ -109,4 +84,33 @@ public class EventListeners extends ListenerAdapter {
     private String changeStateKr(String key) {
         return STATE_MAP.getOrDefault(key, "알 수 없음");
     }
+
+
+
+
+    //봇 강제종류 알림
+//    @Override
+//    public void onShutdown(ShutdownEvent event) {
+//        notifyAllServers(event);
+//    }
+
+    /**
+     * 메시지 반응이모지 리스너
+     */
+//    @Override
+//    public void onMessageReactionAdd(@NotNull MessageReactionAddEvent event) {
+//        User user = event.getUser();
+//        if (user == null || user.isBot()) return;
+//
+//        String emoji = event.getReaction().getEmoji().getAsReactionCode();
+//        String message = String.format("%s 님이 %s 메시지에 %s 반응을 추가했습니다!",
+//                user.getAsMention(),
+//                event.getChannel().getAsMention(),
+//                emoji
+//        );
+//
+//        Objects.requireNonNull(event.getGuild().getDefaultChannel())
+//                .asTextChannel()
+//                .sendMessage(message).queue();
+//    }
 }

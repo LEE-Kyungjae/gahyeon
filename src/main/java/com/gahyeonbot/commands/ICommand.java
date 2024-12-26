@@ -1,4 +1,4 @@
-package com.gahyeonbot.commands.base;
+package com.gahyeonbot.commands;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 

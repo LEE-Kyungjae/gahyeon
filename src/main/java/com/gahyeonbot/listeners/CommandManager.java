@@ -1,8 +1,6 @@
 package com.gahyeonbot.listeners;
 
-import com.gahyeonbot.commands.base.ICommand;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
+import com.gahyeonbot.commands.ICommand;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.sharding.ShardManager;
@@ -10,7 +8,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
+/*
+명령어를 처리하는 주요 역할을 담당하며, ICommand를 통해 구체적인 명령어를 구현합니다.
+*/
 public class CommandManager extends ListenerAdapter {
     private final List<ICommand> commands = new ArrayList<>();
     private ShardManager shardManager;
@@ -19,41 +19,41 @@ public class CommandManager extends ListenerAdapter {
         this.shardManager = shardManager;
     }
 
-    //전역 커멘드 : 한계없음. 업데이트까지 시간이걸림
-//    @Override
-//    public void onReady(@NotNull ReadyEvent event) {
-//        //  커멘드를 삭제하고 재등록할떄만 한번 작동시키면 됨
-//        shardManager.getGuilds().forEach(guild -> {
-//            // 모든 길드에 대해 커맨드 조회 후 삭제
-//            guild.retrieveCommands().queue(commands -> {
-//                commands.forEach(command -> {
-//                    // 커맨드를 하나씩 삭제
-//                    guild.deleteCommandById(command.getId()).queue(
-//                            success -> {
-//                                System.out.println("Command deleted: " + command.getName());
-//                            },
-//                            error -> System.err.println("Failed to delete command: " + command.getName())
-//                    );
-//                });
-//            });
-//        });
-//        for (Guild guild : event.getJDA().getGuilds()) {
-//            for (ICommand command : commands) {
-//                guild.upsertCommand(command.getName(), command.getDescription()).addOptions(command.getOptions()).queue();
-//            }
-//        }
-//    }
 
-    //길드 커멘드 : 최대 100개까지 제한
-    @Override
-    public void onGuildReady(@NotNull GuildReadyEvent event) {
-        for (Guild guild : event.getJDA().getGuilds()) {
-            for (ICommand command : commands) {
-                //guild.upsertCommand(command.getName(), command.getDescription()).addOptions(command.getOptions()).queue();
-            }
+    public void synchronizeCommands() {
+        if (shardManager == null) {
+            System.err.println("ShardManager가 설정되지 않았습니다!");
+            return;
         }
-    }
 
+        shardManager.getGuilds().forEach(guild -> {
+            guild.retrieveCommands().queue(existingCommands -> {
+                // 기존 명령어와 새 명령어 리스트를 비교
+                List<String> existingCommandNames = existingCommands.stream()
+                        .map(command -> command.getName())
+                        .toList();
+
+                // 추가할 명령어
+                commands.stream()
+                        .filter(command -> !existingCommandNames.contains(command.getName()))
+                        .forEach(command -> guild.upsertCommand(command.getName(), command.getDescription())
+                                .addOptions(command.getOptions())
+                                .queue(
+                                        success -> System.out.println("Command 추가 성공: " + command.getName()),
+                                        error -> System.err.println("Command 추가 실패: " + command.getName())
+                                ));
+
+                // 삭제할 명령어
+                existingCommands.stream()
+                        .filter(command -> commands.stream().noneMatch(cmd -> cmd.getName().equals(command.getName())))
+                        .forEach(command -> guild.deleteCommandById(command.getId())
+                                .queue(
+                                        success -> System.out.println("Command 삭제 성공: " + command.getName()),
+                                        error -> System.err.println("Command 삭제 실패: " + command.getName())
+                                ));
+            });
+        });
+    }
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
@@ -64,7 +64,7 @@ public class CommandManager extends ListenerAdapter {
             }
         }
     }
-
+// 명령어를 리스트에 추가
     public void add(ICommand command) {
         commands.add(command);
     }

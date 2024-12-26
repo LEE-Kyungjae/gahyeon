@@ -1,7 +1,7 @@
 package com.gahyeonbot.commands.music;
 
-import com.gahyeonbot.commands.base.ICommand;
-import com.gahyeonbot.commands.base.Description;
+import com.gahyeonbot.commands.ICommand;
+import com.gahyeonbot.commands.Description;
 import com.gahyeonbot.manager.music.AudioManager;
 import com.gahyeonbot.manager.music.GuildMusicManager;
 import com.gahyeonbot.service.SpotifySearchService;
