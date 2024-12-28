@@ -1,9 +1,6 @@
 package com.gahyeonbot.commands.out;
 
-import com.gahyeonbot.commands.util.ICommand;
-import com.gahyeonbot.commands.util.Description;
-import com.gahyeonbot.commands.util.ResponseUtil;
-import com.gahyeonbot.commands.util.EmbedUtil;
+import com.gahyeonbot.commands.util.*;
 import com.gahyeonbot.manager.scheduler.LeaveSchedulerManager;
 import com.gahyeonbot.models.Reservation;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -13,7 +10,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class Out implements ICommand {
+public class Out extends AbstractCommand {
 
     private final LeaveSchedulerManager schedulerManager;
 
@@ -52,6 +49,8 @@ public class Out implements ICommand {
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
+        logger.info("명령어 실행 시작: {}", getName());
+
         var member = event.getMember();
 
         if (member == null || member.getVoiceState() == null || member.getVoiceState().getChannel() == null) {

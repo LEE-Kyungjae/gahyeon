@@ -14,14 +14,18 @@ import java.util.StringJoiner;
 public class EmbedUtil {
 
     //Add 임베드
-    public static EmbedBuilder createNowPlayingEmbed(SlashCommandInteractionEvent event, AudioTrack track) {
-        return new EmbedBuilder()
+    public static EmbedBuilder createNowPlayingEmbed(SlashCommandInteractionEvent event, AudioTrack track,String albumCoverUrl,String streamUrl) {
+        EmbedBuilder embed = new EmbedBuilder()
+
                 .setTitle("🎵 재생 시작!")
                 .setDescription("**" + track.getInfo().title + "**")
                 .addField("아티스트", track.getInfo().author, true)
                 .addField("상태", "재생 중", false)
+                .addField("스트리밍 출처", "[링크](" + streamUrl + ")", false) // 스트리밍 URL 추가
                 .setFooter("요청자: " + event.getUser().getName(), event.getUser().getAvatarUrl())
                 .setColor(Color.GREEN);
+        setAlbumCover(embed, albumCoverUrl); // 앨범 커버 추가
+        return embed;
     }
 
     public static EmbedBuilder createQueueAddedEmbed(AudioTrack track, User requester) {
@@ -51,10 +55,11 @@ public class EmbedUtil {
     }
 
     public static EmbedBuilder createInfoEmbed(String message) {
-        return new EmbedBuilder()
+        EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("ℹ️ 정보")
                 .setDescription(message)
                 .setColor(Color.BLUE);
+        return embed;
     }
     public static EmbedBuilder createCommandListEmbed(List<ICommand> commands, SlashCommandInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder();
@@ -78,11 +83,12 @@ public class EmbedUtil {
         return embed;
     }
     public static EmbedBuilder createMusicStopEmbed(SlashCommandInteractionEvent event) {
-        return new EmbedBuilder()
+        EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("🛑 재생 종료")
                 .setDescription("음악 재생이 종료되었습니다.")
                 .setColor(Color.RED)
                 .setFooter("요청자: " + event.getUser().getName(), event.getUser().getAvatarUrl());
+        return embed;
     }
     public static EmbedBuilder createPauseEmbed(SlashCommandInteractionEvent event) {
         return new EmbedBuilder()
@@ -163,5 +169,12 @@ public class EmbedUtil {
         }
 
         return embed;
+    }
+    private static void setAlbumCover(EmbedBuilder embed, String albumCoverUrl) {
+        if (albumCoverUrl != null && !albumCoverUrl.isBlank()) {
+            embed.setThumbnail(albumCoverUrl); // Thumbnail로 앨범 커버 추가
+        } else {
+            //embed.setThumbnail("https://example.com/default-image.jpg"); // 기본 이미지 (옵션)
+        }
     }
 }

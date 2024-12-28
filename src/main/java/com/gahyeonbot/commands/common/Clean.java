@@ -1,5 +1,6 @@
 package com.gahyeonbot.commands.common;
 
+import com.gahyeonbot.commands.util.AbstractCommand;
 import com.gahyeonbot.commands.util.ICommand;
 import com.gahyeonbot.commands.util.Description;
 import com.gahyeonbot.commands.util.ResponseUtil;
@@ -12,7 +13,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Clean implements ICommand {
+public class Clean extends AbstractCommand {
     private final MessageCleanService messageCleanService;
 
     public Clean(MessageCleanService messageCleanService) {
@@ -48,6 +49,8 @@ public class Clean implements ICommand {
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
+        logger.info("명령어 실행 시작: {}", getName());
+        event.deferReply().queue(); // 응답 시간 연장을 요청
         var channel = event.getChannel();
         OptionMapping lineOption = event.getOption("line");
         OptionMapping myOption = event.getOption("my");

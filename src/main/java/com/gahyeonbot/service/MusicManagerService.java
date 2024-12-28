@@ -44,17 +44,17 @@ public class MusicManagerService {
         return true;
     }
 
-    public void loadAndPlay(SlashCommandInteractionEvent event, String streamUrl, GuildMusicManager musicManager, String query) {
+    public void loadAndPlay(SlashCommandInteractionEvent event, String streamUrl, GuildMusicManager musicManager, String query,String albumCoverUrl) {
         audioManager.getPlayerManager().loadItem(streamUrl, new AudioLoadResultHandler() {
             @Override
             public void trackLoaded(AudioTrack track) {
-                handleTrackLoaded(event, musicManager, track);
+                handleTrackLoaded(event, musicManager, track, albumCoverUrl,streamUrl);
             }
 
             @Override
             public void playlistLoaded(AudioPlaylist playlist) {
                 if (!playlist.getTracks().isEmpty()) {
-                    handleTrackLoaded(event, musicManager, playlist.getTracks().get(0));
+                    handleTrackLoaded(event, musicManager, playlist.getTracks().get(0),albumCoverUrl, streamUrl);
                 } else {
                     ResponseUtil.replyError(event, "재생 가능한 트랙이 없습니다.");
                 }
@@ -72,11 +72,13 @@ public class MusicManagerService {
         });
     }
 
-    private void handleTrackLoaded(SlashCommandInteractionEvent event, GuildMusicManager musicManager, AudioTrack track) {
+    private void handleTrackLoaded(SlashCommandInteractionEvent event, GuildMusicManager musicManager, AudioTrack track, String albumCoverUrl,String streamUrl ) {
+
         if (!musicManager.playOrQueueTrack(track)) {
-            ResponseUtil.replySuccess(event, "🎵 대기열에 추가되었습니다: **" + track.getInfo().title + "**");
+            ResponseUtil.replyEmbed(event, EmbedUtil.createQueueAddedEmbed(track, event.getUser()));
         } else {
-            ResponseUtil.replyEmbed(event, EmbedUtil.createNowPlayingEmbed(event, track));
+            ResponseUtil.replyEmbed(event, EmbedUtil.createNowPlayingEmbed(event, track, albumCoverUrl, track.getInfo().uri));
         }
     }
+
 }

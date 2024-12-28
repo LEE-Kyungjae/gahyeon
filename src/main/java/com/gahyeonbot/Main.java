@@ -3,12 +3,15 @@ package com.gahyeonbot;
 import com.gahyeonbot.config.ConfigLoader;
 import com.gahyeonbot.listeners.CommandManager;
 import com.gahyeonbot.listeners.ListenerManager;
+import com.gahyeonbot.listeners.UserStatusUpdateListener;
 import com.gahyeonbot.manager.BotInitializer;
 import com.gahyeonbot.manager.command.CommandRegistrar;
 import com.gahyeonbot.manager.music.AudioManager;
 import com.gahyeonbot.manager.music.GuildMusicManager;
 import com.gahyeonbot.manager.scheduler.LeaveSchedulerManagerImpl;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.login.LoginException;
 import java.util.HashMap;
@@ -18,8 +21,10 @@ import java.util.HashMap;
  * 토큰을 환경 변수에서 로드하고 ShardManager를 초기화하며 주요 이벤트 리스너와 명령어를 등록합니다.
  */
 public class Main {
+    private static final Logger logger = LoggerFactory.getLogger(UserStatusUpdateListener.class);
 
     public Main() {
+
         ConfigLoader config = new ConfigLoader();
         // 봇 초기화
         BotInitializer botInitializer = new BotInitializer(config);
@@ -41,8 +46,9 @@ public class Main {
         commandManager.synchronizeCommands();
 
         // 이벤트 리스너 등록
-        ListenerManager listenerManager = new ListenerManager(shardManager, config);
+        ListenerManager listenerManager = new ListenerManager(shardManager, config, commandManager);
         listenerManager.registerListeners();
+        logger.info("GahyeonBot started successfully!");
     }
     /**
      * 메인 메서드 - 봇 실행 시작.

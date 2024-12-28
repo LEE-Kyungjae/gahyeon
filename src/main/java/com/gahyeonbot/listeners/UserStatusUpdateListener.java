@@ -5,10 +5,14 @@ import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.events.user.update.UserUpdateOnlineStatusEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 public class UserStatusUpdateListener extends ListenerAdapter {
+    private static final Logger logger = LoggerFactory.getLogger(UserStatusUpdateListener.class);
+
     private final ConfigLoader configLoader;
     private static final Map<String, String> STATE_MAP = Map.of(
             "offline", "오프라인",
@@ -23,6 +27,9 @@ public class UserStatusUpdateListener extends ListenerAdapter {
 
     @Override
     public void onUserUpdateOnlineStatus(@NotNull UserUpdateOnlineStatusEvent event) {
+        logger.info("onUserUpdateOnlineStatus");
+
+
         String userId = getConfigValue("USER_ID");
         if (userId == null) return;
 

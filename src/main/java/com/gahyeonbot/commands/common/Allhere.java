@@ -1,20 +1,20 @@
 package com.gahyeonbot.commands.common;
 
-import com.gahyeonbot.commands.util.ICommand;
-import com.gahyeonbot.commands.util.Description;
-import com.gahyeonbot.commands.util.ResponseUtil;
-import com.gahyeonbot.commands.util.EmbedUtil;
+import com.gahyeonbot.commands.util.*;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class Allhere implements ICommand {
+public class Allhere extends AbstractCommand {
+
     @Override
     public String getName() {
         return Description.ALLHERE_NAME;
@@ -37,6 +37,7 @@ public class Allhere implements ICommand {
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
+        logger.info("명령어 실행 시작: {}", getName());
         Member executor = event.getMember();
 
         if (!isInVoiceChannel(executor)) {

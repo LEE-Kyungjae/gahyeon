@@ -1,9 +1,6 @@
 package com.gahyeonbot.commands.music;
 
-import com.gahyeonbot.commands.util.Description;
-import com.gahyeonbot.commands.util.ICommand;
-import com.gahyeonbot.commands.util.ResponseUtil;
-import com.gahyeonbot.commands.util.EmbedUtil;
+import com.gahyeonbot.commands.util.*;
 import com.gahyeonbot.manager.music.GuildMusicManager;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -11,7 +8,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import java.util.List;
 import java.util.Map;
 
-public class Resume implements ICommand {
+public class Resume extends AbstractCommand {
     private final Map<Long, GuildMusicManager> musicManagers;
 
     public Resume(Map<Long, GuildMusicManager> musicManagers) {
@@ -40,6 +37,8 @@ public class Resume implements ICommand {
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
+        logger.info("명령어 실행 시작: {}", getName());
+
         var guild = event.getGuild();
         if (guild == null) {
             ResponseUtil.replyError(event, "길드 정보를 가져올 수 없습니다.");

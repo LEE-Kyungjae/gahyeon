@@ -1,9 +1,6 @@
 package com.gahyeonbot.commands.out;
 
-import com.gahyeonbot.commands.util.ICommand;
-import com.gahyeonbot.commands.util.Description;
-import com.gahyeonbot.commands.util.ResponseUtil;
-import com.gahyeonbot.commands.util.EmbedUtil;
+import com.gahyeonbot.commands.util.*;
 import com.gahyeonbot.service.BotManagerService;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -12,7 +9,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BotOut implements ICommand {
+public class BotOut extends AbstractCommand {
 
     private final BotManagerService botManagerService;
 
@@ -42,6 +39,8 @@ public class BotOut implements ICommand {
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
+        logger.info("명령어 실행 시작: {}", getName());
+
         Member executor = event.getMember();
 
         // 보이스 채널 접속 여부 확인
