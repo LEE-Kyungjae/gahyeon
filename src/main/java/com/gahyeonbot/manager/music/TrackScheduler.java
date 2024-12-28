@@ -19,43 +19,49 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class TrackScheduler extends AudioEventAdapter {
 
     private final AudioPlayer player;
-    private final BlockingQueue<AudioTrack> queue;
-    private final AudioManager audioManager; // JDA AudioManager
+    private final TrackQueue trackQueue; // 대기열 관리 클래스
+    private final AudioManager audioManager;
 
     public TrackScheduler(AudioPlayer player, AudioManager audioManager) {
         this.player = player;
         this.audioManager = audioManager;
-        this.queue = new LinkedBlockingQueue<>();
+        this.trackQueue = new TrackQueue();
     }
 
-    // 대기열에 트랙 추가
     public void queue(AudioTrack track) {
         if (!player.startTrack(track, true)) {
-            queue.offer(track);
+            trackQueue.addTrack(track);
         }
     }
+
     public List<AudioTrack> getQueue() {
-        return List.copyOf(queue);
+        return trackQueue.getTracks();
     }
 
     public boolean isQueueEmpty() {
-        return queue.isEmpty();
+        return trackQueue.isEmpty();
     }
-    // 다음 트랙 재생
+
     public void nextTrack() {
-        AudioTrack nextTrack = queue.poll();
+        AudioTrack nextTrack = trackQueue.pollTrack();
         if (nextTrack != null) {
             player.startTrack(nextTrack, false);
         } else {
-            if (audioManager != null && audioManager.getConnectedChannel() != null) {
-                audioManager.closeAudioConnection(); // 보이스 채널 연결 종료
-                System.out.println("보이스 채널 연결이 종료되었습니다.");
-            }
+            closeConnection();
         }
     }
+
     public void clearQueue() {
-        queue.clear();
+        trackQueue.clear();
     }
+
+    private void closeConnection() {
+        if (audioManager != null && audioManager.getConnectedChannel() != null) {
+            audioManager.closeAudioConnection();
+            System.out.println("보이스 채널 연결이 종료되었습니다.");
+        }
+    }
+
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
         if (endReason.mayStartNext) {

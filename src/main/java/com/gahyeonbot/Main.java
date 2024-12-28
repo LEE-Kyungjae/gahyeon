@@ -2,7 +2,7 @@ package com.gahyeonbot;
 
 import com.gahyeonbot.config.ConfigLoader;
 import com.gahyeonbot.listeners.CommandManager;
-import com.gahyeonbot.listeners.EventListeners;
+import com.gahyeonbot.listeners.ListenerManager;
 import com.gahyeonbot.manager.BotInitializer;
 import com.gahyeonbot.manager.command.CommandRegistrar;
 import com.gahyeonbot.manager.music.AudioManager;
@@ -34,16 +34,15 @@ public class Main {
         // 명령어 등록
         CommandRegistrar commandRegistrar = new CommandRegistrar(audioManager, schedulerManager, musicManagers);
         CommandManager commandManager = new CommandManager();
-        commandRegistrar.registerCommands().forEach(commandManager::add);
+        commandRegistrar.registerCommands().forEach(commandManager::addCommand);
         // ShardManager 설정
         commandManager.setShardManager(shardManager);
         // 명령어 동기화
         commandManager.synchronizeCommands();
 
         // 이벤트 리스너 등록
-        shardManager.addEventListener(commandManager);
-        shardManager.addEventListener(new EventListeners(config));
-
+        ListenerManager listenerManager = new ListenerManager(shardManager, config);
+        listenerManager.registerListeners();
     }
     /**
      * 메인 메서드 - 봇 실행 시작.

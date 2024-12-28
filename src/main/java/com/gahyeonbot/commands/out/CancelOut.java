@@ -1,13 +1,14 @@
 package com.gahyeonbot.commands.out;
 
-import com.gahyeonbot.commands.Description;
-import com.gahyeonbot.commands.ICommand;
+import com.gahyeonbot.commands.util.Description;
+import com.gahyeonbot.commands.util.ICommand;
+import com.gahyeonbot.commands.util.ResponseUtil;
+import com.gahyeonbot.commands.util.EmbedUtil;
 import com.gahyeonbot.manager.scheduler.LeaveSchedulerManager;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class CancelOut implements ICommand {
@@ -35,21 +36,19 @@ public class CancelOut implements ICommand {
 
     @Override
     public List<OptionData> getOptions() {
-        List<OptionData> data = new ArrayList<>();
-        data.add(new OptionData(OptionType.INTEGER, "id", "취소할 예약 ID", true));
-        return data;
+        return List.of(new OptionData(OptionType.INTEGER, "id", "취소할 예약 ID", true));
     }
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
         long reservationId = event.getOption("id").getAsLong();
-
         boolean success = schedulerManager.cancelReservation(reservationId);
 
         if (success) {
-            event.reply("예약 ID " + reservationId + "가 성공적으로 취소되었습니다.").queue();
+            var embed = EmbedUtil.createCancelSuccessEmbed(reservationId);
+            ResponseUtil.replyEmbed(event, embed);
         } else {
-            event.reply("취소할 수 있는 예약이 없습니다. 예약 ID를 확인하세요.").setEphemeral(true).queue();
+            ResponseUtil.replyError(event, "취소할 수 있는 예약이 없습니다. 예약 ID를 확인하세요.");
         }
     }
 }

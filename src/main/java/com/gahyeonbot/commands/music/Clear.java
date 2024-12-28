@@ -1,13 +1,13 @@
 package com.gahyeonbot.commands.music;
 
-import com.gahyeonbot.commands.ICommand;
-import com.gahyeonbot.commands.Description;
+import com.gahyeonbot.commands.util.ICommand;
+import com.gahyeonbot.commands.util.Description;
+import com.gahyeonbot.commands.util.ResponseUtil;
+import com.gahyeonbot.commands.util.EmbedUtil;
 import com.gahyeonbot.manager.music.GuildMusicManager;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
-import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
@@ -44,26 +44,22 @@ public class Clear implements ICommand {
         var guild = event.getGuild();
 
         if (guild == null) {
-            event.reply("길드를 찾을 수 없습니다.").setEphemeral(true).queue();
+            ResponseUtil.replyError(event, "길드를 찾을 수 없습니다.");
             return;
         }
 
         var musicManager = musicManagers.get(guild.getIdLong());
 
-        if (musicManager == null || musicManager.player.getPlayingTrack() == null) {
-            event.reply("현재 재생 중인 트랙이 없습니다.").setEphemeral(true).queue();
+        if (musicManager == null || !musicManager.isPlaying()) {
+            ResponseUtil.replyError(event, "현재 재생 중인 음악이 없습니다.");
             return;
         }
 
-        musicManager.player.stopTrack();
-        musicManager.scheduler.clearQueue();
-        guild.getAudioManager().closeAudioConnection();
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle("🛑 재생 종료")
-                .setDescription("음악 재생이 종료되었습니다.")
-                .setColor(Color.RED)
-                .setFooter("요청자: " + event.getUser().getName(), event.getUser().getAvatarUrl());
+        // 음악 정지 및 대기열 초기화
+        musicManager.stopPlayback(guild.getAudioManager());
 
-        event.replyEmbeds(embed.build()).queue();
+        // 응답 전송
+        var embed = EmbedUtil.createMusicStopEmbed(event);
+        ResponseUtil.replyEmbed(event, embed);
     }
 }

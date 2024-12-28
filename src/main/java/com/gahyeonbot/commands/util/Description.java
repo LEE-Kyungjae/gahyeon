@@ -1,4 +1,4 @@
-package com.gahyeonbot.commands;
+package com.gahyeonbot.commands.util;
 
 public class Description {
     // 명령어 설명 개요
@@ -56,7 +56,7 @@ public class Description {
     public static final String CLEAR_DETAIL = "현재 재생 중인 음악을 멈추고 대기열을 초기화합니다.";
 
     public static final String PAUSE_NAME = "뮤직정지";
-    public static final String PAUSE_DESC = "현재 노래를 멈추고 대기열을 초기화합니다.";
+    public static final String PAUSE_DESC = "현재 노래를 일시정지합니다.";
     public static final String PAUSE_DETAIL = "현재 재생 중인 음악을 멈추고 대기열을 초기화합니다.";
 
     public static final String QUEUE_NAME = "뮤직리스트";
@@ -66,6 +66,11 @@ public class Description {
     public static final String RESUME_NAME="뮤직재생";
     public static final String RESUME_DESC="현재 노래를 다시재생합니다.";
     public static final String RESUME_DETAIL="현재 정지상태인 음악을 다시 재생시킵니다";
+
+    public static final String SKIP_NAME="뮤직다음곡";
+    public static final String SKIP_DESC="다음곡을 재생합니다.";
+    public static final String SKIP_DETAIL="";
+
     /*
     public static final String _NAME="";
     public static final String _DESC="";

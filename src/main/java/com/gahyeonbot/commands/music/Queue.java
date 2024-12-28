@@ -1,15 +1,15 @@
 package com.gahyeonbot.commands.music;
 
-import com.gahyeonbot.commands.ICommand;
-import com.gahyeonbot.commands.Description;
+import com.gahyeonbot.commands.util.ICommand;
+import com.gahyeonbot.commands.util.Description;
+import com.gahyeonbot.commands.util.ResponseUtil;
+import com.gahyeonbot.commands.util.EmbedUtil;
 import com.gahyeonbot.manager.music.GuildMusicManager;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 
 public class Queue implements ICommand {
 
@@ -44,31 +44,18 @@ public class Queue implements ICommand {
         var guild = event.getGuild();
 
         if (guild == null) {
-            event.reply("길드를 찾을 수 없습니다.").setEphemeral(true).queue();
+            ResponseUtil.replyError(event, "길드를 찾을 수 없습니다.");
             return;
         }
 
         var musicManager = musicManagers.get(guild.getIdLong());
 
-        if (musicManager == null || musicManager.scheduler.getQueue().isEmpty()) {
-            event.reply("현재 대기열에 곡이 없습니다.").setEphemeral(true).queue();
+        if (musicManager == null || musicManager.getQueue().isEmpty()) { // 변경된 부분
+            ResponseUtil.replyError(event, "현재 대기열에 곡이 없습니다.");
             return;
         }
 
-        StringJoiner queueMessage = new StringJoiner("\n");
-        List<AudioTrack> tracks = musicManager.scheduler.getQueue();
-
-        for (int i = 0; i < tracks.size(); i++) {
-            AudioTrack track = tracks.get(i);
-            queueMessage.add((i + 1) + ". " + track.getInfo().title + " - " + formatDuration(track.getDuration()));
-        }
-
-        event.reply("🎶 **현재 대기열:**\n" + queueMessage).queue();
-    }
-
-    private String formatDuration(long durationMillis) {
-        long minutes = (durationMillis / 1000) / 60;
-        long seconds = (durationMillis / 1000) % 60;
-        return String.format("%02d:%02d", minutes, seconds);
+        var embed = EmbedUtil.createQueueEmbed(musicManager.getQueue()); // 변경된 부분
+        ResponseUtil.replyEmbed(event, embed);
     }
 }

@@ -1,54 +1,71 @@
 package com.gahyeonbot.manager.music;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.wrapper.spotify.SpotifyApi;
 import com.wrapper.spotify.model_objects.specification.Track;
 import com.wrapper.spotify.requests.data.search.simplified.SearchTracksRequest;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
-/*
 
-LavaPlayer 초기화 및 소스 등록
-Spotify API 초기화
-Spotify에서 음악 검색 및 SoundCloud 쿼리 생성
-
-*/
 public class AudioManager {
-    public static final AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
+    private static final Logger logger = LoggerFactory.getLogger(AudioManager.class);
+    private final AudioPlayerManager playerManager;
     private final SpotifyApi spotifyApi;
 
-    static {
-        // Register sources supported by LavaPlayer 2.2.2
+    public AudioManager(String spotifyClientId, String spotifyClientSecret) {
+        this.playerManager = new DefaultAudioPlayerManager();
         AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
-    }
 
-    public AudioManager(String spotifyClientId, String spotifyClientSecret) {
         spotifyApi = new SpotifyApi.Builder()
                 .setClientId(spotifyClientId)
                 .setClientSecret(spotifyClientSecret)
                 .build();
+
+        authenticateSpotify();
+    }
+
+    private void authenticateSpotify() {
+        try {
+            var credentials = spotifyApi.clientCredentials().build().execute();
+            spotifyApi.setAccessToken(credentials.getAccessToken());
+            logger.info("Spotify 인증 성공");
+        } catch (Exception e) {
+            logger.error("Spotify 인증 실패: LavaPlayer만 활성화됩니다.", e);
+        }
+    }
+
+    public AudioPlayerManager getPlayerManager() {
+        return playerManager;
     }
 
     public String getSoundCloudTrackFromSpotify(String spotifyQuery) {
-        try {
-            SearchTracksRequest searchTracksRequest = spotifyApi.searchTracks(spotifyQuery).build();
-            Track[] tracks = searchTracksRequest.execute().getItems();
-
-            if (tracks.length == 0) {
-                return null;
-            }
-
-            Track track = tracks[0];
-            String artist = track.getArtists()[0].getName();
-            String title = track.getName();
-
-            // Construct SoundCloud search query
-            String soundCloudQuery = "scsearch:" + artist + " " + title;
-            return soundCloudQuery;
-        } catch (Exception e) {
-            System.err.println("Spotify API Error: " + e.getMessage());
+        if (spotifyQuery == null || spotifyQuery.trim().isEmpty()) {
+            logger.warn("유효하지 않은 Spotify 쿼리");
             return null;
         }
+
+        try {
+            SearchTracksRequest request = spotifyApi.searchTracks(spotifyQuery).build();
+            Track[] tracks = request.execute().getItems();
+            if (tracks.length == 0) {
+                logger.info("Spotify에서 결과를 찾을 수 없습니다. 쿼리: {}", spotifyQuery);
+                return null;
+            }
+            return buildSoundCloudQuery(tracks[0]);
+        } catch (Exception e) {
+            logger.error("Spotify API 오류", e);
+            return null;
+        }
+    }
+
+    private String buildSoundCloudQuery(Track track) {
+        String artist = track.getArtists()[0].getName();
+        String title = track.getName();
+        String soundCloudQuery = "scsearch:" + artist + " " + title;
+        logger.info("SoundCloud 쿼리 생성: {}", soundCloudQuery);
+        return soundCloudQuery;
     }
 }
