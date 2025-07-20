@@ -1,0 +1,30 @@
+app:
+  credentials:
+    application-id: ${APPLICATION_ID}
+    token: ${TOKEN}
+    spotify-client-id: ${SPOTIFY_CLIENT_ID}
+    spotify-client-secret: ${SPOTIFY_CLIENT_SECRET}
+
+
+spring:
+  application:
+    name: gahyeonbot
+
+server:
+  servlet:
+    context-path: /api
+
+# 공통 로깅 패턴
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Actuator 공통
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

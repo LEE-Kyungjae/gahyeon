@@ -28,6 +28,5 @@ Thumbs.db
 .env
 .gitignore
 *.properties
-*.yml
 # 테스트 보고서
 /test-output/
