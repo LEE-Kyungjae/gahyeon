@@ -2,6 +2,7 @@
 *.class
 
 # 로그 파일
+logs/**
 *.log
 *.out
 

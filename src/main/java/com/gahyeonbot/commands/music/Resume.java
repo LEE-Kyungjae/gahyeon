@@ -1,16 +1,28 @@
 package com.gahyeonbot.commands.music;
 
 import com.gahyeonbot.commands.util.*;
-import com.gahyeonbot.manager.music.GuildMusicManager;
+import com.gahyeonbot.core.audio.GuildMusicManager;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 음악 재생을 재개하는 명령어 클래스.
+ * 일시정지된 음악을 다시 재생합니다.
+ * 
+ * @author GahyeonBot Team
+ * @version 1.0
+ */
 public class Resume extends AbstractCommand {
     private final Map<Long, GuildMusicManager> musicManagers;
 
+    /**
+     * Resume 명령어 생성자.
+     * 
+     * @param musicManagers 서버별 음악 매니저 맵
+     */
     public Resume(Map<Long, GuildMusicManager> musicManagers) {
         this.musicManagers = musicManagers;
     }

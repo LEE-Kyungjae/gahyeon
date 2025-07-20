@@ -4,8 +4,8 @@ import com.gahyeonbot.commands.util.AbstractCommand;
 import com.gahyeonbot.commands.util.ICommand;
 import com.gahyeonbot.commands.util.Description;
 import com.gahyeonbot.commands.util.ResponseUtil;
-import com.gahyeonbot.service.MusicManagerService;
-import com.gahyeonbot.service.StreamingService;
+import com.gahyeonbot.services.music.MusicService;
+import com.gahyeonbot.services.streaming.StreamingService;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -13,12 +13,25 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 
 import java.util.List;
 
+/**
+ * 음악을 대기열에 추가하는 명령어 클래스.
+ * 사용자가 입력한 노래 제목을 검색하여 음악 대기열에 추가합니다.
+ * 
+ * @author GahyeonBot Team
+ * @version 1.0
+ */
 public class Add extends AbstractCommand {
-    private final MusicManagerService musicManagerService;
+    private final MusicService musicService;
     private final StreamingService streamingService;
 
-    public Add(MusicManagerService musicManagerService, StreamingService streamingService) {
-        this.musicManagerService = musicManagerService;
+    /**
+     * Add 명령어 생성자.
+     * 
+     * @param musicService 음악 서비스
+     * @param streamingService 스트리밍 서비스
+     */
+    public Add(MusicService musicService, StreamingService streamingService) {
+        this.musicService = musicService;
         this.streamingService = streamingService;
     }
 
@@ -60,9 +73,9 @@ public class Add extends AbstractCommand {
             return;
         }
 
-        var musicManager = musicManagerService.getOrCreateGuildMusicManager(guild);
+        var musicManager = musicService.getOrCreateGuildMusicManager(guild);
 
-        if (!musicManagerService.ensureConnectedToVoiceChannel(event, guild, musicManager)) {
+        if (!musicService.ensureConnectedToVoiceChannel(event, guild, musicManager)) {
             return;
         }
 
@@ -74,6 +87,6 @@ public class Add extends AbstractCommand {
         }
 
         // 음악 로드 및 처리 위임
-        musicManagerService.loadAndPlay(event, searchResult.getStreamUrl(), musicManager, query, searchResult.getAlbumCoverUrl());
+        musicService.loadAndPlay(event, searchResult.getStreamUrl(), musicManager, query, searchResult.getAlbumCoverUrl());
     }
 }

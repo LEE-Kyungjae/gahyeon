@@ -6,30 +6,68 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Discord 명령어 응답을 처리하는 유틸리티 클래스.
+ * 에러, 성공, 임베드 메시지 등을 일관된 방식으로 응답합니다.
+ * 
+ * @author GahyeonBot Team
+ * @version 1.0
+ */
 public class ResponseUtil {
     private static final Logger logger = LoggerFactory.getLogger(ResponseUtil.class);
+    
+    /**
+     * 에러 메시지를 임시 응답으로 전송합니다.
+     * 
+     * @param event 슬래시 명령어 상호작용 이벤트
+     * @param errorMessage 에러 메시지
+     */
     public static void replyError(SlashCommandInteractionEvent event, String errorMessage) {
         logger.error("replyError: {}", errorMessage);
         EmbedBuilder embed = EmbedUtil.createErrorEmbed(errorMessage);
         event.replyEmbeds(embed.build()).setEphemeral(true).queue();
     }
 
+    /**
+     * 성공 메시지를 일반 응답으로 전송합니다.
+     * 
+     * @param event 슬래시 명령어 상호작용 이벤트
+     * @param successMessage 성공 메시지
+     */
     public static void replySuccess(SlashCommandInteractionEvent event, String successMessage) {
         logger.info("replySuccess: {}", successMessage);
         EmbedBuilder embed = EmbedUtil.nomal(successMessage);
         event.replyEmbeds(embed.build()).queue();
     }
 
+    /**
+     * 임베드 메시지를 일반 응답으로 전송합니다.
+     * 
+     * @param event 슬래시 명령어 상호작용 이벤트
+     * @param embed 전송할 임베드
+     */
     public static void replyEmbed(SlashCommandInteractionEvent event, EmbedBuilder embed) {
         logger.info("replyEmbed");
         event.replyEmbeds(embed.build()).queue();
     }
 
+    /**
+     * 임베드 메시지를 임시 응답으로 전송합니다.
+     * 
+     * @param event 슬래시 명령어 상호작용 이벤트
+     * @param embed 전송할 임베드
+     */
     public static void replyEphemeralEmbed(SlashCommandInteractionEvent event, EmbedBuilder embed) {
         logger.info("replyEphemeralEmbed");
         event.replyEmbeds(embed.build()).setEphemeral(true).queue();
     }
 
+    /**
+     * 채널에 일반 텍스트 메시지를 전송합니다.
+     * 
+     * @param event 슬래시 명령어 상호작용 이벤트
+     * @param message 전송할 메시지
+     */
     public static void sendMessageToChannel(SlashCommandInteractionEvent event, String message) {
         logger.info("sendMessageToChannel: {}", message);
         MessageChannel channel = event.getChannel();

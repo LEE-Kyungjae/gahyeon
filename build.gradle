@@ -1,15 +1,25 @@
 plugins {
     id 'java'
+    id 'org.springframework.boot' version '3.2.0'
+    id 'io.spring.dependency-management' version '1.1.4'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 group = 'com.gahyeonbot'
 version = '1.0.0'
 
+java {
+    sourceCompatibility = '17'
+}
+
 repositories {
     mavenCentral()
-    maven { url 'https://m2.dv8tion.net/releases' }  // JDA 전용 저장소
-    maven { url 'https://jitpack.io' }               // Lavaplayer 호스팅 가능
+    maven { url = 'https://m2.dv8tion.net/releases' }  // JDA 전용 저장소
+    maven { url = 'https://jitpack.io' }               // Lavaplayer 호스팅 가능
+}
+
+springBoot {
+    mainClass = 'com.gahyeonbot.Main'
 }
 
 shadowJar {
@@ -18,22 +28,54 @@ shadowJar {
         attributes 'Main-Class': 'com.gahyeonbot.Main'
     }
 }
+
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
+
 dependencies {
-    // https://mvnrepository.com/artifact/net.dv8tion/JDA
-    implementation"net.dv8tion:JDA:5.2.1"
-    implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
-    implementation 'io.github.cdimascio:dotenv-java:3.0.0'
-    implementation 'org.slf4j:slf4j-simple:1.7.32'
-    implementation 'org.yaml:snakeyaml:2.0'
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Database
+    runtimeOnly 'mysql:mysql-connector-java:8.0.33'
+    runtimeOnly 'com.h2database:h2' // 개발용 인메모리 DB
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    // JDA
+    implementation 'net.dv8tion:JDA:5.2.1'
+
+    // Lavaplayer
     implementation 'dev.arbjerg:lavaplayer:2.2.2'
-    implementation 'org.slf4j:slf4j-api:2.0.9'    // SLF4J API 최신 버전
-    implementation 'ch.qos.logback:logback-classic:1.4.11' // Logback 구현
 
-    implementation 'com.github.thelinmichael:spotify-web-api-java:master-SNAPSHOT'
-    implementation 'com.google.code.gson:gson:2.8.9'
-    implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+    // Spotify API
+    implementation 'se.michaelthelin.spotify:spotify-web-api-java:9.1.1'
 
+    // HTTP Client
+    implementation 'org.apache.httpcomponents:httpclient:4.5.14'
+
+    // Jakarta Annotation (for @PostConstruct)
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.assertj:assertj-core:3.25.3'
 }
+
+// Shadow JAR와 Spring Boot JAR 충돌 방지
+tasks.named('jar') {
+    enabled = false
+}
+
+tasks.named('bootJar') {
+    enabled = false
+}
+// Shadow JAR를 기본 JAR로 설정
+assemble.dependsOn shadowJar

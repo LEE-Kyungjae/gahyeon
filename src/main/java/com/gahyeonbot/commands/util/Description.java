@@ -1,5 +1,12 @@
 package com.gahyeonbot.commands.util;
 
+/**
+ * 봇의 모든 명령어에 대한 설명 상수들을 정의하는 클래스.
+ * 명령어의 이름, 설명, 상세 설명을 중앙에서 관리합니다.
+ * 
+ * @author GahyeonBot Team
+ * @version 1.0
+ */
 public class Description {
     // 명령어 설명 개요
     public static final String ALLHERE_NAME = "모여";
