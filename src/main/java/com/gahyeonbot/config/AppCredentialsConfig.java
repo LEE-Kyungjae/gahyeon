@@ -21,7 +21,9 @@ public class AppCredentialsConfig {
     @NotBlank(message = "TOKEN 환경변수가 설정되지 않았습니다")
     private String token;
 
-    // Spotify credentials are optional - warnings are logged if missing
+    @NotBlank(message = "SPOTIFY_CLIENT_ID 환경변수가 설정되지 않았습니다")
     private String spotifyClientId;
+
+    @NotBlank(message = "SPOTIFY_CLIENT_SECRET 환경변수가 설정되지 않았습니다")
     private String spotifyClientSecret;
 }
