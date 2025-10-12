@@ -27,9 +27,15 @@ require_env() {
 
 require_env "TOKEN"
 require_env "APPLICATION_ID"
-require_env "SPOTIFY_CLIENT_ID"
-require_env "SPOTIFY_CLIENT_SECRET"
 require_env "POSTGRES_PROD_PASSWORD"
+
+# Spotify credentials are optional
+if [[ -z "${SPOTIFY_CLIENT_ID:-}" ]]; then
+  echo "Warning: SPOTIFY_CLIENT_ID not set. Spotify features will be disabled."
+fi
+if [[ -z "${SPOTIFY_CLIENT_SECRET:-}" ]]; then
+  echo "Warning: SPOTIFY_CLIENT_SECRET not set. Spotify features will be disabled."
+fi
 
 SPRING_PROFILE="${SPRING_PROFILES_ACTIVE:-prod}"
 
@@ -70,17 +76,27 @@ docker pull "${IMAGE_REPOSITORY}:${IMAGE_TAG}"
 docker stop "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
 docker rm "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
 
-docker run -d \
-  --name "${TARGET_CONTAINER}" \
+# Build docker run command with required env vars
+DOCKER_RUN_CMD="docker run -d \
+  --name ${TARGET_CONTAINER} \
   --restart unless-stopped \
-  -p "${TARGET_PORT}:${INTERNAL_PORT}" \
-  -e TOKEN="${TOKEN}" \
-  -e APPLICATION_ID="${APPLICATION_ID}" \
-  -e SPOTIFY_CLIENT_ID="${SPOTIFY_CLIENT_ID}" \
-  -e SPOTIFY_CLIENT_SECRET="${SPOTIFY_CLIENT_SECRET}" \
-  -e POSTGRES_PROD_PASSWORD="${POSTGRES_PROD_PASSWORD}" \
-  -e SPRING_PROFILES_ACTIVE="${SPRING_PROFILE}" \
-  "${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+  -p ${TARGET_PORT}:${INTERNAL_PORT} \
+  -e TOKEN=${TOKEN} \
+  -e APPLICATION_ID=${APPLICATION_ID} \
+  -e POSTGRES_PROD_PASSWORD=${POSTGRES_PROD_PASSWORD} \
+  -e SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}"
+
+# Add optional Spotify credentials if present
+if [[ -n "${SPOTIFY_CLIENT_ID:-}" ]]; then
+  DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -e SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}"
+fi
+if [[ -n "${SPOTIFY_CLIENT_SECRET:-}" ]]; then
+  DOCKER_RUN_CMD="${DOCKER_RUN_CMD} -e SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}"
+fi
+
+DOCKER_RUN_CMD="${DOCKER_RUN_CMD} ${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+
+eval "${DOCKER_RUN_CMD}"
 
 HEALTH_URL="http://127.0.0.1:${TARGET_PORT}${HEALTH_PATH}"
 echo "Waiting for health check ${HEALTH_URL} (timeout ${HEALTH_TIMEOUT}s)..."
