@@ -9,7 +9,8 @@ group = 'com.gahyeonbot'
 version = '1.0.0'
 
 java {
-    sourceCompatibility = '17'
+    sourceCompatibility = '21'
+    targetCompatibility = '21'
 }
 
 repositories {
@@ -35,24 +36,24 @@ tasks.withType(JavaCompile) {
 
 dependencies {
     // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     // Database
-    runtimeOnly 'mysql:mysql-connector-java:8.0.33'
-    runtimeOnly 'com.h2database:h2' // 개발용 인메모리 DB
+    runtimeOnly 'org.postgresql:postgresql:42.7.4'
+    runtimeOnly 'com.h2database:h2'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
-    // JDA
+    // JDA (Discord API)
     implementation 'net.dv8tion:JDA:5.2.1'
 
-    // Lavaplayer
+    // Lavaplayer (음악 재생)
     implementation 'dev.arbjerg:lavaplayer:2.2.2'
 
     // Spotify API
@@ -60,9 +61,6 @@ dependencies {
 
     // HTTP Client
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
-
-    // Jakarta Annotation (for @PostConstruct)
-    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

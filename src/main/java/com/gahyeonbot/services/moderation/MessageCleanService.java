@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.requests.restaction.pagination.MessagePaginationAction;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,10 +13,11 @@ import java.util.stream.Collectors;
 /**
  * Discord 채널의 메시지를 삭제하는 서비스 클래스.
  * 전체 메시지 또는 특정 사용자의 메시지를 삭제할 수 있습니다.
- * 
+ *
  * @author GahyeonBot Team
  * @version 1.0
  */
+@Service
 public class MessageCleanService {
 
     /**

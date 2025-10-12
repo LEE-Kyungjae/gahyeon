@@ -1,7 +1,6 @@
 package com.gahyeonbot.core;
 
 import com.gahyeonbot.config.AppCredentialsConfig;
-import com.gahyeonbot.config.ConfigLoader;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -43,8 +42,8 @@ public class BotInitializer {
      */
     public ShardManager initialize() throws IllegalArgumentException {
         String token = config.getToken();
-        if (token == null || token.isEmpty()) {
-            throw new IllegalArgumentException("TOKEN이 설정되지 않았습니다!");
+        if (token == null || token.isEmpty() || token.startsWith("test_") || token.equals("your_discord_bot_token_here")) {
+            throw new IllegalArgumentException("TOKEN이 설정되지 않았거나 테스트 토큰입니다. Discord 봇이 비활성화됩니다.");
         }
 
         try {

@@ -1,10 +1,14 @@
 package com.gahyeonbot.core.audio;
 
+import com.gahyeonbot.config.AppCredentialsConfig;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
+import org.springframework.stereotype.Component;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.requests.data.search.simplified.SearchTracksRequest;
@@ -12,29 +16,31 @@ import se.michaelthelin.spotify.requests.data.search.simplified.SearchTracksRequ
 /**
  * 오디오 재생을 관리하는 클래스.
  * LavaPlayer와 Spotify API를 통합하여 음악 재생 기능을 제공합니다.
- * 
+ *
  * @author GahyeonBot Team
  * @version 1.0
  */
+@Component
+@RequiredArgsConstructor
 public class AudioManager {
     private static final Logger logger = LoggerFactory.getLogger(AudioManager.class);
-    private final AudioPlayerManager playerManager;
-    private final SpotifyApi spotifyApi;
+    private final AppCredentialsConfig config;
+    private AudioPlayerManager playerManager;
+    private SpotifyApi spotifyApi;
 
     /**
-     * AudioManager 생성자.
-     * 
-     * @param spotifyClientId Spotify 클라이언트 ID
-     * @param spotifyClientSecret Spotify 클라이언트 시크릿
+     * AudioManager 초기화 메서드.
+     * Spring 빈이 생성된 후 자동으로 호출됩니다.
      */
-    public AudioManager(String spotifyClientId, String spotifyClientSecret) {
+    @PostConstruct
+    public void initialize() {
         this.playerManager = new DefaultAudioPlayerManager();
         AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
 
         spotifyApi = new SpotifyApi.Builder()
-                .setClientId(spotifyClientId)
-                .setClientSecret(spotifyClientSecret)
+                .setClientId(config.getSpotifyClientId())
+                .setClientSecret(config.getSpotifyClientSecret())
                 .build();
 
         authenticateSpotify();

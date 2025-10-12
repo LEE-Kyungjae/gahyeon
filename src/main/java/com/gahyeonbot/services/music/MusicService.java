@@ -8,32 +8,25 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 /**
  * 음악 재생을 관리하는 서비스 클래스.
  * 서버별 음악 매니저를 관리하고 음악 로딩 및 재생을 처리합니다.
- * 
+ *
  * @author GahyeonBot Team
  * @version 1.0
  */
+@Service
+@RequiredArgsConstructor
 public class MusicService {
     private final Map<Long, GuildMusicManager> musicManagers;
     private final AudioManager audioManager;
-
-    /**
-     * MusicService 생성자.
-     * 
-     * @param musicManagers 서버별 음악 매니저 맵
-     * @param audioManager 오디오 매니저
-     */
-    public MusicService(Map<Long, GuildMusicManager> musicManagers, AudioManager audioManager) {
-        this.musicManagers = musicManagers;
-        this.audioManager = audioManager;
-    }
 
     /**
      * 서버의 음악 매니저를 가져오거나 새로 생성합니다.

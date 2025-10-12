@@ -1,8 +1,6 @@
 package com.gahyeonbot.listeners;
 
 import com.gahyeonbot.config.AppCredentialsConfig;
-import com.gahyeonbot.config.ConfigLoader;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
 /**

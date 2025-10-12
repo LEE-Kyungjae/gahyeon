@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  postgres-dev:
+    image: postgres:16
+    container_name: gahyeonbot-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gahyeonbot
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    networks:
+      - gahyeonbot-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devuser -d gahyeonbot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-dev-data:
+    driver: local
+
+networks:
+  gahyeonbot-network:
+    driver: bridge

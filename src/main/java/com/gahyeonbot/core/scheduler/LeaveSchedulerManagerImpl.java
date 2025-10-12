@@ -3,11 +3,13 @@ package com.gahyeonbot.core.scheduler;
 import com.gahyeonbot.models.Reservation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+@Component
 public class LeaveSchedulerManagerImpl implements LeaveSchedulerManager {
 
     private static final Logger logger = LoggerFactory.getLogger(LeaveSchedulerManagerImpl.class);

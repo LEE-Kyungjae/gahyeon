@@ -1,7 +1,6 @@
 package com.gahyeonbot.listeners;
 
 import com.gahyeonbot.config.AppCredentialsConfig;
-import com.gahyeonbot.config.ConfigLoader;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.events.user.update.UserUpdateOnlineStatusEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;

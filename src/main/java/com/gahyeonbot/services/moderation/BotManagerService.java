@@ -3,6 +3,7 @@ package com.gahyeonbot.services.moderation;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,10 +11,11 @@ import java.util.List;
 /**
  * 봇 관리 서비스 클래스.
  * 봇의 상태 관리 및 제어 기능을 제공합니다.
- * 
+ *
  * @author GahyeonBot Team
  * @version 1.0
  */
+@Service
 public class BotManagerService {
 
     /**

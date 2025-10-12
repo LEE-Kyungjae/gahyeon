@@ -10,7 +10,9 @@ spring:
   application:
     name: gahyeonbot
   profiles:
-    default: dev
+    default: dev  # JPA/DB 사용 시 주석 해제
+  jpa:
+    open-in-view: false
 
 server:
   servlet:
