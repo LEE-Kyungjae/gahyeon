@@ -144,7 +144,19 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           envs: TOKEN,APPLICATION_ID,SPOTIFY_CLIENT_ID,SPOTIFY_CLIENT_SECRET,POSTGRES_PROD_PASSWORD,SPRING_PROFILES_ACTIVE
           script: |
+            echo "DEBUG: Checking environment variables..."
+            echo "TOKEN=${TOKEN:0:10}***"
+            echo "APPLICATION_ID=${APPLICATION_ID}"
+            echo "SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID:0:10}***"
+            echo "POSTGRES_PROD_PASSWORD=${POSTGRES_PROD_PASSWORD:0:5}***"
+
             chmod +x /tmp/scripts/remote-deploy.sh
+            export TOKEN="${TOKEN}"
+            export APPLICATION_ID="${APPLICATION_ID}"
+            export SPOTIFY_CLIENT_ID="${SPOTIFY_CLIENT_ID}"
+            export SPOTIFY_CLIENT_SECRET="${SPOTIFY_CLIENT_SECRET}"
+            export POSTGRES_PROD_PASSWORD="${POSTGRES_PROD_PASSWORD}"
+            export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE}"
             /tmp/scripts/remote-deploy.sh "${{ steps.target.outputs.target }}" "${{ needs.build-image.outputs.image }}" "${{ needs.build-image.outputs.tag }}"
 
   create-release:
