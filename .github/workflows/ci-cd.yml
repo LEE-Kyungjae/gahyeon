@@ -127,18 +127,19 @@ jobs:
           target: "/tmp"
       - name: Execute deployment
         uses: appleboy/ssh-action@v1.0.2
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+          APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          POSTGRES_PROD_PASSWORD: ${{ secrets.POSTGRES_PROD_PASSWORD }}
+          SPRING_PROFILES_ACTIVE: prod
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
+          envs: TOKEN,APPLICATION_ID,SPOTIFY_CLIENT_ID,SPOTIFY_CLIENT_SECRET,POSTGRES_PROD_PASSWORD,SPRING_PROFILES_ACTIVE
           script: |
             chmod +x /tmp/scripts/remote-deploy.sh
             /tmp/scripts/remote-deploy.sh "${{ steps.target.outputs.target }}" "${{ needs.build-image.outputs.image }}" "${{ needs.build-image.outputs.tag }}"
-          env:
-            TOKEN: ${{ secrets.TOKEN }}
-            APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
-            SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
-            SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-            POSTGRES_PROD_PASSWORD: ${{ secrets.POSTGRES_PROD_PASSWORD }}
-            SPRING_PROFILES_ACTIVE: prod
