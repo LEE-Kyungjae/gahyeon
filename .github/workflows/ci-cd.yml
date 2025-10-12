@@ -135,11 +135,10 @@ jobs:
           script: |
             chmod +x /tmp/scripts/remote-deploy.sh
             /tmp/scripts/remote-deploy.sh "${{ steps.target.outputs.target }}" "${{ needs.build-image.outputs.image }}" "${{ needs.build-image.outputs.tag }}"
-        envs: TOKEN,APPLICATION_ID,SPOTIFY_CLIENT_ID,SPOTIFY_CLIENT_SECRET,POSTGRES_PROD_PASSWORD,SPRING_PROFILES_ACTIVE
-        env:
-          TOKEN: ${{ secrets.TOKEN }}
-          APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
-          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
-          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-          POSTGRES_PROD_PASSWORD: ${{ secrets.POSTGRES_PROD_PASSWORD }}
-          SPRING_PROFILES_ACTIVE: prod
+          env:
+            TOKEN: ${{ secrets.TOKEN }}
+            APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
+            SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+            SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+            POSTGRES_PROD_PASSWORD: ${{ secrets.POSTGRES_PROD_PASSWORD }}
+            SPRING_PROFILES_ACTIVE: prod
