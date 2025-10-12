@@ -25,6 +25,7 @@ public class BotInitializerRunner implements CommandLineRunner {
     private static final Logger logger = LoggerFactory.getLogger(BotInitializerRunner.class);
     private final AppCredentialsConfig config;
     private final CommandRegistry commandRegistry;
+    private ShardManager shardManager;
 
     /**
      * Discord 봇을 초기화하고 리스너를 등록합니다.
@@ -37,7 +38,7 @@ public class BotInitializerRunner implements CommandLineRunner {
         try {
             // Discord ShardManager 초기화
             BotInitializer botInitializer = new BotInitializer(config);
-            ShardManager shardManager = botInitializer.initialize();
+            shardManager = botInitializer.initialize();
 
             // CommandManager 설정 및 명령어 등록
             CommandManager commandManager = new CommandManager();
@@ -55,6 +56,14 @@ public class BotInitializerRunner implements CommandLineRunner {
         } catch (Exception e) {
             logger.error("Discord 봇 초기화 중 예기치 않은 오류 발생", e);
             throw e;
+        }
+    }
+
+    @jakarta.annotation.PreDestroy
+    public void shutdown() {
+        if (shardManager != null) {
+            logger.info("ShardManager 종료 중...");
+            shardManager.shutdown();
         }
     }
 }

@@ -85,6 +85,7 @@ public class LeaveSchedulerManagerImpl implements LeaveSchedulerManager {
         }
     }
 
+    @jakarta.annotation.PreDestroy
     public void shutdown() {
         logger.info("스케줄러 종료");
         scheduler.shutdown();

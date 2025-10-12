@@ -59,6 +59,14 @@ public class AudioManager {
         }
     }
 
+    @jakarta.annotation.PreDestroy
+    public void shutdown() {
+        if (playerManager != null) {
+            logger.info("AudioPlayerManager 종료 중...");
+            playerManager.shutdown();
+        }
+    }
+
     /**
      * 오디오 플레이어 매니저를 반환합니다.
      * 
