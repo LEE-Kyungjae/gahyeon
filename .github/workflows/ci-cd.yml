@@ -89,16 +89,16 @@ jobs:
         run: |
           IMAGE_ID=${{ env.REGISTRY }}/$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')
           echo "image=${IMAGE_ID}" >> "${GITHUB_OUTPUT}"
-      - name: Build image
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push image
         run: |
-          docker build \
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
             -t ${{ steps.meta.outputs.image }}:${{ needs.tag-version.outputs.tag }} \
             -t ${{ steps.meta.outputs.image }}:latest \
+            --push \
             .
-      - name: Push image
-        run: |
-          docker push ${{ steps.meta.outputs.image }}:${{ needs.tag-version.outputs.tag }}
-          docker push ${{ steps.meta.outputs.image }}:latest
 
   deploy:
     name: Deploy (Blue/Green)
