@@ -1,3 +1,4 @@
+#apllication.yml
 app:
   credentials:
     application-id: ${APPLICATION_ID}
@@ -5,10 +6,11 @@ app:
     spotify-client-id: ${SPOTIFY_CLIENT_ID}
     spotify-client-secret: ${SPOTIFY_CLIENT_SECRET}
 
-
 spring:
   application:
     name: gahyeonbot
+  profiles:
+    default: dev
 
 server:
   servlet:
