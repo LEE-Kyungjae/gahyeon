@@ -39,7 +39,7 @@ jobs:
           arguments: clean test
 
   tag-version:
-    name: Create Release Tag
+    name: Generate Version Tag
     needs: test
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -50,13 +50,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Bump & Tag
+      - name: Generate tag (dry-run)
         id: tag
         uses: mathieudutour/github-tag-action@v6.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           default_bump: patch
           release_branches: main
+          dry_run: true
 
   build-image:
     name: Build & Push Image
@@ -145,3 +146,24 @@ jobs:
           script: |
             chmod +x /tmp/scripts/remote-deploy.sh
             /tmp/scripts/remote-deploy.sh "${{ steps.target.outputs.target }}" "${{ needs.build-image.outputs.image }}" "${{ needs.build-image.outputs.tag }}"
+
+  create-release:
+    name: Create Release Tag
+    needs:
+      - tag-version
+      - deploy
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create and push tag
+        id: tag
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          release_branches: main
+          custom_tag: ${{ needs.tag-version.outputs.tag }}
