@@ -108,6 +108,8 @@ jobs:
     environment:
       name: production
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Resolve deployment target
         id: target
         run: |
