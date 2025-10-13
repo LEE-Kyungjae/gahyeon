@@ -18,4 +18,4 @@ ENV JAVA_OPTS=""
 
 # 7. Docker 컨테이너 실행 시 명령어
 # JAVA_OPTS 환경 변수를 통해 JVM 옵션 전달 가능
-ENTRYPOINT sh -c "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar /app/bot.jar"
+ENTRYPOINT ["/bin/sh", "-c", "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar /app/bot.jar"]

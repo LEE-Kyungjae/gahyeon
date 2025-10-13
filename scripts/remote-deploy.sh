@@ -65,12 +65,20 @@ PREVIOUS_CONTAINER="gahyeonbot-${PREVIOUS_ENV}"
 
 echo "Deploying ${IMAGE_REPOSITORY}:${IMAGE_TAG} to ${TARGET_CONTAINER} (port ${TARGET_PORT})."
 
-docker pull "${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+echo "Pulling image..."
+if ! docker pull "${IMAGE_REPOSITORY}:${IMAGE_TAG}"; then
+  echo "ERROR: Failed to pull Docker image" >&2
+  exit 1
+fi
 
+echo "Stopping and removing old container if exists..."
 docker stop "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
 docker rm "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
 
-docker run -d \
+echo "Starting new container with environment variables..."
+echo "JAVA_OPTS will be set to: -Dspring.profiles.active=${SPRING_PROFILE}"
+
+if ! docker run -d \
   --name "${TARGET_CONTAINER}" \
   --restart unless-stopped \
   -p "${TARGET_PORT}:${INTERNAL_PORT}" \
@@ -81,20 +89,39 @@ docker run -d \
   -e POSTGRES_PROD_PASSWORD="${POSTGRES_PROD_PASSWORD}" \
   -e SPRING_PROFILES_ACTIVE="${SPRING_PROFILE}" \
   -e JAVA_OPTS="-Dspring.profiles.active=${SPRING_PROFILE}" \
-  "${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+  "${IMAGE_REPOSITORY}:${IMAGE_TAG}"; then
+  echo "ERROR: Failed to start Docker container" >&2
+  exit 1
+fi
+
+echo "Container started. Checking if it's running..."
+sleep 2
+if ! docker ps --filter "name=${TARGET_CONTAINER}" --filter "status=running" --format '{{.Names}}' | grep -q "${TARGET_CONTAINER}"; then
+  echo "ERROR: Container is not running. Showing logs:" >&2
+  docker logs "${TARGET_CONTAINER}" 2>&1 || true
+  exit 1
+fi
 
 HEALTH_URL="http://127.0.0.1:${TARGET_PORT}${HEALTH_PATH}"
 echo "Waiting for health check ${HEALTH_URL} (timeout ${HEALTH_TIMEOUT}s)..."
 
 for second in $(seq 1 "${HEALTH_TIMEOUT}"); do
-  if curl -fsS "${HEALTH_URL}" >/dev/null 2>&1; then
-    echo "Health check succeeded after ${second}s."
+  HTTP_CODE=$(curl -fsS -o /dev/null -w "%{http_code}" "${HEALTH_URL}" 2>/dev/null || echo "000")
+  if [[ "${HTTP_CODE}" == "200" ]]; then
+    echo "Health check succeeded after ${second}s (HTTP ${HTTP_CODE})."
     break
   fi
+
+  if [[ $((second % 10)) -eq 0 ]]; then
+    echo "Still waiting... (${second}s elapsed, HTTP code: ${HTTP_CODE})"
+  fi
+
   sleep 1
   if [[ "${second}" == "${HEALTH_TIMEOUT}" ]]; then
-    echo "Health check failed. Printing logs:"
-    docker logs "${TARGET_CONTAINER}" || true
+    echo "Health check failed after ${HEALTH_TIMEOUT}s. Last HTTP code: ${HTTP_CODE}" >&2
+    echo "Container logs:" >&2
+    docker logs --tail 100 "${TARGET_CONTAINER}" 2>&1 || true
+    echo "Cleaning up failed deployment..." >&2
     docker stop "${TARGET_CONTAINER}" || true
     docker rm "${TARGET_CONTAINER}" || true
     exit 1
