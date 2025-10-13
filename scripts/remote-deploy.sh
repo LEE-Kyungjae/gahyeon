@@ -92,7 +92,8 @@ docker stop "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
 docker rm "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
 
 echo "Starting new container with environment variables..."
-echo "JAVA_OPTS will be set to: -Dspring.profiles.active=${SPRING_PROFILE}"
+echo "Server will run on port: ${TARGET_PORT}"
+echo "Spring profile: ${SPRING_PROFILE}"
 
 if ! docker run -d \
   --name "${TARGET_CONTAINER}" \
@@ -105,7 +106,6 @@ if ! docker run -d \
   -e SPOTIFY_CLIENT_SECRET="${SPOTIFY_CLIENT_SECRET}" \
   -e POSTGRES_PROD_PASSWORD="${POSTGRES_PROD_PASSWORD}" \
   -e SPRING_PROFILES_ACTIVE="${SPRING_PROFILE}" \
-  -e JAVA_OPTS="-Dspring.profiles.active=${SPRING_PROFILE} -Dserver.port=${TARGET_PORT}" \
   "${IMAGE_REPOSITORY}:${IMAGE_TAG}"; then
   echo "ERROR: Failed to start Docker container" >&2
   exit 1

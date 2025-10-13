@@ -13,9 +13,14 @@ COPY ${JAR_FILE} /app/bot.jar
 # 5. 포트 설정
 EXPOSE 8080
 
-# 6. 환경 변수 설정
-ENV JAVA_OPTS=""
-
-# 7. Docker 컨테이너 실행 시 명령어
-# JAVA_OPTS 환경 변수를 통해 JVM 옵션 전달 가능
-ENTRYPOINT ["/bin/sh", "-c", "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar /app/bot.jar"]
+# 6. Docker 컨테이너 실행 시 명령어
+# 환경 변수를 Spring Boot 프로퍼티로 명시적 전달
+ENTRYPOINT ["/bin/sh", "-c", "exec java \
+  -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} \
+  -Dserver.port=${SERVER_PORT:-8080} \
+  -Dapp.credentials.token=${TOKEN} \
+  -Dapp.credentials.application-id=${APPLICATION_ID} \
+  -Dapp.credentials.spotify-client-id=${SPOTIFY_CLIENT_ID} \
+  -Dapp.credentials.spotify-client-secret=${SPOTIFY_CLIENT_SECRET} \
+  -Djava.security.egd=file:/dev/./urandom \
+  -jar /app/bot.jar"]
