@@ -14,5 +14,4 @@ COPY ${JAR_FILE} /app/bot.jar
 EXPOSE 8080
 
 # 6. Docker 컨테이너 실행 시 명령어
-# 환경 변수를 Spring Boot 프로퍼티로 명시적 전달
-ENTRYPOINT ["/bin/sh", "-c", "exec java -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -Dserver.port=${SERVER_PORT:-8080} -Dapp.credentials.token=${TOKEN} -Dapp.credentials.application-id=${APPLICATION_ID} -Dapp.credentials.spotify-client-id=${SPOTIFY_CLIENT_ID} -Dapp.credentials.spotify-client-secret=${SPOTIFY_CLIENT_SECRET} -Djava.security.egd=file:/dev/./urandom -jar /app/bot.jar"]
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "/app/bot.jar"]
