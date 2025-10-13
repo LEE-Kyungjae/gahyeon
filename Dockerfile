@@ -14,4 +14,4 @@ COPY ${JAR_FILE} /app/bot.jar
 EXPOSE 8080
 
 # 6. Docker 컨테이너 실행 시 명령어
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "/app/bot.jar"]
+ENTRYPOINT ["/bin/sh", "-c", "exec java -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -Dserver.port=${SERVER_PORT:-8080} -Djava.security.egd=file:/dev/./urandom -jar /app/bot.jar"]
