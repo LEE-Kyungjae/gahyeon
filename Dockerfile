@@ -13,5 +13,9 @@ COPY ${JAR_FILE} /app/bot.jar
 # 5. 포트 설정
 EXPOSE 8080
 
-# 6. Docker 컨테이너 실행 시 명령어
-CMD ["java", "-jar", "/app/bot.jar"]
+# 6. 환경 변수 설정
+ENV JAVA_OPTS=""
+
+# 7. Docker 컨테이너 실행 시 명령어
+# JAVA_OPTS 환경 변수를 통해 JVM 옵션 전달 가능
+ENTRYPOINT sh -c "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar /app/bot.jar"
