@@ -159,8 +159,20 @@ jobs:
             echo "POSTGRES_PROD_PASSWORD=${POSTGRES_PROD_PASSWORD:0:5}***"
             echo "SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}"
 
+            echo ""
+            echo "DEBUG: Deployment script parameters:"
+            echo "  Target: ${{ steps.target.outputs.target }}"
+            echo "  Image: ${{ needs.build-image.outputs.image }}"
+            echo "  Tag: ${{ needs.build-image.outputs.tag }}"
+            echo ""
+
             chmod +x /tmp/scripts/remote-deploy.sh
-            /tmp/scripts/remote-deploy.sh "${{ steps.target.outputs.target }}" "${{ needs.build-image.outputs.image }}" "${{ needs.build-image.outputs.tag }}"
+            echo "Executing deployment script..."
+            /tmp/scripts/remote-deploy.sh "${{ steps.target.outputs.target }}" "${{ needs.build-image.outputs.image }}" "${{ needs.build-image.outputs.tag }}" 2>&1 || {
+              EXIT_CODE=$?
+              echo "ERROR: Deployment script failed with exit code ${EXIT_CODE}" >&2
+              exit ${EXIT_CODE}
+            }
 
   create-release:
     name: Create Release Tag

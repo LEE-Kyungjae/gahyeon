@@ -2,14 +2,30 @@
 
 set -euo pipefail
 
+echo "========================================="
+echo "Deployment Script Started"
+echo "========================================="
+echo "Script arguments:"
+echo "  \$1 (TARGET_ENV): ${1:-<not provided>}"
+echo "  \$2 (IMAGE_REPOSITORY): ${2:-<not provided>}"
+echo "  \$3 (IMAGE_TAG): ${3:-<not provided>}"
+echo ""
+
 TARGET_ENV="${1:-auto}"
 IMAGE_REPOSITORY="${2:-}"
 IMAGE_TAG="${3:-}"
 
 if [[ -z "${IMAGE_REPOSITORY}" || -z "${IMAGE_TAG}" ]]; then
-  echo "Usage: $0 <blue|green|auto> <image-repository> <image-tag>"
+  echo "ERROR: Missing required arguments" >&2
+  echo "Usage: $0 <blue|green|auto> <image-repository> <image-tag>" >&2
   exit 1
 fi
+
+echo "Parsed values:"
+echo "  TARGET_ENV: ${TARGET_ENV}"
+echo "  IMAGE_REPOSITORY: ${IMAGE_REPOSITORY}"
+echo "  IMAGE_TAG: ${IMAGE_TAG}"
+echo ""
 
 BLUE_PORT="${BLUE_PORT:-8080}"
 GREEN_PORT="${GREEN_PORT:-8081}"
