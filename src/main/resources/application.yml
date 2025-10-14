@@ -11,6 +11,8 @@ spring:
     name: gahyeonbot
   profiles:
     default: dev  # JPA/DB 사용 시 주석 해제
+  main:
+    web-application-type: servlet  # 명시적으로 웹 서버 활성화
   jpa:
     open-in-view: false
   lifecycle:
