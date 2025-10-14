@@ -1,7 +1,7 @@
 #application-prod.yml
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/gahyeonbot
+    url: jdbc:postgresql://host.docker.internal:5432/gahyeonbot
     driver-class-name: org.postgresql.Driver
     username: gahyeonbot_app
     password: ${POSTGRES_PROD_PASSWORD}
@@ -26,8 +26,8 @@ logging:
     com.gahyeonbot: INFO
     org.springframework.web: INFO
 
-# server.port는 Dockerfile의 -Dserver.port 시스템 프로퍼티로 설정됩니다
-# 배포 환경에서는 SERVER_PORT 환경변수를 통해 동적으로 할당됩니다
+server:
+  port: 8080  # 컨테이너 내부는 항상 8080 고정, 외부 포트는 docker -p 옵션으로 매핑
 
 #  실행 파라미터로
 # --spring.profiles.active=prod
