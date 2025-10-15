@@ -15,4 +15,5 @@ EXPOSE 8080
 
 # 6. Docker 컨테이너 실행 시 명령어
 # 환경변수: SERVER_PORT (Blue: 8080, Green: 8081), SPRING_PROFILES_ACTIVE (prod)
-ENTRYPOINT ["sh", "-c", "java -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -Dserver.port=${SERVER_PORT:-8080} -Djava.security.egd=file:/dev/./urandom -jar /app/bot.jar"]
+ENTRYPOINT ["sh","-c","java -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -Dserver.port=${SERVER_PORT:-8080} -Djava.security.egd=file:/dev/./urandom -jar /app/bot.jar"]
+
