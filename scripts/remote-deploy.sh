@@ -29,6 +29,7 @@ echo ""
 
 BLUE_PORT="${BLUE_PORT:-8080}"
 GREEN_PORT="${GREEN_PORT:-8081}"
+CONTAINER_PORT="${CONTAINER_PORT:-8080}"
 HEALTH_PATH="${HEALTH_PATH:-/api/health}"
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-120}"
 
@@ -97,15 +98,14 @@ docker stop "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
 docker rm "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
 
 echo "Starting new container with environment variables..."
-echo "Server will run on port: ${TARGET_PORT}"
+echo "Host port: ${TARGET_PORT} → Container port: ${CONTAINER_PORT}"
 echo "Spring profile: ${SPRING_PROFILE}"
 echo "Postgres host: ${POSTGRES_HOST}:${POSTGRES_PORT}"
 
 if ! docker run -d \
   --name "${TARGET_CONTAINER}" \
   --restart unless-stopped \
-  --network host \
-  -e SERVER_PORT="${TARGET_PORT}" \
+  -p "${TARGET_PORT}:${CONTAINER_PORT}" \
   -e TOKEN="${TOKEN}" \
   -e APPLICATION_ID="${APPLICATION_ID}" \
   -e SPOTIFY_CLIENT_ID="${SPOTIFY_CLIENT_ID}" \
