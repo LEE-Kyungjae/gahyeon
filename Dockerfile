@@ -14,4 +14,6 @@ COPY ${JAR_FILE} /app/bot.jar
 EXPOSE 8080
 
 # 6. Docker 컨테이너 실행 시 명령어
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "/app/bot.jar"]
+# SERVER_PORT 환경변수로 포트 설정 (Blue: 8080, Green: 8081)
+ENV SERVER_PORT=8080
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${SERVER_PORT} -Djava.security.egd=file:/dev/./urandom -jar /app/bot.jar"]

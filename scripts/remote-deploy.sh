@@ -29,9 +29,8 @@ echo ""
 
 BLUE_PORT="${BLUE_PORT:-8080}"
 GREEN_PORT="${GREEN_PORT:-8081}"
-CONTAINER_PORT="${CONTAINER_PORT:-8080}"
 HEALTH_PATH="${HEALTH_PATH:-/api/actuator/health}"
-HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-60}"
+HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-120}"
 
 require_env() {
   local name="$1"
@@ -92,13 +91,14 @@ docker stop "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
 docker rm "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
 
 echo "Starting new container with environment variables..."
-echo "Host port: ${TARGET_PORT} → Container port: ${CONTAINER_PORT}"
+echo "Server will run on port: ${TARGET_PORT}"
 echo "Spring profile: ${SPRING_PROFILE}"
 
 if ! docker run -d \
   --name "${TARGET_CONTAINER}" \
   --restart unless-stopped \
-  -p "${TARGET_PORT}:${CONTAINER_PORT}" \
+  --network host \
+  -e SERVER_PORT="${TARGET_PORT}" \
   -e TOKEN="${TOKEN}" \
   -e APPLICATION_ID="${APPLICATION_ID}" \
   -e SPOTIFY_CLIENT_ID="${SPOTIFY_CLIENT_ID}" \
