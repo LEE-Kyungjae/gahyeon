@@ -29,7 +29,7 @@ echo ""
 
 BLUE_PORT="${BLUE_PORT:-8080}"
 GREEN_PORT="${GREEN_PORT:-8081}"
-HEALTH_PATH="${HEALTH_PATH:-/api/actuator/health}"
+HEALTH_PATH="${HEALTH_PATH:-/api/health}"
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-120}"
 
 require_env() {
@@ -47,6 +47,9 @@ require_env "SPOTIFY_CLIENT_SECRET"
 require_env "POSTGRES_PROD_PASSWORD"
 
 SPRING_PROFILE="${SPRING_PROFILES_ACTIVE:-prod}"
+POSTGRES_HOST="${POSTGRES_PROD_HOST:-postgres.internal}"
+POSTGRES_PORT="${POSTGRES_PROD_PORT:-5432}"
+POSTGRES_USER="${POSTGRES_PROD_USERNAME:-gahyeonbot_app}"
 
 resolve_target() {
   local target="$1"
@@ -93,6 +96,7 @@ docker rm "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
 echo "Starting new container with environment variables..."
 echo "Server will run on port: ${TARGET_PORT}"
 echo "Spring profile: ${SPRING_PROFILE}"
+echo "Postgres host: ${POSTGRES_HOST}:${POSTGRES_PORT}"
 
 if ! docker run -d \
   --name "${TARGET_CONTAINER}" \
@@ -108,6 +112,9 @@ if ! docker run -d \
   -e APP_CREDENTIALS_SPOTIFY_CLIENT_ID="${SPOTIFY_CLIENT_ID}" \
   -e APP_CREDENTIALS_SPOTIFY_CLIENT_SECRET="${SPOTIFY_CLIENT_SECRET}" \
   -e POSTGRES_PROD_PASSWORD="${POSTGRES_PROD_PASSWORD}" \
+  -e POSTGRES_PROD_HOST="${POSTGRES_HOST}" \
+  -e POSTGRES_PROD_PORT="${POSTGRES_PORT}" \
+  -e POSTGRES_PROD_USERNAME="${POSTGRES_USER}" \
   -e SPRING_PROFILES_ACTIVE="${SPRING_PROFILE}" \
   "${IMAGE_REPOSITORY}:${IMAGE_TAG}"; then
   echo "ERROR: Failed to start Docker container" >&2

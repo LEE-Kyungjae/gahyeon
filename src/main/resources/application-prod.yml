@@ -3,9 +3,9 @@ spring:
   main:
     web-application-type: servlet  # 웹 서버 활성화
   datasource:
-    url: jdbc:postgresql://localhost:5432/gahyeonbot
+    url: jdbc:postgresql://${POSTGRES_PROD_HOST:postgres.internal}:${POSTGRES_PROD_PORT:5432}/gahyeonbot
     driver-class-name: org.postgresql.Driver
-    username: gahyeonbot_app
+    username: ${POSTGRES_PROD_USERNAME:gahyeonbot_app}
     password: ${POSTGRES_PROD_PASSWORD}
     hikari:
       maximum-pool-size: 20
