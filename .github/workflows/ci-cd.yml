@@ -136,13 +136,16 @@ jobs:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
           POSTGRES_PROD_PASSWORD: ${{ secrets.POSTGRES_PROD_PASSWORD }}
+          POSTGRES_PROD_HOST: ${{ secrets.POSTGRES_PROD_HOST }}
+          POSTGRES_PROD_PORT: ${{ secrets.POSTGRES_PROD_PORT }}
+          POSTGRES_PROD_USERNAME: ${{ secrets.POSTGRES_PROD_USERNAME }}
           SPRING_PROFILES_ACTIVE: prod
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          envs: TOKEN,APPLICATION_ID,SPOTIFY_CLIENT_ID,SPOTIFY_CLIENT_SECRET,POSTGRES_PROD_PASSWORD,SPRING_PROFILES_ACTIVE
+          envs: TOKEN,APPLICATION_ID,SPOTIFY_CLIENT_ID,SPOTIFY_CLIENT_SECRET,POSTGRES_PROD_PASSWORD,POSTGRES_PROD_HOST,POSTGRES_PROD_PORT,POSTGRES_PROD_USERNAME,SPRING_PROFILES_ACTIVE
           script: |
             set -euo pipefail
 
@@ -152,11 +155,17 @@ jobs:
             if [[ -z "${SPOTIFY_CLIENT_ID:-}" ]]; then echo "ERROR: SPOTIFY_CLIENT_ID is empty" >&2; exit 1; fi
             if [[ -z "${SPOTIFY_CLIENT_SECRET:-}" ]]; then echo "ERROR: SPOTIFY_CLIENT_SECRET is empty" >&2; exit 1; fi
             if [[ -z "${POSTGRES_PROD_PASSWORD:-}" ]]; then echo "ERROR: POSTGRES_PROD_PASSWORD is empty" >&2; exit 1; fi
+            if [[ -z "${POSTGRES_PROD_HOST:-}" ]]; then echo "ERROR: POSTGRES_PROD_HOST is empty" >&2; exit 1; fi
+            if [[ -z "${POSTGRES_PROD_PORT:-}" ]]; then echo "ERROR: POSTGRES_PROD_PORT is empty" >&2; exit 1; fi
+            if [[ -z "${POSTGRES_PROD_USERNAME:-}" ]]; then echo "ERROR: POSTGRES_PROD_USERNAME is empty" >&2; exit 1; fi
 
             echo "TOKEN=${TOKEN:0:10}***"
             echo "APPLICATION_ID=${APPLICATION_ID}"
             echo "SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID:0:10}***"
             echo "POSTGRES_PROD_PASSWORD=${POSTGRES_PROD_PASSWORD:0:5}***"
+            echo "POSTGRES_PROD_HOST=${POSTGRES_PROD_HOST}"
+            echo "POSTGRES_PROD_PORT=${POSTGRES_PROD_PORT}"
+            echo "POSTGRES_PROD_USERNAME=${POSTGRES_PROD_USERNAME}"
             echo "SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}"
 
             echo ""
