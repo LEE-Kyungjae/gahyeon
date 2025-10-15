@@ -197,9 +197,9 @@ jobs:
           fetch-depth: 0
       - name: Create and push tag
         id: tag
-        uses: mathieudutour/github-tag-action@v6.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: patch
-          release_branches: main
-          custom_tag: ${{ needs.tag-version.outputs.tag }}
+        run: |
+          TAG="${{ needs.tag-version.outputs.tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "Release ${TAG}"
+          git push origin "${TAG}"
