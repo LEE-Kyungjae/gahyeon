@@ -71,12 +71,12 @@ dependencies {
 }
 
 // Shadow JAR와 Spring Boot JAR 충돌 방지
-tasks.named('jar') {
-    enabled = false
-}
-
-tasks.named('bootJar') {
-    enabled = false
-}
-// Shadow JAR를 기본 JAR로 설정
-assemble.dependsOn shadowJar
+//tasks.named('jar') {
+//    enabled = false
+//}
+//
+//tasks.named('bootJar') {
+//    enabled = false
+//}
+//// Shadow JAR를 기본 JAR로 설정
+//assemble.dependsOn shadowJar

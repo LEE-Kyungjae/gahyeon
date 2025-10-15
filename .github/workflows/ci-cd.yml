@@ -77,8 +77,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Build Fat JAR
-        run: ./gradlew clean shadowJar -x test
+      - name: Build Boot JAR
+        run: ./gradlew clean bootJar -x test
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
