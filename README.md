@@ -103,7 +103,7 @@ Dockerfile은 Java 21 JRE(Eclipse Temurin)를 기반으로 하며, `docker-compo
 - **CI**: GitHub Actions 워크플로(`.github/workflows/ci-cd.yml`)가 PR·main 브랜치 푸시에서 `./gradlew clean test`를 실행합니다.
 - **버전 태깅**: main 브랜치에 머지되면 자동으로 패치 버전 태그(`vX.Y.Z`)가 생성되고 GHCR에 새 Docker 이미지가 빌드·푸시됩니다.
 - **CD**: 같은 워크플로에서 프로덕션 환경 승인 후 SSH를 통해 `scripts/remote-deploy.sh`를 실행하여 Blue/Green 컨테이너를 교대 배포합니다.
-- **헬스체크**: 컨테이너 기동 후 `/actuator/health` 응답을 확인한 뒤 이전 환경 컨테이너를 정리합니다. 실패 시 새 컨테이너를 중단하고 로그를 출력합니다.
+- **헬스체크**: 컨테이너 기동 후 `/api/health` 응답을 확인한 뒤 이전 환경 컨테이너를 정리합니다. 실패 시 새 컨테이너를 중단하고 로그를 출력합니다.
 
 ### GitHub Actions Secrets
 배포를 위해 아래 시크릿을 저장해야 합니다.
@@ -121,7 +121,10 @@ Dockerfile은 Java 21 JRE(Eclipse Temurin)를 기반으로 하며, `docker-compo
 | 이름 | 설명 |
 | --- | --- |
 | `BLUE_PORT` / `GREEN_PORT` | Blue/Green 컨테이너가 노출할 호스트 포트 (기본 8080/8081) |
-| `HEALTH_PATH` | 헬스체크 엔드포인트 (기본 `/actuator/health`) |
+| `HEALTH_PATH` | 헬스체크 엔드포인트 (기본 `/api/health`) |
+| `POSTGRES_PROD_HOST` | 운영 Postgres 호스트명 (기본 `postgres.internal`) |
+| `POSTGRES_PROD_PORT` | 운영 Postgres 포트 (기본 `5432`) |
+| `POSTGRES_PROD_USERNAME` | 운영 Postgres 사용자명 (기본 `gahyeonbot_app`) |
 
 > **참고:** `scripts/remote-deploy.sh`는 원격 서버에 전달되어 실행되므로, 서버 측에서 Docker가 설치되어 있고 GHCR 이미지를 가져올 수 있어야 합니다. 최초 실행 전에는 `chmod +x scripts/remote-deploy.sh`로 실행 권한을 부여하세요.
 

@@ -3,7 +3,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5433/gahyeonbot
     driver-class-name: org.postgresql.Driver
-    username: devuser
+    username: ${POSTGRES_DEV_USERNAME}
     password: ${POSTGRES_DEV_PASSWORD}
     hikari:
       maximum-pool-size: 10
