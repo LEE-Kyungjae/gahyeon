@@ -14,8 +14,13 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update  # TODO: 나중에 Flyway 마이그레이션 완료 후 none으로 변경
+      ddl-auto: none  # Flyway가 스키마 관리
     show-sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true  # 기존 데이터베이스에 Flyway 적용
+    baseline-version: 0  # 기존 스키마를 버전 0으로 설정
     properties:
       hibernate:
         format_sql: true
