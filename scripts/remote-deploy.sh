@@ -132,25 +132,66 @@ if ! docker ps --filter "name=${TARGET_CONTAINER}" --filter "status=running" --f
   exit 1
 fi
 
-HEALTH_URL="http://127.0.0.1:${TARGET_PORT}${HEALTH_PATH}"
-echo "Waiting for health check ${HEALTH_URL} (timeout ${HEALTH_TIMEOUT}s)..."
+# 두 포트 모두 헬스체크 수행
+HEALTH_URL_PRIMARY="http://127.0.0.1:${TARGET_PORT}${HEALTH_PATH}"
+HEALTH_URL_8080="http://127.0.0.1:8080${HEALTH_PATH}"
+HEALTH_URL_8081="http://127.0.0.1:8081${HEALTH_PATH}"
+
+echo "========================================="
+echo "Health Check Configuration"
+echo "========================================="
+echo "Primary target: ${HEALTH_URL_PRIMARY}"
+echo "Monitoring both ports: 8080 and 8081"
+echo "Timeout: ${HEALTH_TIMEOUT}s"
+echo "========================================="
+echo ""
 
 for second in $(seq 1 "${HEALTH_TIMEOUT}"); do
-  HTTP_CODE=$(curl -fsS -o /dev/null -w "%{http_code}" "${HEALTH_URL}" 2>/dev/null || echo "000")
-  if [[ "${HTTP_CODE}" == "200" ]]; then
-    echo "Health check succeeded after ${second}s (HTTP ${HTTP_CODE})."
-    break
+  # 타겟 포트 체크
+  HTTP_CODE=$(curl -fsS -o /dev/null -w "%{http_code}" "${HEALTH_URL_PRIMARY}" 2>/dev/null || echo "000")
+
+  # 10초마다 두 포트 모두 상태 출력
+  if [[ $((second % 10)) -eq 0 ]]; then
+    HTTP_8080=$(curl -fsS -o /dev/null -w "%{http_code}" "${HEALTH_URL_8080}" 2>/dev/null || echo "000")
+    HTTP_8081=$(curl -fsS -o /dev/null -w "%{http_code}" "${HEALTH_URL_8081}" 2>/dev/null || echo "000")
+    echo "Health check status (${second}s elapsed):"
+    echo "  Port 8080: HTTP ${HTTP_8080}"
+    echo "  Port 8081: HTTP ${HTTP_8081}"
+    echo "  Primary (${TARGET_PORT}): HTTP ${HTTP_CODE}"
   fi
 
-  if [[ $((second % 10)) -eq 0 ]]; then
-    echo "Still waiting... (${second}s elapsed, HTTP code: ${HTTP_CODE})"
+  if [[ "${HTTP_CODE}" == "200" ]]; then
+    echo ""
+    echo "✓ Health check succeeded after ${second}s (HTTP ${HTTP_CODE})."
+
+    # 최종 상태 확인
+    HTTP_8080=$(curl -fsS -o /dev/null -w "%{http_code}" "${HEALTH_URL_8080}" 2>/dev/null || echo "000")
+    HTTP_8081=$(curl -fsS -o /dev/null -w "%{http_code}" "${HEALTH_URL_8081}" 2>/dev/null || echo "000")
+    echo ""
+    echo "Final health check status:"
+    echo "  Port 8080: HTTP ${HTTP_8080}"
+    echo "  Port 8081: HTTP ${HTTP_8081}"
+    echo ""
+    break
   fi
 
   sleep 1
   if [[ "${second}" == "${HEALTH_TIMEOUT}" ]]; then
-    echo "Health check failed after ${HEALTH_TIMEOUT}s. Last HTTP code: ${HTTP_CODE}" >&2
+    echo "" >&2
+    echo "✗ Health check failed after ${HEALTH_TIMEOUT}s. Last HTTP code: ${HTTP_CODE}" >&2
+
+    # 실패 시 두 포트 모두 상태 출력
+    HTTP_8080=$(curl -fsS -o /dev/null -w "%{http_code}" "${HEALTH_URL_8080}" 2>/dev/null || echo "000")
+    HTTP_8081=$(curl -fsS -o /dev/null -w "%{http_code}" "${HEALTH_URL_8081}" 2>/dev/null || echo "000")
+    echo "" >&2
+    echo "Final health check status:" >&2
+    echo "  Port 8080: HTTP ${HTTP_8080}" >&2
+    echo "  Port 8081: HTTP ${HTTP_8081}" >&2
+    echo "" >&2
+
     echo "Container logs:" >&2
     docker logs --tail 100 "${TARGET_CONTAINER}" 2>&1 || true
+    echo "" >&2
     echo "Cleaning up failed deployment..." >&2
     docker stop "${TARGET_CONTAINER}" || true
     docker rm "${TARGET_CONTAINER}" || true
