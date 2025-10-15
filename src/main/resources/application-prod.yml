@@ -14,7 +14,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update  # TODO: 나중에 Flyway 마이그레이션 완료 후 none으로 변경
     show-sql: false
     properties:
       hibernate:
