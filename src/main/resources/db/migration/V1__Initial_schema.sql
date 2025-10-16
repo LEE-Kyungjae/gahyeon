@@ -1,7 +1,7 @@
 -- Initial schema for gahyeonbot
 -- Based on BotConfig entity
 
-CREATE TABLE bot_config (
+CREATE TABLE IF NOT EXISTS bot_config (
     id BIGSERIAL PRIMARY KEY,
     config_key VARCHAR(100) NOT NULL UNIQUE,
     config_value VARCHAR(500),
@@ -11,7 +11,7 @@ CREATE TABLE bot_config (
 );
 
 -- Add index for faster lookups by config_key
-CREATE INDEX idx_bot_config_key ON bot_config(config_key);
+CREATE INDEX IF NOT EXISTS idx_bot_config_key ON bot_config(config_key);
 
 -- Add comment to table
 COMMENT ON TABLE bot_config IS 'Bot configuration storage for dynamic settings and database connection testing';
