@@ -1,10 +1,20 @@
 name: CI/CD
 
+# GitHub Flow Strategy:
+# - develop: Build and test only
+# - main: Build, test, version tag, build image, deploy to production
+# - PR to main/develop: Run tests
+# - Deployment: Only on main branch push or workflow_dispatch
+
 on:
   push:
     branches:
       - main
+      - develop
   pull_request:
+    branches:
+      - main
+      - develop
   workflow_dispatch:
     inputs:
       deploy_target:
