@@ -5,6 +5,7 @@ app:
     token: ${TOKEN}
     spotify-client-id: ${SPOTIFY_CLIENT_ID}
     spotify-client-secret: ${SPOTIFY_CLIENT_SECRET}
+    openai-api-key: ${OPENAI_API_KEY}
 
 spring:
   application:
