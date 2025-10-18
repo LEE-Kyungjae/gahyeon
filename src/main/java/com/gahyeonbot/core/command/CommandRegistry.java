@@ -2,11 +2,13 @@ package com.gahyeonbot.core.command;
 import com.gahyeonbot.commands.util.ICommand;
 import com.gahyeonbot.commands.general.Allhere;
 import com.gahyeonbot.commands.general.Clean;
+import com.gahyeonbot.commands.general.Gahyeona;
 import com.gahyeonbot.commands.general.Info;
 import com.gahyeonbot.commands.music.*;
 import com.gahyeonbot.commands.moderation.*;
 import com.gahyeonbot.core.audio.*;
 import com.gahyeonbot.core.scheduler.LeaveSchedulerManager;
+import com.gahyeonbot.services.ai.OpenAiService;
 import com.gahyeonbot.services.music.MusicService;
 import com.gahyeonbot.services.streaming.StreamingService;
 import com.gahyeonbot.services.moderation.MessageCleanService;
@@ -39,6 +41,7 @@ public class CommandRegistry {
     private final StreamingService streamingService;
     private final MessageCleanService messageCleanService;
     private final BotManagerService botManagerService;
+    private final OpenAiService openAiService;
 
     /**
      * 모든 명령어를 등록하고 반환합니다.
@@ -65,6 +68,7 @@ public class CommandRegistry {
         // 기타 명령어 등록
         commands.add(new Allhere());
         commands.add(new Clean(messageCleanService));
+        commands.add(new Gahyeona(openAiService));
         commands.add(new Info(commands));
 
         // 로그 출력

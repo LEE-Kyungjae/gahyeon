@@ -21,6 +21,10 @@ public class Description {
     public static final String INFO_DESC = "명령어 사용법 안내서";
     public static final String INFO_DETAIL = "봇의 명령어 목록과 사용법을 안내합니다.";
 
+    public static final String GAHYEONA_NAME = "가현아";
+    public static final String GAHYEONA_DESC = "AI에게 질문하고 답변을 받습니다.";
+    public static final String GAHYEONA_DETAIL = "OpenAI GPT를 사용하여 사용자의 질문에 대한 답변을 제공합니다. 질문은 1000자 이하로 입력해주세요.";
+
     //내보내기
     public static final String BOTOUT_NAME = "봇퇴장";
     public static final String BOTOUT_DESC = "현재 보이스 채널에서 모든 봇을 즉시내보냅니다.";
