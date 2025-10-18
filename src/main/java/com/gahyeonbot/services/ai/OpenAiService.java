@@ -16,6 +16,8 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * OpenAI API 서비스 클래스 (엄격한 Rate Limiting 및 보안 강화).
@@ -48,6 +50,9 @@ public class OpenAiService {
 
     // 캐시: 최근 질문과 답변 저장 (10분 TTL)
     private final Map<String, CachedResponse> responseCache = new ConcurrentHashMap<>();
+
+    // 사용자별 Lock: 동일 사용자의 동시 요청 방지 (ShardManager 동시성 제어)
+    private final Map<Long, Lock> userLocks = new ConcurrentHashMap<>();
 
     // Rate Limiting 상수
     private static final int HOURLY_LIMIT_PER_USER = 10;      // 사용자당 1시간 제한
@@ -96,6 +101,10 @@ public class OpenAiService {
      * 사용자 질문에 대해 AI 응답을 생성합니다.
      * 모든 Rate Limiting 및 보안 검사를 통과해야 합니다.
      *
+     * ShardManager 동시성 제어:
+     * - 동일 사용자의 요청은 Lock으로 순차 처리 (Race Condition 방지)
+     * - 다른 사용자의 요청은 병렬 처리 (성능 유지)
+     *
      * @param userId 사용자 ID
      * @param username 사용자 이름
      * @param guildId 서버 ID
@@ -104,8 +113,22 @@ public class OpenAiService {
      * @throws RateLimitException Rate Limit 초과 시
      * @throws AdversarialPromptException 적대적 프롬프트 감지 시
      */
-    @Transactional
     public String chat(Long userId, String username, Long guildId, String userMessage) throws RateLimitException, AdversarialPromptException {
+        // 사용자별 Lock 획득 (동일 사용자의 동시 요청 방지)
+        Lock userLock = userLocks.computeIfAbsent(userId, k -> new ReentrantLock());
+        userLock.lock();
+        try {
+            return chatInternal(userId, username, guildId, userMessage);
+        } finally {
+            userLock.unlock();
+        }
+    }
+
+    /**
+     * 내부 chat 메서드 (Lock으로 보호됨)
+     */
+    @Transactional
+    private String chatInternal(Long userId, String username, Long guildId, String userMessage) throws RateLimitException, AdversarialPromptException {
         if (!isEnabled) {
             throw new RateLimitException("OpenAI 서비스가 비활성화되어 있습니다.");
         }
