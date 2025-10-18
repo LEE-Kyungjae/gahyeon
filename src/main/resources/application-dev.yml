@@ -14,12 +14,17 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate  # Flyway가 스키마 관리, Hibernate는 검증만
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true  # 기존 DB에 Flyway 적용
+    baseline-version: 0  # 처음부터 시작
+    locations: classpath:db/migration
 
 logging:
   level:

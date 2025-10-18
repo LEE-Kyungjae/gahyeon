@@ -5,6 +5,17 @@ app:
     token: ${TOKEN}
     spotify-client-id: ${SPOTIFY_CLIENT_ID}
     spotify-client-secret: ${SPOTIFY_CLIENT_SECRET}
+    openai-api-key: ${OPENAI_API_KEY}
+
+# Spring AI OpenAI Configuration
+spring.ai:
+  openai:
+    api-key: ${OPENAI_API_KEY}
+    chat:
+      options:
+        model: gpt-4o-mini  # 저렴한 모델 사용 (GPT-4 대비 1/10 가격)
+        temperature: 0.7
+        max-tokens: 500     # 응답 길이 제한으로 비용 절감
 
 spring:
   application:
