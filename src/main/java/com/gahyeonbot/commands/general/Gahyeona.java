@@ -75,12 +75,13 @@ public class Gahyeona extends AbstractCommand {
         try {
             log.info("OpenAI 요청 - 사용자: {}, 질문: {}", event.getUser().getName(), question);
 
+            String interactionId = event.getId();  // Discord Interaction ID (중복 방지용)
             Long userId = event.getUser().getIdLong();
             String username = event.getUser().getName();
             Long guildId = event.getGuild() != null ? event.getGuild().getIdLong() : null;
 
             // OpenAI API 호출
-            String response = openAiService.chat(userId, username, guildId, question);
+            String response = openAiService.chat(interactionId, userId, username, guildId, question);
 
             if (response == null || response.trim().isEmpty()) {
                 event.getHook().editOriginal("AI 응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.").queue();
@@ -102,6 +103,10 @@ public class Gahyeona extends AbstractCommand {
 
             log.info("OpenAI 응답 전송 완료 - 사용자: {}", event.getUser().getName());
 
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            log.warn("중복 Interaction 감지 - 다른 인스턴스가 이미 처리 중: {}", event.getUser().getName());
+            // 다른 인스턴스가 처리 중이므로 조용히 종료 (사용자는 이미 응답을 받을 것)
+            event.getHook().editOriginal("요청을 처리 중입니다...").queue();
         } catch (OpenAiService.RateLimitException e) {
             log.warn("Rate Limit 초과 - 사용자: {}, 메시지: {}", event.getUser().getName(), e.getMessage());
             event.getHook().editOriginal("⚠️ " + e.getMessage()).queue();

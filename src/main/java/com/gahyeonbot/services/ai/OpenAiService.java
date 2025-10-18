@@ -101,10 +101,15 @@ public class OpenAiService {
      * 사용자 질문에 대해 AI 응답을 생성합니다.
      * 모든 Rate Limiting 및 보안 검사를 통과해야 합니다.
      *
+     * 다중 인스턴스 대응:
+     * - Interaction ID 기반 중복 방지 (여러 봇 인스턴스 병렬 실행 시)
+     * - DB UNIQUE 제약조건으로 첫 번째 인스턴스만 처리
+     *
      * ShardManager 동시성 제어:
      * - 동일 사용자의 요청은 Lock으로 순차 처리 (Race Condition 방지)
      * - 다른 사용자의 요청은 병렬 처리 (성능 유지)
      *
+     * @param interactionId Discord Interaction ID (중복 방지용)
      * @param userId 사용자 ID
      * @param username 사용자 이름
      * @param guildId 서버 ID
@@ -113,12 +118,12 @@ public class OpenAiService {
      * @throws RateLimitException Rate Limit 초과 시
      * @throws AdversarialPromptException 적대적 프롬프트 감지 시
      */
-    public String chat(Long userId, String username, Long guildId, String userMessage) throws RateLimitException, AdversarialPromptException {
+    public String chat(String interactionId, Long userId, String username, Long guildId, String userMessage) throws RateLimitException, AdversarialPromptException {
         // 사용자별 Lock 획득 (동일 사용자의 동시 요청 방지)
         Lock userLock = userLocks.computeIfAbsent(userId, k -> new ReentrantLock());
         userLock.lock();
         try {
-            return chatInternal(userId, username, guildId, userMessage);
+            return chatInternal(interactionId, userId, username, guildId, userMessage);
         } finally {
             userLock.unlock();
         }
@@ -128,7 +133,7 @@ public class OpenAiService {
      * 내부 chat 메서드 (Lock으로 보호됨)
      */
     @Transactional
-    private String chatInternal(Long userId, String username, Long guildId, String userMessage) throws RateLimitException, AdversarialPromptException {
+    private String chatInternal(String interactionId, Long userId, String username, Long guildId, String userMessage) throws RateLimitException, AdversarialPromptException {
         if (!isEnabled) {
             throw new RateLimitException("OpenAI 서비스가 비활성화되어 있습니다.");
         }
@@ -148,7 +153,7 @@ public class OpenAiService {
             boolean isFlagged = checkModeration(userMessage);
             if (isFlagged) {
                 log.warn("OpenAI Moderation 차단 - 사용자: {}", username);
-                logUsage(userId, username, guildId, userMessage, null, false, "Moderation API 차단");
+                logUsage(interactionId, userId, username, guildId, userMessage, null, false, "Moderation API 차단");
                 throw new AdversarialPromptException("부적절한 요청이 감지되었습니다.");
             }
         } catch (AdversarialPromptException e) {
@@ -161,7 +166,7 @@ public class OpenAiService {
         // 3. 키워드 기반 적대적 프롬프트 차단 (보조 필터)
         if (containsAdversarialKeyword(userMessage)) {
             log.warn("키워드 필터 차단 - 사용자: {}, 메시지: {}", username, userMessage);
-            logUsage(userId, username, guildId, userMessage, null, false, "키워드 필터 차단");
+            logUsage(interactionId, userId, username, guildId, userMessage, null, false, "키워드 필터 차단");
             throw new AdversarialPromptException("부적절한 요청이 감지되었습니다.");
         }
 
@@ -170,7 +175,7 @@ public class OpenAiService {
         CachedResponse cached = responseCache.get(cacheKey);
         if (cached != null && !cached.isExpired()) {
             log.info("캐시 히트 - 사용자: {}", username);
-            logUsage(userId, username, guildId, userMessage, cached.response, true, null);
+            logUsage(interactionId, userId, username, guildId, userMessage, cached.response, true, null);
             return cached.response;
         }
 
@@ -229,23 +234,26 @@ public class OpenAiService {
             responseCache.put(cacheKey, new CachedResponse(response, LocalDateTime.now()));
 
             // 12. DB 로깅
-            logUsage(userId, username, guildId, userMessage, response, true, null);
+            logUsage(interactionId, userId, username, guildId, userMessage, response, true, null);
 
             return response;
 
         } catch (Exception e) {
             log.error("OpenAI API 호출 실패 - 사용자: {}, 메시지: {}", username, userMessage, e);
-            logUsage(userId, username, guildId, userMessage, null, false, e.getMessage());
+            logUsage(interactionId, userId, username, guildId, userMessage, null, false, e.getMessage());
             throw new RuntimeException("AI 응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.");
         }
     }
 
     /**
      * 사용량을 DB에 로깅합니다.
+     *
+     * @throws org.springframework.dao.DataIntegrityViolationException 이미 처리된 interaction_id인 경우
      */
-    private void logUsage(Long userId, String username, Long guildId, String prompt, String response, boolean success, String errorMessage) {
+    private void logUsage(String interactionId, Long userId, String username, Long guildId, String prompt, String response, boolean success, String errorMessage) {
         try {
             OpenAiUsage usage = OpenAiUsage.builder()
+                    .interactionId(interactionId)
                     .userId(userId)
                     .username(username)
                     .guildId(guildId)
@@ -258,6 +266,10 @@ public class OpenAiService {
                     .build();
 
             usageRepository.save(usage);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // UNIQUE 제약조건 위반: 다른 인스턴스가 이미 처리 중
+            log.warn("중복 Interaction ID 감지 - 다른 인스턴스가 처리 중: {}", interactionId);
+            throw e;
         } catch (Exception e) {
             log.error("사용량 로깅 실패", e);
         }

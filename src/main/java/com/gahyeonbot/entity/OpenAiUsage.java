@@ -32,6 +32,13 @@ public class OpenAiUsage {
     private Long id;
 
     /**
+     * Discord Interaction ID (중복 방지용)
+     * 여러 봇 인스턴스가 병렬 실행되어도 같은 요청은 한 번만 처리
+     */
+    @Column(name = "interaction_id", unique = true, nullable = false, length = 100)
+    private String interactionId;
+
+    /**
      * Discord 사용자 ID (숫자)
      */
     @Column(name = "user_id", nullable = false)
