@@ -1,5 +1,6 @@
 package com.gahyeonbot.services.ai;
 
+import com.gahyeonbot.config.AppCredentialsConfig;
 import com.gahyeonbot.entity.OpenAiUsage;
 import com.gahyeonbot.repository.OpenAiUsageRepository;
 import jakarta.annotation.PostConstruct;
@@ -7,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,10 +40,9 @@ public class OpenAiService {
 
     private final OpenAiChatModel chatModel;
     private final OpenAiUsageRepository usageRepository;
+    private final AppCredentialsConfig appCredentialsConfig;
 
-    @Value("${spring.ai.openai.api-key:}")
     private String apiKey;
-
     private boolean isEnabled = false;
     private RestTemplate restTemplate;
 
@@ -73,6 +72,9 @@ public class OpenAiService {
 
     @PostConstruct
     public void initialize() {
+        // AppCredentialsConfig에서 API 키 가져오기
+        this.apiKey = appCredentialsConfig.getOpenaiApiKey();
+
         if (apiKey == null || apiKey.isEmpty() || apiKey.startsWith("your_")) {
             log.warn("OPENAI_API_KEY가 설정되지 않았습니다. OpenAI 기능이 비활성화됩니다.");
             this.isEnabled = false;
