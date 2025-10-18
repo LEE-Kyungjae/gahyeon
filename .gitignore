@@ -31,3 +31,4 @@ Thumbs.db
 # 테스트 보고서
 /test-output/
 node_modules/
+PR_DESCRIPTION.md
