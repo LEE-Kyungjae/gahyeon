@@ -1,8 +1,8 @@
 
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.2.0'
-    id 'io.spring.dependency-management' version '1.1.4'
+    id 'org.springframework.boot' version '3.5.6'
+    id 'io.spring.dependency-management' version '1.1.7'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
@@ -18,7 +18,6 @@ repositories {
     mavenCentral()
     maven { url = 'https://m2.dv8tion.net/releases' }  // JDA 전용 저장소
     maven { url = 'https://jitpack.io' }               // Lavaplayer 호스팅 가능
-    maven { url = 'https://repo.spring.io/milestone' } // Spring AI
 }
 
 springBoot {
@@ -52,6 +51,7 @@ dependencies {
 
     // Database Migration
     implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.30'
@@ -67,8 +67,8 @@ dependencies {
     implementation 'se.michaelthelin.spotify:spotify-web-api-java:9.1.1'
 
     // OpenAI API
-    implementation platform('org.springframework.ai:spring-ai-bom:1.0.0-M4')
-    implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
+    implementation platform('org.springframework.ai:spring-ai-bom:1.0.1')
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
     // HTTP Client
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
