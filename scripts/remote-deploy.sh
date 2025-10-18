@@ -199,6 +199,12 @@ for second in $(seq 1 "${HEALTH_TIMEOUT}"); do
   fi
 done
 
+# 이전 버전 정보 수집 (삭제 전)
+PREVIOUS_VERSION=""
+if docker ps -a --filter "name=${PREVIOUS_CONTAINER}" --format '{{.Names}}' | grep -q "${PREVIOUS_CONTAINER}"; then
+  PREVIOUS_VERSION=$(docker inspect "${PREVIOUS_CONTAINER}" --format='{{.Config.Image}}' 2>/dev/null | grep -oP '(?<=:)v[0-9]+\.[0-9]+\.[0-9]+' || echo "unknown")
+fi
+
 echo "Stopping previous environment container (${PREVIOUS_CONTAINER}) if running."
 docker stop "${PREVIOUS_CONTAINER}" >/dev/null 2>&1 || true
 docker rm "${PREVIOUS_CONTAINER}" >/dev/null 2>&1 || true
@@ -207,4 +213,17 @@ echo "Pruning unused Docker images older than 7 days and dangling layers."
 docker image prune -af --filter "until=168h" >/dev/null 2>&1 || true
 docker image prune -f --filter "dangling=true" >/dev/null 2>&1 || true
 
-echo "Deployment to ${TARGET_CONTAINER} completed successfully."
+echo ""
+echo "========================================="
+echo "✓ Deployment Summary"
+echo "========================================="
+echo "Environment: ${TARGET_CONTAINER} (port ${TARGET_PORT})"
+if [[ -n "${PREVIOUS_VERSION}" && "${PREVIOUS_VERSION}" != "unknown" ]]; then
+  echo "Version:     ${PREVIOUS_VERSION} → ${IMAGE_TAG}"
+else
+  echo "Version:     ${IMAGE_TAG} (new deployment)"
+fi
+echo "Image:       ${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+echo "Status:      Running and healthy ✓"
+echo "========================================="
+echo ""
