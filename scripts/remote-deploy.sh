@@ -227,3 +227,28 @@ echo "Image:       ${IMAGE_REPOSITORY}:${IMAGE_TAG}"
 echo "Status:      Running and healthy ✓"
 echo "========================================="
 echo ""
+
+# GitHub Actions Job Summary (GitHub Actions 환경에서만 추가)
+if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+  {
+    echo "## 🚀 Deployment Summary"
+    echo ""
+    echo "| Item | Value |"
+    echo "|------|-------|"
+    echo "| **Environment** | \`${TARGET_CONTAINER}\` (port ${TARGET_PORT}) |"
+    if [[ -n "${PREVIOUS_VERSION}" && "${PREVIOUS_VERSION}" != "unknown" ]]; then
+      echo "| **Version** | ${PREVIOUS_VERSION} → **${IMAGE_TAG}** |"
+    else
+      echo "| **Version** | **${IMAGE_TAG}** (new deployment) |"
+    fi
+    echo "| **Image** | \`${IMAGE_REPOSITORY}:${IMAGE_TAG}\` |"
+    echo "| **Status** | ✅ Running and healthy |"
+    echo ""
+    echo "### Configuration"
+    echo ""
+    echo "- **Spring Profile**: ${SPRING_PROFILE}"
+    echo "- **Database**: ${POSTGRES_HOST}:${POSTGRES_PORT}"
+    echo "- **Container Port**: ${CONTAINER_PORT}"
+    echo ""
+  } >> "${GITHUB_STEP_SUMMARY}"
+fi
