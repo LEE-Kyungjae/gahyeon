@@ -65,6 +65,7 @@
 | `APPLICATION_ID` | Discord 애플리케이션 ID |
 | `SPOTIFY_CLIENT_ID` | Spotify Client ID |
 | `SPOTIFY_CLIENT_SECRET` | Spotify Client Secret |
+| `OPENAI_API_KEY` | OpenAI API 키 (가현아 AI 대화 기능) |
 | `POSTGRES_DEV_PASSWORD` | 개발용 Postgres 비밀번호 (`application-dev.yml` 참고) |
 
 ### 1. 프로젝트 클론
@@ -113,6 +114,7 @@ Dockerfile은 Java 21 JRE(Eclipse Temurin)를 기반으로 하며, `docker-compo
 | `TOKEN` | Discord 봇 토큰 |
 | `APPLICATION_ID` | Discord 애플리케이션 ID |
 | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | Spotify API 자격 증명 |
+| `OPENAI_API_KEY` | OpenAI API 키 (가현아 AI 대화 기능) |
 | `POSTGRES_PROD_PASSWORD` | 운영용 Postgres 비밀번호 (`application-prod.yml`) |
 | `SSH_HOST` / `SSH_PORT` / `SSH_USER` / `SSH_KEY` | 배포 대상 서버 접근 정보 (OpenSSH private key) |
 
