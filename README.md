@@ -86,7 +86,7 @@ docker compose up -d postgres-dev
 ./gradlew clean shadowJar
 java -jar build/libs/gahyeonbot-1.0.0.jar --spring.profiles.active=dev
 ```
-> 기본 실행(`--spring.profiles.active` 생략)은 In-memory H2를 사용하는 `local` 프로필입니다. 이 프로필에서는 Discord 봇 초기화(`bot.enabled`)가 비활성화되어 있어 토큰 없이도 애플리케이션을 기동할 수 있습니다. PostgreSQL과 Flyway를 사용하려면 `dev` 프로필을 활성화하고 `docker compose up -d postgres-dev`로 DB를 띄워주세요.
+> 기본 실행(`--spring.profiles.active` 생략)은 `dev` 프로필이며 PostgreSQL·Flyway·Discord 연동이 모두 켜진 상태입니다. 로컬 개발 시 `docker compose up -d postgres-dev`로 DB를 띄우고 필요한 환경 변수를 설정하세요. 만약 Discord 봇 연결을 잠시 끄고 싶다면 `BOT_ENABLED=false ./gradlew bootRun`처럼 환경 변수로 제어할 수 있습니다.
 
 ### 4. Docker 이미지로 실행 (선택)
 ```bash

@@ -19,7 +19,7 @@ spring:
   application:
     name: gahyeonbot
   profiles:
-    default: local  # 기본은 H2(로컬) 프로필, 필요 시 dev/prod로 override
+    default: dev  # 기본 실행 시 dev 프로필 사용 (운영과 동일한 환경)
   main:
     web-application-type: servlet  # 명시적으로 웹 서버 활성화
   jpa:

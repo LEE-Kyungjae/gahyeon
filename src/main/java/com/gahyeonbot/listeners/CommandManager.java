@@ -57,23 +57,17 @@ public class CommandManager extends ListenerAdapter {
      * @param existingCommands 기존에 등록된 명령어 목록
      */
     private void synchronizeGuildCommands(String guildId, List<net.dv8tion.jda.api.interactions.commands.Command> existingCommands) {
-        List<String> existingCommandNames = existingCommands.stream()
-                .map(net.dv8tion.jda.api.interactions.commands.Command::getName)
-                .collect(Collectors.toList());
-
         Optional.ofNullable(shardManager.getGuildById(guildId)).ifPresentOrElse(guild -> {
-            // 새 명령어 등록
-            commandMap.values().stream()
-                    .filter(command -> !existingCommandNames.contains(command.getName()))
-                    .forEach(command -> {
-                        logger.debug("명령어 '{}' 등록 시도", command.getName());
-                        guild.upsertCommand(command.getName(), command.getDescription())
-                                .addOptions(command.getOptions())
-                                .queue(
-                                        success -> logger.info("명령어 '{}' 등록 성공", command.getName()),
-                                        error -> logger.error("명령어 '{}' 등록 실패 - {}", command.getName(), error.getMessage(), error)
-                                );
-                    });
+            // 새 명령어 등록/업데이트 (이름이 같아도 매번 upsert하여 최신 정의 유지)
+            commandMap.values().forEach(command -> {
+                logger.debug("명령어 '{}' 등록/업데이트 시도", command.getName());
+                guild.upsertCommand(command.getName(), command.getDescription())
+                        .addOptions(command.getOptions())
+                        .queue(
+                                success -> logger.info("명령어 '{}' 등록/업데이트 성공", command.getName()),
+                                error -> logger.error("명령어 '{}' 등록/업데이트 실패 - {}", command.getName(), error.getMessage(), error)
+                        );
+            });
 
             // 기존 명령어 중 삭제 대상 제거
             existingCommands.stream()
