@@ -49,7 +49,7 @@ class GahyeonaTest {
         assertThat(command.getDescription()).isNotNull().isNotEmpty();
         assertThat(command.getDetailedDescription()).isNotNull().isNotEmpty();
         assertThat(command.getOptions()).isNotNull().hasSize(1);
-        assertThat(command.getOptions().get(0).getName()).isEqualTo("질문");
+        assertThat(command.getOptions().get(0).getName()).isEqualTo("question");
         assertThat(command.getOptions().get(0).isRequired()).isTrue();
     }
 }
