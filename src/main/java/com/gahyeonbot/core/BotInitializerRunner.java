@@ -49,7 +49,7 @@ public class BotInitializerRunner implements CommandLineRunner {
 
             // CommandManager 설정 및 명령어 등록
             CommandManager commandManager = new CommandManager();
-            commandRegistry.registerCommands().forEach(commandManager::addCommand);
+            commandManager.addCommands(commandRegistry.getCommands());
             commandManager.setShardManager(shardManager);
             commandManager.synchronizeCommands();
 

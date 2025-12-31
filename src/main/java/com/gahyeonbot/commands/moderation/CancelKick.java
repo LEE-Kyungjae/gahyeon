@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ import java.util.List;
  * @version 1.0
  */
 @Slf4j
+@Component
 public class CancelKick extends AbstractCommand implements ICommand {
     private final LeaveSchedulerManager schedulerManager;
 
