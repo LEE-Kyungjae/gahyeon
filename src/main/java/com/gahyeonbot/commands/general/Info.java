@@ -1,11 +1,13 @@
 package com.gahyeonbot.commands.general;
 
 import com.gahyeonbot.commands.util.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,12 +18,10 @@ import java.util.List;
  * @version 1.0
  */
 @Slf4j
+@Component
+@RequiredArgsConstructor
 public class Info extends AbstractCommand {
-    private final List<ICommand> commands;
-
-    public Info(List<ICommand> commands) {
-        this.commands = commands;
-    }
+    private final ObjectProvider<ICommand> commandProvider;
 
     @Override
     public String getName() {
@@ -40,14 +40,16 @@ public class Info extends AbstractCommand {
 
     @Override
     public List<OptionData> getOptions() {
-        return new ArrayList<>();
+        return List.of();
     }
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
         log.info("명령어 실행 시작: {}", getName());
 
-        if (commands == null || commands.isEmpty()) {
+        List<ICommand> commands = commandProvider.orderedStream().toList();
+
+        if (commands.isEmpty()) {
             ResponseUtil.replyError(event, "현재 사용 가능한 명령어가 없습니다.");
             return;
         }

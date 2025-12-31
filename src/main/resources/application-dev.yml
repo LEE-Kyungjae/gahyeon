@@ -36,6 +36,9 @@ logging:
 server:
   port: 8080
 
+bot:
+  enabled: ${BOT_ENABLED:true}
+
 #
 #
 #

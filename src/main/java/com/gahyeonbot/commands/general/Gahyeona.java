@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ import java.util.List;
  * @version 1.0
  */
 @Slf4j
+@Component
 @RequiredArgsConstructor
 public class Gahyeona extends AbstractCommand {
 
@@ -41,7 +43,7 @@ public class Gahyeona extends AbstractCommand {
     @Override
     public List<OptionData> getOptions() {
         return List.of(
-                new OptionData(OptionType.STRING, "질문", "가현아에게 물어볼 질문을 입력하세요", true)
+                new OptionData(OptionType.STRING, "question", "가현아에게 물어볼 질문을 입력하세요", true)
         );
     }
 
@@ -56,7 +58,7 @@ public class Gahyeona extends AbstractCommand {
         }
 
         // 질문 옵션 가져오기
-        String question = event.getOption("질문").getAsString();
+        String question = event.getOption("question").getAsString();
 
         if (question == null || question.trim().isEmpty()) {
             ResponseUtil.replyError(event, "질문을 입력해주세요.");

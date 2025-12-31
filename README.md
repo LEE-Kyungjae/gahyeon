@@ -65,6 +65,7 @@
 | `APPLICATION_ID` | Discord 애플리케이션 ID |
 | `SPOTIFY_CLIENT_ID` | Spotify Client ID |
 | `SPOTIFY_CLIENT_SECRET` | Spotify Client Secret |
+| `OPENAI_API_KEY` | OpenAI API 키 (가현아 AI 대화 기능) |
 | `POSTGRES_DEV_PASSWORD` | 개발용 Postgres 비밀번호 (`application-dev.yml` 참고) |
 
 ### 1. 프로젝트 클론
@@ -85,6 +86,7 @@ docker compose up -d postgres-dev
 ./gradlew clean shadowJar
 java -jar build/libs/gahyeonbot-1.0.0.jar --spring.profiles.active=dev
 ```
+> 기본 실행(`--spring.profiles.active` 생략)은 `dev` 프로필이며 PostgreSQL·Flyway·Discord 연동이 모두 켜진 상태입니다. 로컬 개발 시 `docker compose up -d postgres-dev`로 DB를 띄우고 필요한 환경 변수를 설정하세요. 만약 Discord 봇 연결을 잠시 끄고 싶다면 `BOT_ENABLED=false ./gradlew bootRun`처럼 환경 변수로 제어할 수 있습니다.
 
 ### 4. Docker 이미지로 실행 (선택)
 ```bash
@@ -113,6 +115,7 @@ Dockerfile은 Java 21 JRE(Eclipse Temurin)를 기반으로 하며, `docker-compo
 | `TOKEN` | Discord 봇 토큰 |
 | `APPLICATION_ID` | Discord 애플리케이션 ID |
 | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | Spotify API 자격 증명 |
+| `OPENAI_API_KEY` | OpenAI API 키 (가현아 AI 대화 기능) |
 | `POSTGRES_PROD_PASSWORD` | 운영용 Postgres 비밀번호 (`application-prod.yml`) |
 | `SSH_HOST` / `SSH_PORT` / `SSH_USER` / `SSH_KEY` | 배포 대상 서버 접근 정보 (OpenSSH private key) |
 

@@ -8,8 +8,9 @@ import com.gahyeonbot.services.music.MusicService;
 import com.gahyeonbot.services.streaming.StreamingService;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -20,6 +21,7 @@ import java.util.List;
  * @author GahyeonBot Team
  * @version 1.0
  */
+@Component
 public class Add extends AbstractCommand {
     private final MusicService musicService;
     private final StreamingService streamingService;
@@ -53,7 +55,7 @@ public class Add extends AbstractCommand {
     @Override
     public List<OptionData> getOptions() {
         return List.of(
-                new OptionData(OptionType.STRING, "노래정보", "노래 제목을 입력하세요.", true)
+                new OptionData(OptionType.STRING, "query", "노래 제목을 입력하세요.", true)
         );
     }
 
@@ -61,7 +63,7 @@ public class Add extends AbstractCommand {
     public void execute(SlashCommandInteractionEvent event) {
         logger.info("명령어 실행 시작: {}", getName());
         // 노래정보 옵션 가져오기
-        String query = event.getOption("노래정보", "", OptionMapping::getAsString).trim();
+        String query = event.getOption("query", "", OptionMapping::getAsString).trim();
         if (query.isEmpty()) {
             ResponseUtil.replyError(event, "유효한 노래 정보를 입력하세요.");
             return;

@@ -7,21 +7,19 @@ app:
     spotify-client-secret: ${SPOTIFY_CLIENT_SECRET}
     openai-api-key: ${OPENAI_API_KEY}
 
-# Spring AI OpenAI Configuration
-spring.ai:
-  openai:
-    api-key: ${OPENAI_API_KEY}
-    chat:
-      options:
-        model: gpt-4o-mini  # 저렴한 모델 사용 (GPT-4 대비 1/10 가격)
-        temperature: 0.7
-        max-tokens: 500     # 응답 길이 제한으로 비용 절감
-
 spring:
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini  # 저렴한 모델 사용 (GPT-4 대비 1/10 가격)
+          temperature: 0.7
+          max-tokens: 500     # 응답 길이 제한으로 비용 절감
   application:
     name: gahyeonbot
   profiles:
-    default: dev  # JPA/DB 사용 시 주석 해제
+    default: dev  # 기본 실행 시 dev 프로필 사용 (운영과 동일한 환경)
   main:
     web-application-type: servlet  # 명시적으로 웹 서버 활성화
   jpa:
