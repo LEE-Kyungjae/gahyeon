@@ -9,12 +9,14 @@ import com.gahyeonbot.core.scheduler.LeaveSchedulerManager;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 예약된 추방을 취소하는 명령어.
@@ -35,6 +37,11 @@ public class CancelKick extends AbstractCommand implements ICommand {
     @Override
     public String getName() {
         return Description.CANCLEOUT_NAME;
+    }
+
+    @Override
+    public Map<DiscordLocale, String> getNameLocalizations() {
+        return localizeKorean(Description.CANCLEOUT_NAME_KO);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.gahyeonbot.commands.music;
 import com.gahyeonbot.commands.util.*;
 import com.gahyeonbot.core.audio.GuildMusicManager;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +33,11 @@ public class Resume extends AbstractCommand {
     @Override
     public String getName() {
         return Description.RESUME_NAME;
+    }
+
+    @Override
+    public Map<DiscordLocale, String> getNameLocalizations() {
+        return localizeKorean(Description.RESUME_NAME_KO);
     }
 
     @Override

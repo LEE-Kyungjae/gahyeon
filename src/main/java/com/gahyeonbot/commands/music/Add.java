@@ -6,13 +6,16 @@ import com.gahyeonbot.commands.util.Description;
 import com.gahyeonbot.commands.util.ResponseUtil;
 import com.gahyeonbot.services.music.MusicService;
 import com.gahyeonbot.services.streaming.StreamingService;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 음악을 대기열에 추가하는 명령어 클래스.
@@ -43,6 +46,11 @@ public class Add extends AbstractCommand {
     }
 
     @Override
+    public Map<DiscordLocale, String> getNameLocalizations() {
+        return localizeKorean(Description.ADD_NAME_KO);
+    }
+
+    @Override
     public String getDescription() {
         return Description.ADD_DESC;
     }
@@ -56,14 +64,18 @@ public class Add extends AbstractCommand {
     public List<OptionData> getOptions() {
         return List.of(
                 new OptionData(OptionType.STRING, "query", "노래 제목을 입력하세요.", true)
+                        .setNameLocalization(DiscordLocale.KOREAN, "노래정보")
         );
     }
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
         logger.info("명령어 실행 시작: {}", getName());
-        // 노래정보 옵션 가져오기
-        String query = event.getOption("query", "", OptionMapping::getAsString).trim();
+        OptionMapping queryOption = event.getOption("query");
+        if (queryOption == null) {
+            queryOption = event.getOption("노래정보");
+        }
+        String query = queryOption != null ? queryOption.getAsString().trim() : "";
         if (query.isEmpty()) {
             ResponseUtil.replyError(event, "유효한 노래 정보를 입력하세요.");
             return;
@@ -75,6 +87,16 @@ public class Add extends AbstractCommand {
             return;
         }
 
+        event.deferReply().queue(
+                hook -> handleAdd(event, guild, query),
+                error -> {
+                    logger.error("명령어 '{}' 응답 예약 실패", getName(), error);
+                    ResponseUtil.replyError(event, "명령어 처리를 시작하지 못했습니다.");
+                }
+        );
+    }
+
+    private void handleAdd(SlashCommandInteractionEvent event, Guild guild, String query) {
         var musicManager = musicService.getOrCreateGuildMusicManager(guild);
 
         if (!musicService.ensureConnectedToVoiceChannel(event, guild, musicManager)) {

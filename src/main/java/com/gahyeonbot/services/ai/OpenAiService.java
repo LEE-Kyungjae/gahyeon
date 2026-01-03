@@ -282,15 +282,18 @@ public class OpenAiService {
      * 예: "무 시", "무.시", "i g n o r e" 모두 감지
      */
     private boolean containsAdversarialKeyword(String message) {
-        // 공백과 특수문자를 제거한 정규화된 메시지
-        String normalized = message.replaceAll("[\\s\\W_]", "").toLowerCase();
+        // 공백과 ASCII 특수문자만 제거 (한글/영문 유지)
+        String normalized = message.replaceAll("[\\s\\p{Punct}]", "").toLowerCase();
 
-        return ADVERSARIAL_KEYWORDS.stream()
-                .anyMatch(keyword -> {
-                    // 키워드도 동일하게 정규화
-                    String normalizedKeyword = keyword.replaceAll("[\\s\\W_]", "").toLowerCase();
-                    return normalized.contains(normalizedKeyword);
-                });
+        for (String keyword : ADVERSARIAL_KEYWORDS) {
+            String normalizedKeyword = keyword.replaceAll("[\\s\\p{Punct}]", "").toLowerCase();
+            if (normalized.contains(normalizedKeyword)) {
+                log.warn("키워드 필터 매칭 - 메시지: '{}', 정규화: '{}', 매칭 키워드: '{}'",
+                        message, normalized, keyword);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -1,19 +1,21 @@
 package com.gahyeonbot.commands.moderation;
 
 import com.gahyeonbot.commands.util.AbstractCommand;
-import com.gahyeonbot.commands.util.ICommand;
 import com.gahyeonbot.commands.util.Description;
-import com.gahyeonbot.commands.util.ResponseUtil;
 import com.gahyeonbot.commands.util.EmbedUtil;
+import com.gahyeonbot.commands.util.ICommand;
+import com.gahyeonbot.commands.util.ResponseUtil;
 import com.gahyeonbot.services.moderation.BotManagerService;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 모든 봇을 서버에서 추방하는 명령어.
@@ -34,6 +36,11 @@ public class KickAllBots extends AbstractCommand implements ICommand {
     @Override
     public String getName() {
         return Description.BOTOUT_NAME;
+    }
+
+    @Override
+    public Map<DiscordLocale, String> getNameLocalizations() {
+        return localizeKorean(Description.BOTOUT_NAME_KO);
     }
 
     @Override
