@@ -3,6 +3,8 @@ package com.gahyeonbot.listeners;
 import com.gahyeonbot.commands.util.ICommand;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 public class CommandManager extends ListenerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(CommandManager.class);
     private final Map<String, ICommand> commandMap = new HashMap<>();
+    private final Map<String, ICommand> localizedNameMap = new HashMap<>();
     private ShardManager shardManager;
 
     /**
@@ -45,6 +48,10 @@ public class CommandManager extends ListenerAdapter {
 
         shardManager.getGuilds().forEach(guild -> {
             guild.retrieveCommands().queue(existingCommands -> {
+                logger.info("길드 '{}' 기존 명령어 목록: {}", guild.getName(),
+                        existingCommands.stream()
+                                .map(net.dv8tion.jda.api.interactions.commands.Command::getName)
+                                .toList());
                 synchronizeGuildCommands(guild.getId(), existingCommands);
             });
         });
@@ -57,23 +64,27 @@ public class CommandManager extends ListenerAdapter {
      * @param existingCommands 기존에 등록된 명령어 목록
      */
     private void synchronizeGuildCommands(String guildId, List<net.dv8tion.jda.api.interactions.commands.Command> existingCommands) {
-        List<String> existingCommandNames = existingCommands.stream()
-                .map(net.dv8tion.jda.api.interactions.commands.Command::getName)
-                .collect(Collectors.toList());
-
         Optional.ofNullable(shardManager.getGuildById(guildId)).ifPresentOrElse(guild -> {
-            // 새 명령어 등록
-            commandMap.values().stream()
-                    .filter(command -> !existingCommandNames.contains(command.getName()))
-                    .forEach(command -> {
-                        logger.debug("명령어 '{}' 등록 시도", command.getName());
-                        guild.upsertCommand(command.getName(), command.getDescription())
-                                .addOptions(command.getOptions())
-                                .queue(
-                                        success -> logger.info("명령어 '{}' 등록 성공", command.getName()),
-                                        error -> logger.error("명령어 '{}' 등록 실패 - {}", command.getName(), error.getMessage(), error)
-                                );
-                    });
+            // 새 명령어 등록/업데이트 (이름이 같아도 매번 upsert하여 최신 정의 유지)
+            logger.info("Discord에 등록할 명령어: {}", commandMap.keySet());
+            commandMap.values().forEach(command -> {
+                logger.info("명령어 '{}' Discord 등록 시도 (옵션: {}개)", command.getName(),
+                        command.getOptions() != null ? command.getOptions().size() : 0);
+                CommandCreateAction action = guild.upsertCommand(command.getName(), command.getDescription());
+                List<OptionData> options = command.getOptions();
+                if (options != null && !options.isEmpty()) {
+                    action.addOptions(options);
+                }
+                command.getNameLocalizations()
+                        .forEach(action::setNameLocalization);
+                command.getDescriptionLocalizations()
+                        .forEach(action::setDescriptionLocalization);
+
+                action.queue(
+                        success -> logger.info("명령어 '{}' 등록/업데이트 성공", command.getName()),
+                        error -> logger.error("명령어 '{}' 등록/업데이트 실패 - {}", command.getName(), error.getMessage(), error)
+                );
+            });
 
             // 기존 명령어 중 삭제 대상 제거
             existingCommands.stream()
@@ -99,6 +110,10 @@ public class CommandManager extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         ICommand command = commandMap.get(event.getName());
+        // 기본 이름으로 찾지 못한 경우 localized name으로 조회
+        if (command == null) {
+            command = localizedNameMap.get(event.getName());
+        }
         logger.info("명령어 '{}' 실행 요청 - 사용자: {} - 옵션: {}",
                 event.getName(),
                 event.getUser().getAsTag(),
@@ -134,6 +149,10 @@ public class CommandManager extends ListenerAdapter {
             return;
         }
         commandMap.put(command.getName(), command);
+        // localized name도 매핑에 추가 (기존 Discord 등록과의 호환성)
+        command.getNameLocalizations().values().forEach(localizedName -> {
+            localizedNameMap.put(localizedName, command);
+        });
         logger.info("명령어 '{}' 등록 완료.", command.getName());
     }
 

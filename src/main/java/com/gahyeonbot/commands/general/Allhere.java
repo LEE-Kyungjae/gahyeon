@@ -7,10 +7,13 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -21,11 +24,17 @@ import java.util.concurrent.CompletableFuture;
  * @version 1.0
  */
 @Slf4j
+@Component
 public class Allhere extends AbstractCommand {
 
     @Override
     public String getName() {
         return Description.ALLHERE_NAME;
+    }
+
+    @Override
+    public Map<DiscordLocale, String> getNameLocalizations() {
+        return localizeKorean(Description.ALLHERE_NAME_KO);
     }
 
     @Override

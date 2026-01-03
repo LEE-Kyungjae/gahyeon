@@ -26,4 +26,10 @@ public class AppCredentialsConfig {
 
     @NotBlank(message = "SPOTIFY_CLIENT_SECRET 환경변수가 설정되지 않았습니다")
     private String spotifyClientSecret;
+
+    /**
+     * OpenAI API Key (선택적)
+     * 설정되지 않으면 OpenAI 기능이 비활성화됩니다.
+     */
+    private String openaiApiKey;
 }

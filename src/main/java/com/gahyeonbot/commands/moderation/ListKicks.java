@@ -8,12 +8,12 @@ import com.gahyeonbot.commands.util.EmbedUtil;
 import com.gahyeonbot.core.scheduler.LeaveSchedulerManager;
 import com.gahyeonbot.models.Reservation;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 예약된 추방 목록을 조회하는 명령어.
@@ -22,6 +22,7 @@ import java.util.List;
  * @author GahyeonBot Team
  * @version 1.0
  */
+@Component
 public class ListKicks extends AbstractCommand implements ICommand {
     private final LeaveSchedulerManager schedulerManager;
 
@@ -37,6 +38,11 @@ public class ListKicks extends AbstractCommand implements ICommand {
     @Override
     public String getName() {
         return Description.SEARCHOUT_NAME;
+    }
+
+    @Override
+    public Map<DiscordLocale, String> getNameLocalizations() {
+        return localizeKorean(Description.SEARCHOUT_NAME_KO);
     }
 
     @Override
@@ -72,6 +78,6 @@ public class ListKicks extends AbstractCommand implements ICommand {
 
     @Override
     public List<OptionData> getOptions() {
-        return new ArrayList<>();
+        return List.of();
     }
 }

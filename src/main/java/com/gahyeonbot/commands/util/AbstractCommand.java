@@ -1,7 +1,11 @@
 package com.gahyeonbot.commands.util;
 
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * 명령어의 기본 구현을 제공하는 추상 클래스.
@@ -15,4 +19,11 @@ public abstract class AbstractCommand implements ICommand {
      * 로깅을 위한 Logger 인스턴스.
      */
     protected final Logger logger = LoggerFactory.getLogger(getClass());
+
+    protected Map<DiscordLocale, String> localizeKorean(String value) {
+        if (value == null || value.isBlank()) {
+            return Collections.emptyMap();
+        }
+        return Collections.singletonMap(DiscordLocale.KOREAN, value);
+    }
 }

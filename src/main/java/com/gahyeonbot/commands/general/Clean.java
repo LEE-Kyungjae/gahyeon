@@ -8,11 +8,14 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 채팅 메시지를 삭제하는 명령어 클래스.
@@ -22,6 +25,7 @@ import java.util.List;
  * @version 1.0
  */
 @Slf4j
+@Component
 public class Clean extends AbstractCommand {
     private final MessageCleanService messageCleanService;
 
@@ -32,6 +36,11 @@ public class Clean extends AbstractCommand {
     @Override
     public String getName() {
         return Description.CLEAN_NAME;
+    }
+
+    @Override
+    public Map<DiscordLocale, String> getNameLocalizations() {
+        return localizeKorean(Description.CLEAN_NAME_KO);
     }
 
     @Override

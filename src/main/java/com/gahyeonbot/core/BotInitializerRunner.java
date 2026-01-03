@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,8 @@ public class BotInitializerRunner implements CommandLineRunner {
     private static final Logger logger = LoggerFactory.getLogger(BotInitializerRunner.class);
     private final AppCredentialsConfig config;
     private final CommandRegistry commandRegistry;
+    @Value("${bot.enabled:true}")
+    private boolean botEnabled;
     private ShardManager shardManager;
 
     /**
@@ -35,14 +38,25 @@ public class BotInitializerRunner implements CommandLineRunner {
      */
     @Override
     public void run(String... args) throws Exception {
+        if (!botEnabled) {
+            logger.info("bot.enabled=false 설정으로 Discord 봇 초기화를 건너뜁니다.");
+            return;
+        }
         try {
             // Discord ShardManager 초기화
             BotInitializer botInitializer = new BotInitializer(config);
             shardManager = botInitializer.initialize();
 
+            // JDA가 준비될 때까지 대기 (guilds 로드 필요)
+            logger.info("JDA 준비 대기 중...");
+            for (var shard : shardManager.getShards()) {
+                shard.awaitReady();
+            }
+            logger.info("JDA 준비 완료. 총 {}개 길드 감지됨.", shardManager.getGuilds().size());
+
             // CommandManager 설정 및 명령어 등록
             CommandManager commandManager = new CommandManager();
-            commandRegistry.registerCommands().forEach(commandManager::addCommand);
+            commandManager.addCommands(commandRegistry.getCommands());
             commandManager.setShardManager(shardManager);
             commandManager.synchronizeCommands();
 

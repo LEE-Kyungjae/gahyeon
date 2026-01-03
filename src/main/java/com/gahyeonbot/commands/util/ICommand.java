@@ -1,10 +1,12 @@
 package com.gahyeonbot.commands.util;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Discord 슬래시 명령어를 정의하는 인터페이스.
@@ -35,6 +37,24 @@ public interface ICommand {
      * @return 명령어 상세 설명
      */
     String getDetailedDescription();
+
+    /**
+     * 명령어 이름의 현지화 정보를 반환합니다.
+     *
+     * @return Locale과 현지화된 명령어 이름의 매핑
+     */
+    default Map<DiscordLocale, String> getNameLocalizations() {
+        return Collections.emptyMap();
+    }
+
+    /**
+     * 명령어 설명의 현지화 정보를 반환합니다.
+     *
+     * @return Locale과 현지화된 명령어 설명의 매핑
+     */
+    default Map<DiscordLocale, String> getDescriptionLocalizations() {
+        return Collections.emptyMap();
+    }
     
     /**
      * 명령어의 옵션 목록을 반환합니다.
