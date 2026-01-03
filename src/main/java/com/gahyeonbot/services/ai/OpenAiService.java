@@ -13,6 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import org.springframework.core.io.ClassPathResource;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,6 +51,7 @@ public class OpenAiService {
     private String apiKey;
     private boolean isEnabled = false;
     private RestTemplate restTemplate;
+    private String systemPrompt;
 
     // 캐시: 최근 질문과 답변 저장 (10분 TTL)
     private final Map<String, CachedResponse> responseCache = new ConcurrentHashMap<>();
@@ -89,8 +94,12 @@ public class OpenAiService {
         try {
             // RestTemplate 초기화
             this.restTemplate = new RestTemplate();
+
+            // 시스템 프롬프트 로드
+            loadSystemPrompt();
+
             this.isEnabled = true;
-            log.info("OpenAI 서비스가 활성화되었습니다. 모델: gpt-4o-mini (엄격한 Rate Limiting + Moderation API 적용)");
+            log.info("OpenAI 서비스가 활성화되었습니다. 모델: gpt-4o-mini (가현이 캐릭터 + Rate Limiting + Moderation API 적용)");
         } catch (Exception e) {
             log.error("OpenAI 초기화 실패. OpenAI 기능이 비활성화됩니다.", e);
             this.isEnabled = false;
@@ -224,6 +233,7 @@ public class OpenAiService {
 
             ChatClient chatClient = ChatClient.create(chatModel);
             String response = chatClient.prompt()
+                    .system(systemPrompt)
                     .user(userMessage)
                     .call()
                     .content();
@@ -301,6 +311,20 @@ public class OpenAiService {
      */
     private String generateCacheKey(String message) {
         return message.trim().toLowerCase();
+    }
+
+    /**
+     * 시스템 프롬프트를 리소스에서 로드합니다.
+     */
+    private void loadSystemPrompt() {
+        try {
+            ClassPathResource resource = new ClassPathResource("prompts/gahyeon_system_prompt.txt");
+            this.systemPrompt = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            log.info("가현이 시스템 프롬프트 로드 완료 ({}자)", systemPrompt.length());
+        } catch (IOException e) {
+            log.warn("시스템 프롬프트 로드 실패, 기본 프롬프트 사용", e);
+            this.systemPrompt = "너는 '가현이'야. 친근하고 밝은 20대 여성이야. 반말로 짧게 대화해.";
+        }
     }
 
     /**
