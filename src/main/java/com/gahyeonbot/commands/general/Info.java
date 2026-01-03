@@ -4,11 +4,13 @@ import com.gahyeonbot.commands.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 봇의 명령어 목록을 표시하는 명령어 클래스.
@@ -26,6 +28,11 @@ public class Info extends AbstractCommand {
     @Override
     public String getName() {
         return Description.INFO_NAME;
+    }
+
+    @Override
+    public Map<DiscordLocale, String> getNameLocalizations() {
+        return localizeKorean(Description.INFO_NAME_KO);
     }
 
     @Override

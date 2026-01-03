@@ -32,3 +32,9 @@ Thumbs.db
 /test-output/
 node_modules/
 PR_DESCRIPTION.md
+
+# Personal data
+KakaoTalk_*.csv
+gahyeon_analysis/
+scripts/analyze_*.py
+scripts/extract_*.py

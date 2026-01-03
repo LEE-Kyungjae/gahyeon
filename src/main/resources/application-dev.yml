@@ -1,10 +1,10 @@
 #application-dev.yml
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/gahyeonbot
-    driver-class-name: org.postgresql.Driver
-    username: ${POSTGRES_DEV_USERNAME}
-    password: ${POSTGRES_DEV_PASSWORD}
+    url: ${POSTGRES_DEV_URL:jdbc:h2:mem:gahyeonbot-dev;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    driver-class-name: ${POSTGRES_DEV_DRIVER:org.h2.Driver}
+    username: ${POSTGRES_DEV_USERNAME:sa}
+    password: ${POSTGRES_DEV_PASSWORD:}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 3
@@ -14,14 +14,14 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate  # Flyway가 스키마 관리, Hibernate는 검증만
+      ddl-auto: ${JPA_DDL_AUTO:update}  # H2 기본 update, Postgres 사용 시 validate 등으로 오버라이드
     show-sql: true
     properties:
       hibernate:
         format_sql: true
 
   flyway:
-    enabled: true
+    enabled: ${FLYWAY_ENABLED:false}
     baseline-on-migrate: true  # 기존 DB에 Flyway 적용
     baseline-version: 0  # 처음부터 시작
     locations: classpath:db/migration

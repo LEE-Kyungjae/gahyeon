@@ -1,13 +1,14 @@
 package com.gahyeonbot.commands.moderation;
 
 import com.gahyeonbot.commands.util.AbstractCommand;
-import com.gahyeonbot.commands.util.ICommand;
 import com.gahyeonbot.commands.util.Description;
-import com.gahyeonbot.commands.util.ResponseUtil;
 import com.gahyeonbot.commands.util.EmbedUtil;
+import com.gahyeonbot.commands.util.ICommand;
+import com.gahyeonbot.commands.util.ResponseUtil;
 import com.gahyeonbot.core.scheduler.LeaveSchedulerManager;
 import com.gahyeonbot.models.Reservation;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 /**
  * 특정 사용자를 서버에서 추방하는 명령어.
@@ -40,6 +42,11 @@ public class KickUser extends AbstractCommand implements ICommand {
     @Override
     public String getName() {
         return Description.OUT_NAME;
+    }
+
+    @Override
+    public Map<DiscordLocale, String> getNameLocalizations() {
+        return localizeKorean(Description.OUT_NAME_KO);
     }
 
     @Override

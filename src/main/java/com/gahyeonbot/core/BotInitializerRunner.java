@@ -47,6 +47,13 @@ public class BotInitializerRunner implements CommandLineRunner {
             BotInitializer botInitializer = new BotInitializer(config);
             shardManager = botInitializer.initialize();
 
+            // JDA가 준비될 때까지 대기 (guilds 로드 필요)
+            logger.info("JDA 준비 대기 중...");
+            for (var shard : shardManager.getShards()) {
+                shard.awaitReady();
+            }
+            logger.info("JDA 준비 완료. 총 {}개 길드 감지됨.", shardManager.getGuilds().size());
+
             // CommandManager 설정 및 명령어 등록
             CommandManager commandManager = new CommandManager();
             commandManager.addCommands(commandRegistry.getCommands());

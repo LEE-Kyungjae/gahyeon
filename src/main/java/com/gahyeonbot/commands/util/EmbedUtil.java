@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 
 import java.awt.*;
 import java.util.List;
@@ -82,8 +83,7 @@ public class EmbedUtil {
      */
     public static EmbedBuilder nomal(String errorMessage) {
         EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle("")
-               .setDescription(errorMessage)
+        embed.setDescription(errorMessage)
                .setColor(Color.YELLOW);
         return embed;
     }
@@ -116,16 +116,23 @@ public class EmbedUtil {
                 .setDescription("아래는 봇이 지원하는 명령어 목록입니다.")
                 .setFooter("가현봇 | 도움말", event.getJDA().getSelfUser().getEffectiveAvatarUrl());
 
+        DiscordLocale userLocale = event.getUserLocale();
+
         for (ICommand command : commands) {
             String detailedDescription = command.getDetailedDescription();
             String description = command.getDescription();
+            String commandName = command.getName();
+
+            if (userLocale != null) {
+                commandName = command.getNameLocalizations().getOrDefault(userLocale, commandName);
+            }
 
             String fieldValue = description;
             if (detailedDescription != null && !detailedDescription.isEmpty()) {
                 fieldValue += "\n**사용법:** " + detailedDescription;
             }
 
-            embed.addField("/" + command.getName(), fieldValue, false);
+            embed.addField("/" + commandName, fieldValue, false);
         }
 
         return embed;

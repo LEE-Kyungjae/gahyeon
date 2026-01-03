@@ -25,7 +25,7 @@ public class ResponseUtil {
     public static void replyError(SlashCommandInteractionEvent event, String errorMessage) {
         logger.error("replyError: {}", errorMessage);
         EmbedBuilder embed = EmbedUtil.createErrorEmbed(errorMessage);
-        event.replyEmbeds(embed.build()).setEphemeral(true).queue();
+        sendEmbed(event, embed, true);
     }
 
     /**
@@ -37,7 +37,7 @@ public class ResponseUtil {
     public static void replySuccess(SlashCommandInteractionEvent event, String successMessage) {
         logger.info("replySuccess: {}", successMessage);
         EmbedBuilder embed = EmbedUtil.nomal(successMessage);
-        event.replyEmbeds(embed.build()).queue();
+        sendEmbed(event, embed, false);
     }
 
     /**
@@ -48,7 +48,7 @@ public class ResponseUtil {
      */
     public static void replyEmbed(SlashCommandInteractionEvent event, EmbedBuilder embed) {
         logger.info("replyEmbed");
-        event.replyEmbeds(embed.build()).queue();
+        sendEmbed(event, embed, false);
     }
 
     /**
@@ -59,7 +59,7 @@ public class ResponseUtil {
      */
     public static void replyEphemeralEmbed(SlashCommandInteractionEvent event, EmbedBuilder embed) {
         logger.info("replyEphemeralEmbed");
-        event.replyEmbeds(embed.build()).setEphemeral(true).queue();
+        sendEmbed(event, embed, true);
     }
 
     /**
@@ -72,5 +72,13 @@ public class ResponseUtil {
         logger.info("sendMessageToChannel: {}", message);
         MessageChannel channel = event.getChannel();
         channel.sendMessage(message).queue();
+    }
+
+    private static void sendEmbed(SlashCommandInteractionEvent event, EmbedBuilder embed, boolean ephemeral) {
+        if (event.isAcknowledged()) {
+            event.getHook().sendMessageEmbeds(embed.build()).setEphemeral(ephemeral).queue();
+        } else {
+            event.replyEmbeds(embed.build()).setEphemeral(ephemeral).queue();
+        }
     }
 }
