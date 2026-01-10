@@ -58,13 +58,14 @@ public class BotInitializerRunner implements CommandLineRunner {
             CommandManager commandManager = new CommandManager();
             commandManager.addCommands(commandRegistry.getCommands());
             commandManager.setShardManager(shardManager);
-            commandManager.synchronizeCommands();
+            commandManager.synchronizeCommands().join();
 
             // 이벤트 리스너 등록
             ListenerManager listenerManager = new ListenerManager(shardManager, config, commandManager);
             listenerManager.registerListeners();
 
             logger.info("Discord 봇이 성공적으로 초기화되었습니다.");
+            logger.info("모든 명령어 등록 및 서비스 기동이 완료되었습니다.");
         } catch (IllegalArgumentException e) {
             logger.warn("Discord 봇 초기화 실패: {}. 애플리케이션은 계속 실행됩니다.", e.getMessage());
         } catch (Exception e) {

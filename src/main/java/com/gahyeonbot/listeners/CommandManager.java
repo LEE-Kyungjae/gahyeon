@@ -1,6 +1,7 @@
 package com.gahyeonbot.listeners;
 
 import com.gahyeonbot.commands.util.ICommand;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -41,20 +43,32 @@ public class CommandManager extends ListenerAdapter {
      *
      * @throws IllegalStateException ShardManager가 설정되지 않은 경우
      */
-    public void synchronizeCommands() {
+    public CompletableFuture<Void> synchronizeCommands() {
         if (shardManager == null) {
             throw new IllegalStateException("ShardManager가 설정되지 않았습니다!");
         }
 
-        shardManager.getGuilds().forEach(guild -> {
-            guild.retrieveCommands().queue(existingCommands -> {
-                logger.info("길드 '{}' 기존 명령어 목록: {}", guild.getName(),
-                        existingCommands.stream()
-                                .map(net.dv8tion.jda.api.interactions.commands.Command::getName)
-                                .toList());
-                synchronizeGuildCommands(guild.getId(), existingCommands);
-            });
-        });
+        List<CompletableFuture<Void>> guildFutures = shardManager.getGuilds().stream()
+                .map(guild -> guild.retrieveCommands().submit()
+                        .thenCompose(existingCommands -> {
+                            logger.info("길드 '{}' 기존 명령어 목록: {}", guild.getName(),
+                                    existingCommands.stream()
+                                            .map(net.dv8tion.jda.api.interactions.commands.Command::getName)
+                                            .toList());
+                            return synchronizeGuildCommands(guild, existingCommands);
+                        })
+                        .whenComplete((ignored, throwable) -> {
+                            if (throwable != null) {
+                                logger.error("길드 '{}' 명령어 동기화 중 오류 발생 - {}",
+                                        guild.getName(), throwable.getMessage(), throwable);
+                            }
+                        }))
+                .toList();
+
+        if (guildFutures.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+        return CompletableFuture.allOf(guildFutures.toArray(new CompletableFuture[0]));
     }
 
     /**
@@ -63,43 +77,56 @@ public class CommandManager extends ListenerAdapter {
      * @param guildId 서버 ID
      * @param existingCommands 기존에 등록된 명령어 목록
      */
-    private void synchronizeGuildCommands(String guildId, List<net.dv8tion.jda.api.interactions.commands.Command> existingCommands) {
-        Optional.ofNullable(shardManager.getGuildById(guildId)).ifPresentOrElse(guild -> {
-            // 새 명령어 등록/업데이트 (이름이 같아도 매번 upsert하여 최신 정의 유지)
-            logger.info("Discord에 등록할 명령어: {}", commandMap.keySet());
-            commandMap.values().forEach(command -> {
-                logger.info("명령어 '{}' Discord 등록 시도 (옵션: {}개)", command.getName(),
-                        command.getOptions() != null ? command.getOptions().size() : 0);
-                CommandCreateAction action = guild.upsertCommand(command.getName(), command.getDescription());
-                List<OptionData> options = command.getOptions();
-                if (options != null && !options.isEmpty()) {
-                    action.addOptions(options);
-                }
-                command.getNameLocalizations()
-                        .forEach(action::setNameLocalization);
-                command.getDescriptionLocalizations()
-                        .forEach(action::setDescriptionLocalization);
+    private CompletableFuture<Void> synchronizeGuildCommands(Guild guild, List<net.dv8tion.jda.api.interactions.commands.Command> existingCommands) {
+        List<CompletableFuture<Void>> operations = new ArrayList<>();
+        logger.info("Discord에 등록할 명령어: {}", commandMap.keySet());
+        commandMap.values().forEach(command -> {
+            logger.info("명령어 '{}' Discord 등록 시도 (옵션: {}개)", command.getName(),
+                    command.getOptions() != null ? command.getOptions().size() : 0);
+            CommandCreateAction action = guild.upsertCommand(command.getName(), command.getDescription());
+            List<OptionData> options = command.getOptions();
+            if (options != null && !options.isEmpty()) {
+                action.addOptions(options);
+            }
+            command.getNameLocalizations()
+                    .forEach(action::setNameLocalization);
+            command.getDescriptionLocalizations()
+                    .forEach(action::setDescriptionLocalization);
 
-                action.queue(
-                        success -> logger.info("명령어 '{}' 등록/업데이트 성공", command.getName()),
-                        error -> logger.error("명령어 '{}' 등록/업데이트 실패 - {}", command.getName(), error.getMessage(), error)
-                );
-            });
-
-            // 기존 명령어 중 삭제 대상 제거
-            existingCommands.stream()
-                    .filter(cmd -> !commandMap.containsKey(cmd.getName()))
-                    .forEach(cmd -> {
-                        logger.debug("명령어 '{}' 삭제 시도", cmd.getName());
-                        guild.deleteCommandById(cmd.getId())
-                                .queue(
-                                        success -> logger.info("명령어 '{}' 삭제 성공", cmd.getName()),
-                                        error -> logger.error("명령어 '{}' 삭제 실패 - {}", cmd.getName(), error.getMessage(), error)
-                                );
+            CompletableFuture<Void> operation = action.submit()
+                    .thenAccept(success -> logger.info("명령어 '{}' 등록/업데이트 성공", command.getName()))
+                    .whenComplete((ignored, throwable) -> {
+                        if (throwable != null) {
+                            logger.error("명령어 '{}' 등록/업데이트 실패 - {}", command.getName(), throwable.getMessage(), throwable);
+                        }
                     });
+            operations.add(operation);
+        });
 
-            logger.info("길드 '{}'에 동기화된 명령어: {}", guild.getName(), String.join(", ", commandMap.keySet()));
-        }, () -> logger.warn("Guild ID {}에 해당하는 Guild를 찾을 수 없어 동기화를 건너뜁니다.", guildId));
+        existingCommands.stream()
+                .filter(cmd -> !commandMap.containsKey(cmd.getName()))
+                .forEach(cmd -> {
+                    logger.debug("명령어 '{}' 삭제 시도", cmd.getName());
+                    CompletableFuture<Void> deletion = guild.deleteCommandById(cmd.getId())
+                            .submit()
+                            .thenAccept(success -> logger.info("명령어 '{}' 삭제 성공", cmd.getName()))
+                            .whenComplete((ignored, throwable) -> {
+                                if (throwable != null) {
+                                    logger.error("명령어 '{}' 삭제 실패 - {}", cmd.getName(), throwable.getMessage(), throwable);
+                                }
+                            });
+                    operations.add(deletion);
+                });
+
+        CompletableFuture<Void> combined = operations.isEmpty()
+                ? CompletableFuture.completedFuture(null)
+                : CompletableFuture.allOf(operations.toArray(new CompletableFuture[0]));
+
+        return combined.whenComplete((ignored, throwable) -> {
+            if (throwable == null) {
+                logger.info("길드 '{}'에 동기화된 명령어: {}", guild.getName(), String.join(", ", commandMap.keySet()));
+            }
+        });
     }
 
     /**

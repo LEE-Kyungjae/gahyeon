@@ -130,6 +130,16 @@ public class Gahyeona extends AbstractCommand {
         } catch (IllegalArgumentException e) {
             log.warn("잘못된 요청 - 사용자: {}, 메시지: {}", event.getUser().getName(), e.getMessage());
             safeEditOriginal(event, e.getMessage());
+        } catch (OpenAiService.ChatProcessingException e) {
+            OpenAiService.ChatProcessingException.ErrorType errorType = e.getErrorType();
+            log.error("OpenAI 처리 오류 - 사용자: {}, 유형: {}", event.getUser().getName(), errorType, e);
+            String userMessage;
+            if (errorType == OpenAiService.ChatProcessingException.ErrorType.OPENAI_API_FAILURE) {
+                userMessage = "AI 서버와 통신 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.";
+            } else {
+                userMessage = "시스템 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+            }
+            safeEditOriginal(event, userMessage);
         } catch (Exception e) {
             log.error("OpenAI 명령어 실행 중 오류 발생", e);
             safeEditOriginal(event, "오류가 발생했습니다. 잠시 후 다시 시도해주세요.");

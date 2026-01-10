@@ -8,12 +8,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-
-import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -60,7 +60,7 @@ public class OpenAiService {
     private final Map<Long, Lock> userLocks = new ConcurrentHashMap<>();
 
     // Rate Limiting 상수
-    private static final int HOURLY_LIMIT_PER_USER = 10;      // 사용자당 1시간 제한
+    private static final int HOURLY_LIMIT_PER_USER = 75;      // 사용자당 1시간 제한
     private static final int DAILY_LIMIT_PER_USER = 30;       // 사용자당 하루 제한
     private static final int DAILY_LIMIT_TOTAL = 50;          // 봇 전체 하루 제한
     private static final int MONTHLY_LIMIT_TOTAL = 100;       // 봇 전체 월 제한
@@ -251,7 +251,8 @@ public class OpenAiService {
         } catch (Exception e) {
             log.error("OpenAI API 호출 실패 - 사용자: {}, 메시지: {}", username, userMessage, e);
             logUsage(interactionId, userId, username, guildId, userMessage, null, false, e.getMessage());
-            throw new RuntimeException("AI 응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.");
+            throw new ChatProcessingException(ChatProcessingException.ErrorType.OPENAI_API_FAILURE,
+                    "AI 응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.", e);
         }
     }
 
@@ -366,19 +367,27 @@ public class OpenAiService {
             Map<String, String> body = Map.of("input", message);
             HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
 
-            ResponseEntity<Map> response = restTemplate.postForEntity(
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     "https://api.openai.com/v1/moderations",
+                    HttpMethod.POST,
                     request,
-                    Map.class
+                    new ParameterizedTypeReference<>() {
+                    }
             );
 
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                List<Map<String, Object>> results = (List<Map<String, Object>>) response.getBody().get("results");
-                if (results != null && !results.isEmpty()) {
-                    Boolean flagged = (Boolean) results.get(0).get("flagged");
-                    if (flagged != null && flagged) {
-                        log.warn("Moderation API 차단: 부적절한 콘텐츠 감지");
-                        return true;
+            if (response.getStatusCode() == HttpStatus.OK) {
+                Map<String, Object> responseBody = response.getBody();
+                if (responseBody != null) {
+                    Object resultsObj = responseBody.get("results");
+                    if (resultsObj instanceof List<?> results && !results.isEmpty()) {
+                        Object first = results.get(0);
+                        if (first instanceof Map<?, ?> firstResult) {
+                            Object flaggedObj = firstResult.get("flagged");
+                            if (flaggedObj instanceof Boolean flagged && flagged) {
+                                log.warn("Moderation API 차단: 부적절한 콘텐츠 감지");
+                                return true;
+                            }
+                        }
                     }
                 }
             }
@@ -406,6 +415,27 @@ public class OpenAiService {
     public static class AdversarialPromptException extends Exception {
         public AdversarialPromptException(String message) {
             super(message);
+        }
+    }
+
+    /**
+     * OpenAI 처리 중 발생한 일반 오류
+     */
+    public static class ChatProcessingException extends RuntimeException {
+        public enum ErrorType {
+            OPENAI_API_FAILURE,
+            UNKNOWN
+        }
+
+        private final ErrorType errorType;
+
+        public ChatProcessingException(ErrorType errorType, String message, Throwable cause) {
+            super(message, cause);
+            this.errorType = errorType;
+        }
+
+        public ErrorType getErrorType() {
+            return errorType;
         }
     }
 }
