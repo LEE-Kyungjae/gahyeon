@@ -53,15 +53,26 @@ public enum City {
     private final String timezone;
 
     /**
-     * API URL 생성
+     * 현재 날씨 API URL 생성
      */
-    public String buildApiUrl() {
+    public String buildCurrentWeatherUrl() {
         return String.format(
                 "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f" +
                 "&current=temperature_2m,precipitation,weather_code,wind_speed_10m" +
                 "&hourly=precipitation_probability" +
-                "&daily=temperature_2m_max,temperature_2m_min" +
                 "&forecast_days=1&timezone=%s",
+                latitude, longitude, timezone
+        );
+    }
+
+    /**
+     * 7일 예보 API URL 생성
+     */
+    public String buildForecastUrl() {
+        return String.format(
+                "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f" +
+                "&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max" +
+                "&forecast_days=7&timezone=%s",
                 latitude, longitude, timezone
         );
     }
