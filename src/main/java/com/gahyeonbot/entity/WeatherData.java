@@ -28,6 +28,24 @@ public class WeatherData {
     private Long id;
 
     /**
+     * 도시 코드 (City enum name)
+     */
+    @Column(name = "city", nullable = false, length = 50)
+    private String city;
+
+    /**
+     * 도시 한글 이름
+     */
+    @Column(name = "city_name", nullable = false, length = 50)
+    private String cityName;
+
+    /**
+     * 국가 이름
+     */
+    @Column(name = "country", nullable = false, length = 50)
+    private String country;
+
+    /**
      * 현재 기온 (섭씨)
      */
     @Column(name = "temperature", nullable = false)

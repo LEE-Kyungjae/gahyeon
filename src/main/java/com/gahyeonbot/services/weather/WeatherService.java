@@ -13,82 +13,112 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * 날씨 데이터 서비스.
- * Open-Meteo API를 사용하여 서울 날씨를 조회하고 캐시합니다.
+ * Open-Meteo API를 사용하여 여러 도시의 날씨를 조회하고 캐시합니다.
  *
  * @author GahyeonBot Team
- * @version 1.0
+ * @version 2.0
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class WeatherService {
 
-    private static final String WEATHER_API_URL =
-            "https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.9780" +
-            "&current=temperature_2m,precipitation,wind_speed_10m,weather_code" +
-            "&hourly=precipitation_probability&timezone=Asia/Seoul";
-
     private static final int CACHE_DURATION_MINUTES = 30;
 
     private final WeatherRepository weatherRepository;
     private RestTemplate restTemplate;
 
-    // 메모리 캐시 (DB 조회 최소화)
-    private WeatherData cachedWeather;
+    // 메모리 캐시 (도시별)
+    private final Map<City, WeatherData> weatherCache = new ConcurrentHashMap<>();
     private LocalDateTime cacheTime;
 
     @PostConstruct
     public void initialize() {
         this.restTemplate = new RestTemplate();
-        log.info("날씨 서비스 초기화 완료");
-        // 시작 시 날씨 데이터 로드
-        fetchAndSaveWeather();
+        log.info("날씨 서비스 초기화 완료 - 대상 도시: {}개", City.values().length);
+        // 시작 시 모든 도시 날씨 로드
+        fetchAllCitiesWeather();
     }
 
     /**
-     * 현재 날씨 정보를 가져옵니다.
-     * 캐시된 데이터가 있으면 반환하고, 없으면 DB에서 조회합니다.
+     * 모든 도시의 현재 날씨 정보를 가져옵니다.
      *
-     * @return 날씨 데이터 (없으면 빈 Optional)
+     * @return 도시별 날씨 데이터 맵
      */
-    public Optional<WeatherData> getCurrentWeather() {
-        // 메모리 캐시 확인
-        if (cachedWeather != null && cacheTime != null &&
+    public Map<City, WeatherData> getAllCitiesWeather() {
+        // 캐시 확인
+        if (!weatherCache.isEmpty() && cacheTime != null &&
                 cacheTime.plusMinutes(CACHE_DURATION_MINUTES).isAfter(LocalDateTime.now())) {
-            return Optional.of(cachedWeather);
+            return new HashMap<>(weatherCache);
         }
 
         // DB에서 최신 데이터 조회
-        Optional<WeatherData> latest = weatherRepository.findLatest();
-        latest.ifPresent(weather -> {
-            this.cachedWeather = weather;
-            this.cacheTime = LocalDateTime.now();
-        });
+        List<WeatherData> latestData = weatherRepository.findLatestForAllCities();
+        Map<City, WeatherData> result = new HashMap<>();
 
-        return latest;
+        for (WeatherData weather : latestData) {
+            try {
+                City city = City.valueOf(weather.getCity());
+                result.put(city, weather);
+                weatherCache.put(city, weather);
+            } catch (IllegalArgumentException e) {
+                log.warn("알 수 없는 도시 코드: {}", weather.getCity());
+            }
+        }
+
+        if (!result.isEmpty()) {
+            this.cacheTime = LocalDateTime.now();
+        }
+
+        return result;
     }
 
     /**
      * 대화에 사용할 날씨 컨텍스트 문자열 생성
+     * 국가별로 그룹화하여 보기 좋게 정리
      *
      * @return 날씨 정보 문자열
      */
     public String getWeatherContext() {
-        return getCurrentWeather()
-                .map(weather -> String.format(
-                        "[현재 서울 날씨] 기온: %.1f°C, %s, 풍속: %.1fkm/h, 강수확률: %d%%",
-                        weather.getTemperature(),
-                        weather.getWeatherDescription(),
-                        weather.getWindSpeed(),
-                        weather.getPrecipitationProbability() != null ? weather.getPrecipitationProbability() : 0
-                ))
-                .orElse("");
+        Map<City, WeatherData> allWeather = getAllCitiesWeather();
+
+        if (allWeather.isEmpty()) {
+            return "";
+        }
+
+        // 국가별로 그룹화
+        Map<String, List<Map.Entry<City, WeatherData>>> byCountry = allWeather.entrySet().stream()
+                .collect(Collectors.groupingBy(e -> e.getKey().getCountry()));
+
+        StringBuilder sb = new StringBuilder("[현재 날씨 정보]\n");
+
+        // 한국을 먼저, 나머지는 알파벳 순
+        List<String> countries = new ArrayList<>(byCountry.keySet());
+        countries.sort((a, b) -> {
+            if (a.equals("한국")) return -1;
+            if (b.equals("한국")) return 1;
+            return a.compareTo(b);
+        });
+
+        for (String country : countries) {
+            sb.append("▸ ").append(country).append(": ");
+            List<String> cityWeathers = byCountry.get(country).stream()
+                    .map(e -> {
+                        WeatherData w = e.getValue();
+                        return String.format("%s %.1f°C %s",
+                                w.getCityName(), w.getTemperature(), w.getWeatherDescription());
+                    })
+                    .collect(Collectors.toList());
+            sb.append(String.join(" / ", cityWeathers)).append("\n");
+        }
+
+        return sb.toString().trim();
     }
 
     /**
@@ -97,44 +127,66 @@ public class WeatherService {
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void scheduledWeatherUpdate() {
-        log.info("스케줄된 날씨 업데이트 시작");
-        fetchAndSaveWeather();
+        log.info("스케줄된 날씨 업데이트 시작 - {}개 도시", City.values().length);
+        fetchAllCitiesWeather();
     }
 
     /**
-     * API에서 날씨 데이터를 가져와 저장합니다.
+     * 모든 도시의 날씨 데이터를 가져와 저장합니다.
      */
     @Transactional
-    public void fetchAndSaveWeather() {
+    public void fetchAllCitiesWeather() {
+        int successCount = 0;
+        int failCount = 0;
+
+        for (City city : City.values()) {
+            try {
+                WeatherData weather = fetchWeatherForCity(city);
+                if (weather != null) {
+                    weatherRepository.save(weather);
+                    weatherCache.put(city, weather);
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+                // API 과부하 방지
+                Thread.sleep(100);
+            } catch (Exception e) {
+                log.error("도시 날씨 조회 실패 - {}: {}", city.getKoreanName(), e.getMessage());
+                failCount++;
+            }
+        }
+
+        this.cacheTime = LocalDateTime.now();
+        log.info("날씨 업데이트 완료 - 성공: {}, 실패: {}", successCount, failCount);
+    }
+
+    /**
+     * 특정 도시의 날씨 데이터를 API에서 가져옵니다.
+     */
+    private WeatherData fetchWeatherForCity(City city) {
         try {
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    WEATHER_API_URL,
+                    city.buildApiUrl(),
                     HttpMethod.GET,
                     null,
                     new ParameterizedTypeReference<>() {}
             );
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                WeatherData weather = parseWeatherResponse(response.getBody());
-                weatherRepository.save(weather);
-
-                // 메모리 캐시 업데이트
-                this.cachedWeather = weather;
-                this.cacheTime = LocalDateTime.now();
-
-                log.info("날씨 데이터 업데이트 완료 - 기온: {}°C, {}",
-                        weather.getTemperature(), weather.getWeatherDescription());
+                return parseWeatherResponse(city, response.getBody());
             }
         } catch (Exception e) {
-            log.error("날씨 데이터 조회 실패", e);
+            log.error("API 호출 실패 - {}: {}", city.getKoreanName(), e.getMessage());
         }
+        return null;
     }
 
     /**
      * API 응답을 파싱하여 WeatherData 객체 생성
      */
     @SuppressWarnings("unchecked")
-    private WeatherData parseWeatherResponse(Map<String, Object> response) {
+    private WeatherData parseWeatherResponse(City city, Map<String, Object> response) {
         Map<String, Object> current = (Map<String, Object>) response.get("current");
         Map<String, Object> hourly = (Map<String, Object>) response.get("hourly");
 
@@ -153,6 +205,9 @@ public class WeatherService {
         }
 
         return WeatherData.builder()
+                .city(city.name())
+                .cityName(city.getKoreanName())
+                .country(city.getCountry())
                 .temperature(temperature)
                 .precipitation(precipitation)
                 .windSpeed(windSpeed)
@@ -164,7 +219,6 @@ public class WeatherService {
 
     /**
      * WMO 날씨 코드를 한글 설명으로 변환
-     * https://open-meteo.com/en/docs 참고
      */
     private String getWeatherDescription(int code) {
         return switch (code) {
