@@ -6,6 +6,7 @@ app:
     spotify-client-id: ${SPOTIFY_CLIENT_ID}
     spotify-client-secret: ${SPOTIFY_CLIENT_SECRET}
     openai-api-key: ${OPENAI_API_KEY}
+    glm-api-key: ${GLM_API_KEY:}
 
 spring:
   ai:

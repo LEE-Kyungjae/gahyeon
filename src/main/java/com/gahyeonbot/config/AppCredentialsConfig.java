@@ -32,4 +32,10 @@ public class AppCredentialsConfig {
      * 설정되지 않으면 OpenAI 기능이 비활성화됩니다.
      */
     private String openaiApiKey;
+
+    /**
+     * Zhipu AI GLM API Key (선택적)
+     * 설정되지 않으면 대화 요약 기능이 비활성화됩니다.
+     */
+    private String glmApiKey;
 }

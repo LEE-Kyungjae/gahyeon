@@ -47,6 +47,7 @@ public class OpenAiService {
     private final OpenAiChatModel chatModel;
     private final OpenAiUsageRepository usageRepository;
     private final AppCredentialsConfig appCredentialsConfig;
+    private final ConversationHistoryService conversationHistoryService;
 
     private String apiKey;
     private boolean isEnabled = false;
@@ -227,23 +228,46 @@ public class OpenAiService {
             throw new RateLimitException("이번 달 AI 사용 한도가 모두 소진되었습니다. 다음 달에 다시 시도해주세요.");
         }
 
-        // 10. OpenAI API 호출
+        // 10. 대화 히스토리 컨텍스트 빌드
+        String conversationContext = "";
+        try {
+            conversationContext = conversationHistoryService.buildContext(userId);
+            if (!conversationContext.isEmpty()) {
+                log.debug("대화 컨텍스트 로드 - 사용자: {}, 컨텍스트 길이: {}자", username, conversationContext.length());
+            }
+        } catch (Exception e) {
+            log.warn("대화 컨텍스트 로드 실패 - 무시하고 계속 진행", e);
+        }
+
+        // 11. OpenAI API 호출
         try {
             log.info("OpenAI 요청 시작 - 사용자: {}, 메시지 길이: {} 문자", username, userMessage.length());
+
+            // 컨텍스트가 있으면 메시지에 포함
+            String fullUserMessage = conversationContext.isEmpty()
+                    ? userMessage
+                    : conversationContext + "\n\n[현재 질문]\n" + userMessage;
 
             ChatClient chatClient = ChatClient.create(chatModel);
             String response = chatClient.prompt()
                     .system(systemPrompt)
-                    .user(userMessage)
+                    .user(fullUserMessage)
                     .call()
                     .content();
 
             log.info("OpenAI 응답 성공 - 사용자: {}, 응답 길이: {} 문자", username, response.length());
 
-            // 11. 캐시에 저장
+            // 12. 대화 히스토리 저장
+            try {
+                conversationHistoryService.saveConversation(userId, userMessage, response);
+            } catch (Exception e) {
+                log.warn("대화 히스토리 저장 실패 - 무시하고 계속 진행", e);
+            }
+
+            // 13. 캐시에 저장
             responseCache.put(cacheKey, new CachedResponse(response, LocalDateTime.now()));
 
-            // 12. DB 로깅
+            // 14. DB 로깅
             logUsage(interactionId, userId, username, guildId, userMessage, response, true, null);
 
             return response;
