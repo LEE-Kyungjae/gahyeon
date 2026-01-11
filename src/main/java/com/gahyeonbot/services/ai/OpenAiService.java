@@ -3,6 +3,7 @@ package com.gahyeonbot.services.ai;
 import com.gahyeonbot.config.AppCredentialsConfig;
 import com.gahyeonbot.entity.OpenAiUsage;
 import com.gahyeonbot.repository.OpenAiUsageRepository;
+import com.gahyeonbot.services.weather.WeatherService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,7 @@ public class OpenAiService {
     private final OpenAiUsageRepository usageRepository;
     private final AppCredentialsConfig appCredentialsConfig;
     private final ConversationHistoryService conversationHistoryService;
+    private final WeatherService weatherService;
 
     private String apiKey;
     private boolean isEnabled = false;
@@ -239,14 +241,28 @@ public class OpenAiService {
             log.warn("대화 컨텍스트 로드 실패 - 무시하고 계속 진행", e);
         }
 
+        // 10-1. 날씨 컨텍스트 빌드
+        String weatherContext = "";
+        try {
+            weatherContext = weatherService.getWeatherContext();
+        } catch (Exception e) {
+            log.warn("날씨 컨텍스트 로드 실패 - 무시하고 계속 진행", e);
+        }
+
         // 11. OpenAI API 호출
         try {
             log.info("OpenAI 요청 시작 - 사용자: {}, 메시지 길이: {} 문자", username, userMessage.length());
 
-            // 컨텍스트가 있으면 메시지에 포함
-            String fullUserMessage = conversationContext.isEmpty()
-                    ? userMessage
-                    : conversationContext + "\n\n[현재 질문]\n" + userMessage;
+            // 컨텍스트 조합: 날씨 + 대화 히스토리 + 현재 질문
+            StringBuilder contextBuilder = new StringBuilder();
+            if (!weatherContext.isEmpty()) {
+                contextBuilder.append(weatherContext).append("\n\n");
+            }
+            if (!conversationContext.isEmpty()) {
+                contextBuilder.append(conversationContext).append("\n\n");
+            }
+            contextBuilder.append("[현재 질문]\n").append(userMessage);
+            String fullUserMessage = contextBuilder.toString();
 
             ChatClient chatClient = ChatClient.create(chatModel);
             String response = chatClient.prompt()
