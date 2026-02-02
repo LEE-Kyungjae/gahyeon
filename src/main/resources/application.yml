@@ -53,3 +53,4 @@ weather:
     enabled: ${WEATHER_RAG_ENABLED:true}
     embedding-model: ${WEATHER_RAG_EMBEDDING_MODEL:text-embedding-3-small}
     top-k: ${WEATHER_RAG_TOP_K:4}
+    min-similarity: ${WEATHER_RAG_MIN_SIMILARITY:0.35}

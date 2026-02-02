@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * pgvector를 사용한 날씨 RAG 인덱싱/검색 서비스.
@@ -48,6 +49,9 @@ public class WeatherRagService {
 
     @Value("${weather.rag.top-k:4}")
     private int topK;
+
+    @Value("${weather.rag.min-similarity:0.35}")
+    private double minSimilarity;
 
     private volatile Boolean pgVectorReady;
 
@@ -113,6 +117,7 @@ public class WeatherRagService {
             return "";
         }
 
+        Optional<City> mentionedCity = extractMentionedCity(userQuestion);
         List<List<Double>> queryEmbedding = embedTexts(List.of(userQuestion));
         if (queryEmbedding.isEmpty()) {
             return "";
@@ -120,27 +125,9 @@ public class WeatherRagService {
 
         String vectorLiteral = toVectorLiteral(queryEmbedding.get(0));
 
-        List<RetrievedChunk> chunks = jdbcTemplate.query(
-                """
-                SELECT city_name, country, source_type, source_date, fetched_at, chunk_text,
-                       (1 - (embedding <=> CAST(? AS vector))) AS similarity
-                FROM weather_rag_chunks
-                ORDER BY embedding <=> CAST(? AS vector)
-                LIMIT ?
-                """,
-                (rs, rowNum) -> new RetrievedChunk(
-                        rs.getString("city_name"),
-                        rs.getString("country"),
-                        rs.getString("source_type"),
-                        rs.getDate("source_date").toLocalDate(),
-                        rs.getTimestamp("fetched_at").toLocalDateTime(),
-                        rs.getString("chunk_text"),
-                        rs.getDouble("similarity")
-                ),
-                vectorLiteral,
-                vectorLiteral,
-                topK
-        );
+        List<RetrievedChunk> chunks = mentionedCity
+                .map(city -> searchByCity(vectorLiteral, city.name()))
+                .orElseGet(() -> searchWithoutCity(vectorLiteral));
 
         if (chunks.isEmpty()) {
             return "";
@@ -161,6 +148,60 @@ public class WeatherRagService {
                     .append("\n");
         }
         return context.toString().trim();
+    }
+
+    private List<RetrievedChunk> searchByCity(String vectorLiteral, String cityCode) {
+        return jdbcTemplate.query(
+                """
+                SELECT city_name, country, source_type, source_date, fetched_at, chunk_text, similarity
+                FROM (
+                    SELECT city_name, country, source_type, source_date, fetched_at, chunk_text,
+                           (1 - (embedding <=> CAST(? AS vector))) AS similarity
+                    FROM weather_rag_chunks
+                    WHERE city = ?
+                ) ranked
+                WHERE similarity >= ?
+                ORDER BY similarity DESC, fetched_at DESC
+                LIMIT ?
+                """,
+                this::mapChunk,
+                vectorLiteral,
+                cityCode,
+                minSimilarity,
+                topK
+        );
+    }
+
+    private List<RetrievedChunk> searchWithoutCity(String vectorLiteral) {
+        return jdbcTemplate.query(
+                """
+                SELECT city_name, country, source_type, source_date, fetched_at, chunk_text, similarity
+                FROM (
+                    SELECT city_name, country, source_type, source_date, fetched_at, chunk_text,
+                           (1 - (embedding <=> CAST(? AS vector))) AS similarity
+                    FROM weather_rag_chunks
+                ) ranked
+                WHERE similarity >= ?
+                ORDER BY similarity DESC, fetched_at DESC
+                LIMIT ?
+                """,
+                this::mapChunk,
+                vectorLiteral,
+                minSimilarity,
+                topK
+        );
+    }
+
+    private RetrievedChunk mapChunk(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
+        return new RetrievedChunk(
+                rs.getString("city_name"),
+                rs.getString("country"),
+                rs.getString("source_type"),
+                rs.getDate("source_date").toLocalDate(),
+                rs.getTimestamp("fetched_at").toLocalDateTime(),
+                rs.getString("chunk_text"),
+                rs.getDouble("similarity")
+        );
     }
 
     @Transactional
@@ -336,6 +377,23 @@ public class WeatherRagService {
         }
         sb.append(']');
         return sb.toString();
+    }
+
+    private Optional<City> extractMentionedCity(String question) {
+        String normalized = normalize(question);
+        for (City city : City.values()) {
+            String korean = normalize(city.getKoreanName());
+            String english = normalize(city.name());
+            if (normalized.contains(korean) || normalized.contains(english)) {
+                return Optional.of(city);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private String normalize(String value) {
+        return value.toLowerCase()
+                .replaceAll("[\\s_\\-]", "");
     }
 
     private record RetrievedChunk(

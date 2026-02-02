@@ -106,13 +106,9 @@ public class Gahyeona extends AbstractCommand {
                 response = response.substring(0, 1997) + "...";
             }
 
-            String embedMessage = String.format("**질문:** %s\n\n**답변:**\n%s",
-                    question.length() > 100 ? question.substring(0, 97) + "..." : question,
-                    response);
-
             // 동기로 응답 전송하여 성공 확인
             event.getHook().editOriginalEmbeds(
-                    EmbedUtil.nomal(embedMessage).build()
+                    EmbedUtil.nomal(response).build()
             ).complete();
 
             log.info("OpenAI 응답 전송 완료 - 사용자: {}", event.getUser().getName());
