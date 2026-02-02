@@ -47,3 +47,9 @@ management:
     web:
       exposure:
         include: health,info,metrics
+
+weather:
+  rag:
+    enabled: ${WEATHER_RAG_ENABLED:true}
+    embedding-model: ${WEATHER_RAG_EMBEDDING_MODEL:text-embedding-3-small}
+    top-k: ${WEATHER_RAG_TOP_K:4}

@@ -3,6 +3,7 @@ package com.gahyeonbot.services.ai;
 import com.gahyeonbot.config.AppCredentialsConfig;
 import com.gahyeonbot.entity.OpenAiUsage;
 import com.gahyeonbot.repository.OpenAiUsageRepository;
+import com.gahyeonbot.services.weather.WeatherRagService;
 import com.gahyeonbot.services.weather.WeatherService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +51,7 @@ public class OpenAiService {
     private final AppCredentialsConfig appCredentialsConfig;
     private final ConversationHistoryService conversationHistoryService;
     private final WeatherService weatherService;
+    private final WeatherRagService weatherRagService;
 
     private String apiKey;
     private boolean isEnabled = false;
@@ -244,7 +246,10 @@ public class OpenAiService {
         // 10-1. 날씨 컨텍스트 빌드
         String weatherContext = "";
         try {
-            weatherContext = weatherService.getWeatherContext();
+            weatherContext = weatherRagService.searchWeatherContext(userMessage);
+            if (weatherContext.isEmpty()) {
+                weatherContext = weatherService.getWeatherContext();
+            }
         } catch (Exception e) {
             log.warn("날씨 컨텍스트 로드 실패 - 무시하고 계속 진행", e);
         }
