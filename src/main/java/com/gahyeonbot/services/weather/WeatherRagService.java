@@ -25,6 +25,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Locale;
+import java.util.StringJoiner;
 
 /**
  * pgvector를 사용한 날씨 RAG 인덱싱/검색 서비스.
@@ -52,6 +54,15 @@ public class WeatherRagService {
 
     @Value("${weather.rag.min-similarity:0.35}")
     private double minSimilarity;
+
+    @Value("${weather.rag.min-text-score:0.01}")
+    private double minTextScore;
+
+    @Value("${weather.rag.vector-weight:0.75}")
+    private double vectorWeight;
+
+    @Value("${weather.rag.text-weight:0.25}")
+    private double textWeight;
 
     private volatile Boolean pgVectorReady;
 
@@ -118,16 +129,44 @@ public class WeatherRagService {
         }
 
         Optional<City> mentionedCity = extractMentionedCity(userQuestion);
+        DateFilter dateFilter = extractDateFilter(userQuestion);
+        SourceTypeFilter sourceTypeFilter = extractSourceTypeFilter(userQuestion);
+
         List<List<Double>> queryEmbedding = embedTexts(List.of(userQuestion));
         if (queryEmbedding.isEmpty()) {
             return "";
         }
 
         String vectorLiteral = toVectorLiteral(queryEmbedding.get(0));
+        String keywordQuery = toKeywordQuery(userQuestion);
 
-        List<RetrievedChunk> chunks = mentionedCity
-                .map(city -> searchByCity(vectorLiteral, city.name()))
-                .orElseGet(() -> searchWithoutCity(vectorLiteral));
+        List<RetrievedChunk> chunks = searchHybrid(
+                vectorLiteral,
+                keywordQuery,
+                mentionedCity.map(Enum::name).orElse(null),
+                sourceTypeFilter,
+                dateFilter
+        );
+
+        if (chunks.isEmpty() && mentionedCity.isPresent()) {
+            chunks = searchHybrid(
+                    vectorLiteral,
+                    keywordQuery,
+                    mentionedCity.get().name(),
+                    SourceTypeFilter.ANY,
+                    DateFilter.none()
+            );
+        }
+
+        if (chunks.isEmpty()) {
+            chunks = searchHybrid(
+                    vectorLiteral,
+                    keywordQuery,
+                    null,
+                    SourceTypeFilter.ANY,
+                    DateFilter.none()
+            );
+        }
 
         if (chunks.isEmpty()) {
             return "";
@@ -150,46 +189,69 @@ public class WeatherRagService {
         return context.toString().trim();
     }
 
-    private List<RetrievedChunk> searchByCity(String vectorLiteral, String cityCode) {
-        return jdbcTemplate.query(
-                """
-                SELECT city_name, country, source_type, source_date, fetched_at, chunk_text, similarity
+    private List<RetrievedChunk> searchHybrid(
+            String vectorLiteral,
+            String keywordQuery,
+            String cityCode,
+            SourceTypeFilter sourceTypeFilter,
+            DateFilter dateFilter
+    ) {
+        StringBuilder whereClause = new StringBuilder();
+        List<Object> args = new ArrayList<>();
+        args.add(vectorLiteral);
+        args.add(keywordQuery);
+
+        if (cityCode != null) {
+            appendWhere(whereClause, "city = ?");
+            args.add(cityCode);
+        }
+
+        sourceTypeFilter.toValue().ifPresent(sourceType -> {
+            appendWhere(whereClause, "source_type = ?");
+            args.add(sourceType);
+        });
+
+        if (dateFilter.startDate != null) {
+            appendWhere(whereClause, "source_date >= ?");
+            args.add(dateFilter.startDate);
+        }
+        if (dateFilter.endDate != null) {
+            appendWhere(whereClause, "source_date <= ?");
+            args.add(dateFilter.endDate);
+        }
+
+        String sql = """
+                SELECT city_name, country, source_type, source_date, fetched_at, chunk_text,
+                       vector_score, text_score,
+                       (? * vector_score + ? * text_score) AS hybrid_score
                 FROM (
                     SELECT city_name, country, source_type, source_date, fetched_at, chunk_text,
-                           (1 - (embedding <=> CAST(? AS vector))) AS similarity
+                           (1 - (embedding <=> CAST(? AS vector))) AS vector_score,
+                           ts_rank_cd(to_tsvector('simple', chunk_text), websearch_to_tsquery('simple', ?)) AS text_score
                     FROM weather_rag_chunks
-                    WHERE city = ?
+                """ + (whereClause.isEmpty() ? "" : " WHERE " + whereClause) + """
                 ) ranked
-                WHERE similarity >= ?
-                ORDER BY similarity DESC, fetched_at DESC
+                WHERE vector_score >= ? OR text_score >= ?
+                ORDER BY hybrid_score DESC, fetched_at DESC
                 LIMIT ?
-                """,
-                this::mapChunk,
-                vectorLiteral,
-                cityCode,
-                minSimilarity,
-                topK
-        );
+                """;
+
+        List<Object> finalArgs = new ArrayList<>();
+        finalArgs.add(vectorWeight);
+        finalArgs.add(textWeight);
+        finalArgs.addAll(args);
+        finalArgs.add(minSimilarity);
+        finalArgs.add(minTextScore);
+        finalArgs.add(topK);
+
+        return jdbcTemplate.query(sql, this::mapChunk, finalArgs.toArray());
     }
 
-    private List<RetrievedChunk> searchWithoutCity(String vectorLiteral) {
-        return jdbcTemplate.query(
-                """
-                SELECT city_name, country, source_type, source_date, fetched_at, chunk_text, similarity
-                FROM (
-                    SELECT city_name, country, source_type, source_date, fetched_at, chunk_text,
-                           (1 - (embedding <=> CAST(? AS vector))) AS similarity
-                    FROM weather_rag_chunks
-                ) ranked
-                WHERE similarity >= ?
-                ORDER BY similarity DESC, fetched_at DESC
-                LIMIT ?
-                """,
-                this::mapChunk,
-                vectorLiteral,
-                minSimilarity,
-                topK
-        );
+    private void appendWhere(StringBuilder whereClause, String condition) {
+        if (!whereClause.isEmpty()) {
+            whereClause.append(" AND ");
+        }
+        whereClause.append(condition);
     }
 
     private RetrievedChunk mapChunk(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
@@ -200,7 +262,7 @@ public class WeatherRagService {
                 rs.getDate("source_date").toLocalDate(),
                 rs.getTimestamp("fetched_at").toLocalDateTime(),
                 rs.getString("chunk_text"),
-                rs.getDouble("similarity")
+                rs.getDouble("hybrid_score")
         );
     }
 
@@ -394,6 +456,79 @@ public class WeatherRagService {
     private String normalize(String value) {
         return value.toLowerCase()
                 .replaceAll("[\\s_\\-]", "");
+    }
+
+    private DateFilter extractDateFilter(String question) {
+        String normalized = normalize(question);
+        LocalDate today = LocalDate.now();
+        if (normalized.contains("오늘") || normalized.contains("today")) {
+            return new DateFilter(today, today);
+        }
+        if (normalized.contains("내일") || normalized.contains("tomorrow")) {
+            LocalDate tomorrow = today.plusDays(1);
+            return new DateFilter(tomorrow, tomorrow);
+        }
+        if (normalized.contains("모레")) {
+            LocalDate dayAfter = today.plusDays(2);
+            return new DateFilter(dayAfter, dayAfter);
+        }
+        if (normalized.contains("이번주") || normalized.contains("주간") || normalized.contains("week")) {
+            return new DateFilter(today, today.plusDays(6));
+        }
+        return DateFilter.none();
+    }
+
+    private SourceTypeFilter extractSourceTypeFilter(String question) {
+        String normalized = normalize(question);
+        if (normalized.contains("예보") || normalized.contains("forecast")
+                || normalized.contains("내일") || normalized.contains("모레")
+                || normalized.contains("이번주") || normalized.contains("주간")) {
+            return SourceTypeFilter.FORECAST;
+        }
+        if (normalized.contains("지금") || normalized.contains("현재") || normalized.contains("today") || normalized.contains("오늘")) {
+            return SourceTypeFilter.CURRENT;
+        }
+        return SourceTypeFilter.ANY;
+    }
+
+    private String toKeywordQuery(String question) {
+        String cleaned = question
+                .replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}\\s]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+        if (cleaned.isEmpty()) {
+            return "weather";
+        }
+
+        String[] parts = cleaned.split(" ");
+        StringJoiner joiner = new StringJoiner(" ");
+        for (String part : parts) {
+            if (part.length() >= 2) {
+                joiner.add(part.toLowerCase(Locale.ROOT));
+            }
+        }
+        String result = joiner.toString().trim();
+        return result.isEmpty() ? "weather" : result;
+    }
+
+    private enum SourceTypeFilter {
+        CURRENT,
+        FORECAST,
+        ANY;
+
+        Optional<String> toValue() {
+            return switch (this) {
+                case CURRENT -> Optional.of(WeatherRagService.SOURCE_TYPE_CURRENT);
+                case FORECAST -> Optional.of(WeatherRagService.SOURCE_TYPE_FORECAST);
+                case ANY -> Optional.empty();
+            };
+        }
+    }
+
+    private record DateFilter(LocalDate startDate, LocalDate endDate) {
+        static DateFilter none() {
+            return new DateFilter(null, null);
+        }
     }
 
     private record RetrievedChunk(

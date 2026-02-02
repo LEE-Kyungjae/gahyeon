@@ -54,3 +54,6 @@ weather:
     embedding-model: ${WEATHER_RAG_EMBEDDING_MODEL:text-embedding-3-small}
     top-k: ${WEATHER_RAG_TOP_K:4}
     min-similarity: ${WEATHER_RAG_MIN_SIMILARITY:0.35}
+    min-text-score: ${WEATHER_RAG_MIN_TEXT_SCORE:0.01}
+    vector-weight: ${WEATHER_RAG_VECTOR_WEIGHT:0.75}
+    text-weight: ${WEATHER_RAG_TEXT_WEIGHT:0.25}
