@@ -7,8 +7,10 @@ import com.gahyeonbot.repository.WeatherRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -50,9 +53,22 @@ public class WeatherService {
     public void initialize() {
         this.restTemplate = new RestTemplate();
         log.info("날씨 서비스 초기화 완료 - 대상 도시: {}개", City.values().length);
-        // 시작 시 모든 도시 날씨 및 예보 로드
-        fetchAllCitiesWeather();
-        fetchAllCitiesForecasts();
+    }
+
+    /**
+     * 앱 부팅 완료 후 초기 날씨/예보를 비동기로 로드합니다.
+     * 부팅 중 외부 API 호출로 헬스체크가 지연되는 문제를 방지합니다.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void warmupWeatherAsync() {
+        CompletableFuture.runAsync(() -> {
+            try {
+                fetchAllCitiesWeather();
+                fetchAllCitiesForecasts();
+            } catch (Exception e) {
+                log.warn("초기 날씨 워밍업 실패: {}", e.getMessage());
+            }
+        });
     }
 
     /**
