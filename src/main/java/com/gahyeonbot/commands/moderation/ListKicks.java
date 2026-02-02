@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -67,6 +68,7 @@ public class ListKicks extends AbstractCommand implements ICommand {
         }
 
         List<Reservation> reservations = schedulerManager.getReservations(member.getIdLong());
+        reservations.sort(Comparator.comparing(Reservation::getExecuteAt));
 
         if (reservations.isEmpty()) {
             ResponseUtil.replyError(event, "예약된 작업이 없습니다.");

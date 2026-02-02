@@ -11,7 +11,6 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.DiscordLocale;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.springframework.stereotype.Component;
@@ -79,12 +78,13 @@ public class KickAllUsers extends AbstractCommand implements ICommand {
         int totalMinutes = resolveTime(event);
 
         if (totalMinutes <= 0) {
-            ResponseUtil.replyError(event, "잘못된 시간 입력입니다. HHMM/HMM/MM 형식으로 입력해주세요.");
+            ResponseUtil.replyError(event, "시간을 올바르게 지정해주세요. (preset 또는 time)");
             return;
         }
 
         VoiceChannel voiceChannel = (VoiceChannel) member.getVoiceState().getChannel();
         List<Member> members = voiceChannel.getMembers();
+        long reservationId = schedulerManager.generateId();
 
         // 예약 생성
         var task = schedulerManager.scheduleTask(() -> {
@@ -94,15 +94,17 @@ public class KickAllUsers extends AbstractCommand implements ICommand {
                         failure -> ResponseUtil.sendMessageToChannel(event, "오류 발생: " + failure.getMessage())
                 );
             }
+            schedulerManager.completeReservation(reservationId);
         }, totalMinutes, TimeUnit.MINUTES);
 
-        long reservationId = schedulerManager.addReservation(new Reservation(
-                schedulerManager.generateId(),
+        schedulerManager.addReservation(new Reservation(
+                reservationId,
                 member.getIdLong(),
                 member.getEffectiveName(),
                 member.getGuild().getIdLong(),
                 task,
-                "함께 나가기 예약"
+                "함께 취침 예약",
+                totalMinutes
         ));
 
         var embed = EmbedUtil.createReservationEmbed(reservationId, "보이스 채널의 모든 사용자", totalMinutes);
@@ -117,45 +119,22 @@ public class KickAllUsers extends AbstractCommand implements ICommand {
             return Integer.parseInt(presetOption.getAsString());
         }
         if (timeOption != null) {
-            return parseCustomTime(timeOption.getAsString());
+            return timeOption.getAsInt();
         }
         return -1;
-    }
-
-    private int parseCustomTime(String timeInput) {
-        try {
-            int time = Integer.parseInt(timeInput);
-
-            if (time <= 0 || time > 2400) return -1;
-
-            if (timeInput.length() == 4) {
-                int hour = time / 100;
-                int minute = time % 100;
-                return (hour > 24 || minute >= 60) ? -1 : hour * 60 + minute;
-            }
-
-            if (timeInput.length() == 3) {
-                int hour = time / 100;
-                int minute = time % 100;
-                return (hour > 24 || minute >= 60) ? -1 : hour * 60 + minute;
-            }
-
-            if (timeInput.length() <= 2) {
-                return time >= 60 ? time : -1;
-            }
-
-            return -1;
-        } catch (NumberFormatException e) {
-            return -1;
-        }
     }
 
     @Override
     public List<OptionData> getOptions() {
         List<OptionData> options = new ArrayList<>();
-        options.add(new OptionData(OptionType.INTEGER, "time", "추방까지 남은 시간(분)", true)
+        options.add(new OptionData(OptionType.STRING, "preset", "빠른 시간 선택", false)
+                .addChoice("30분", "30")
+                .addChoice("1시간", "60")
+                .addChoice("90분", "90")
+                .addChoice("2시간", "120"));
+        options.add(new OptionData(OptionType.INTEGER, "time", "직접 입력(분)", false)
                 .setMinValue(1)
-                .setMaxValue(60));
+                .setMaxValue(240));
         return options;
     }
 }

@@ -3,6 +3,8 @@ package com.gahyeonbot.models;
 import lombok.Getter;
 import lombok.AllArgsConstructor;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.concurrent.ScheduledFuture;
 
 /**
@@ -21,4 +23,24 @@ public class Reservation {
     private final long guildId;
     private final ScheduledFuture<?> task;
     private final String description;
+    private final LocalDateTime createdAt;
+    private final LocalDateTime executeAt;
+    private final int delayMinutes;
+
+    public Reservation(
+            long id,
+            long memberId,
+            String memberName,
+            long guildId,
+            ScheduledFuture<?> task,
+            String description,
+            int delayMinutes
+    ) {
+        this(id, memberId, memberName, guildId, task, description,
+                LocalDateTime.now(), LocalDateTime.now().plusMinutes(delayMinutes), delayMinutes);
+    }
+
+    public long getRemainingMinutes() {
+        return Math.max(0, Duration.between(LocalDateTime.now(), executeAt).toMinutes());
+    }
 }

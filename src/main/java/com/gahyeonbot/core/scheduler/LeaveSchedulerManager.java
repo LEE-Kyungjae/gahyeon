@@ -20,6 +20,12 @@ public interface LeaveSchedulerManager {
     boolean cancelReservation(long reservationId);
 
     /**
+     * 예약 완료 처리 (실행 후 내부 목록에서 제거)
+     * @param reservationId 예약 ID
+     */
+    void completeReservation(long reservationId);
+
+    /**
      * 예약 조회
      * @param memberId 유저 ID
      * @return 예약 목록

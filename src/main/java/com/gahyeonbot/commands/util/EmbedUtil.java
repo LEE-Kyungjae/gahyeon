@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.DiscordLocale;
 
 import java.awt.*;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.StringJoiner;
 
@@ -20,6 +21,7 @@ import java.util.StringJoiner;
  * @version 1.0
  */
 public class EmbedUtil {
+    private static final DateTimeFormatter RESERVATION_TIME_FORMATTER = DateTimeFormatter.ofPattern("MM-dd HH:mm");
 
     /**
      * 현재 재생 중인 음악에 대한 임베드를 생성합니다.
@@ -271,10 +273,12 @@ public class EmbedUtil {
      * @return 예약 성공 임베드
      */
     public static EmbedBuilder createReservationEmbed(long reservationId, String nickname, int minutes) {
+        String executeAt = java.time.LocalDateTime.now().plusMinutes(minutes).format(RESERVATION_TIME_FORMATTER);
         return new EmbedBuilder()
                 .setTitle("📅 예약 완료")
                 .setDescription("**" + nickname + "**님의 퇴장이 **" + minutes + "분** 후로 예약되었습니다.")
                 .addField("예약 ID", String.valueOf(reservationId), true)
+                .addField("실행 예정", executeAt, true)
                 .setColor(Color.BLUE);
     }
     
@@ -290,7 +294,14 @@ public class EmbedUtil {
                 .setColor(Color.BLUE);
 
         for (Reservation reservation : reservations) {
-            embed.addField("ID: " + reservation.getId(), reservation.getDescription(), false);
+            String value = String.format(
+                    "%s\n대상: %s\n남은 시간: %d분\n실행 예정: %s",
+                    reservation.getDescription(),
+                    reservation.getMemberName(),
+                    reservation.getRemainingMinutes(),
+                    reservation.getExecuteAt().format(RESERVATION_TIME_FORMATTER)
+            );
+            embed.addField("ID: " + reservation.getId(), value, false);
         }
 
         return embed;

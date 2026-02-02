@@ -7,9 +7,10 @@ import com.gahyeonbot.commands.util.ICommand;
 import com.gahyeonbot.commands.util.ResponseUtil;
 import com.gahyeonbot.core.scheduler.LeaveSchedulerManager;
 import com.gahyeonbot.models.Reservation;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.DiscordLocale;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.springframework.stereotype.Component;
@@ -63,43 +64,75 @@ public class KickUser extends AbstractCommand implements ICommand {
     public void execute(SlashCommandInteractionEvent event) {
         logger.info("명령어 실행 시작: {}", getName());
 
-        var member = event.getMember();
+        var requester = event.getMember();
 
-        if (member == null || member.getVoiceState() == null || member.getVoiceState().getChannel() == null) {
+        if (requester == null || requester.getVoiceState() == null || requester.getVoiceState().getChannel() == null) {
             ResponseUtil.replyError(event, "오류: 보이스 채널에 접속 중이 아닙니다.");
+            return;
+        }
+
+        Member target = resolveTargetMember(event, requester);
+        if (target == null) {
+            return;
+        }
+
+        if (!requester.getId().equals(target.getId()) && !requester.hasPermission(Permission.KICK_MEMBERS)) {
+            ResponseUtil.replyError(event, "다른 사용자의 취침 예약은 관리자 권한이 필요해요.");
+            return;
+        }
+
+        if (target.getVoiceState() == null || target.getVoiceState().getChannel() == null
+                || !target.getVoiceState().getChannel().equals(requester.getVoiceState().getChannel())) {
+            ResponseUtil.replyError(event, "대상 사용자가 같은 보이스 채널에 접속해 있지 않습니다.");
             return;
         }
 
         // 시간 처리
         int minutes = resolveTime(event);
         if (minutes <= 0) {
-            ResponseUtil.replyError(event, "시간을 올바르게 지정해주세요.");
+            ResponseUtil.replyError(event, "시간을 올바르게 지정해주세요. (preset 또는 time)");
             return;
         }
 
-        var nickname = member.getEffectiveName();
+        long reservationId = schedulerManager.generateId();
+        var nickname = target.getEffectiveName();
 
         // 예약 생성
         var task = schedulerManager.scheduleTask(() -> {
-            member.getGuild().kickVoiceMember(member).queue(
+            target.getGuild().kickVoiceMember(target).queue(
                     success -> ResponseUtil.sendMessageToChannel(event, nickname + "님을 보이스 채널에서 내보냈습니다."),
                     failure -> ResponseUtil.sendMessageToChannel(event, "오류 발생: " + failure.getMessage())
             );
+            schedulerManager.completeReservation(reservationId);
         }, minutes, TimeUnit.MINUTES);
 
         // 예약 추가
-        long reservationId = schedulerManager.addReservation(new Reservation(
-                schedulerManager.generateId(),
-                member.getIdLong(),
+        schedulerManager.addReservation(new Reservation(
+                reservationId,
+                requester.getIdLong(),
                 nickname,
-                member.getGuild().getIdLong(),
+                requester.getGuild().getIdLong(),
                 task,
-                "나가기 예약"
+                "개인 취침 예약",
+                minutes
         ));
 
         // 응답 전송
         var embed = EmbedUtil.createReservationEmbed(reservationId, nickname, minutes);
         ResponseUtil.replyEmbed(event, embed);
+    }
+
+    private Member resolveTargetMember(SlashCommandInteractionEvent event, Member requester) {
+        var userOption = event.getOption("user");
+        if (userOption == null) {
+            return requester;
+        }
+        var target = userOption.getAsMember();
+        if (target == null) {
+            ResponseUtil.replyError(event, "대상 사용자를 찾을 수 없습니다.");
+            return null;
+        }
+        return target;
     }
 
     private int resolveTime(SlashCommandInteractionEvent event) {
@@ -118,10 +151,15 @@ public class KickUser extends AbstractCommand implements ICommand {
     @Override
     public List<OptionData> getOptions() {
         List<OptionData> options = new ArrayList<>();
-        options.add(new OptionData(OptionType.USER, "user", "추방할 사용자", true));
-        options.add(new OptionData(OptionType.INTEGER, "time", "추방까지 남은 시간(분)", true)
+        options.add(new OptionData(OptionType.USER, "user", "취침 예약 대상 (미입력 시 본인)", false));
+        options.add(new OptionData(OptionType.STRING, "preset", "빠른 시간 선택", false)
+                .addChoice("30분", "30")
+                .addChoice("1시간", "60")
+                .addChoice("90분", "90")
+                .addChoice("2시간", "120"));
+        options.add(new OptionData(OptionType.INTEGER, "time", "직접 입력(분)", false)
                 .setMinValue(1)
-                .setMaxValue(60));
+                .setMaxValue(240));
         return options;
     }
 }

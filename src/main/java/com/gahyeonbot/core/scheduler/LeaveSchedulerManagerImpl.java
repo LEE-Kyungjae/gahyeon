@@ -49,6 +49,18 @@ public class LeaveSchedulerManagerImpl implements LeaveSchedulerManager {
     }
 
     @Override
+    public void completeReservation(long reservationId) {
+        for (var memberReservations : reservations.values()) {
+            Reservation removed = memberReservations.remove(reservationId);
+            if (removed != null) {
+                logger.info("예약 완료 처리: {}", reservationId);
+                return;
+            }
+        }
+        logger.debug("완료 처리 대상 예약 없음: {}", reservationId);
+    }
+
+    @Override
     public List<Reservation> getReservations(long memberId) {
         var memberReservations = reservations.get(memberId);
         return memberReservations != null ? new ArrayList<>(memberReservations.values()) : Collections.emptyList();
@@ -57,10 +69,7 @@ public class LeaveSchedulerManagerImpl implements LeaveSchedulerManager {
     @Override
     public ScheduledFuture<?> scheduleTask(Runnable task, long delay, TimeUnit unit) {
         logger.info("예약된 작업: {}ms 후 실행", unit.toMillis(delay));
-        return scheduler.schedule(() -> {
-            task.run();
-            cleanUpCompletedReservations(task);
-        }, delay, unit);
+        return scheduler.schedule(task, delay, unit);
     }
 
     @Override
@@ -68,18 +77,6 @@ public class LeaveSchedulerManagerImpl implements LeaveSchedulerManager {
         lock.lock();
         try {
             return nextId++;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    private void cleanUpCompletedReservations(Runnable task) {
-        lock.lock();
-        try {
-            reservations.values().forEach(memberReservations ->
-                    memberReservations.entrySet().removeIf(entry -> entry.getValue().getTask().equals(task))
-            );
-            logger.info("완료된 예약 정리: {}", task);
         } finally {
             lock.unlock();
         }
