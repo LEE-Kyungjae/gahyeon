@@ -19,6 +19,10 @@ on:
       - develop
   workflow_dispatch:
     inputs:
+      run_mode:
+        description: "Run mode (test-only or full pipeline)"
+        required: false
+        default: "test-only"
       deploy_target:
         description: "Deployment target environment (blue, green, auto)"
         required: false
@@ -53,7 +57,7 @@ jobs:
   tag-version:
     name: Generate Version Tag
     needs: test
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || inputs.run_mode == 'full')
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.new_tag }}
@@ -76,7 +80,7 @@ jobs:
     needs:
       - test
       - tag-version
-    if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && needs.tag-version.outputs.tag != ''
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || inputs.run_mode == 'full') && needs.tag-version.outputs.tag != ''
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.meta.outputs.image }}
@@ -116,7 +120,7 @@ jobs:
   deploy:
     name: Deploy (Blue/Green)
     needs: build-image
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || inputs.run_mode == 'full')
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -202,7 +206,7 @@ jobs:
     needs:
       - tag-version
       - deploy
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || inputs.run_mode == 'full')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
