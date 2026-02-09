@@ -33,7 +33,7 @@ set_active_upstream() {
   local tmp_file
   tmp_file="$(mktemp)"
   write_upstream_conf "${active_env}" > "${tmp_file}"
-  if ! mv "${tmp_file}" "${ACTIVE_UPSTREAM_CONF}"; then
+  if ! sudo mv "${tmp_file}" "${ACTIVE_UPSTREAM_CONF}"; then
     echo "ERROR: Failed to update Nginx upstream config at ${ACTIVE_UPSTREAM_CONF}" >&2
     rm -f "${tmp_file}" || true
     exit 1
