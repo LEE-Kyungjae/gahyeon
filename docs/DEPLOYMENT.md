@@ -160,6 +160,10 @@ git push origin main
 5. 🚀 운영 서버에 Blue/Green 배포
 6. 📝 GitHub Release 생성
 
+### Blue/Green 드레인 TTL
+트래픽 전환 후 기존 환경은 즉시 종료하지 않고 `DRAIN_TTL_SECONDS`(기본 3600초) 동안 드레인 상태로 유지됩니다.
+장애로 롤백되는 경우, 드레인 대기 중인 종료 예약은 즉시 취소됩니다.
+
 #### 수동 워크플로 실행
 GitHub 저장소의 **Actions** 탭에서:
 1. **CI/CD** 워크플로 선택
@@ -347,15 +351,18 @@ services:
     restart: unless-stopped
 ```
 
-### Nginx 설정 예시
+### Nginx 설정 예시 (Blue/Green 전환)
+
+**/etc/nginx/conf.d/gahyeonbot-upstream.conf** (배포 스크립트가 이 파일을 갱신):
+```nginx
+upstream gahyeonbot {
+    server 127.0.0.1:8080;
+}
+```
+배포 계정이 이 파일을 수정할 수 있어야 합니다. 필요하면 `ACTIVE_UPSTREAM_CONF`를 쓰기 가능한 경로로 바꾸고, Nginx에서 해당 파일을 include 하세요.
 
 **/etc/nginx/sites-available/gahyeonbot**:
 ```nginx
-upstream gahyeonbot {
-    server 127.0.0.1:8080 max_fails=3 fail_timeout=30s;
-    server 127.0.0.1:8081 max_fails=3 fail_timeout=30s backup;
-}
-
 server {
     listen 80;
     server_name bot.yourdomain.com;
@@ -385,24 +392,20 @@ sudo systemctl reload nginx
 ## 롤백 절차
 
 ### 자동 롤백
-Health Check 실패 시 자동으로 롤백됩니다:
-1. 새 컨테이너 중지
-2. 새 컨테이너 삭제
-3. 이전 컨테이너 유지 (계속 실행)
+전환 직후 헬스 체크가 실패하면 자동으로 롤백됩니다:
+1. 트래픽을 이전 환경으로 되돌림 (Nginx reload)
+2. 1시간 드레인 예약 취소
+3. 실패한 컨테이너 중지/삭제
 
 ### 수동 롤백
 배포 후 문제 발견 시:
 
 ```bash
-# 1. 현재 활성 환경 확인
-docker ps | grep gahyeonbot
+# 1. GitHub Actions Rollback 워크플로 실행 (권장)
+#  - target: blue, green, auto
 
-# 2. 이전 버전 이미지로 재배포
-./remote-deploy.sh auto ghcr.io/lee-kyungjae/gahyeonbot v1.2.2
-
-# 또는 직접 컨테이너 전환
-docker stop gahyeonbot-blue
-docker start gahyeonbot-green
+# 2. 서버에서 직접 롤백
+./remote-rollback.sh auto
 ```
 
 ---

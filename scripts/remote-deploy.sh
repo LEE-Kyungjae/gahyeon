@@ -32,6 +32,12 @@ GREEN_PORT="${GREEN_PORT:-8081}"
 CONTAINER_PORT="${CONTAINER_PORT:-8080}"
 HEALTH_PATH="${HEALTH_PATH:-/api/health}"
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-90}"
+DRAIN_TTL_SECONDS="${DRAIN_TTL_SECONDS:-3600}"
+DRAIN_PID_FILE="${DRAIN_PID_FILE:-/tmp/gahyeonbot-drain.pid}"
+DRAIN_TARGET_FILE="${DRAIN_TARGET_FILE:-/tmp/gahyeonbot-drain.target}"
+ACTIVE_UPSTREAM_CONF="${ACTIVE_UPSTREAM_CONF:-/etc/nginx/conf.d/gahyeonbot-upstream.conf}"
+NGINX_RELOAD_CMD="${NGINX_RELOAD_CMD:-sudo nginx -s reload}"
+POST_SWITCH_HEALTH_TIMEOUT="${POST_SWITCH_HEALTH_TIMEOUT:-120}"
 
 require_env() {
   local name="$1"
@@ -71,6 +77,90 @@ resolve_target() {
   fi
 
   echo "${target}"
+}
+
+write_upstream_conf() {
+  local active_env="$1"
+  local active_port
+  if [[ "${active_env}" == "blue" ]]; then
+    active_port="${BLUE_PORT}"
+  else
+    active_port="${GREEN_PORT}"
+  fi
+
+  cat <<EOF
+upstream gahyeonbot {
+    server 127.0.0.1:${active_port};
+}
+EOF
+}
+
+set_active_upstream() {
+  local active_env="$1"
+  local tmp_file
+  tmp_file="$(mktemp)"
+  write_upstream_conf "${active_env}" > "${tmp_file}"
+  if ! mv "${tmp_file}" "${ACTIVE_UPSTREAM_CONF}"; then
+    echo "ERROR: Failed to update Nginx upstream config at ${ACTIVE_UPSTREAM_CONF}" >&2
+    rm -f "${tmp_file}" || true
+    exit 1
+  fi
+  echo "Reloading Nginx (${NGINX_RELOAD_CMD})..."
+  if ! eval "${NGINX_RELOAD_CMD}"; then
+    echo "ERROR: Nginx reload failed." >&2
+    exit 1
+  fi
+}
+
+cancel_drain() {
+  if [[ -f "${DRAIN_PID_FILE}" ]]; then
+    local pid
+    pid="$(cat "${DRAIN_PID_FILE}" 2>/dev/null || true)"
+    if [[ -n "${pid}" ]]; then
+      echo "Cancelling scheduled drain (PID: ${pid})..."
+      kill "${pid}" >/dev/null 2>&1 || true
+    fi
+    rm -f "${DRAIN_PID_FILE}" "${DRAIN_TARGET_FILE}" || true
+  fi
+}
+
+schedule_drain() {
+  local container="$1"
+  cancel_drain
+
+  echo "Scheduling drain for ${container} in ${DRAIN_TTL_SECONDS}s..."
+  nohup bash -c "sleep ${DRAIN_TTL_SECONDS}; docker stop '${container}' >/dev/null 2>&1 || true; docker rm '${container}' >/dev/null 2>&1 || true" \
+    >/dev/null 2>&1 &
+  echo $! > "${DRAIN_PID_FILE}"
+  echo "${container}" > "${DRAIN_TARGET_FILE}"
+}
+
+post_switch_health_check() {
+  local target_port="$1"
+  local url="http://127.0.0.1:${target_port}${HEALTH_PATH}"
+  echo "Post-switch health check: ${url} (${POST_SWITCH_HEALTH_TIMEOUT}s)"
+
+  for second in $(seq 1 "${POST_SWITCH_HEALTH_TIMEOUT}"); do
+    local code
+    code="$(curl -fsS -o /dev/null -w "%{http_code}" "${url}" 2>/dev/null || echo "000")"
+    if [[ "${code}" == "200" ]]; then
+      echo "Post-switch health OK after ${second}s."
+      return 0
+    fi
+    sleep 1
+  done
+  echo "Post-switch health check failed after ${POST_SWITCH_HEALTH_TIMEOUT}s." >&2
+  return 1
+}
+
+rollback_to_previous() {
+  echo "Rolling back to ${PREVIOUS_ENV}..."
+  cancel_drain
+  set_active_upstream "${PREVIOUS_ENV}"
+
+  echo "Stopping failed target container (${TARGET_CONTAINER})..."
+  docker stop "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
+  docker rm "${TARGET_CONTAINER}" >/dev/null 2>&1 || true
 }
 
 TARGET="$(resolve_target "${TARGET_ENV}")"
@@ -203,15 +293,25 @@ for second in $(seq 1 "${HEALTH_TIMEOUT}"); do
   fi
 done
 
+# 트래픽 전환 (Blue/Green)
+echo "Switching active upstream to ${TARGET}..."
+set_active_upstream "${TARGET}"
+
+# 기존 환경은 1시간 드레인 대기
+schedule_drain "${PREVIOUS_CONTAINER}"
+
+# 전환 이후 헬스 체크 실패 시 자동 롤백
+if ! post_switch_health_check "${TARGET_PORT}"; then
+  echo "ERROR: Post-switch health check failed. Triggering rollback." >&2
+  rollback_to_previous
+  exit 1
+fi
+
 # 이전 버전 정보 수집 (삭제 전)
 PREVIOUS_VERSION=""
 if docker ps -a --filter "name=${PREVIOUS_CONTAINER}" --format '{{.Names}}' | grep -q "${PREVIOUS_CONTAINER}"; then
   PREVIOUS_VERSION=$(docker inspect "${PREVIOUS_CONTAINER}" --format='{{.Config.Image}}' 2>/dev/null | grep -oP '(?<=:)v[0-9]+\.[0-9]+\.[0-9]+' || echo "unknown")
 fi
-
-echo "Stopping previous environment container (${PREVIOUS_CONTAINER}) if running."
-docker stop "${PREVIOUS_CONTAINER}" >/dev/null 2>&1 || true
-docker rm "${PREVIOUS_CONTAINER}" >/dev/null 2>&1 || true
 
 echo "Pruning unused Docker images older than 7 days and dangling layers."
 docker image prune -af --filter "until=168h" >/dev/null 2>&1 || true
