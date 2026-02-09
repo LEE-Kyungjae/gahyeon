@@ -3,6 +3,7 @@ name: CI/CD
 # GitHub Flow Strategy:
 # - develop: Build and test only
 # - main: Build, test, version tag, build image, deploy to production
+# - release/*: Build and test only (no deploy)
 # - PR to main/develop: Run tests
 # - Deployment: Only on main branch push or workflow_dispatch
 
@@ -11,6 +12,7 @@ on:
     branches:
       - main
       - develop
+      - release/**
   pull_request:
     branches:
       - main
