@@ -66,13 +66,13 @@ public enum City {
     }
 
     /**
-     * 7일 예보 API URL 생성
+     * 최대 16일 예보 API URL 생성
      */
     public String buildForecastUrl() {
         return String.format(
                 "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f" +
                 "&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max" +
-                "&forecast_days=7&timezone=%s",
+                "&forecast_days=16&timezone=%s",
                 latitude, longitude, timezone
         );
     }

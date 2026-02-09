@@ -20,8 +20,11 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.DayOfWeek;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,6 +41,7 @@ public class WeatherRagService {
 
     private static final String SOURCE_TYPE_CURRENT = "current";
     private static final String SOURCE_TYPE_FORECAST = "forecast";
+    private static final Map<String, DayOfWeek> WEEKDAY_MAP = createWeekdayMap();
 
     private final JdbcTemplate jdbcTemplate;
     private final AppCredentialsConfig appCredentialsConfig;
@@ -461,6 +465,19 @@ public class WeatherRagService {
     private DateFilter extractDateFilter(String question) {
         String normalized = normalize(question);
         LocalDate today = LocalDate.now();
+
+        Optional<DayOfWeek> requestedWeekday = extractWeekday(normalized);
+        if (requestedWeekday.isPresent()) {
+            DayOfWeek targetWeekday = requestedWeekday.get();
+            if (normalized.contains("다음주") || normalized.contains("nextweek")) {
+                return new DateFilter(dateOfNextWeekday(today, targetWeekday, true), dateOfNextWeekday(today, targetWeekday, true));
+            }
+            if (normalized.contains("이번주")) {
+                return new DateFilter(dateOfThisWeekday(today, targetWeekday), dateOfThisWeekday(today, targetWeekday));
+            }
+            return new DateFilter(dateOfNextOccurrence(today, targetWeekday), dateOfNextOccurrence(today, targetWeekday));
+        }
+
         if (normalized.contains("오늘") || normalized.contains("today")) {
             return new DateFilter(today, today);
         }
@@ -472,8 +489,13 @@ public class WeatherRagService {
             LocalDate dayAfter = today.plusDays(2);
             return new DateFilter(dayAfter, dayAfter);
         }
+        if (normalized.contains("다음주") || normalized.contains("nextweek")) {
+            LocalDate nextWeekStart = today.with(TemporalAdjusters.next(DayOfWeek.MONDAY));
+            return new DateFilter(nextWeekStart, nextWeekStart.plusDays(6));
+        }
         if (normalized.contains("이번주") || normalized.contains("주간") || normalized.contains("week")) {
-            return new DateFilter(today, today.plusDays(6));
+            LocalDate thisWeekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+            return new DateFilter(thisWeekStart, thisWeekStart.plusDays(6));
         }
         return DateFilter.none();
     }
@@ -482,7 +504,9 @@ public class WeatherRagService {
         String normalized = normalize(question);
         if (normalized.contains("예보") || normalized.contains("forecast")
                 || normalized.contains("내일") || normalized.contains("모레")
-                || normalized.contains("이번주") || normalized.contains("주간")) {
+                || normalized.contains("이번주") || normalized.contains("다음주")
+                || normalized.contains("주간") || normalized.contains("nextweek")
+                || extractWeekday(normalized).isPresent()) {
             return SourceTypeFilter.FORECAST;
         }
         if (normalized.contains("지금") || normalized.contains("현재") || normalized.contains("today") || normalized.contains("오늘")) {
@@ -523,6 +547,61 @@ public class WeatherRagService {
                 case ANY -> Optional.empty();
             };
         }
+    }
+
+    private Optional<DayOfWeek> extractWeekday(String normalizedQuestion) {
+        return WEEKDAY_MAP.entrySet().stream()
+                .filter(entry -> normalizedQuestion.contains(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst();
+    }
+
+    private LocalDate dateOfThisWeekday(LocalDate today, DayOfWeek target) {
+        LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        return weekStart.with(TemporalAdjusters.nextOrSame(target));
+    }
+
+    private LocalDate dateOfNextWeekday(LocalDate today, DayOfWeek target, boolean forceNextWeek) {
+        LocalDate thisWeekDate = dateOfThisWeekday(today, target);
+        if (forceNextWeek) {
+            return thisWeekDate.plusWeeks(1);
+        }
+        return thisWeekDate;
+    }
+
+    private LocalDate dateOfNextOccurrence(LocalDate today, DayOfWeek target) {
+        if (today.getDayOfWeek() == target) {
+            return today;
+        }
+        return today.with(TemporalAdjusters.next(target));
+    }
+
+    private static Map<String, DayOfWeek> createWeekdayMap() {
+        Map<String, DayOfWeek> map = new HashMap<>();
+        map.put("월요일", DayOfWeek.MONDAY);
+        map.put("화요일", DayOfWeek.TUESDAY);
+        map.put("수요일", DayOfWeek.WEDNESDAY);
+        map.put("목요일", DayOfWeek.THURSDAY);
+        map.put("금요일", DayOfWeek.FRIDAY);
+        map.put("토요일", DayOfWeek.SATURDAY);
+        map.put("일요일", DayOfWeek.SUNDAY);
+
+        map.put("월욜", DayOfWeek.MONDAY);
+        map.put("화욜", DayOfWeek.TUESDAY);
+        map.put("수욜", DayOfWeek.WEDNESDAY);
+        map.put("목욜", DayOfWeek.THURSDAY);
+        map.put("금욜", DayOfWeek.FRIDAY);
+        map.put("토욜", DayOfWeek.SATURDAY);
+        map.put("일욜", DayOfWeek.SUNDAY);
+
+        map.put("monday", DayOfWeek.MONDAY);
+        map.put("tuesday", DayOfWeek.TUESDAY);
+        map.put("wednesday", DayOfWeek.WEDNESDAY);
+        map.put("thursday", DayOfWeek.THURSDAY);
+        map.put("friday", DayOfWeek.FRIDAY);
+        map.put("saturday", DayOfWeek.SATURDAY);
+        map.put("sunday", DayOfWeek.SUNDAY);
+        return map;
     }
 
     private record DateFilter(LocalDate startDate, LocalDate endDate) {
