@@ -29,6 +29,7 @@ public class BotInitializerRunner implements CommandLineRunner {
     @Value("${bot.enabled:true}")
     private boolean botEnabled;
     private ShardManager shardManager;
+    private volatile boolean ready = false;
 
     /**
      * Discord 봇을 초기화하고 리스너를 등록합니다.
@@ -40,6 +41,7 @@ public class BotInitializerRunner implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if (!botEnabled) {
             logger.info("bot.enabled=false 설정으로 Discord 봇 초기화를 건너뜁니다.");
+            ready = true;
             return;
         }
         try {
@@ -66,12 +68,26 @@ public class BotInitializerRunner implements CommandLineRunner {
 
             logger.info("Discord 봇이 성공적으로 초기화되었습니다.");
             logger.info("모든 명령어 등록 및 서비스 기동이 완료되었습니다.");
+            ready = true;
         } catch (IllegalArgumentException e) {
             logger.warn("Discord 봇 초기화 실패: {}. 애플리케이션은 계속 실행됩니다.", e.getMessage());
+            ready = true;
         } catch (Exception e) {
             logger.error("Discord 봇 초기화 중 예기치 않은 오류 발생", e);
             throw e;
         }
+    }
+
+    public boolean isReady() {
+        return ready;
+    }
+
+    public boolean isBotEnabled() {
+        return botEnabled;
+    }
+
+    public ShardManager getShardManager() {
+        return shardManager;
     }
 
     @jakarta.annotation.PreDestroy
