@@ -20,9 +20,9 @@ on:
   workflow_dispatch:
     inputs:
       run_mode:
-        description: "Run mode (test-only or full pipeline)"
+        description: "Run mode (full pipeline)"
         required: false
-        default: "test-only"
+        default: "full"
       deploy_target:
         description: "Deployment target environment (blue, green, auto)"
         required: false
