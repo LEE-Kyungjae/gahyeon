@@ -31,7 +31,6 @@ on:
 permissions:
   contents: write
   packages: write
-  workflows: write
 
 env:
   REGISTRY: ghcr.io
@@ -272,9 +271,14 @@ jobs:
           fetch-depth: 0
       - name: Create and push tag
         id: tag
+        env:
+          RELEASE_PUSH_TOKEN: ${{ secrets.RELEASE_PUSH_TOKEN }}
+          FALLBACK_GITHUB_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ needs.tag-version.outputs.tag }}"
+          PUSH_TOKEN="${RELEASE_PUSH_TOKEN:-$FALLBACK_GITHUB_TOKEN}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${PUSH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git tag -a "${TAG}" -m "Release ${TAG}"
           git push origin "${TAG}"
