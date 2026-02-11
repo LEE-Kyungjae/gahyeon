@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:00"
+      timezone: "Asia/Seoul"
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:10"
+      timezone: "Asia/Seoul"
+    labels:
+      - "dependencies"
+      - "java"
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:20"
+      timezone: "Asia/Seoul"
+    labels:
+      - "dependencies"
+      - "javascript"
