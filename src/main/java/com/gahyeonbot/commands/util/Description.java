@@ -29,6 +29,21 @@ public class Description {
     public static final String GAHYEONA_DESC = "AI에게 질문하고 답변을 받습니다.";
     public static final String GAHYEONA_DETAIL = "OpenAI GPT를 사용하여 사용자의 질문에 대한 답변을 제공합니다. 질문은 1000자 이하로 입력해주세요.";
 
+    public static final String DM_OPTIN_NAME = "dm-optin";
+    public static final String DM_OPTIN_NAME_KO = "dm수신";
+    public static final String DM_OPTIN_DESC = "개인 메시지 정기 발송 수신을 켭니다.";
+    public static final String DM_OPTIN_DETAIL = "외부 스케줄러에서 발송하는 개인 메시지를 수신 동의합니다.";
+
+    public static final String DM_OPTOUT_NAME = "dm-optout";
+    public static final String DM_OPTOUT_NAME_KO = "dm거부";
+    public static final String DM_OPTOUT_DESC = "개인 메시지 정기 발송 수신을 끕니다.";
+    public static final String DM_OPTOUT_DETAIL = "외부 스케줄러에서 발송하는 개인 메시지를 수신 거부합니다.";
+
+    public static final String DM_STATUS_NAME = "dm-status";
+    public static final String DM_STATUS_NAME_KO = "dm상태";
+    public static final String DM_STATUS_DESC = "개인 메시지 수신 상태를 확인합니다.";
+    public static final String DM_STATUS_DETAIL = "현재 개인 메시지 정기 발송 수신 동의 여부와 시간대를 확인합니다.";
+
     //내보내기
     public static final String BOTOUT_NAME = "kick-bots";
     public static final String BOTOUT_NAME_KO = "봇퇴장";

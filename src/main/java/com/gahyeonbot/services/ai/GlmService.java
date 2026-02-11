@@ -27,6 +27,7 @@ public class GlmService {
     private static final String GLM_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
     private static final String GLM_MODEL = "glm-4-flash";
     private static final int MAX_TOKENS = 150;
+    private static final int DM_MAX_TOKENS = 220;
 
     private final AppCredentialsConfig appCredentialsConfig;
 
@@ -106,6 +107,83 @@ public class GlmService {
         } catch (Exception e) {
             log.error("GLM 요약 실패: {}", e.getMessage());
             return simpleSummary(userMessage, aiResponse);
+        }
+    }
+
+    /**
+     * 정기 개인 메시지 본문을 생성합니다.
+     *
+     * @param userId 대상 사용자 ID
+     * @param conversationContext 사용자별 최근 대화 컨텍스트
+     * @param weatherContext 공통 날씨 컨텍스트
+     * @return 전송 가능한 DM 본문
+     */
+    public String generatePeriodicDmMessage(Long userId, String conversationContext, String weatherContext) {
+        if (!isEnabled) {
+            return "오늘도 좋은 하루 보내세요. 필요하면 가현이를 불러주세요.";
+        }
+
+        try {
+            String systemPrompt = """
+                    너는 디스코드 봇 '가현이'다.
+                    사용자에게 보내는 짧은 개인 메시지를 한국어로 작성해라.
+                    조건:
+                    - 2~4문장
+                    - 220자 이내
+                    - 과장/광고/반말 지양
+                    - 위험하거나 민감한 조언 금지
+                    - 마지막 문장은 부드러운 응원 톤
+                    """;
+
+            String userPrompt = """
+                    대상 사용자 ID: %d
+
+                    [최근 대화 컨텍스트]
+                    %s
+
+                    [날씨 컨텍스트]
+                    %s
+
+                    위 정보를 참고해 오늘 보낼 개인 메시지 1개를 작성해줘.
+                    """.formatted(
+                    userId,
+                    truncate(conversationContext, 1200),
+                    truncate(weatherContext, 1000)
+            );
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(apiKey);
+
+            Map<String, Object> requestBody = Map.of(
+                    "model", GLM_MODEL,
+                    "messages", List.of(
+                            Map.of("role", "system", "content", systemPrompt),
+                            Map.of("role", "user", "content", userPrompt)
+                    ),
+                    "max_tokens", DM_MAX_TOKENS,
+                    "temperature", 0.7
+            );
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    GLM_API_URL,
+                    HttpMethod.POST,
+                    request,
+                    new ParameterizedTypeReference<>() {}
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                String content = extractContent(response.getBody());
+                if (content != null && !content.isBlank()) {
+                    return truncate(content.trim(), 500);
+                }
+            }
+
+            return "안녕하세요. 오늘도 무리하지 말고 천천히 해봐요. 필요하면 언제든 저를 불러주세요.";
+        } catch (Exception e) {
+            log.warn("GLM 개인 메시지 생성 실패 - userId: {}, reason: {}", userId, e.getMessage());
+            return "오늘도 수고 많았어요. 잠깐 쉬어가면서 하루를 정리해봐요.";
         }
     }
 

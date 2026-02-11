@@ -57,3 +57,11 @@ weather:
     min-text-score: ${WEATHER_RAG_MIN_TEXT_SCORE:0.01}
     vector-weight: ${WEATHER_RAG_VECTOR_WEIGHT:0.75}
     text-weight: ${WEATHER_RAG_TEXT_WEIGHT:0.25}
+
+notifications:
+  dm:
+    enabled: ${NOTIFICATIONS_DM_ENABLED:true}
+    max-retries: ${NOTIFICATIONS_DM_MAX_RETRIES:3}
+    embedded-enabled: ${NOTIFICATIONS_DM_EMBEDDED_ENABLED:true}
+    embedded-cron: ${NOTIFICATIONS_DM_EMBEDDED_CRON:0 0 10 * * *}
+    schedule-zone: ${NOTIFICATIONS_DM_SCHEDULE_ZONE:Asia/Seoul}
