@@ -33,6 +33,13 @@ server:
     context-path: /api
   shutdown: graceful
 
+bot:
+  enabled: ${BOT_ENABLED:true}
+  leader-lock:
+    enabled: ${BOT_LEADER_LOCK_ENABLED:true}
+    key: ${BOT_LEADER_LOCK_KEY:1220338955082399845}
+    retry-ms: ${BOT_LEADER_LOCK_RETRY_MS:30000}
+
 # 공통 로깅 패턴
 logging:
   pattern:
