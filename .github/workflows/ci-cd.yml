@@ -201,6 +201,62 @@ jobs:
               exit ${EXIT_CODE}
             }
 
+      - name: Inspect deployment state
+        id: inspect
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          set -euo pipefail
+
+          KEY_FILE="$(mktemp)"
+          printf '%s\n' "${SSH_KEY}" > "${KEY_FILE}"
+          chmod 600 "${KEY_FILE}"
+
+          REMOTE_OUTPUT="$(ssh -i "${KEY_FILE}" -p "${SSH_PORT}" -o StrictHostKeyChecking=no "${SSH_USER}@${SSH_HOST}" '
+            set -euo pipefail
+            ACTIVE_PORT="$(grep -oE "127.0.0.1:[0-9]+" /etc/nginx/conf.d/gahyeonbot-upstream.conf 2>/dev/null | tail -n1 | cut -d: -f2 || true)"
+            if [[ "${ACTIVE_PORT}" == "8080" ]]; then
+              ACTIVE_COLOR="blue"
+            elif [[ "${ACTIVE_PORT}" == "8081" ]]; then
+              ACTIVE_COLOR="green"
+            else
+              ACTIVE_COLOR="unknown"
+            fi
+
+            NEWEST="$(docker inspect -f "{{.Name}}|{{.Created}}|{{.Config.Image}}" gahyeonbot-blue gahyeonbot-green 2>/dev/null | sed "s#^/##" | sort -t"|" -k2 | tail -n1 || true)"
+            RUNNING="$(docker ps --format "{{.Names}}|{{.Image}}|{{.RunningFor}}" | grep "^gahyeonbot-" || true)"
+
+            echo "ACTIVE_COLOR=${ACTIVE_COLOR}"
+            echo "ACTIVE_PORT=${ACTIVE_PORT:-unknown}"
+            echo "NEWEST=${NEWEST:-none}"
+            echo "RUNNING<<EOF"
+            echo "${RUNNING}"
+            echo "EOF"
+          ')"
+
+          rm -f "${KEY_FILE}"
+
+          echo "${REMOTE_OUTPUT}" >> "${GITHUB_OUTPUT}"
+
+      - name: Deployment summary
+        run: |
+          {
+            echo "## Deployment Summary"
+            echo ""
+            echo "- Requested target: \`${{ steps.target.outputs.target }}\`"
+            echo "- Image: \`${{ needs.build-image.outputs.image }}:${{ needs.build-image.outputs.tag }}\`"
+            echo "- Active upstream: \`${{ steps.inspect.outputs.ACTIVE_COLOR }}\` (port \`${{ steps.inspect.outputs.ACTIVE_PORT }}\`)"
+            echo "- Newest container: \`${{ steps.inspect.outputs.NEWEST }}\`"
+            echo ""
+            echo "### Running Containers"
+            echo '```'
+            echo "${{ steps.inspect.outputs.RUNNING }}"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
   create-release:
     name: Create Release Tag
     needs:
