@@ -9,114 +9,83 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.DiscordLocale;
 
 import java.awt.*;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.StringJoiner;
 
-/**
- * Discord 임베드 메시지를 생성하는 유틸리티 클래스.
- * 다양한 상황에 맞는 임베드 메시지를 생성하는 정적 메서드들을 제공합니다.
- * 
- * @author GahyeonBot Team
- * @version 1.0
- */
 public class EmbedUtil {
+
+    private static final Color BRAND_PRIMARY = new Color(0x06B6D4);
+    private static final Color BRAND_SUCCESS = new Color(0x06B6A0);
+    private static final Color BRAND_WARNING = new Color(0xF59E0B);
+    private static final Color BRAND_ERROR   = new Color(0xEF4444);
+
+    private static final String BOT_NAME = "가현봇";
     private static final DateTimeFormatter RESERVATION_TIME_FORMATTER = DateTimeFormatter.ofPattern("MM-dd HH:mm");
 
-    /**
-     * 현재 재생 중인 음악에 대한 임베드를 생성합니다.
-     * 
-     * @param event 슬래시 명령어 상호작용 이벤트
-     * @param track 오디오 트랙
-     * @param albumCoverUrl 앨범 커버 URL
-     * @param streamUrl 스트리밍 URL
-     * @return 재생 중 임베드
-     */
-    public static EmbedBuilder createNowPlayingEmbed(SlashCommandInteractionEvent event, AudioTrack track,String albumCoverUrl,String streamUrl) {
-        EmbedBuilder embed = new EmbedBuilder()
+    private static String botAvatarUrl;
 
-                .setTitle("🎵 재생 시작!")
-                .setDescription("**" + track.getInfo().title + "**")
+    public static void init(String avatarUrl) {
+        botAvatarUrl = avatarUrl;
+    }
+
+    private static EmbedBuilder base(Color color) {
+        EmbedBuilder eb = new EmbedBuilder()
+                .setColor(color)
+                .setTimestamp(Instant.now());
+        if (botAvatarUrl != null) {
+            eb.setAuthor(BOT_NAME, null, botAvatarUrl);
+        }
+        return eb;
+    }
+
+    public static EmbedBuilder createNowPlayingEmbed(SlashCommandInteractionEvent event, AudioTrack track, String albumCoverUrl, String streamUrl) {
+        EmbedBuilder embed = base(BRAND_PRIMARY)
+                .setTitle(track.getInfo().title, streamUrl)
+                .setDescription("재생 시작")
                 .addField("아티스트", track.getInfo().author, true)
-                .addField("상태", "재생 중", false)
-                .addField("스트리밍 출처", "[링크](" + streamUrl + ")", false) // 스트리밍 URL 추가
-                .setFooter("요청자: " + event.getUser().getName(), event.getUser().getAvatarUrl())
-                .setColor(Color.GREEN);
-        setAlbumCover(embed, albumCoverUrl); // 앨범 커버 추가
+                .addField("상태", "재생 중", true)
+                .setFooter(event.getUser().getName(), event.getUser().getAvatarUrl());
+        setAlbumCover(embed, albumCoverUrl);
         return embed;
     }
 
-    /**
-     * 대기열에 추가된 음악에 대한 임베드를 생성합니다.
-     * 
-     * @param track 오디오 트랙
-     * @param requester 요청한 사용자
-     * @return 대기열 추가 임베드
-     */
     public static EmbedBuilder createQueueAddedEmbed(AudioTrack track, User requester) {
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle("🎵 대기열에 추가됨")
+        return base(BRAND_PRIMARY)
+                .setTitle("대기열에 추가됨")
                 .setDescription("**" + track.getInfo().title + "**")
                 .addField("아티스트", track.getInfo().author, true)
-                .setFooter("요청자: " + requester.getName(), requester.getEffectiveAvatarUrl())
-                .setColor(Color.YELLOW);
-        return embed;
+                .setFooter(requester.getName(), requester.getEffectiveAvatarUrl());
     }
 
-    /**
-     * 에러 메시지 임베드를 생성합니다.
-     * 
-     * @param errorMessage 에러 메시지
-     * @return 에러 임베드
-     */
     public static EmbedBuilder createErrorEmbed(String errorMessage) {
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle("🚨 오류 발생")
-                .setDescription(errorMessage)
-                .setColor(Color.RED);
-        return embed;
+        return base(BRAND_ERROR)
+                .setTitle("오류 발생")
+                .setDescription(errorMessage);
     }
 
-    /**
-     * 일반 메시지 임베드를 생성합니다.
-     * 
-     * @param errorMessage 메시지 내용
-     * @return 일반 임베드
-     */
-    public static EmbedBuilder nomal(String errorMessage) {
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setDescription(errorMessage)
-               .setColor(Color.YELLOW);
-        return embed;
+    public static EmbedBuilder createNormalEmbed(String message) {
+        return base(BRAND_PRIMARY)
+                .setDescription(message);
     }
 
-    /**
-     * 정보 메시지 임베드를 생성합니다.
-     * 
-     * @param message 정보 메시지
-     * @return 정보 임베드
-     */
+    /** @deprecated Use {@link #createNormalEmbed(String)} instead. */
+    @Deprecated
+    public static EmbedBuilder nomal(String message) {
+        return createNormalEmbed(message);
+    }
+
     public static EmbedBuilder createInfoEmbed(String message) {
-        EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("ℹ️ 정보")
-                .setDescription(message)
-                .setColor(Color.BLUE);
-        return embed;
+        return base(BRAND_PRIMARY)
+                .setTitle("정보")
+                .setDescription(message);
     }
-    
-    /**
-     * 명령어 목록 임베드를 생성합니다.
-     * 
-     * @param commands 명령어 목록
-     * @param event 슬래시 명령어 상호작용 이벤트
-     * @return 명령어 목록 임베드
-     */
+
     public static EmbedBuilder createCommandListEmbed(List<ICommand> commands, SlashCommandInteractionEvent event) {
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle("📜 명령어 목록")
-                .setColor(Color.CYAN)
-                .setDescription("아래는 봇이 지원하는 명령어 목록입니다.")
-                .setFooter("가현봇 | 도움말", event.getJDA().getSelfUser().getEffectiveAvatarUrl());
+        EmbedBuilder embed = base(BRAND_PRIMARY)
+                .setTitle("명령어 목록")
+                .setDescription("아래는 봇이 지원하는 명령어 목록입니다.");
 
         DiscordLocale userLocale = event.getUserLocale();
 
@@ -131,7 +100,7 @@ public class EmbedUtil {
 
             String fieldValue = description;
             if (detailedDescription != null && !detailedDescription.isEmpty()) {
-                fieldValue += "\n**사용법:** " + detailedDescription;
+                fieldValue += "\n`" + detailedDescription + "`";
             }
 
             embed.addField("/" + commandName, fieldValue, false);
@@ -139,108 +108,58 @@ public class EmbedUtil {
 
         return embed;
     }
-    
-    /**
-     * 음악 정지 임베드를 생성합니다.
-     * 
-     * @param event 슬래시 명령어 상호작용 이벤트
-     * @return 음악 정지 임베드
-     */
+
     public static EmbedBuilder createMusicStopEmbed(SlashCommandInteractionEvent event) {
-        EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("🛑 재생 종료")
+        return base(BRAND_WARNING)
+                .setTitle("재생 종료")
                 .setDescription("음악 재생이 종료되었습니다.")
-                .setColor(Color.RED)
-                .setFooter("요청자: " + event.getUser().getName(), event.getUser().getAvatarUrl());
-        return embed;
+                .setFooter(event.getUser().getName(), event.getUser().getAvatarUrl());
     }
-    
-    /**
-     * 음악 일시정지 임베드를 생성합니다.
-     * 
-     * @param event 슬래시 명령어 상호작용 이벤트
-     * @return 음악 일시정지 임베드
-     */
+
     public static EmbedBuilder createPauseEmbed(SlashCommandInteractionEvent event) {
-        return new EmbedBuilder()
-                .setTitle("⏸️ 음악 일시정지")
+        return base(BRAND_PRIMARY)
+                .setTitle("음악 일시정지")
                 .setDescription("음악이 일시정지되었습니다.")
-                .setColor(Color.YELLOW)
-                .setFooter("요청자: " + event.getUser().getName(), event.getUser().getAvatarUrl());
+                .setFooter(event.getUser().getName(), event.getUser().getAvatarUrl());
     }
-    
-    /**
-     * 음악 대기열 임베드를 생성합니다.
-     * 
-     * @param tracks 오디오 트랙 목록
-     * @return 대기열 임베드
-     */
+
     public static EmbedBuilder createQueueEmbed(List<AudioTrack> tracks) {
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle("🎶 현재 대기열")
-                .setColor(Color.BLUE);
+        EmbedBuilder embed = base(BRAND_PRIMARY)
+                .setTitle("현재 대기열");
 
         StringJoiner queueMessage = new StringJoiner("\n");
         for (int i = 0; i < tracks.size(); i++) {
             AudioTrack track = tracks.get(i);
-            queueMessage.add((i + 1) + ". " + track.getInfo().title + " - " + formatDuration(track.getDuration()));
+            queueMessage.add("`" + (i + 1) + ".` " + track.getInfo().title + " \u2014 " + formatDuration(track.getDuration()));
         }
 
         embed.setDescription(queueMessage.toString());
         return embed;
     }
 
-    /**
-     * 밀리초를 MM:SS 형식으로 변환합니다.
-     * 
-     * @param durationMillis 밀리초
-     * @return MM:SS 형식의 문자열
-     */
     private static String formatDuration(long durationMillis) {
         long minutes = (durationMillis / 1000) / 60;
         long seconds = (durationMillis / 1000) % 60;
         return String.format("%02d:%02d", minutes, seconds);
     }
-    
-    /**
-     * 음악 재생 재개 임베드를 생성합니다.
-     * 
-     * @param event 슬래시 명령어 상호작용 이벤트
-     * @return 음악 재생 재개 임베드
-     */
+
     public static EmbedBuilder createResumeEmbed(SlashCommandInteractionEvent event) {
-        return new EmbedBuilder()
-                .setTitle("▶️ 음악 재생")
+        return base(BRAND_PRIMARY)
+                .setTitle("음악 재생")
                 .setDescription("음악 재생이 다시 시작되었습니다.")
-                .setColor(Color.GREEN)
-                .setFooter("요청자: " + event.getUser().getName(), event.getUser().getAvatarUrl());
+                .setFooter(event.getUser().getName(), event.getUser().getAvatarUrl());
     }
-    
-    /**
-     * 트랙 스킵 임베드를 생성합니다.
-     * 
-     * @param event 슬래시 명령어 상호작용 이벤트
-     * @param trackTitle 스킵된 트랙 제목
-     * @return 트랙 스킵 임베드
-     */
+
     public static EmbedBuilder createSkipEmbed(SlashCommandInteractionEvent event, String trackTitle) {
-        return new EmbedBuilder()
-                .setTitle("⏭️ 트랙 스킵")
+        return base(BRAND_PRIMARY)
+                .setTitle("트랙 스킵")
                 .setDescription("현재 트랙을 건너뛰었습니다: **" + trackTitle + "**")
-                .setColor(Color.ORANGE)
-                .setFooter("요청자: " + event.getUser().getName(), event.getUser().getAvatarUrl());
+                .setFooter(event.getUser().getName(), event.getUser().getAvatarUrl());
     }
-    
-    /**
-     * 봇 제거 완료 임베드를 생성합니다.
-     * 
-     * @param removedBots 제거된 봇 목록
-     * @return 봇 제거 완료 임베드
-     */
+
     public static EmbedBuilder createBotOutEmbed(List<Member> removedBots) {
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle("🤖 봇 제거 완료")
-                .setColor(Color.RED);
+        EmbedBuilder embed = base(BRAND_WARNING)
+                .setTitle("봇 제거 완료");
 
         StringBuilder description = new StringBuilder("다음 봇이 채널에서 제거되었습니다:\n");
         for (Member bot : removedBots) {
@@ -251,47 +170,24 @@ public class EmbedUtil {
         return embed;
     }
 
-    /**
-     * 예약 취소 성공 임베드를 생성합니다.
-     * 
-     * @param reservationId 예약 ID
-     * @return 예약 취소 성공 임베드
-     */
     public static EmbedBuilder createReservationCancelledEmbed(int reservationId) {
-        return new EmbedBuilder()
-                .setTitle("✅ 예약 취소 완료")
-                .setDescription("예약 ID **" + reservationId + "**이(가) 성공적으로 취소되었습니다.")
-                .setColor(Color.GREEN);
+        return base(BRAND_SUCCESS)
+                .setTitle("예약 취소 완료")
+                .setDescription("예약 ID **" + reservationId + "**이(가) 성공적으로 취소되었습니다.");
     }
-    
-    /**
-     * 예약 성공 임베드를 생성합니다.
-     * 
-     * @param reservationId 예약 ID
-     * @param nickname 사용자 닉네임
-     * @param minutes 예약 시간(분)
-     * @return 예약 성공 임베드
-     */
+
     public static EmbedBuilder createReservationEmbed(long reservationId, String nickname, int minutes) {
         String executeAt = java.time.LocalDateTime.now().plusMinutes(minutes).format(RESERVATION_TIME_FORMATTER);
-        return new EmbedBuilder()
-                .setTitle("📅 예약 완료")
+        return base(BRAND_PRIMARY)
+                .setTitle("예약 완료")
                 .setDescription("**" + nickname + "**님의 퇴장이 **" + minutes + "분** 후로 예약되었습니다.")
                 .addField("예약 ID", String.valueOf(reservationId), true)
-                .addField("실행 예정", executeAt, true)
-                .setColor(Color.BLUE);
+                .addField("실행 예정", executeAt, true);
     }
-    
-    /**
-     * 예약 목록 임베드를 생성합니다.
-     * 
-     * @param reservations 예약 목록
-     * @return 예약 목록 임베드
-     */
+
     public static EmbedBuilder createReservationListEmbed(List<Reservation> reservations) {
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle("📋 예약된 작업 목록")
-                .setColor(Color.BLUE);
+        EmbedBuilder embed = base(BRAND_PRIMARY)
+                .setTitle("예약된 작업 목록");
 
         for (Reservation reservation : reservations) {
             String value = String.format(
@@ -306,18 +202,10 @@ public class EmbedUtil {
 
         return embed;
     }
-    
-    /**
-     * 임베드에 앨범 커버를 설정합니다.
-     * 
-     * @param embed 임베드 빌더
-     * @param albumCoverUrl 앨범 커버 URL
-     */
+
     private static void setAlbumCover(EmbedBuilder embed, String albumCoverUrl) {
         if (albumCoverUrl != null && !albumCoverUrl.isBlank()) {
-            embed.setThumbnail(albumCoverUrl); // Thumbnail로 앨범 커버 추가
-        } else {
-            //embed.setThumbnail("https://example.com/default-image.jpg"); // 기본 이미지 (옵션)
+            embed.setThumbnail(albumCoverUrl);
         }
     }
 }

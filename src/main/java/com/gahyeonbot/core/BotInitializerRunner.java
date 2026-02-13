@@ -1,5 +1,6 @@
 package com.gahyeonbot.core;
 
+import com.gahyeonbot.commands.util.EmbedUtil;
 import com.gahyeonbot.config.AppCredentialsConfig;
 import com.gahyeonbot.core.command.CommandRegistry;
 import com.gahyeonbot.listeners.CommandManager;
@@ -101,6 +102,7 @@ public class BotInitializerRunner implements CommandLineRunner {
             shard.awaitReady();
         }
         logger.info("JDA 준비 완료. 총 {}개 길드 감지됨.", shardManager.getGuilds().size());
+        EmbedUtil.init(shardManager.getShards().get(0).getSelfUser().getEffectiveAvatarUrl());
 
         CommandManager commandManager = new CommandManager();
         commandManager.addCommands(commandRegistry.getCommands());

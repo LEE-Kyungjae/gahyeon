@@ -36,7 +36,7 @@ public class ResponseUtil {
      */
     public static void replySuccess(SlashCommandInteractionEvent event, String successMessage) {
         logger.info("replySuccess: {}", successMessage);
-        EmbedBuilder embed = EmbedUtil.nomal(successMessage);
+        EmbedBuilder embed = EmbedUtil.createNormalEmbed(successMessage);
         sendEmbed(event, embed, false);
     }
 
