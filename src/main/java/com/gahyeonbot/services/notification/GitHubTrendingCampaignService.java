@@ -4,7 +4,9 @@ import com.gahyeonbot.commands.util.EmbedUtil;
 import com.gahyeonbot.entity.DmSubscription;
 import com.gahyeonbot.entity.GitHubTrending;
 import com.gahyeonbot.entity.GitHubTrendingEvent;
+import com.gahyeonbot.entity.RepoReadmeCache;
 import com.gahyeonbot.repository.GitHubTrendingEventRepository;
+import com.gahyeonbot.repository.RepoReadmeCacheRepository;
 import com.gahyeonbot.services.ai.GlmService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +33,7 @@ public class GitHubTrendingCampaignService {
     private final DmSubscriptionService dmSubscriptionService;
     private final DmDispatchService dmDispatchService;
     private final GitHubTrendingEventRepository trendingEventRepository;
+    private final RepoReadmeCacheRepository repoReadmeCacheRepository;
     private final GlmService glmService;
 
     @Value("${notifications.dm.trending-enabled:true}")
@@ -67,7 +70,7 @@ public class GitHubTrendingCampaignService {
         }
 
         List<GitHubTrending> repos = events.stream()
-                .map(GitHubTrendingCampaignService::toTrendingEntityForDigest)
+                .map(this::toTrendingEntityForDigest)
                 .collect(Collectors.toList());
 
         String digest = glmService.generateTrendingDigest(repos);
@@ -118,12 +121,20 @@ public class GitHubTrendingCampaignService {
                 runId, repos.size(), subscribers.size(), sent, failed);
     }
 
-    private static GitHubTrending toTrendingEntityForDigest(GitHubTrendingEvent e) {
+    private GitHubTrending toTrendingEntityForDigest(GitHubTrendingEvent e) {
+        String repoSummary = repoReadmeCacheRepository.findTopByRepoFullNameAndSummaryKoIsNotNullOrderBySummaryKoUpdatedAtDesc(e.getRepoFullName())
+                .map(RepoReadmeCache::getSummaryKo)
+                .orElse(null);
+
+        String descriptionForDigest = (repoSummary != null && !repoSummary.isBlank())
+                ? repoSummary.trim()
+                : e.getDescription();
+
         return GitHubTrending.builder()
                 .snapshotDate(e.getSnapshotDate())
                 .repoFullName(e.getRepoFullName())
                 .repoUrl(e.getRepoUrl())
-                .description(e.getDescription())
+                .description(descriptionForDigest)
                 .language(e.getLanguage())
                 .starsTotal(e.getStarsTotal() != null ? e.getStarsTotal() : 0)
                 .starsPeriod(e.getStarsPeriod())
