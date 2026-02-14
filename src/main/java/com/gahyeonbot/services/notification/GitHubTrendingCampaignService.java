@@ -7,7 +7,6 @@ import com.gahyeonbot.entity.GitHubTrendingEvent;
 import com.gahyeonbot.entity.RepoReadmeCache;
 import com.gahyeonbot.repository.GitHubTrendingEventRepository;
 import com.gahyeonbot.repository.RepoReadmeCacheRepository;
-import com.gahyeonbot.services.ai.GlmService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -34,7 +33,6 @@ public class GitHubTrendingCampaignService {
     private final DmDispatchService dmDispatchService;
     private final GitHubTrendingEventRepository trendingEventRepository;
     private final RepoReadmeCacheRepository repoReadmeCacheRepository;
-    private final GlmService glmService;
 
     @Value("${notifications.dm.trending-enabled:true}")
     private boolean trendingEnabled;
@@ -73,7 +71,8 @@ public class GitHubTrendingCampaignService {
                 .map(this::toTrendingEntityForDigest)
                 .collect(Collectors.toList());
 
-        String digest = glmService.generateTrendingDigest(repos);
+        // README summary_ko is precomputed by RepoReadmeSummaryScheduler; DM sending should not depend on GLM uptime.
+        String digest = String.format("오늘의 GitHub 트렌딩 다이제스트 (%s, %d개)", snapshotDate, repos.size());
         MessageEmbed embed = EmbedUtil.createGitHubTrendingEmbed(digest, repos).build();
 
         List<DmSubscription> subscribers = dmSubscriptionService.getOptedInSubscriptions();
