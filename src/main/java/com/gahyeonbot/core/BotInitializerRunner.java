@@ -185,6 +185,13 @@ public class BotInitializerRunner implements CommandLineRunner {
         return shardManager;
     }
 
+    /**
+     * Blue/Green 등 다중 인스턴스에서 스케줄 작업을 1개 인스턴스만 수행하도록 게이트에 사용.
+     */
+    public boolean hasLeadership() {
+        return hasLeadership;
+    }
+
     @jakarta.annotation.PreDestroy
     public void shutdown() {
         if (shardManager != null) {
