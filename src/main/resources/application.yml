@@ -70,5 +70,5 @@ notifications:
     enabled: ${NOTIFICATIONS_DM_ENABLED:true}
     max-retries: ${NOTIFICATIONS_DM_MAX_RETRIES:3}
     trending-enabled: ${NOTIFICATIONS_DM_TRENDING_ENABLED:true}
-    trending-cron: ${NOTIFICATIONS_DM_TRENDING_CRON:0 15 7 * * *}
+    trending-cron: ${NOTIFICATIONS_DM_TRENDING_CRON:0 0 7 * * *}
     schedule-zone: ${NOTIFICATIONS_DM_SCHEDULE_ZONE:Asia/Seoul}

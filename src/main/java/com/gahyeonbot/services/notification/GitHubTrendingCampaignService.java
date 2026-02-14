@@ -40,7 +40,7 @@ public class GitHubTrendingCampaignService {
     private String scheduleZone;
 
     @Scheduled(
-            cron = "${notifications.dm.trending-cron:0 15 7 * * *}",
+            cron = "${notifications.dm.trending-cron:0 0 7 * * *}",
             zone = "${notifications.dm.schedule-zone:Asia/Seoul}"
     )
     public void runTrendingCampaign() {
