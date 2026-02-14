@@ -46,7 +46,7 @@ public class DmOptIn extends AbstractCommand {
     @Override
     public void execute(SlashCommandInteractionEvent event) {
         dmSubscriptionService.optIn(event.getUser().getIdLong());
-        event.reply("개인 메시지 수신을 활성화했습니다. 매일 오전 10시(KST) 발송 대상에 포함됩니다.")
+        event.reply("개인 메시지 수신을 활성화했습니다. 매일 오전 5시(KST) GitHub 트렌딩 다이제스트가 발송됩니다.")
                 .setEphemeral(true)
                 .queue();
     }

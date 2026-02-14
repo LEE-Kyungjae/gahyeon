@@ -9,8 +9,11 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.gahyeonbot.entity.GitHubTrending;
+
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Zhipu AI GLM-4-flash API 서비스.
@@ -28,6 +31,7 @@ public class GlmService {
     private static final String GLM_MODEL = "glm-4-flash";
     private static final int MAX_TOKENS = 150;
     private static final int DM_MAX_TOKENS = 220;
+    private static final int TRENDING_MAX_TOKENS = 300;
 
     private final AppCredentialsConfig appCredentialsConfig;
 
@@ -184,6 +188,65 @@ public class GlmService {
         } catch (Exception e) {
             log.warn("GLM 개인 메시지 생성 실패 - userId: {}, reason: {}", userId, e.getMessage());
             return "오늘도 수고 많았어요. 잠깐 쉬어가면서 하루를 정리해봐요.";
+        }
+    }
+
+    /**
+     * GitHub 트렌딩 레포 목록을 받아 한국어 다이제스트를 생성합니다.
+     *
+     * @param repos 트렌딩 레포 목록
+     * @return 한국어 요약 문자열
+     */
+    public String generateTrendingDigest(List<GitHubTrending> repos) {
+        if (!isEnabled) {
+            return "오늘의 GitHub 트렌딩 레포입니다.";
+        }
+
+        try {
+            String systemPrompt = "GitHub 트렌딩 레포 목록을 받아 한국어로 2~4문장으로 요약해라. "
+                    + "어떤 분야가 뜨고 있는지, 주목할 레포가 뭔지 간결하게 설명해라.";
+
+            String repoList = repos.stream()
+                    .map(r -> String.format("- %s (%s): %s [★ %d]",
+                            r.getRepoFullName(),
+                            r.getLanguage() != null ? r.getLanguage() : "N/A",
+                            r.getDescription() != null ? truncate(r.getDescription(), 80) : "",
+                            r.getStarsTotal()))
+                    .collect(Collectors.joining("\n"));
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(apiKey);
+
+            Map<String, Object> requestBody = Map.of(
+                    "model", GLM_MODEL,
+                    "messages", List.of(
+                            Map.of("role", "system", "content", systemPrompt),
+                            Map.of("role", "user", "content", repoList)
+                    ),
+                    "max_tokens", TRENDING_MAX_TOKENS,
+                    "temperature", 0.7
+            );
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    GLM_API_URL,
+                    HttpMethod.POST,
+                    request,
+                    new ParameterizedTypeReference<>() {}
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                String content = extractContent(response.getBody());
+                if (content != null && !content.isBlank()) {
+                    return content.trim();
+                }
+            }
+
+            return "오늘의 GitHub 트렌딩 레포입니다.";
+        } catch (Exception e) {
+            log.warn("GLM 트렌딩 다이제스트 생성 실패: {}", e.getMessage());
+            return "오늘의 GitHub 트렌딩 레포입니다.";
         }
     }
 

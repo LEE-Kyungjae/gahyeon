@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +20,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
+import java.util.function.Consumer;
 
 @Slf4j
 @Service
@@ -36,6 +38,61 @@ public class DmDispatchService {
 
     @Transactional
     public DispatchResult dispatchGeneratedMessage(String runId, Long userId, String content, String dedupeKey) {
+        if (userId == null || content == null || content.trim().isEmpty() || dedupeKey == null || dedupeKey.isBlank()) {
+            return DispatchResult.builder()
+                    .sent(false)
+                    .status("FAILED_INVALID_INPUT")
+                    .message("userId/content/dedupeKey are required")
+                    .build();
+        }
+
+        String trimmed = content.trim();
+        return dispatchInternal(
+                runId,
+                userId,
+                dedupeKey,
+                sha256(content),
+                "userId/content/dedupeKey are required",
+                user -> user.openPrivateChannel()
+                        .flatMap(channel -> channel.sendMessage(truncateContent(trimmed)))
+                        .complete()
+        );
+    }
+
+    @Transactional
+    public DispatchResult dispatchEmbed(String runId, Long userId, MessageEmbed embed, String dedupeKey) {
+        if (userId == null || embed == null || dedupeKey == null || dedupeKey.isBlank()) {
+            return DispatchResult.builder()
+                    .sent(false)
+                    .status("FAILED_INVALID_INPUT")
+                    .message("userId/embed/dedupeKey are required")
+                    .build();
+        }
+
+        String contentHash = sha256(
+                (embed.getTitle() != null ? embed.getTitle() : "")
+                        + (embed.getDescription() != null ? embed.getDescription() : "")
+        );
+        return dispatchInternal(
+                runId,
+                userId,
+                dedupeKey,
+                contentHash,
+                "userId/embed/dedupeKey are required",
+                user -> user.openPrivateChannel()
+                        .flatMap(channel -> channel.sendMessageEmbeds(embed))
+                        .complete()
+        );
+    }
+
+    private DispatchResult dispatchInternal(
+            String runId,
+            Long userId,
+            String dedupeKey,
+            String contentHash,
+            String invalidInputMessage,
+            Consumer<User> sendFn
+    ) {
         if (!dmEnabled) {
             return DispatchResult.builder()
                     .sent(false)
@@ -44,11 +101,11 @@ public class DmDispatchService {
                     .build();
         }
 
-        if (userId == null || content == null || content.trim().isEmpty() || dedupeKey == null || dedupeKey.isBlank()) {
+        if (userId == null || dedupeKey == null || dedupeKey.isBlank() || contentHash == null || contentHash.isBlank() || sendFn == null) {
             return DispatchResult.builder()
                     .sent(false)
                     .status("FAILED_INVALID_INPUT")
-                    .message("userId/content/dedupeKey are required")
+                    .message(invalidInputMessage)
                     .build();
         }
 
@@ -64,7 +121,7 @@ public class DmDispatchService {
                 .runId(safeRunId(runId))
                 .dedupeKey(dedupeKey.trim())
                 .userId(userId)
-                .contentHash(sha256(content))
+                .contentHash(contentHash)
                 .status("RECEIVED")
                 .build();
 
@@ -99,9 +156,7 @@ public class DmDispatchService {
                         .build();
             }
 
-            user.openPrivateChannel()
-                    .flatMap(channel -> channel.sendMessage(truncateContent(content.trim())))
-                    .complete();
+            sendFn.accept(user);
 
             logEntry.setStatus("SENT");
             logEntry.setErrorMessage(null);

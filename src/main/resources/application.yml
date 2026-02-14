@@ -69,6 +69,6 @@ notifications:
   dm:
     enabled: ${NOTIFICATIONS_DM_ENABLED:true}
     max-retries: ${NOTIFICATIONS_DM_MAX_RETRIES:3}
-    embedded-enabled: ${NOTIFICATIONS_DM_EMBEDDED_ENABLED:true}
-    embedded-cron: ${NOTIFICATIONS_DM_EMBEDDED_CRON:0 0 10 * * *}
+    trending-enabled: ${NOTIFICATIONS_DM_TRENDING_ENABLED:true}
+    trending-cron: ${NOTIFICATIONS_DM_TRENDING_CRON:0 0 5 * * *}
     schedule-zone: ${NOTIFICATIONS_DM_SCHEDULE_ZONE:Asia/Seoul}

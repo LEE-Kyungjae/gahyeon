@@ -31,18 +31,18 @@ public class Description {
 
     public static final String DM_OPTIN_NAME = "dm-optin";
     public static final String DM_OPTIN_NAME_KO = "dm수신";
-    public static final String DM_OPTIN_DESC = "개인 메시지 정기 발송 수신을 켭니다.";
-    public static final String DM_OPTIN_DETAIL = "외부 스케줄러에서 발송하는 개인 메시지를 수신 동의합니다.";
+    public static final String DM_OPTIN_DESC = "GitHub 트렌딩 다이제스트 DM 수신을 켭니다.";
+    public static final String DM_OPTIN_DETAIL = "매일 오전 5시(KST) GitHub 트렌딩 레포 요약을 DM으로 받습니다.";
 
     public static final String DM_OPTOUT_NAME = "dm-optout";
     public static final String DM_OPTOUT_NAME_KO = "dm거부";
-    public static final String DM_OPTOUT_DESC = "개인 메시지 정기 발송 수신을 끕니다.";
-    public static final String DM_OPTOUT_DETAIL = "외부 스케줄러에서 발송하는 개인 메시지를 수신 거부합니다.";
+    public static final String DM_OPTOUT_DESC = "GitHub 트렌딩 다이제스트 DM 수신을 끕니다.";
+    public static final String DM_OPTOUT_DETAIL = "정기 DM 발송 대상에서 제외됩니다.";
 
     public static final String DM_STATUS_NAME = "dm-status";
     public static final String DM_STATUS_NAME_KO = "dm상태";
-    public static final String DM_STATUS_DESC = "개인 메시지 수신 상태를 확인합니다.";
-    public static final String DM_STATUS_DETAIL = "현재 개인 메시지 정기 발송 수신 동의 여부와 시간대를 확인합니다.";
+    public static final String DM_STATUS_DESC = "GitHub 트렌딩 DM 수신 상태를 확인합니다.";
+    public static final String DM_STATUS_DETAIL = "현재 GitHub 트렌딩 다이제스트 DM 수신 동의 여부를 확인합니다.";
 
     //내보내기
     public static final String BOTOUT_NAME = "kick-bots";

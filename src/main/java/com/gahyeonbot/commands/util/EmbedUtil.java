@@ -1,5 +1,6 @@
 package com.gahyeonbot.commands.util;
 
+import com.gahyeonbot.entity.GitHubTrending;
 import com.gahyeonbot.models.Reservation;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -198,6 +199,35 @@ public class EmbedUtil {
                     reservation.getExecuteAt().format(RESERVATION_TIME_FORMATTER)
             );
             embed.addField("ID: " + reservation.getId(), value, false);
+        }
+
+        return embed;
+    }
+
+    public static EmbedBuilder createGitHubTrendingEmbed(String digest, List<GitHubTrending> repos) {
+        EmbedBuilder embed = base(BRAND_PRIMARY)
+                .setTitle("GitHub 트렌딩")
+                .setDescription(digest);
+
+        int limit = Math.min(repos.size(), 10);
+        for (int i = 0; i < limit; i++) {
+            GitHubTrending repo = repos.get(i);
+            String name = "[" + repo.getRepoFullName() + "](" + repo.getRepoUrl() + ")";
+
+            StringBuilder value = new StringBuilder();
+            if (repo.getDescription() != null && !repo.getDescription().isBlank()) {
+                String desc = repo.getDescription();
+                if (desc.length() > 100) {
+                    desc = desc.substring(0, 97) + "...";
+                }
+                value.append(desc);
+            }
+            value.append(" · ☆ ").append(repo.getStarsTotal());
+            if (repo.getLanguage() != null && !repo.getLanguage().isBlank()) {
+                value.append(" · ").append(repo.getLanguage());
+            }
+
+            embed.addField(name, value.toString(), false);
         }
 
         return embed;
