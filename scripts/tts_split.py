@@ -11,6 +11,8 @@ Output: JSON array of strings (utf-8)
 import json
 import re
 import sys
+import contextlib
+import io
 
 
 def naive_split(text: str):
@@ -33,10 +35,13 @@ def main():
         return
 
     try:
-        import kss  # type: ignore
+        # kss sometimes prints banners/logs to stdout depending on environment.
+        # Swallow any stdout noise so we always output a single JSON payload.
+        with contextlib.redirect_stdout(io.StringIO()):
+            import kss  # type: ignore
 
-        # kss can return list[str]
-        parts = kss.split_sentences(text)
+            # kss can return list[str]
+            parts = kss.split_sentences(text)
         out = [p.strip() for p in parts if p and str(p).strip()]
     except Exception:
         out = naive_split(text)

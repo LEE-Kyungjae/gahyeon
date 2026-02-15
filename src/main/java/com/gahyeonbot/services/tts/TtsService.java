@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -71,9 +72,10 @@ public class TtsService {
                 props.getKss().getPython(),
                 script
         );
-        pb.redirectErrorStream(true);
+        pb.redirectErrorStream(false);
         Process p = pb.start();
-        StreamGobbler gobbler = StreamGobbler.start(p.getInputStream());
+        StreamGobbler outGobbler = StreamGobbler.start(p.getInputStream());
+        StreamGobbler errGobbler = StreamGobbler.start(p.getErrorStream());
         try (var os = p.getOutputStream()) {
             os.write(text.getBytes(StandardCharsets.UTF_8));
         }
@@ -83,12 +85,20 @@ public class TtsService {
             p.destroyForcibly();
             throw new IllegalStateException("KSS splitter timeout");
         }
-        String output = gobbler.getOutput();
+        String stdout = outGobbler.getOutput();
+        String stderr = errGobbler.getOutput();
         if (p.exitValue() != 0) {
-            throw new IllegalStateException("KSS splitter failed: " + output);
+            throw new IllegalStateException("KSS splitter failed: " + stderr);
         }
 
-        return objectMapper.readValue(output, new TypeReference<>() {});
+        String json = extractJsonPayload(stdout).orElse(stdout);
+        try {
+            return objectMapper.readValue(json, new TypeReference<>() {});
+        } catch (Exception e) {
+            // Include both streams for diagnosis but keep it compact.
+            String msg = "KSS splitter returned non-JSON output. stdout=" + abbreviate(stdout) + " stderr=" + abbreviate(stderr);
+            throw new IllegalStateException(msg, e);
+        }
     }
 
     private Path synthesizeToWav(String text) throws Exception {
@@ -146,6 +156,29 @@ public class TtsService {
             throw new IllegalStateException("Piper produced empty audio");
         }
         return wav;
+    }
+
+    private static Optional<String> extractJsonPayload(String s) {
+        if (s == null) return Optional.empty();
+        int startArr = s.indexOf('[');
+        int endArr = s.lastIndexOf(']');
+        if (startArr >= 0 && endArr > startArr) {
+            return Optional.of(s.substring(startArr, endArr + 1).trim());
+        }
+        int startObj = s.indexOf('{');
+        int endObj = s.lastIndexOf('}');
+        if (startObj >= 0 && endObj > startObj) {
+            return Optional.of(s.substring(startObj, endObj + 1).trim());
+        }
+        return Optional.empty();
+    }
+
+    private static String abbreviate(String s) {
+        if (s == null) return "";
+        String t = s.replace("\n", "\\n").replace("\r", "\\r");
+        int max = 400;
+        if (t.length() <= max) return t;
+        return t.substring(0, max) + "...";
     }
 
     private static final class StreamGobbler implements Runnable {
