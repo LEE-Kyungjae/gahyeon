@@ -55,7 +55,7 @@ public class Weather extends AbstractCommand {
         // Discord slash commands require declared options to accept user input.
         // Keep it minimal: optional free-form query (e.g., "콜마르 다음주").
         return List.of(
-                new OptionData(OptionType.STRING, "query", "도시/날짜를 자연어로 입력 (예: 콜마르 다음주, 서울 내일)", false)
+                new OptionData(OptionType.STRING, "question", "도시/날짜를 자연어로 입력 (예: 콜마르 다음주, 서울 내일)", false)
         );
     }
 
@@ -71,7 +71,7 @@ public class Weather extends AbstractCommand {
         }
 
         try {
-            String query = event.getOption("query") != null ? event.getOption("query").getAsString() : null;
+            String query = event.getOption("question") != null ? event.getOption("question").getAsString() : null;
             String message;
 
             if (query == null || query.isBlank()) {
@@ -266,7 +266,7 @@ public class Weather extends AbstractCommand {
                 현재 지원 도시: %s
 
                 예) `/날씨`
-                예) `/날씨 query:콜마르 다음주`
+                예) `/날씨 question:콜마르 다음주`
                 """.formatted(query.trim(), supported).trim();
     }
 }

@@ -88,7 +88,7 @@ public class Gahyeona extends AbstractCommand {
                 String guide = """
                         날씨는 `/날씨`로 물어봐줘.
                         예) `/날씨`
-                        예) `/날씨 query:콜마르 다음주`
+                        예) `/날씨 question:콜마르 다음주`
                         """.trim();
                 event.getHook().editOriginalEmbeds(EmbedUtil.createInfoEmbed(guide).build()).complete();
                 return;
