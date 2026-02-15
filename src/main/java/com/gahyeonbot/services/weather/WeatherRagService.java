@@ -193,6 +193,68 @@ public class WeatherRagService {
         return context.toString().trim();
     }
 
+    /**
+     * 슬래시 커맨드(/날씨)에서 사용자에게 바로 보여줄 메시지 형태로 날씨 검색 결과를 반환합니다.
+     * 내부 RAG 메타(유사도, [RAG] 헤더 등)는 숨기고 chunk_text만 노출합니다.
+     */
+    @Transactional(readOnly = true)
+    public String searchWeatherMessage(String userQuestion) {
+        if (userQuestion == null || userQuestion.isBlank() || !isUsable()) {
+            return "";
+        }
+
+        Optional<City> mentionedCity = extractMentionedCity(userQuestion);
+        DateFilter dateFilter = extractDateFilter(userQuestion);
+        SourceTypeFilter sourceTypeFilter = extractSourceTypeFilter(userQuestion);
+
+        List<List<Double>> queryEmbedding = embedTexts(List.of(userQuestion));
+        if (queryEmbedding.isEmpty()) {
+            return "";
+        }
+
+        String vectorLiteral = toVectorLiteral(queryEmbedding.get(0));
+        String keywordQuery = toKeywordQuery(userQuestion);
+
+        List<RetrievedChunk> chunks = searchHybrid(
+                vectorLiteral,
+                keywordQuery,
+                mentionedCity.map(Enum::name).orElse(null),
+                sourceTypeFilter,
+                dateFilter
+        );
+
+        if (chunks.isEmpty() && mentionedCity.isPresent()) {
+            chunks = searchHybrid(
+                    vectorLiteral,
+                    keywordQuery,
+                    mentionedCity.get().name(),
+                    SourceTypeFilter.ANY,
+                    DateFilter.none()
+            );
+        }
+
+        if (chunks.isEmpty()) {
+            chunks = searchHybrid(
+                    vectorLiteral,
+                    keywordQuery,
+                    null,
+                    SourceTypeFilter.ANY,
+                    DateFilter.none()
+            );
+        }
+
+        if (chunks.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder out = new StringBuilder();
+        out.append("요청: ").append(userQuestion.trim()).append("\n\n");
+        for (RetrievedChunk chunk : chunks) {
+            out.append("- ").append(chunk.chunkText).append("\n");
+        }
+        return out.toString().trim();
+    }
+
     private List<RetrievedChunk> searchHybrid(
             String vectorLiteral,
             String keywordQuery,

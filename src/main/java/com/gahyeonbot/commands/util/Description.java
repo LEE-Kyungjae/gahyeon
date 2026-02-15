@@ -29,6 +29,11 @@ public class Description {
     public static final String GAHYEONA_DESC = "AI에게 질문하고 답변을 받습니다.";
     public static final String GAHYEONA_DETAIL = "OpenAI GPT를 사용하여 사용자의 질문에 대한 답변을 제공합니다. 질문은 1000자 이하로 입력해주세요.";
 
+    public static final String WEATHER_NAME = "weather";
+    public static final String WEATHER_NAME_KO = "날씨";
+    public static final String WEATHER_DESC = "현재 날씨와 예보를 확인합니다.";
+    public static final String WEATHER_DETAIL = "기본은 서울입니다. 예) /날씨, /날씨 query:콜마르 다음주";
+
     public static final String DM_OPTIN_NAME = "dm-optin";
     public static final String DM_OPTIN_NAME_KO = "dm수신";
     public static final String DM_OPTIN_DESC = "GitHub 트렌딩 다이제스트 DM 수신을 켭니다.";

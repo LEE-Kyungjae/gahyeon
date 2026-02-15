@@ -2,6 +2,7 @@ package com.gahyeonbot.commands.general;
 
 import com.gahyeonbot.commands.util.*;
 import com.gahyeonbot.services.ai.OpenAiService;
+import com.gahyeonbot.services.weather.City;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -11,6 +12,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -78,6 +80,17 @@ public class Gahyeona extends AbstractCommand {
 
             if (question == null || question.trim().isEmpty()) {
                 event.getHook().editOriginal("❌ 질문을 입력해주세요.").complete();
+                return;
+            }
+
+            // 날씨 질문은 /날씨로 분리 (AI 호출 없이 사용법만 안내)
+            if (looksLikeWeatherQuestion(question)) {
+                String guide = """
+                        날씨는 `/날씨`로 물어봐줘.
+                        예) `/날씨`
+                        예) `/날씨 query:콜마르 다음주`
+                        """.trim();
+                event.getHook().editOriginalEmbeds(EmbedUtil.createInfoEmbed(guide).build()).complete();
                 return;
             }
 
@@ -152,5 +165,83 @@ public class Gahyeona extends AbstractCommand {
             log.warn("응답 전송 실패 (InteractionHook 만료 가능) - 사용자: {}, 메시지: {}",
                     event.getUser().getName(), e.getMessage());
         }
+    }
+
+    private boolean looksLikeWeatherQuestion(String text) {
+        if (text == null) return false;
+        // Avoid false positives by requiring either explicit weather keywords,
+        // or (city mention + time/temperature hint).
+        String s = text.toLowerCase(Locale.ROOT);
+        String normalized = s.replaceAll("[\\s_\\-]", "");
+
+        boolean hasWeatherKeyword = normalized.contains("날씨")
+                || normalized.contains("예보")
+                || normalized.contains("forecast")
+                || normalized.contains("weather")
+                || normalized.contains("기온")
+                || normalized.contains("온도")
+                || normalized.contains("temperature")
+                || normalized.contains("강수")
+                || normalized.contains("비")
+                || normalized.contains("rain")
+                || normalized.contains("눈")
+                || normalized.contains("snow")
+                || normalized.contains("바람")
+                || normalized.contains("풍속")
+                || normalized.contains("wind");
+
+        boolean hasTimeKeyword = normalized.contains("오늘")
+                || normalized.contains("내일")
+                || normalized.contains("모레")
+                || normalized.contains("이번주")
+                || normalized.contains("다음주")
+                || normalized.contains("주말")
+                || normalized.contains("nextweek")
+                || normalized.contains("thisweek")
+                || normalized.contains("weekend")
+                || normalized.contains("monday")
+                || normalized.contains("tuesday")
+                || normalized.contains("wednesday")
+                || normalized.contains("thursday")
+                || normalized.contains("friday")
+                || normalized.contains("saturday")
+                || normalized.contains("sunday")
+                || normalized.contains("월요일")
+                || normalized.contains("화요일")
+                || normalized.contains("수요일")
+                || normalized.contains("목요일")
+                || normalized.contains("금요일")
+                || normalized.contains("토요일")
+                || normalized.contains("일요일")
+                || normalized.contains("월욜")
+                || normalized.contains("화욜")
+                || normalized.contains("수욜")
+                || normalized.contains("목욜")
+                || normalized.contains("금욜")
+                || normalized.contains("토욜")
+                || normalized.contains("일욜");
+
+        boolean hasTempHint = normalized.contains("도")
+                || normalized.contains("°c")
+                || normalized.matches(".*\\d+\\s*도.*")
+                || normalized.matches(".*\\d+\\s*°\\s*c.*");
+
+        boolean mentionsCity = mentionsAnyCity(normalized);
+
+        return hasWeatherKeyword || (mentionsCity && (hasTimeKeyword || hasTempHint));
+    }
+
+    private boolean mentionsAnyCity(String normalizedLowerNoSpaces) {
+        for (City city : City.values()) {
+            String ko = city.getKoreanName() != null ? city.getKoreanName().toLowerCase(Locale.ROOT) : "";
+            String code = city.name().toLowerCase(Locale.ROOT);
+            if (!ko.isBlank() && normalizedLowerNoSpaces.contains(ko.replaceAll("[\\s_\\-]", ""))) {
+                return true;
+            }
+            if (normalizedLowerNoSpaces.contains(code.replaceAll("[\\s_\\-]", ""))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

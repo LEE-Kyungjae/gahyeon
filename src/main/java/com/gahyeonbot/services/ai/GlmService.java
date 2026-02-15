@@ -30,9 +30,10 @@ public class GlmService {
     private static final String GLM_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
     private static final String GLM_MODEL = "glm-4-flash";
     private static final int MAX_TOKENS = 150;
-    private static final int DM_MAX_TOKENS = 220;
+    private static final int DM_MAX_TOKENS = 320;
     private static final int TRENDING_MAX_TOKENS = 300;
     private static final int README_SUMMARY_MAX_TOKENS = 260;
+    private static final int DM_MAX_CHARS = 220;
 
     private final AppCredentialsConfig appCredentialsConfig;
 
@@ -125,19 +126,26 @@ public class GlmService {
      */
     public String generatePeriodicDmMessage(Long userId, String conversationContext, String weatherContext) {
         if (!isEnabled) {
-            return "오늘도 좋은 하루 보내세요. 필요하면 가현이를 불러주세요.";
+            return "오늘도 무리하지 말고 천천히 해봐요. 필요하면 언제든 불러주세요.";
         }
 
         try {
             String systemPrompt = """
                     너는 디스코드 봇 '가현이'다.
-                    사용자에게 보내는 짧은 개인 메시지를 한국어로 작성해라.
+                    사용자에게 보내는 짧은 개인 메시지를 한국어(존댓말)로 작성해라.
                     조건:
-                    - 2~4문장
-                    - 220자 이내
-                    - 과장/광고/반말 지양
-                    - 위험하거나 민감한 조언 금지
-                    - 마지막 문장은 부드러운 응원 톤
+                    - 2~3문장
+                    - %d자 이내
+                    - 반말/유행어/과한 감탄사 금지 (예: 헐, ㅋㅋ, ㅠㅠ, !!!, ???)
+                    - 과장/광고/상투적 멘트 반복 금지
+                    - 위험하거나 민감한 조언 금지 (의학/법률/투자/연애상담 단정 금지)
+                    - 최근 대화 컨텍스트가 비어 있으면: 자연스러운 안부 + 가벼운 질문 1개
+                    - 날씨는 꼭 필요할 때만 한 번 짧게 언급 (비/눈/강풍 등 주의가 필요할 때). 억지로 끼우지 말 것.
+                    - 마지막 문장은 부드러운 응원 톤으로 마무리
+
+                    좋은 예시(문체만 참고, 그대로 복사 금지):
+                    1) "요즘 어떻게 지내고 계세요? 오늘은 컨디션 괜찮으신가요? 무리하지 말고 천천히 해봐요."
+                    2) "오늘 일정이 바쁘실까요? 잠깐이라도 쉬는 시간 챙기셨으면 좋겠어요. 오늘도 잘 해내실 거예요."
                     """;
 
             String userPrompt = """
@@ -152,8 +160,8 @@ public class GlmService {
                     위 정보를 참고해 오늘 보낼 개인 메시지 1개를 작성해줘.
                     """.formatted(
                     userId,
-                    truncate(conversationContext, 1200),
-                    truncate(weatherContext, 1000)
+                    truncate(conversationContext == null || conversationContext.isBlank() ? "(없음)" : conversationContext, 1200),
+                    truncate(weatherContext == null || weatherContext.isBlank() ? "(없음)" : weatherContext, 1000)
             );
 
             HttpHeaders headers = new HttpHeaders();
@@ -163,11 +171,11 @@ public class GlmService {
             Map<String, Object> requestBody = Map.of(
                     "model", GLM_MODEL,
                     "messages", List.of(
-                            Map.of("role", "system", "content", systemPrompt),
+                            Map.of("role", "system", "content", systemPrompt.formatted(DM_MAX_CHARS)),
                             Map.of("role", "user", "content", userPrompt)
                     ),
                     "max_tokens", DM_MAX_TOKENS,
-                    "temperature", 0.7
+                    "temperature", 0.5
             );
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
@@ -181,15 +189,36 @@ public class GlmService {
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 String content = extractContent(response.getBody());
                 if (content != null && !content.isBlank()) {
-                    return truncate(content.trim(), 500);
+                    String sanitized = sanitizeDm(content.trim());
+                    return truncate(sanitized, DM_MAX_CHARS);
                 }
             }
 
-            return "안녕하세요. 오늘도 무리하지 말고 천천히 해봐요. 필요하면 언제든 저를 불러주세요.";
+            return "오늘은 어떻게 지내고 계세요? 잠깐이라도 쉬는 시간 챙기셨으면 좋겠어요. 오늘도 잘 해내실 거예요.";
         } catch (Exception e) {
             log.warn("GLM 개인 메시지 생성 실패 - userId: {}, reason: {}", userId, e.getMessage());
-            return "오늘도 수고 많았어요. 잠깐 쉬어가면서 하루를 정리해봐요.";
+            return "오늘도 수고 많으셨어요. 잠깐 숨 고르고 물 한 잔 챙겨보세요. 무리하지 않으셨으면 좋겠어요.";
         }
+    }
+
+    /**
+     * 정기 DM은 캐주얼 감탄/특수문자 톤이 섞이면 어색해져서 간단 후처리를 합니다.
+     */
+    private String sanitizeDm(String text) {
+        if (text == null) return null;
+        String s = text;
+        // 과한 감탄/채팅 표현 제거 (프롬프트로도 막지만 안전장치로 한 번 더)
+        s = s.replace("헐", "");
+        s = s.replace("ㅋㅋㅋ", "");
+        s = s.replace("ㅋㅋ", "");
+        s = s.replace("ㅠㅠ", "");
+        s = s.replace("ㅜㅜ", "");
+        s = s.replace("!!!", "!");
+        s = s.replace("???", "?");
+        // 공백 정리
+        s = s.replaceAll("[ \\t\\x0B\\f\\r]+", " ");
+        s = s.replaceAll("\\n{3,}", "\n\n");
+        return s.trim();
     }
 
     /**

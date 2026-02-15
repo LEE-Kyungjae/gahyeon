@@ -243,26 +243,12 @@ public class OpenAiService {
             log.warn("대화 컨텍스트 로드 실패 - 무시하고 계속 진행", e);
         }
 
-        // 10-1. 날씨 컨텍스트 빌드
-        String weatherContext = "";
-        try {
-            weatherContext = weatherRagService.searchWeatherContext(userMessage);
-            if (weatherContext.isEmpty()) {
-                weatherContext = weatherService.getWeatherContext();
-            }
-        } catch (Exception e) {
-            log.warn("날씨 컨텍스트 로드 실패 - 무시하고 계속 진행", e);
-        }
-
         // 11. OpenAI API 호출
         try {
             log.info("OpenAI 요청 시작 - 사용자: {}, 메시지 길이: {} 문자", username, userMessage.length());
 
-            // 컨텍스트 조합: 날씨 + 대화 히스토리 + 현재 질문
+            // 컨텍스트 조합: 대화 히스토리 + 현재 질문
             StringBuilder contextBuilder = new StringBuilder();
-            if (!weatherContext.isEmpty()) {
-                contextBuilder.append(weatherContext).append("\n\n");
-            }
             if (!conversationContext.isEmpty()) {
                 contextBuilder.append(conversationContext).append("\n\n");
             }
