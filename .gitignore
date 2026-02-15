@@ -38,3 +38,7 @@ KakaoTalk_*.csv
 gahyeon_analysis/
 scripts/analyze_*.py
 scripts/extract_*.py
+
+# Local agent config
+.claude/
+CLAUDE.md
