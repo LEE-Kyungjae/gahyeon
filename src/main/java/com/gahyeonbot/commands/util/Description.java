@@ -87,6 +87,11 @@ public class Description {
         """;
 
     //노래 API
+    public static final String MUSIC_NAME = "music";
+    public static final String MUSIC_NAME_KO = "뮤직";
+    public static final String MUSIC_DESC = "음악 재생/대기열을 한 번에 제어합니다.";
+    public static final String MUSIC_DETAIL = "예) /뮤직 action:추가 query:노래제목, /뮤직 action:대기열";
+
     public static final String ADD_NAME = "music-add";
     public static final String ADD_NAME_KO = "뮤직추가";
     public static final String ADD_DESC = "노래를 추가합니다.";

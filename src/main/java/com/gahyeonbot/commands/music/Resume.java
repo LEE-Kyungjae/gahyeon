@@ -5,8 +5,6 @@ import com.gahyeonbot.core.audio.GuildMusicManager;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +15,6 @@ import java.util.Map;
  * @author GahyeonBot Team
  * @version 1.0
  */
-@Component
 public class Resume extends AbstractCommand {
     private final Map<Long, GuildMusicManager> musicManagers;
 
