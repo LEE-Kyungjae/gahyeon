@@ -16,6 +16,9 @@ public enum City {
     // 한국
     SEOUL("서울", "한국", 37.5665, 126.9780, "Asia/Seoul"),
 
+    // 아이슬란드
+    REYKJAVIK("레이캬비크", "아이슬란드", 64.1466, -21.9426, "Atlantic/Reykjavik"),
+
     // 프랑스
     PARIS("파리", "프랑스", 48.8566, 2.3522, "auto"),
     COLMAR("콜마르", "프랑스", 48.0793, 7.3585, "auto"),

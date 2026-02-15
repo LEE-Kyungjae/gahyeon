@@ -509,6 +509,10 @@ public class WeatherRagService {
 
     private Optional<City> extractMentionedCity(String question) {
         String normalized = normalize(question);
+        // Country-level alias: treat "아이슬란드/Iceland" as Reykjavik (single supported city for the country)
+        if (normalized.contains("아이슬란드") || normalized.contains("iceland")) {
+            return Optional.of(City.REYKJAVIK);
+        }
         for (City city : City.values()) {
             String korean = normalize(city.getKoreanName());
             String english = normalize(city.name());
