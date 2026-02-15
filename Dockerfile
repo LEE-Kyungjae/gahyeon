@@ -9,7 +9,8 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # Python deps for offline sentence splitting + TTS synthesis.
-RUN pip3 install --no-cache-dir kss piper-tts
+# piper-tts CLI import needs pathvalidate in some versions/environments; install explicitly for safety.
+RUN pip3 install --no-cache-dir kss piper-tts pathvalidate
 
 # 2. Build Arguments
 ARG JAR_FILE=build/libs/gahyeonbot-1.0.0.jar
