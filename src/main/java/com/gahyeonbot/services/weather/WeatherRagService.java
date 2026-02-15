@@ -519,6 +519,17 @@ public class WeatherRagService {
         return Optional.empty();
     }
 
+    /**
+     * 사용자 질의에서 지원하는 도시가 언급되었는지 확인합니다.
+     * (/날씨 커맨드에서 "지원하지 않는 도시" 안내 분기를 위해 사용)
+     */
+    public Optional<City> tryExtractMentionedCity(String question) {
+        if (question == null || question.isBlank()) {
+            return Optional.empty();
+        }
+        return extractMentionedCity(question);
+    }
+
     private String normalize(String value) {
         return value.toLowerCase()
                 .replaceAll("[\\s_\\-]", "");

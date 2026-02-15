@@ -3,6 +3,7 @@ package com.gahyeonbot.commands.general;
 import com.gahyeonbot.commands.util.AbstractCommand;
 import com.gahyeonbot.commands.util.Description;
 import com.gahyeonbot.commands.util.EmbedUtil;
+import com.gahyeonbot.services.weather.City;
 import com.gahyeonbot.services.weather.WeatherRagService;
 import com.gahyeonbot.services.weather.WeatherService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -72,9 +74,14 @@ public class Weather extends AbstractCommand {
                 // 기본: 서울 포함 전체 컨텍스트(현재 + 7일 예보 + 여행지 요약)
                 message = weatherService.getWeatherContext();
             } else {
+                // 지원하지 않는 도시를 물으면 엉뚱한 RAG 결과가 나올 수 있으니 먼저 안내
+                if (looksLikeWeatherQuery(query) && weatherRagService.tryExtractMentionedCity(query).isEmpty()) {
+                    message = buildUnsupportedCityMessage(query);
+                } else {
                 message = weatherRagService.searchWeatherMessage(query);
                 if (message.isBlank()) {
                     message = "해당 질문으로는 날씨 정보를 찾지 못했어. 기본 날씨를 보여줄게.\n\n" + weatherService.getWeatherContext();
+                }
                 }
             }
 
@@ -92,5 +99,31 @@ public class Weather extends AbstractCommand {
             }
         }
     }
-}
 
+    private boolean looksLikeWeatherQuery(String text) {
+        String s = text == null ? "" : text.toLowerCase();
+        return s.contains("날씨")
+                || s.contains("예보")
+                || s.contains("기온")
+                || s.contains("온도")
+                || s.contains("강수")
+                || s.contains("weather")
+                || s.contains("forecast")
+                || s.contains("temperature");
+    }
+
+    private String buildUnsupportedCityMessage(String query) {
+        String supported = java.util.Arrays.stream(City.values())
+                .map(c -> c.getKoreanName() + "(" + c.getCountry() + ")")
+                .collect(Collectors.joining(", "));
+
+        return """
+                아직 지원하지 않는 도시야: %s
+
+                현재 지원 도시: %s
+
+                예) `/날씨`
+                예) `/날씨 query:콜마르 다음주`
+                """.formatted(query.trim(), supported).trim();
+    }
+}
