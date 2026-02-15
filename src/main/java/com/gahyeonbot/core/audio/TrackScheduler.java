@@ -5,10 +5,12 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
+import com.gahyeonbot.services.tts.TtsTrackMetadata;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.nio.file.Files;
 
 /**
  * 음악 트랙 스케줄링을 관리하는 클래스.
@@ -102,11 +104,24 @@ public class TrackScheduler extends AudioEventAdapter {
      */
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
+        cleanupIfTts(track);
         if (endReason.mayStartNext) {
             nextTrack();
         } else {
             System.out.println("트랙 종료: " + track.getInfo().title + " (이유: " + endReason + ")");
             nextTrack();
+        }
+    }
+
+    private void cleanupIfTts(AudioTrack track) {
+        if (track == null) return;
+        Object data = track.getUserData();
+        if (data instanceof TtsTrackMetadata meta && meta.deleteOnEnd() && meta.wavPath() != null) {
+            try {
+                Files.deleteIfExists(meta.wavPath());
+            } catch (Exception ignored) {
+                // Best-effort cleanup.
+            }
         }
     }
 }

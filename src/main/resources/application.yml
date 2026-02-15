@@ -65,6 +65,21 @@ weather:
     vector-weight: ${WEATHER_RAG_VECTOR_WEIGHT:0.75}
     text-weight: ${WEATHER_RAG_TEXT_WEIGHT:0.25}
 
+tts:
+  enabled: ${TTS_ENABLED:true}
+  max-chars: ${TTS_MAX_CHARS:400}
+  segment-max-chars: ${TTS_SEGMENT_MAX_CHARS:120}
+  timeout-seconds: ${TTS_TIMEOUT_SECONDS:20}
+  piper:
+    # Default: Piper Korean voice "ko_KR-kss-medium" (preloaded in Dockerfile by default).
+    model: ${TTS_PIPER_MODEL:ko_KR-kss-medium}
+    config: ${TTS_PIPER_CONFIG:}
+    data-dir: ${TTS_PIPER_DATA_DIR:/app/piper_data}
+    bin: ${TTS_PIPER_BIN:piper}
+  kss:
+    python: ${TTS_PYTHON:python3}
+    script: ${TTS_KSS_SCRIPT:/app/tts_split.py}
+
 notifications:
   dm:
     enabled: ${NOTIFICATIONS_DM_ENABLED:true}
