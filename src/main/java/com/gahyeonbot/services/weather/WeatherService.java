@@ -49,6 +49,14 @@ public class WeatherService {
     private final Map<City, WeatherData> weatherCache = new ConcurrentHashMap<>();
     private LocalDateTime cacheTime;
 
+    // Ops/health visibility
+    private volatile LocalDateTime lastCurrentAttemptAt;
+    private volatile LocalDateTime lastCurrentSuccessAt;
+    private volatile String lastCurrentError;
+    private volatile LocalDateTime lastForecastAttemptAt;
+    private volatile LocalDateTime lastForecastSuccessAt;
+    private volatile String lastForecastError;
+
     @PostConstruct
     public void initialize() {
         this.restTemplate = new RestTemplate();
@@ -258,6 +266,8 @@ public class WeatherService {
      */
     @Transactional
     public void fetchAllCitiesWeather() {
+        lastCurrentAttemptAt = LocalDateTime.now();
+        lastCurrentError = null;
         int successCount = 0;
         int failCount = 0;
 
@@ -275,11 +285,15 @@ public class WeatherService {
                 Thread.sleep(100);
             } catch (Exception e) {
                 log.error("현재 날씨 조회 실패 - {}: {}", city.getKoreanName(), e.getMessage());
+                lastCurrentError = e.getMessage();
                 failCount++;
             }
         }
 
         this.cacheTime = LocalDateTime.now();
+        if (successCount > 0) {
+            lastCurrentSuccessAt = cacheTime;
+        }
         log.info("현재 날씨 업데이트 완료 - 성공: {}, 실패: {}", successCount, failCount);
     }
 
@@ -288,6 +302,8 @@ public class WeatherService {
      */
     @Transactional
     public void fetchAllCitiesForecasts() {
+        lastForecastAttemptAt = LocalDateTime.now();
+        lastForecastError = null;
         int successCount = 0;
         int failCount = 0;
 
@@ -304,11 +320,147 @@ public class WeatherService {
                 Thread.sleep(100);
             } catch (Exception e) {
                 log.error("예보 조회 실패 - {}: {}", city.getKoreanName(), e.getMessage());
+                lastForecastError = e.getMessage();
                 failCount++;
             }
         }
 
+        if (successCount > 0) {
+            lastForecastSuccessAt = LocalDateTime.now();
+        }
         log.info("예보 업데이트 완료 - 성공: {}, 실패: {}", successCount, failCount);
+    }
+
+    public LocalDateTime getLastCurrentAttemptAt() {
+        return lastCurrentAttemptAt;
+    }
+
+    public LocalDateTime getLastCurrentSuccessAt() {
+        return lastCurrentSuccessAt;
+    }
+
+    public String getLastCurrentError() {
+        return lastCurrentError;
+    }
+
+    public LocalDateTime getLastForecastAttemptAt() {
+        return lastForecastAttemptAt;
+    }
+
+    public LocalDateTime getLastForecastSuccessAt() {
+        return lastForecastSuccessAt;
+    }
+
+    public String getLastForecastError() {
+        return lastForecastError;
+    }
+
+    public Optional<WeatherData> getLatestWeather(City city) {
+        if (city == null) return Optional.empty();
+        WeatherData cached = weatherCache.get(city);
+        if (cached != null) {
+            return Optional.of(cached);
+        }
+        return weatherRepository.findLatestByCity(city.name());
+    }
+
+    public String buildCurrentWeatherMessage(City city) {
+        City c = city != null ? city : City.SEOUL;
+        Optional<WeatherData> dataOpt = getLatestWeather(c);
+        if (dataOpt.isEmpty()) {
+            return c.getDisplayName() + " 현재 날씨 데이터를 찾지 못했어.";
+        }
+
+        WeatherData w = dataOpt.get();
+        return String.format(
+                "%s 현재 날씨: %.1f°C, %s, 강수량 %.1fmm, 강수확률 %d%%, 풍속 %.1fkm/h\n(관측: %s)",
+                w.getCityName() + "(" + w.getCountry() + ")",
+                w.getTemperature(),
+                w.getWeatherDescription(),
+                w.getPrecipitation(),
+                w.getPrecipitationProbability() != null ? w.getPrecipitationProbability() : 0,
+                w.getWindSpeed(),
+                w.getFetchedAt()
+        );
+    }
+
+    public String buildForecastMessage(City city, LocalDate startDate, LocalDate endDate) {
+        City c = city != null ? city : City.SEOUL;
+        LocalDate today = LocalDate.now();
+        LocalDate start = startDate != null ? startDate : today;
+        LocalDate end = endDate != null ? endDate : start.plusDays(6);
+        if (end.isBefore(start)) {
+            LocalDate tmp = start;
+            start = end;
+            end = tmp;
+        }
+
+        // Open-Meteo 16-day forecast: clamp to avoid asking for ranges we won't have.
+        LocalDate maxEnd = today.plusDays(15);
+        if (end.isAfter(maxEnd)) {
+            end = maxEnd;
+        }
+
+        List<WeatherForecast> forecasts = getSmartForecasts(c, start, end);
+        if (forecasts.isEmpty()) {
+            return c.getDisplayName() + " 예보 데이터를 찾지 못했어.";
+        }
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("M/d(E)", Locale.KOREAN);
+        LocalDate first = start;
+        LocalDate last = end;
+
+        double minMin = forecasts.stream().mapToDouble(WeatherForecast::getTempMin).min().orElse(Double.NaN);
+        double maxMax = forecasts.stream().mapToDouble(WeatherForecast::getTempMax).max().orElse(Double.NaN);
+        int maxPop = forecasts.stream()
+                .map(f -> f.getPrecipitationProbability() != null ? f.getPrecipitationProbability() : 0)
+                .max(Integer::compareTo)
+                .orElse(0);
+        Optional<WeatherForecast> popDay = forecasts.stream()
+                .max(Comparator.comparingInt(f -> f.getPrecipitationProbability() != null ? f.getPrecipitationProbability() : 0));
+
+        LocalDateTime latestFetched = forecasts.stream()
+                .map(WeatherForecast::getFetchedAt)
+                .filter(Objects::nonNull)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("%s 예보 (%s~%s)\n",
+                c.getDisplayName(),
+                first.format(fmt),
+                last.format(fmt)));
+        sb.append(String.format("요약: %.0f~%.0f°C", minMin, maxMax));
+        if (popDay.isPresent()) {
+            WeatherForecast f = popDay.get();
+            sb.append(String.format(", 강수확률 최고 %d%%(%s)", maxPop, f.getForecastDate().format(fmt)));
+        }
+        if (latestFetched != null) {
+            sb.append(String.format("\n(데이터: %s)", latestFetched));
+        }
+        sb.append("\n\n");
+
+        // Print day-by-day in the requested window. Fill missing days explicitly.
+        Map<LocalDate, WeatherForecast> byDate = new HashMap<>();
+        for (WeatherForecast f : forecasts) {
+            byDate.put(f.getForecastDate(), f);
+        }
+        for (LocalDate d = start; !d.isAfter(end); d = d.plusDays(1)) {
+            WeatherForecast f = byDate.get(d);
+            if (f == null) {
+                sb.append(String.format("- %s: 데이터 없음\n", d.format(fmt)));
+                continue;
+            }
+            int pop = f.getPrecipitationProbability() != null ? f.getPrecipitationProbability() : 0;
+            sb.append(String.format("- %s: %s %.0f~%.0f°C 강수확률%d%%\n",
+                    d.format(fmt),
+                    f.getWeatherDescription(),
+                    f.getTempMin(),
+                    f.getTempMax(),
+                    pop));
+        }
+
+        return sb.toString().trim();
     }
 
     /**

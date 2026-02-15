@@ -1,6 +1,7 @@
 package com.gahyeonbot.controllers;
 
 import com.gahyeonbot.core.BotInitializerRunner;
+import com.gahyeonbot.services.weather.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ public class HealthController {
 
     private final DataSource dataSource;
     private final BotInitializerRunner botRunner;
+    private final WeatherService weatherService;
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
@@ -44,6 +46,14 @@ public class HealthController {
         } else {
             result.put("bot", botRunner.getShardManager() != null ? "UP" : "DISABLED");
         }
+
+        // Weather update visibility (should not block readiness)
+        result.put("weatherCurrentLastAttemptAt", weatherService.getLastCurrentAttemptAt());
+        result.put("weatherCurrentLastSuccessAt", weatherService.getLastCurrentSuccessAt());
+        result.put("weatherCurrentLastError", weatherService.getLastCurrentError());
+        result.put("weatherForecastLastAttemptAt", weatherService.getLastForecastAttemptAt());
+        result.put("weatherForecastLastSuccessAt", weatherService.getLastForecastSuccessAt());
+        result.put("weatherForecastLastError", weatherService.getLastForecastError());
 
         result.put("status", ready ? "UP" : "STARTING");
         return ready

@@ -14,7 +14,11 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.springframework.stereotype.Component;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -74,15 +78,7 @@ public class Weather extends AbstractCommand {
                 // 기본: 서울 포함 전체 컨텍스트(현재 + 7일 예보 + 여행지 요약)
                 message = weatherService.getWeatherContext();
             } else {
-                // 지원하지 않는 도시를 물으면 엉뚱한 RAG 결과가 나올 수 있으니 먼저 안내
-                if (looksLikeWeatherQuery(query) && weatherRagService.tryExtractMentionedCity(query).isEmpty()) {
-                    message = buildUnsupportedCityMessage(query);
-                } else {
-                message = weatherRagService.searchWeatherMessage(query);
-                if (message.isBlank()) {
-                    message = "해당 질문으로는 날씨 정보를 찾지 못했어. 기본 날씨를 보여줄게.\n\n" + weatherService.getWeatherContext();
-                }
-                }
+                message = buildWeatherMessageFromQuery(query);
             }
 
             // Embed description limit is generous, but keep it safe for Discord clients.
@@ -110,6 +106,153 @@ public class Weather extends AbstractCommand {
                 || s.contains("weather")
                 || s.contains("forecast")
                 || s.contains("temperature");
+    }
+
+    private String buildWeatherMessageFromQuery(String query) {
+        String q = query.trim();
+        String normalized = q.toLowerCase(Locale.ROOT).replaceAll("[\\s_\\-]", "");
+
+        var cityOpt = weatherRagService.tryExtractMentionedCity(q);
+        City city = cityOpt.orElse(City.SEOUL);
+
+        // If the user explicitly wrote "<place> 날씨" and <place> isn't supported, show a helpful message.
+        String locationHint = extractLocationHint(q);
+        if (looksLikeWeatherQuery(q)
+                && cityOpt.isEmpty()
+                && locationHint != null
+                && !isTimeWordOnly(locationHint)) {
+            return buildUnsupportedCityMessage(locationHint);
+        }
+
+        DateRange range = parseDateRange(normalized);
+        boolean wantsCurrent = normalized.contains("지금")
+                || normalized.contains("현재")
+                || normalized.contains("now");
+
+        boolean wantsForecast = normalized.contains("예보")
+                || normalized.contains("forecast")
+                || range != null;
+
+        if (wantsForecast) {
+            LocalDate start = range != null ? range.start : LocalDate.now();
+            LocalDate end = range != null ? range.end : LocalDate.now().plusDays(6);
+            String msg = weatherService.buildForecastMessage(city, start, end);
+            if (msg.contains("찾지 못했어")) {
+                // Fallback to RAG if DB doesn't have enough yet.
+                String rag = weatherRagService.searchWeatherMessage(q);
+                return rag.isBlank() ? msg : rag;
+            }
+            return msg;
+        }
+
+        if (wantsCurrent) {
+            return weatherService.buildCurrentWeatherMessage(city);
+        }
+
+        // Default: show current + 7-day for the resolved city.
+        return weatherService.buildCurrentWeatherMessage(city)
+                + "\n\n"
+                + weatherService.buildForecastMessage(city, LocalDate.now(), LocalDate.now().plusDays(6));
+    }
+
+    private String extractLocationHint(String query) {
+        String q = query.trim();
+        String lower = q.toLowerCase(Locale.ROOT);
+
+        int idx = lower.indexOf("날씨");
+        if (idx <= 0) {
+            idx = lower.indexOf("weather");
+        }
+        if (idx <= 0) {
+            return null;
+        }
+
+        String candidate = q.substring(0, idx).trim();
+        candidate = candidate.replaceAll("[\"'`]", "").trim();
+        if (candidate.isBlank()) {
+            return null;
+        }
+
+        // If it's a long phrase, use the last token (e.g., "다음주 아이슬란드" -> "아이슬란드").
+        String[] parts = candidate.split("\\s+");
+        String last = parts[parts.length - 1].trim();
+        if (last.isBlank()) {
+            return null;
+        }
+        // Strip common particles.
+        last = last.replaceAll("(의|에서|에|로|으로)$", "");
+        return last.isBlank() ? null : last;
+    }
+
+    private boolean isTimeWordOnly(String s) {
+        String n = s.toLowerCase(Locale.ROOT).replaceAll("[\\s_\\-]", "");
+        return n.contains("오늘")
+                || n.contains("내일")
+                || n.contains("모레")
+                || n.contains("이번주")
+                || n.contains("다음주")
+                || n.contains("주말")
+                || n.contains("thisweek")
+                || n.contains("nextweek")
+                || n.contains("weekend");
+    }
+
+    private record DateRange(LocalDate start, LocalDate end) {}
+
+    private DateRange parseDateRange(String normalizedLowerNoSpaces) {
+        LocalDate today = LocalDate.now();
+        if (normalizedLowerNoSpaces.contains("오늘") || normalizedLowerNoSpaces.contains("today")) {
+            return new DateRange(today, today);
+        }
+        if (normalizedLowerNoSpaces.contains("내일") || normalizedLowerNoSpaces.contains("tomorrow")) {
+            LocalDate d = today.plusDays(1);
+            return new DateRange(d, d);
+        }
+        if (normalizedLowerNoSpaces.contains("모레")) {
+            LocalDate d = today.plusDays(2);
+            return new DateRange(d, d);
+        }
+        if (normalizedLowerNoSpaces.contains("주말") || normalizedLowerNoSpaces.contains("weekend")) {
+            LocalDate sat = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY));
+            LocalDate sun = sat.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+            return new DateRange(sat, sun);
+        }
+        if (normalizedLowerNoSpaces.contains("다음주") || normalizedLowerNoSpaces.contains("nextweek")) {
+            LocalDate start = today.with(TemporalAdjusters.next(DayOfWeek.MONDAY));
+            return new DateRange(start, start.plusDays(6));
+        }
+        if (normalizedLowerNoSpaces.contains("이번주") || normalizedLowerNoSpaces.contains("thisweek") || normalizedLowerNoSpaces.contains("주간")) {
+            LocalDate start = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+            return new DateRange(start, start.plusDays(6));
+        }
+
+        DayOfWeek weekday = extractWeekday(normalizedLowerNoSpaces);
+        if (weekday != null) {
+            LocalDate d;
+            if (normalizedLowerNoSpaces.contains("다음주") || normalizedLowerNoSpaces.contains("nextweek")) {
+                LocalDate weekStart = today.with(TemporalAdjusters.next(DayOfWeek.MONDAY));
+                d = weekStart.with(TemporalAdjusters.nextOrSame(weekday));
+            } else if (normalizedLowerNoSpaces.contains("이번주") || normalizedLowerNoSpaces.contains("thisweek")) {
+                LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+                d = weekStart.with(TemporalAdjusters.nextOrSame(weekday));
+            } else {
+                d = today.with(TemporalAdjusters.nextOrSame(weekday));
+            }
+            return new DateRange(d, d);
+        }
+
+        return null;
+    }
+
+    private DayOfWeek extractWeekday(String normalizedLowerNoSpaces) {
+        if (normalizedLowerNoSpaces.contains("월요일") || normalizedLowerNoSpaces.contains("월욜") || normalizedLowerNoSpaces.contains("monday")) return DayOfWeek.MONDAY;
+        if (normalizedLowerNoSpaces.contains("화요일") || normalizedLowerNoSpaces.contains("화욜") || normalizedLowerNoSpaces.contains("tuesday")) return DayOfWeek.TUESDAY;
+        if (normalizedLowerNoSpaces.contains("수요일") || normalizedLowerNoSpaces.contains("수욜") || normalizedLowerNoSpaces.contains("wednesday")) return DayOfWeek.WEDNESDAY;
+        if (normalizedLowerNoSpaces.contains("목요일") || normalizedLowerNoSpaces.contains("목욜") || normalizedLowerNoSpaces.contains("thursday")) return DayOfWeek.THURSDAY;
+        if (normalizedLowerNoSpaces.contains("금요일") || normalizedLowerNoSpaces.contains("금욜") || normalizedLowerNoSpaces.contains("friday")) return DayOfWeek.FRIDAY;
+        if (normalizedLowerNoSpaces.contains("토요일") || normalizedLowerNoSpaces.contains("토욜") || normalizedLowerNoSpaces.contains("saturday")) return DayOfWeek.SATURDAY;
+        if (normalizedLowerNoSpaces.contains("일요일") || normalizedLowerNoSpaces.contains("일욜") || normalizedLowerNoSpaces.contains("sunday")) return DayOfWeek.SUNDAY;
+        return null;
     }
 
     private String buildUnsupportedCityMessage(String query) {
