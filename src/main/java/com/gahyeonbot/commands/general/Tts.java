@@ -2,7 +2,6 @@ package com.gahyeonbot.commands.general;
 
 import com.gahyeonbot.commands.util.AbstractCommand;
 import com.gahyeonbot.commands.util.Description;
-import com.gahyeonbot.commands.util.EmbedUtil;
 import com.gahyeonbot.commands.util.ResponseUtil;
 import com.gahyeonbot.core.audio.GuildMusicManager;
 import com.gahyeonbot.services.music.MusicService;
@@ -101,8 +100,6 @@ public class Tts extends AbstractCommand {
             return;
         }
 
-        ResponseUtil.replyEphemeralEmbed(event, EmbedUtil.createInfoEmbed("가현이가 읽어줄게. 잠깐만..."));
-
         List<Path> wavs;
         try {
             wavs = ttsService.synthesizeSegmentsToWav(text);
@@ -130,14 +127,8 @@ public class Tts extends AbstractCommand {
                 // Mark for cleanup.
                 track.setUserData(new TtsTrackMetadata(wav, true));
 
-                boolean immediate = musicManager.playOrQueueTrack(track);
-                if (firstQueued.compareAndSet(false, true)) {
-                    if (immediate) {
-                        ResponseUtil.replyEmbed(event, EmbedUtil.createNormalEmbed("읽기 시작할게."));
-                    } else {
-                        ResponseUtil.replyEmbed(event, EmbedUtil.createNormalEmbed("대기열에 넣어둘게."));
-                    }
-                }
+                musicManager.playOrQueueTrack(track);
+                firstQueued.compareAndSet(false, true);
             }
 
             @Override
@@ -169,4 +160,3 @@ public class Tts extends AbstractCommand {
         });
     }
 }
-
