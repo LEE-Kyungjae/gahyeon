@@ -38,6 +38,7 @@ DRAIN_TARGET_FILE="${DRAIN_TARGET_FILE:-/tmp/gahyeonbot-drain.target}"
 ACTIVE_UPSTREAM_CONF="${ACTIVE_UPSTREAM_CONF:-/etc/nginx/conf.d/gahyeonbot-upstream.conf}"
 NGINX_RELOAD_CMD="${NGINX_RELOAD_CMD:-sudo nginx -s reload}"
 POST_SWITCH_HEALTH_TIMEOUT="${POST_SWITCH_HEALTH_TIMEOUT:-120}"
+BOT_SINGLETON_MODE="${BOT_SINGLETON_MODE:-true}"
 
 require_env() {
   local name="$1"
@@ -297,8 +298,19 @@ done
 echo "Switching active upstream to ${TARGET}..."
 set_active_upstream "${TARGET}"
 
-# 기존 환경은 1시간 드레인 대기
-schedule_drain "${PREVIOUS_CONTAINER}"
+# 기존 환경 처리:
+# - BOT_SINGLETON_MODE=true (default): 이전 컨테이너 즉시 중지/삭제
+#   Discord bot 리더십 락 충돌 방지.
+# - false: 기존 드레인 정책 유지.
+if [[ "${BOT_SINGLETON_MODE}" == "true" ]]; then
+  cancel_drain
+  echo "BOT_SINGLETON_MODE=true: stopping previous container immediately (${PREVIOUS_CONTAINER})..."
+  docker stop "${PREVIOUS_CONTAINER}" >/dev/null 2>&1 || true
+  docker rm "${PREVIOUS_CONTAINER}" >/dev/null 2>&1 || true
+else
+  echo "BOT_SINGLETON_MODE=false: keeping previous container with drain scheduling."
+  schedule_drain "${PREVIOUS_CONTAINER}"
+fi
 
 # 전환 이후 헬스 체크 실패 시 자동 롤백
 if ! post_switch_health_check "${TARGET_PORT}"; then
