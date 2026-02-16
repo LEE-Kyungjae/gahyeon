@@ -27,8 +27,8 @@ COPY scripts/tts_split.py /app/tts_split.py
 # Bundle community Korean female model (neurlang/piper-onnx-kss-korean).
 # You can override all values at build time if you want to swap model later.
 ARG TTS_MODEL_REPO=https://huggingface.co/neurlang/piper-onnx-kss-korean/resolve/main
-ARG TTS_MODEL_FILE=ko_KR-kss-medium.onnx
-ARG TTS_MODEL_CONFIG_FILE=ko_KR-kss-medium.onnx.json
+ARG TTS_MODEL_FILE=piper-kss-korean.onnx
+ARG TTS_MODEL_CONFIG_FILE=piper-kss-korean.onnx.json
 ENV TTS_MODEL_DIR=/app/tts_models
 RUN mkdir -p "$TTS_MODEL_DIR" \
   && curl -fL "$TTS_MODEL_REPO/$TTS_MODEL_FILE" -o "$TTS_MODEL_DIR/$TTS_MODEL_FILE" \

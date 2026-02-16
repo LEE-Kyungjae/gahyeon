@@ -72,8 +72,8 @@ tts:
   timeout-seconds: ${TTS_TIMEOUT_SECONDS:20}
   piper:
     # Default: Korean female model bundled in Docker image.
-    model: ${TTS_PIPER_MODEL:/app/tts_models/ko_KR-kss-medium.onnx}
-    config: ${TTS_PIPER_CONFIG:/app/tts_models/ko_KR-kss-medium.onnx.json}
+    model: ${TTS_PIPER_MODEL:/app/tts_models/piper-kss-korean.onnx}
+    config: ${TTS_PIPER_CONFIG:/app/tts_models/piper-kss-korean.onnx.json}
     data-dir: ${TTS_PIPER_DATA_DIR:/app/piper_data}
     bin: ${TTS_PIPER_BIN:piper}
   kss:
