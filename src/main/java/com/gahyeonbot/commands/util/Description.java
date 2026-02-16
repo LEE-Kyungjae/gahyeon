@@ -42,7 +42,7 @@ public class Description {
     public static final String DM_OPTIN_NAME = "dm-optin";
     public static final String DM_OPTIN_NAME_KO = "dm수신";
     public static final String DM_OPTIN_DESC = "GitHub 트렌딩 다이제스트 DM 수신을 켭니다.";
-    public static final String DM_OPTIN_DETAIL = "매일 오전 5시(KST) GitHub 트렌딩 레포 요약을 DM으로 받습니다.";
+    public static final String DM_OPTIN_DETAIL = "매일 오전 7시(KST) GitHub 트렌딩 레포 요약을 DM으로 받습니다.";
 
     public static final String DM_OPTOUT_NAME = "dm-optout";
     public static final String DM_OPTOUT_NAME_KO = "dm거부";

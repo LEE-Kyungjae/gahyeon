@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Zhipu AI GLM-4-flash API 서비스.
+ * Zhipu AI GLM API 서비스.
  * 대화 요약 전용으로 사용됩니다.
  *
  * @author GahyeonBot Team
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class GlmService {
 
     private static final String GLM_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
-    private static final String GLM_MODEL = "glm-4-flash";
+    private static final String DEFAULT_GLM_MODEL = "glm-4.7-flash";
     private static final int MAX_TOKENS = 150;
     private static final int DM_MAX_TOKENS = 320;
     private static final int TRENDING_MAX_TOKENS = 300;
@@ -38,12 +38,14 @@ public class GlmService {
     private final AppCredentialsConfig appCredentialsConfig;
 
     private String apiKey;
+    private String glmModel;
     private boolean isEnabled = false;
     private RestTemplate restTemplate;
 
     @PostConstruct
     public void initialize() {
         this.apiKey = appCredentialsConfig.getGlmApiKey();
+        this.glmModel = resolveModel(appCredentialsConfig.getGlmModel());
 
         if (apiKey == null || apiKey.isEmpty() || apiKey.startsWith("your_")) {
             log.warn("GLM_API_KEY가 설정되지 않았습니다. 대화 요약 기능이 비활성화됩니다.");
@@ -54,7 +56,7 @@ public class GlmService {
         try {
             this.restTemplate = new RestTemplate();
             this.isEnabled = true;
-            log.info("GLM 서비스가 활성화되었습니다. 모델: {}", GLM_MODEL);
+            log.info("GLM 서비스가 활성화되었습니다. 모델: {}", glmModel);
         } catch (Exception e) {
             log.error("GLM 초기화 실패. 대화 요약 기능이 비활성화됩니다.", e);
             this.isEnabled = false;
@@ -86,7 +88,7 @@ public class GlmService {
             headers.setBearerAuth(apiKey);
 
             Map<String, Object> requestBody = Map.of(
-                    "model", GLM_MODEL,
+                    "model", glmModel,
                     "messages", List.of(
                             Map.of("role", "user", "content", prompt)
                     ),
@@ -169,7 +171,7 @@ public class GlmService {
             headers.setBearerAuth(apiKey);
 
             Map<String, Object> requestBody = Map.of(
-                    "model", GLM_MODEL,
+                    "model", glmModel,
                     "messages", List.of(
                             Map.of("role", "system", "content", systemPrompt.formatted(DM_MAX_CHARS)),
                             Map.of("role", "user", "content", userPrompt)
@@ -249,7 +251,7 @@ public class GlmService {
             headers.setBearerAuth(apiKey);
 
             Map<String, Object> requestBody = Map.of(
-                    "model", GLM_MODEL,
+                    "model", glmModel,
                     "messages", List.of(
                             Map.of("role", "system", "content", systemPrompt),
                             Map.of("role", "user", "content", repoList)
@@ -306,7 +308,7 @@ public class GlmService {
             headers.setBearerAuth(apiKey);
 
             Map<String, Object> requestBody = Map.of(
-                    "model", GLM_MODEL,
+                    "model", glmModel,
                     "messages", List.of(
                             Map.of("role", "system", "content", systemPrompt),
                             Map.of("role", "user", "content", userPrompt)
@@ -383,5 +385,16 @@ public class GlmService {
      */
     public boolean isEnabled() {
         return isEnabled;
+    }
+
+    public String getActiveModel() {
+        return resolveModel(glmModel);
+    }
+
+    private String resolveModel(String configuredModel) {
+        if (configuredModel == null || configuredModel.isBlank()) {
+            return DEFAULT_GLM_MODEL;
+        }
+        return configuredModel.trim();
     }
 }

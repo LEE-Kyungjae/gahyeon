@@ -38,4 +38,10 @@ public class AppCredentialsConfig {
      * 설정되지 않으면 대화 요약 기능이 비활성화됩니다.
      */
     private String glmApiKey;
+
+    /**
+     * Zhipu AI GLM Model (선택적)
+     * 기본값은 application.yml에서 설정합니다.
+     */
+    private String glmModel;
 }

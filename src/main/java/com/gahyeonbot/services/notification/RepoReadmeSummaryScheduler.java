@@ -127,7 +127,7 @@ public class RepoReadmeSummaryScheduler {
         }
 
         latest.setSummaryKo(summary.trim());
-        latest.setSummaryKoModel("glm-4-flash");
+        latest.setSummaryKoModel(glmService.getActiveModel());
         latest.setSummaryKoUpdatedAt(OffsetDateTime.now());
         repoReadmeCacheRepository.save(latest);
         return true;
