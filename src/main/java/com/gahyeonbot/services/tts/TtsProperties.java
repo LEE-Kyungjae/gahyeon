@@ -36,10 +36,10 @@ public class TtsProperties {
          * - If ends with ".onnx" (or an existing file path): treated as local model path.
          * - Else: treated as a piper-tts voice name (e.g., "ko_KR-kss-medium") and will use --data-dir.
          */
-        private String model = "ko_KR-kss-medium";
+        private String model = "/app/tts_models/ko_KR-kss-medium.onnx";
 
         /** Optional local config path for a local .onnx model (voice.json). */
-        private String config;
+        private String config = "/app/tts_models/ko_KR-kss-medium.onnx.json";
 
         /** Piper data dir for voice downloads (used when model is a voice name). */
         private String dataDir = "/app/piper_data";
@@ -58,4 +58,3 @@ public class TtsProperties {
         private String script = "/app/tts_split.py";
     }
 }
-

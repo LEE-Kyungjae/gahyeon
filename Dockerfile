@@ -5,7 +5,7 @@ FROM eclipse-temurin:21-jre-jammy
 # - python3 + pip: run kss splitter + piper-tts CLI
 # - libsndfile1: piper-tts runtime dependency on many distros
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 python3-pip libsndfile1 ca-certificates \
+  && apt-get install -y --no-install-recommends python3 python3-pip libsndfile1 ca-certificates curl \
   && rm -rf /var/lib/apt/lists/*
 
 # Python deps for offline sentence splitting + TTS synthesis.
@@ -24,16 +24,15 @@ COPY ${JAR_FILE} /app/bot.jar
 # TTS helper script.
 COPY scripts/tts_split.py /app/tts_split.py
 
-# Preload a default Korean voice into the image so runtime is fully offline.
-# Can be overridden at build time:
-#   docker build --build-arg PIPER_PRELOAD_VOICE=ko_KR-kss-medium ...
-ARG PIPER_PRELOAD_VOICE=ko_KR-kss-medium
-ENV PIPER_DATA_DIR=/app/piper_data
-RUN mkdir -p "$PIPER_DATA_DIR" \
-  && if [ -n "$PIPER_PRELOAD_VOICE" ]; then \
-       echo "piper warmup" | piper --model "$PIPER_PRELOAD_VOICE" --data-dir "$PIPER_DATA_DIR" --download-dir "$PIPER_DATA_DIR" --output_file /tmp/piper_warmup.wav ; \
-       rm -f /tmp/piper_warmup.wav ; \
-     fi
+# Bundle community Korean female model (neurlang/piper-onnx-kss-korean).
+# You can override all values at build time if you want to swap model later.
+ARG TTS_MODEL_REPO=https://huggingface.co/neurlang/piper-onnx-kss-korean/resolve/main
+ARG TTS_MODEL_FILE=ko_KR-kss-medium.onnx
+ARG TTS_MODEL_CONFIG_FILE=ko_KR-kss-medium.onnx.json
+ENV TTS_MODEL_DIR=/app/tts_models
+RUN mkdir -p "$TTS_MODEL_DIR" \
+  && curl -fL "$TTS_MODEL_REPO/$TTS_MODEL_FILE" -o "$TTS_MODEL_DIR/$TTS_MODEL_FILE" \
+  && curl -fL "$TTS_MODEL_REPO/$TTS_MODEL_CONFIG_FILE" -o "$TTS_MODEL_DIR/$TTS_MODEL_CONFIG_FILE"
 
 # 5. 포트 설정
 EXPOSE 8080
