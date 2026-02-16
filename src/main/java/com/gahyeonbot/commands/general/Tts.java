@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Component
@@ -100,23 +101,46 @@ public class Tts extends AbstractCommand {
             return;
         }
 
-        List<Path> wavs;
+        List<String> segments;
         try {
-            wavs = ttsService.synthesizeSegmentsToWav(text);
+            segments = ttsService.prepareSegments(text);
         } catch (Exception e) {
             log.error("TTS 합성 실패", e);
-            ResponseUtil.replyError(event, "TTS 합성에 실패했어: " + e.getMessage());
+            ResponseUtil.replyError(event, "TTS 준비에 실패했어: " + e.getMessage());
             return;
         }
 
-        if (wavs.isEmpty()) {
+        if (segments.isEmpty()) {
             ResponseUtil.replyError(event, "읽을 문장을 만들지 못했어.");
             return;
         }
 
+        // 1) First segment is synthesized first for faster perceived response.
+        Path firstAudio;
+        try {
+            firstAudio = ttsService.synthesizeSegmentToAudio(segments.get(0));
+        } catch (Exception e) {
+            log.error("TTS 첫 문장 합성 실패", e);
+            ResponseUtil.replyError(event, "TTS 합성에 실패했어: " + e.getMessage());
+            return;
+        }
+
         AtomicBoolean firstQueued = new AtomicBoolean(false);
-        for (Path wav : wavs) {
-            enqueueWav(event, musicManager, wav, firstQueued);
+        enqueueWav(event, musicManager, firstAudio, firstQueued);
+
+        // 2) Remaining segments synthesize in background and queue as they are ready.
+        if (segments.size() > 1) {
+            CompletableFuture.runAsync(() -> {
+                for (int i = 1; i < segments.size(); i++) {
+                    String segment = segments.get(i);
+                    try {
+                        Path audio = ttsService.synthesizeSegmentToAudio(segment);
+                        enqueueWav(event, musicManager, audio, firstQueued);
+                    } catch (Exception e) {
+                        log.error("TTS 후속 문장 합성 실패 (index={})", i, e);
+                    }
+                }
+            });
         }
     }
 

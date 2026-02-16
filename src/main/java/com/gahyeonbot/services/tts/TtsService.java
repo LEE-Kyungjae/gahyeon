@@ -31,13 +31,20 @@ public class TtsService {
         return props.getMaxChars();
     }
 
-    public List<Path> synthesizeSegmentsToWav(String text) throws Exception {
-        List<String> segments = splitAndChunk(text);
-        List<Path> out = new ArrayList<>(segments.size());
-        for (String s : segments) {
-            out.add(synthesizeToAudio(s));
+    public List<String> prepareSegments(String text) throws Exception {
+        String trimmed = text == null ? "" : text.trim();
+        if (trimmed.isEmpty()) {
+            return List.of();
         }
-        return out;
+        // Fast path: short text skips splitter process entirely.
+        if (trimmed.length() <= props.getSegmentMaxChars()) {
+            return List.of(trimmed);
+        }
+        return splitAndChunk(trimmed);
+    }
+
+    public Path synthesizeSegmentToAudio(String text) throws Exception {
+        return synthesizeToAudio(text);
     }
 
     private List<String> splitAndChunk(String text) throws Exception {
