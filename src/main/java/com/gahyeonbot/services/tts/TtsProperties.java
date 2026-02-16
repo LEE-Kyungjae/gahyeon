@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * TTS 설정.
- * - Piper + (optional) KSS sentence splitting via python script.
+ * - Edge TTS + (optional) KSS sentence splitting via python script.
  */
 @Component
 @ConfigurationProperties(prefix = "tts")
@@ -25,27 +25,23 @@ public class TtsProperties {
     /** Process timeout for splitter + synthesis. */
     private int timeoutSeconds = 20;
 
-    private final Piper piper = new Piper();
+    private final Edge edge = new Edge();
     private final Kss kss = new Kss();
 
     @Getter
     @Setter
-    public static class Piper {
-        /**
-         * Piper model spec.
-         * - If ends with ".onnx" (or an existing file path): treated as local model path.
-         * - Else: treated as a piper-tts voice name (e.g., "ko_KR-kss-medium") and will use --data-dir.
-         */
-        private String model = "/app/tts_models/piper-kss-korean.onnx";
+    public static class Edge {
+        /** edge-tts executable. */
+        private String bin = "edge-tts";
 
-        /** Optional local config path for a local .onnx model (voice.json). */
-        private String config = "/app/tts_models/piper-kss-korean.onnx.json";
+        /** Korean female neural voice. */
+        private String voice = "ko-KR-SunHiNeural";
 
-        /** Piper data dir for voice downloads (used when model is a voice name). */
-        private String dataDir = "/app/piper_data";
+        /** Speech rate, e.g. +0%, -10%. */
+        private String rate = "+0%";
 
-        /** Piper executable (from piper-tts). */
-        private String bin = "piper";
+        /** Speech pitch, e.g. +0Hz, -20Hz. */
+        private String pitch = "+0Hz";
     }
 
     @Getter

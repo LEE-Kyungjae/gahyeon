@@ -70,12 +70,11 @@ tts:
   max-chars: ${TTS_MAX_CHARS:400}
   segment-max-chars: ${TTS_SEGMENT_MAX_CHARS:120}
   timeout-seconds: ${TTS_TIMEOUT_SECONDS:20}
-  piper:
-    # Default: Korean female model bundled in Docker image.
-    model: ${TTS_PIPER_MODEL:/app/tts_models/piper-kss-korean.onnx}
-    config: ${TTS_PIPER_CONFIG:/app/tts_models/piper-kss-korean.onnx.json}
-    data-dir: ${TTS_PIPER_DATA_DIR:/app/piper_data}
-    bin: ${TTS_PIPER_BIN:piper}
+  edge:
+    bin: ${TTS_EDGE_BIN:edge-tts}
+    voice: ${TTS_EDGE_VOICE:ko-KR-SunHiNeural}
+    rate: ${TTS_EDGE_RATE:+0%}
+    pitch: ${TTS_EDGE_PITCH:+0Hz}
   kss:
     python: ${TTS_PYTHON:python3}
     script: ${TTS_KSS_SCRIPT:/app/tts_split.py}

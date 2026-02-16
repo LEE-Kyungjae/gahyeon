@@ -35,7 +35,7 @@ public class TtsService {
         List<String> segments = splitAndChunk(text);
         List<Path> out = new ArrayList<>(segments.size());
         for (String s : segments) {
-            out.add(synthesizeToWav(s));
+            out.add(synthesizeToAudio(s));
         }
         return out;
     }
@@ -101,59 +101,38 @@ public class TtsService {
         }
     }
 
-    private Path synthesizeToWav(String text) throws Exception {
+    private Path synthesizeToAudio(String text) throws Exception {
         Path dir = Path.of(System.getProperty("java.io.tmpdir"), "gahyeonbot-tts");
         Files.createDirectories(dir);
-        Path wav = Files.createTempFile(dir, "tts_", ".wav");
+        Path audio = Files.createTempFile(dir, "tts_", ".mp3");
 
-        String model = props.getPiper().getModel();
-        boolean modelLooksLikeFile = model.endsWith(".onnx") || Files.exists(Path.of(model));
-        if (modelLooksLikeFile && !Files.exists(Path.of(model))) {
-            throw new IllegalStateException("Piper model file not found: " + model);
-        }
-
-        PiperExecResult result = runPiperSynthesis(text, wav, model, modelLooksLikeFile);
+        ExecResult result = runEdgeSynthesis(text, audio);
         if (!result.ok()) {
-            // Self-heal once: download missing voice if model is a voice name.
-            if (!modelLooksLikeFile && isVoiceMissingError(result.output())) {
-                log.warn("Piper voice not found. Attempting one-time download: {}", model);
-                downloadVoice(model);
-                result = runPiperSynthesis(text, wav, model, false);
-            }
-        }
-        if (!result.ok()) {
-            safeDelete(wav);
-            throw new IllegalStateException("Piper failed: " + result.output());
+            safeDelete(audio);
+            throw new IllegalStateException("Edge TTS failed: " + result.output());
         }
 
         // Basic sanity check.
-        if (!Files.exists(wav) || Files.size(wav) < 256) {
-            safeDelete(wav);
-            throw new IllegalStateException("Piper produced empty audio");
+        if (!Files.exists(audio) || Files.size(audio) < 256) {
+            safeDelete(audio);
+            throw new IllegalStateException("Edge TTS produced empty audio");
         }
-        return wav;
+        return audio;
     }
 
-    private PiperExecResult runPiperSynthesis(String text, Path wav, String model, boolean modelLooksLikeFile) throws Exception {
+    private ExecResult runEdgeSynthesis(String text, Path outputFile) throws Exception {
         List<String> cmd = new ArrayList<>();
-        cmd.add(props.getPiper().getBin());
-        cmd.add("--output_file");
-        cmd.add(wav.toString());
-        cmd.add("--model");
-        cmd.add(model);
-
-        if (!modelLooksLikeFile) {
-            cmd.add("--data-dir");
-            cmd.add(props.getPiper().getDataDir());
-            cmd.add("--download-dir");
-            cmd.add(props.getPiper().getDataDir());
-        } else {
-            String cfg = props.getPiper().getConfig();
-            if (cfg != null && !cfg.isBlank()) {
-                cmd.add("--config");
-                cmd.add(cfg);
-            }
-        }
+        cmd.add(props.getEdge().getBin());
+        cmd.add("--voice");
+        cmd.add(props.getEdge().getVoice());
+        cmd.add("--rate");
+        cmd.add(props.getEdge().getRate());
+        cmd.add("--pitch");
+        cmd.add(props.getEdge().getPitch());
+        cmd.add("--text");
+        cmd.add(text);
+        cmd.add("--write-media");
+        cmd.add(outputFile.toString());
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
         pb.redirectErrorStream(true);
@@ -166,43 +145,11 @@ public class TtsService {
         boolean ok = p.waitFor(props.getTimeoutSeconds(), TimeUnit.SECONDS);
         if (!ok) {
             p.destroyForcibly();
-            return new PiperExecResult(false, "Piper timeout");
+            return new ExecResult(false, "Edge TTS timeout");
         }
-        return new PiperExecResult(p.exitValue() == 0, gobbler.getOutput());
+        return new ExecResult(p.exitValue() == 0, gobbler.getOutput());
     }
-
-    private void downloadVoice(String voiceName) throws Exception {
-        ProcessBuilder pb = new ProcessBuilder(
-                props.getKss().getPython(),
-                "-m",
-                "piper.download_voices",
-                voiceName,
-                "--data-dir",
-                props.getPiper().getDataDir(),
-                "--download-dir",
-                props.getPiper().getDataDir()
-        );
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        StreamGobbler gobbler = StreamGobbler.start(p.getInputStream());
-        boolean ok = p.waitFor(props.getTimeoutSeconds() * 3L, TimeUnit.SECONDS);
-        if (!ok) {
-            p.destroyForcibly();
-            throw new IllegalStateException("Voice download timeout");
-        }
-        String output = gobbler.getOutput();
-        if (p.exitValue() != 0) {
-            throw new IllegalStateException("Voice download failed: " + output);
-        }
-    }
-
-    private static boolean isVoiceMissingError(String output) {
-        if (output == null) return false;
-        String s = output.toLowerCase();
-        return s.contains("unable to find voice") || s.contains("use piper.download_voices");
-    }
-
-    private record PiperExecResult(boolean ok, String output) {}
+    private record ExecResult(boolean ok, String output) {}
 
     private static Optional<String> extractJsonPayload(String s) {
         if (s == null) return Optional.empty();
