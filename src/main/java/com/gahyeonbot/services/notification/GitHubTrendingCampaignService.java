@@ -7,6 +7,7 @@ import com.gahyeonbot.entity.GitHubTrendingEvent;
 import com.gahyeonbot.entity.RepoReadmeCache;
 import com.gahyeonbot.repository.GitHubTrendingEventRepository;
 import com.gahyeonbot.repository.RepoReadmeCacheRepository;
+import com.gahyeonbot.services.ai.GlmService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -33,6 +34,7 @@ public class GitHubTrendingCampaignService {
     private final DmDispatchService dmDispatchService;
     private final GitHubTrendingEventRepository trendingEventRepository;
     private final RepoReadmeCacheRepository repoReadmeCacheRepository;
+    private final GlmService glmService;
 
     @Value("${notifications.dm.trending-enabled:true}")
     private boolean trendingEnabled;
@@ -50,30 +52,11 @@ public class GitHubTrendingCampaignService {
         }
 
         LocalDate today = LocalDate.now(ZoneId.of(scheduleZone));
-        LocalDate snapshotDate = today;
-        List<GitHubTrendingEvent> events = trendingEventRepository
-                .findBySnapshotDateAndSentAtIsNullOrderByCreatedAtAsc(snapshotDate);
-
-        if (events.isEmpty()) {
-            LocalDate yesterday = today.minusDays(1);
-            snapshotDate = yesterday;
-            events = trendingEventRepository.findBySnapshotDateAndSentAtIsNullOrderByCreatedAtAsc(snapshotDate);
-        }
-
-        if (events.isEmpty()) {
-            // "신규만"이 목표라면 이벤트가 없으면 보내지 않는 게 맞음.
-            // (기존처럼 스냅샷 전체를 보내고 싶다면 여기서 github_trending으로 fallback 하면 됨)
-            log.info("GitHub 트렌딩 신규 이벤트 없음 - today: {}, yesterday: {}", today, today.minusDays(1));
+        List<LocalDate> pendingSnapshotDates = trendingEventRepository.findDistinctPendingSnapshotDatesUpTo(today);
+        if (pendingSnapshotDates.isEmpty()) {
+            log.info("GitHub 트렌딩 미발송 이벤트 없음 - upTo: {}", today);
             return;
         }
-
-        List<GitHubTrending> repos = events.stream()
-                .map(this::toTrendingEntityForDigest)
-                .collect(Collectors.toList());
-
-        // README summary_ko is precomputed by RepoReadmeSummaryScheduler; DM sending should not depend on GLM uptime.
-        String digest = String.format("오늘의 GitHub 트렌딩 다이제스트 (%s, %d개)", snapshotDate, repos.size());
-        MessageEmbed embed = EmbedUtil.createGitHubTrendingEmbed(digest, repos).build();
 
         List<DmSubscription> subscribers = dmSubscriptionService.getOptedInSubscriptions();
         if (subscribers.isEmpty()) {
@@ -81,53 +64,72 @@ public class GitHubTrendingCampaignService {
             return;
         }
 
-        String runId = "trending-" + snapshotDate.format(RUN_DATE_FORMAT);
-        int sent = 0;
-        int failed = 0;
-        boolean shouldMarkEventsSent = false;
+        int totalRepos = 0;
+        int totalSent = 0;
+        int totalFailed = 0;
+        int markedSnapshots = 0;
 
-        for (DmSubscription subscription : subscribers) {
-            Long userId = subscription.getUserId();
-            // 동일한 snapshotDate 신규 이벤트 묶음은 사용자당 1회만 보내도록 dedupe.
-            String dedupeKey = runId + "-" + userId;
+        for (LocalDate snapshotDate : pendingSnapshotDates) {
+            List<GitHubTrendingEvent> events = trendingEventRepository
+                    .findBySnapshotDateAndSentAtIsNullOrderByCreatedAtAsc(snapshotDate);
+            if (events.isEmpty()) {
+                continue;
+            }
 
-            DmDispatchService.DispatchResult result =
-                    dmDispatchService.dispatchEmbed(runId, userId, embed, dedupeKey);
+            List<GitHubTrending> repos = events.stream()
+                    .map(this::toTrendingEntityForDigest)
+                    .collect(Collectors.toList());
+            totalRepos += repos.size();
 
-            if (result.isSent()) {
-                sent++;
-                shouldMarkEventsSent = true;
-            } else {
-                failed++;
-                if ("SKIPPED_DUPLICATE".equals(result.getStatus())) {
-                    // 이미 같은 runId/userId로 발송(또는 처리)된 케이스면 이벤트도 "처리됨"으로 보는 게 자연스럽다.
+            String digest = String.format("오늘의 GitHub 트렌딩 다이제스트 (%s, %d개)", snapshotDate, repos.size());
+            MessageEmbed embed = EmbedUtil.createGitHubTrendingEmbed(digest, repos).build();
+
+            String runId = "trending-" + snapshotDate.format(RUN_DATE_FORMAT);
+            int sent = 0;
+            int failed = 0;
+            boolean shouldMarkEventsSent = false;
+
+            for (DmSubscription subscription : subscribers) {
+                Long userId = subscription.getUserId();
+                String dedupeKey = runId + "-" + userId;
+
+                DmDispatchService.DispatchResult result =
+                        dmDispatchService.dispatchEmbed(runId, userId, embed, dedupeKey);
+
+                if (result.isSent()) {
+                    sent++;
                     shouldMarkEventsSent = true;
+                } else {
+                    failed++;
+                    if ("SKIPPED_DUPLICATE".equals(result.getStatus())) {
+                        shouldMarkEventsSent = true;
+                    }
                 }
             }
-        }
 
-        if (shouldMarkEventsSent) {
-            OffsetDateTime markedAt = OffsetDateTime.now();
-            for (GitHubTrendingEvent e : events) {
-                if (e.getSentAt() == null) {
-                    e.setSentAt(markedAt);
+            if (shouldMarkEventsSent) {
+                OffsetDateTime markedAt = OffsetDateTime.now();
+                for (GitHubTrendingEvent e : events) {
+                    if (e.getSentAt() == null) {
+                        e.setSentAt(markedAt);
+                    }
                 }
+                trendingEventRepository.saveAll(events);
+                markedSnapshots++;
             }
-            trendingEventRepository.saveAll(events);
+
+            totalSent += sent;
+            totalFailed += failed;
+            log.info("GitHub 트렌딩 DM 스냅샷 처리 - runId: {}, 레포: {}, 대상: {}, 성공: {}, 실패/스킵: {}",
+                    runId, repos.size(), subscribers.size(), sent, failed);
         }
 
-        log.info("GitHub 트렌딩 DM 캠페인 완료 - runId: {}, 레포: {}, 대상: {}, 성공: {}, 실패/스킵: {}",
-                runId, repos.size(), subscribers.size(), sent, failed);
+        log.info("GitHub 트렌딩 DM 캠페인 완료 - snapshots: {}, marked: {}, 대상: {}, 레포: {}, 성공: {}, 실패/스킵: {}",
+                pendingSnapshotDates.size(), markedSnapshots, subscribers.size(), totalRepos, totalSent, totalFailed);
     }
 
     private GitHubTrending toTrendingEntityForDigest(GitHubTrendingEvent e) {
-        String repoSummary = repoReadmeCacheRepository.findTopByRepoFullNameAndSummaryKoIsNotNullOrderBySummaryKoUpdatedAtDesc(e.getRepoFullName())
-                .map(RepoReadmeCache::getSummaryKo)
-                .orElse(null);
-
-        String descriptionForDigest = (repoSummary != null && !repoSummary.isBlank())
-                ? repoSummary.trim()
-                : e.getDescription();
+        String descriptionForDigest = resolveDescriptionForDigest(e);
 
         return GitHubTrending.builder()
                 .snapshotDate(e.getSnapshotDate())
@@ -140,5 +142,43 @@ public class GitHubTrendingCampaignService {
                 // Digest/Embed 생성을 위한 변환이라 persisted entity로 저장하지 않음.
                 .createdAt(LocalDateTime.now())
                 .build();
+    }
+
+    private String resolveDescriptionForDigest(GitHubTrendingEvent event) {
+        String repoFullName = event.getRepoFullName();
+        if (repoFullName == null || repoFullName.isBlank()) {
+            return event.getDescription();
+        }
+
+        try {
+            RepoReadmeCache latest = repoReadmeCacheRepository.findTopByRepoFullNameOrderByReadmeFetchedAtDesc(repoFullName)
+                    .orElse(null);
+            if (latest == null) {
+                return event.getDescription();
+            }
+
+            if (latest.getSummaryKo() != null && !latest.getSummaryKo().isBlank()) {
+                return latest.getSummaryKo().trim();
+            }
+
+            String readmeText = latest.getReadmeText();
+            if (readmeText == null || readmeText.isBlank()) {
+                return event.getDescription();
+            }
+
+            String generated = glmService.summarizeRepoReadmeKo(repoFullName, readmeText);
+            if (generated == null || generated.isBlank()) {
+                return event.getDescription();
+            }
+
+            latest.setSummaryKo(generated.trim());
+            latest.setSummaryKoModel(glmService.getActiveModel());
+            latest.setSummaryKoUpdatedAt(OffsetDateTime.now());
+            repoReadmeCacheRepository.save(latest);
+            return latest.getSummaryKo();
+        } catch (Exception ex) {
+            log.warn("README summary resolve 실패 - repo: {}, reason: {}", repoFullName, ex.getMessage());
+            return event.getDescription();
+        }
     }
 }
