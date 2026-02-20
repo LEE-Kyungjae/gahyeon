@@ -7,8 +7,7 @@ import java.util.Optional;
 
 public interface RepoReadmeCacheRepository extends JpaRepository<RepoReadmeCache, Long> {
 
-    Optional<RepoReadmeCache> findTopByRepoFullNameOrderByReadmeFetchedAtDesc(String repoFullName);
+    Optional<RepoReadmeCache> findTopByRepoFullNameOrderByReadmeFetchedAtDescIdDesc(String repoFullName);
 
-    Optional<RepoReadmeCache> findTopByRepoFullNameAndSummaryKoIsNotNullOrderBySummaryKoUpdatedAtDesc(String repoFullName);
+    Optional<RepoReadmeCache> findTopByRepoFullNameAndSummaryKoIsNotNullOrderBySummaryKoUpdatedAtDescIdDesc(String repoFullName);
 }
-

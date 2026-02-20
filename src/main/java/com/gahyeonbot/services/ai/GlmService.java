@@ -479,7 +479,7 @@ public class GlmService {
         if (bullets.isEmpty()) {
             return truncate(cleaned, 600);
         }
-        return truncate(String.join("\n", bullets), 600);
+        return truncateMultiline(String.join("\n", bullets), 600);
     }
 
     /**
@@ -490,6 +490,21 @@ public class GlmService {
         text = text.replaceAll("\\s+", " ").trim();
         if (text.length() <= maxLength) return text;
         return text.substring(0, maxLength) + "...";
+    }
+
+    private String truncateMultiline(String text, int maxLength) {
+        if (text == null) {
+            return "";
+        }
+        String normalized = text.replace("\r\n", "\n")
+                .replace("\r", "\n")
+                .replaceAll("[ \\t\\x0B\\f]+", " ")
+                .replaceAll("\\n{3,}", "\n\n")
+                .trim();
+        if (normalized.length() <= maxLength) {
+            return normalized;
+        }
+        return normalized.substring(0, maxLength) + "...";
     }
 
     /**

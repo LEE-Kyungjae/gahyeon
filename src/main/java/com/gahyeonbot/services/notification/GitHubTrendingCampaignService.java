@@ -151,24 +151,25 @@ public class GitHubTrendingCampaignService {
         }
 
         try {
-            RepoReadmeCache latest = repoReadmeCacheRepository.findTopByRepoFullNameOrderByReadmeFetchedAtDesc(repoFullName)
+            RepoReadmeCache latest = repoReadmeCacheRepository.findTopByRepoFullNameOrderByReadmeFetchedAtDescIdDesc(repoFullName)
                     .orElse(null);
             if (latest == null) {
                 return event.getDescription();
             }
 
-            if (latest.getSummaryKo() != null && !latest.getSummaryKo().isBlank()) {
-                return latest.getSummaryKo().trim();
+            String latestSummary = normalized(latest.getSummaryKo());
+            if (latestSummary != null) {
+                return latestSummary;
             }
 
             String readmeText = latest.getReadmeText();
             if (readmeText == null || readmeText.isBlank()) {
-                return event.getDescription();
+                return findCachedSummaryOrDefault(repoFullName, event.getDescription());
             }
 
             String generated = glmService.summarizeRepoReadmeKo(repoFullName, readmeText);
             if (generated == null || generated.isBlank()) {
-                return event.getDescription();
+                return findCachedSummaryOrDefault(repoFullName, event.getDescription());
             }
 
             latest.setSummaryKo(generated.trim());
@@ -180,5 +181,21 @@ public class GitHubTrendingCampaignService {
             log.warn("README summary resolve 실패 - repo: {}, reason: {}", repoFullName, ex.getMessage());
             return event.getDescription();
         }
+    }
+
+    private String findCachedSummaryOrDefault(String repoFullName, String fallback) {
+        return repoReadmeCacheRepository
+                .findTopByRepoFullNameAndSummaryKoIsNotNullOrderBySummaryKoUpdatedAtDescIdDesc(repoFullName)
+                .map(RepoReadmeCache::getSummaryKo)
+                .map(this::normalized)
+                .orElse(fallback);
+    }
+
+    private String normalized(String text) {
+        if (text == null) {
+            return null;
+        }
+        String trimmed = text.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
