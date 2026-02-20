@@ -48,6 +48,10 @@ public class RepoReadmeSummaryScheduler {
         if (!summaryEnabled) {
             return;
         }
+        if (!glmService.isEnabled()) {
+            log.warn("README summary 스케줄 중단 - GLM 비활성 상태(reason={})", glmService.getDisabledReason());
+            return;
+        }
         // Blue/Green 환경에서 1개 인스턴스만 수행.
         if (!botInitializerRunner.hasLeadership()) {
             return;
@@ -83,7 +87,7 @@ public class RepoReadmeSummaryScheduler {
 
         for (String repoFullName : repos) {
             try {
-                RepoReadmeCache latest = repoReadmeCacheRepository.findTopByRepoFullNameOrderByReadmeFetchedAtDesc(repoFullName)
+                RepoReadmeCache latest = repoReadmeCacheRepository.findTopByRepoFullNameOrderByReadmeFetchedAtDescIdDesc(repoFullName)
                         .orElse(null);
                 if (latest == null || latest.getReadmeText() == null || latest.getReadmeText().isBlank()) {
                     skippedNoReadme++;
@@ -108,7 +112,7 @@ public class RepoReadmeSummaryScheduler {
 
     @Transactional
     protected boolean fillOne(String repoFullName) {
-        RepoReadmeCache latest = repoReadmeCacheRepository.findTopByRepoFullNameOrderByReadmeFetchedAtDesc(repoFullName)
+        RepoReadmeCache latest = repoReadmeCacheRepository.findTopByRepoFullNameOrderByReadmeFetchedAtDescIdDesc(repoFullName)
                 .orElse(null);
         if (latest == null) {
             return false;

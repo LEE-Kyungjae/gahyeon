@@ -4,15 +4,21 @@ import com.gahyeonbot.config.AppCredentialsConfig;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import com.gahyeonbot.entity.GitHubTrending;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -34,12 +40,20 @@ public class GlmService {
     private static final int TRENDING_MAX_TOKENS = 300;
     private static final int README_SUMMARY_MAX_TOKENS = 260;
     private static final int DM_MAX_CHARS = 220;
+    private static final Pattern BULLET_PREFIX = Pattern.compile("^[\\-\\*•]\\s*");
 
     private final AppCredentialsConfig appCredentialsConfig;
+
+    @Value("${app.credentials.glm-connect-timeout-ms:5000}")
+    private int glmConnectTimeoutMs;
+
+    @Value("${app.credentials.glm-read-timeout-ms:20000}")
+    private int glmReadTimeoutMs;
 
     private String apiKey;
     private String glmModel;
     private boolean isEnabled = false;
+    private String disabledReason = "NOT_INITIALIZED";
     private RestTemplate restTemplate;
 
     @PostConstruct
@@ -50,16 +64,22 @@ public class GlmService {
         if (apiKey == null || apiKey.isEmpty() || apiKey.startsWith("your_")) {
             log.warn("GLM_API_KEY가 설정되지 않았습니다. 대화 요약 기능이 비활성화됩니다.");
             this.isEnabled = false;
+            this.disabledReason = "MISSING_API_KEY";
             return;
         }
 
         try {
-            this.restTemplate = new RestTemplate();
+            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+            factory.setConnectTimeout(glmConnectTimeoutMs);
+            factory.setReadTimeout(glmReadTimeoutMs);
+            this.restTemplate = new RestTemplate(factory);
             this.isEnabled = true;
+            this.disabledReason = null;
             log.info("GLM 서비스가 활성화되었습니다. 모델: {}", glmModel);
         } catch (Exception e) {
             log.error("GLM 초기화 실패. 대화 요약 기능이 비활성화됩니다.", e);
             this.isEnabled = false;
+            this.disabledReason = "INIT_FAILURE";
         }
     }
 
@@ -112,6 +132,12 @@ public class GlmService {
             log.warn("GLM API 응답 실패, 간단 요약 사용");
             return simpleSummary(userMessage, aiResponse);
 
+        } catch (HttpStatusCodeException e) {
+            log.warn("GLM 요약 HTTP 실패 - status: {}, body: {}", e.getStatusCode(), truncate(e.getResponseBodyAsString(), 400));
+            return simpleSummary(userMessage, aiResponse);
+        } catch (ResourceAccessException e) {
+            log.warn("GLM 요약 네트워크 실패(타임아웃 가능): {}", e.getMessage());
+            return simpleSummary(userMessage, aiResponse);
         } catch (Exception e) {
             log.error("GLM 요약 실패: {}", e.getMessage());
             return simpleSummary(userMessage, aiResponse);
@@ -197,6 +223,13 @@ public class GlmService {
             }
 
             return "오늘은 어떻게 지내고 계세요? 잠깐이라도 쉬는 시간 챙기셨으면 좋겠어요. 오늘도 잘 해내실 거예요.";
+        } catch (HttpStatusCodeException e) {
+            log.warn("GLM 개인 메시지 HTTP 실패 - userId: {}, status: {}, body: {}",
+                    userId, e.getStatusCode(), truncate(e.getResponseBodyAsString(), 400));
+            return "오늘도 수고 많으셨어요. 잠깐 숨 고르고 물 한 잔 챙겨보세요. 무리하지 않으셨으면 좋겠어요.";
+        } catch (ResourceAccessException e) {
+            log.warn("GLM 개인 메시지 네트워크 실패(타임아웃 가능) - userId: {}, reason: {}", userId, e.getMessage());
+            return "오늘도 수고 많으셨어요. 잠깐 숨 고르고 물 한 잔 챙겨보세요. 무리하지 않으셨으면 좋겠어요.";
         } catch (Exception e) {
             log.warn("GLM 개인 메시지 생성 실패 - userId: {}, reason: {}", userId, e.getMessage());
             return "오늘도 수고 많으셨어요. 잠깐 숨 고르고 물 한 잔 챙겨보세요. 무리하지 않으셨으면 좋겠어요.";
@@ -276,6 +309,13 @@ public class GlmService {
             }
 
             return "오늘의 GitHub 트렌딩 레포입니다.";
+        } catch (HttpStatusCodeException e) {
+            log.warn("GLM 트렌딩 다이제스트 HTTP 실패 - status: {}, body: {}",
+                    e.getStatusCode(), truncate(e.getResponseBodyAsString(), 400));
+            return "오늘의 GitHub 트렌딩 레포입니다.";
+        } catch (ResourceAccessException e) {
+            log.warn("GLM 트렌딩 다이제스트 네트워크 실패(타임아웃 가능): {}", e.getMessage());
+            return "오늘의 GitHub 트렌딩 레포입니다.";
         } catch (Exception e) {
             log.warn("GLM 트렌딩 다이제스트 생성 실패: {}", e.getMessage());
             return "오늘의 GitHub 트렌딩 레포입니다.";
@@ -328,10 +368,17 @@ public class GlmService {
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 String content = extractContent(response.getBody());
                 if (content != null && !content.isBlank()) {
-                    // Keep it bounded for embeds/DM.
-                    return truncate(content.trim(), 600);
+                    return normalizeReadmeSummary(content);
                 }
             }
+            return null;
+        } catch (HttpStatusCodeException e) {
+            log.warn("GLM README 요약 HTTP 실패 - repo: {}, status: {}, body: {}",
+                    repoFullName, e.getStatusCode(), truncate(e.getResponseBodyAsString(), 400));
+            return null;
+        } catch (ResourceAccessException e) {
+            log.warn("GLM README 요약 네트워크 실패(타임아웃 가능) - repo: {}, reason: {}",
+                    repoFullName, e.getMessage());
             return null;
         } catch (Exception e) {
             log.warn("GLM README 요약 실패 - repo: {}, reason: {}", repoFullName, e.getMessage());
@@ -349,14 +396,52 @@ public class GlmService {
             if (choices != null && !choices.isEmpty()) {
                 Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
                 if (message != null) {
-                    String content = (String) message.get("content");
-                    if (content != null && !content.trim().isEmpty()) {
+                    String content = extractTextFromContent(message.get("content"));
+                    if (content != null && !content.isBlank()) {
                         return content.trim();
                     }
                 }
             }
+            String fallback = extractTextFromContent(responseBody.get("output_text"));
+            if (fallback != null && !fallback.isBlank()) {
+                return fallback.trim();
+            }
         } catch (Exception e) {
             log.error("GLM 응답 파싱 실패", e);
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String extractTextFromContent(Object content) {
+        if (content == null) {
+            return null;
+        }
+        if (content instanceof String text) {
+            return text.trim();
+        }
+        if (content instanceof List<?> list) {
+            String joined = list.stream()
+                    .map(this::extractTextFromContent)
+                    .filter(Objects::nonNull)
+                    .filter(s -> !s.isBlank())
+                    .collect(Collectors.joining("\n"));
+            return joined.isBlank() ? null : joined;
+        }
+        if (content instanceof Map<?, ?> rawMap) {
+            Map<String, Object> map = (Map<String, Object>) rawMap;
+            String directText = extractTextFromContent(map.get("text"));
+            if (directText != null && !directText.isBlank()) {
+                return directText;
+            }
+            String nestedContent = extractTextFromContent(map.get("content"));
+            if (nestedContent != null && !nestedContent.isBlank()) {
+                return nestedContent;
+            }
+            String outputText = extractTextFromContent(map.get("output_text"));
+            if (outputText != null && !outputText.isBlank()) {
+                return outputText;
+            }
         }
         return null;
     }
@@ -368,6 +453,33 @@ public class GlmService {
         String q = truncate(userMessage, 30);
         String a = truncate(aiResponse, 30);
         return String.format("Q: %s / A: %s", q, a);
+    }
+
+    private String normalizeReadmeSummary(String raw) {
+        String cleaned = raw == null ? "" : raw
+                .replace("\r\n", "\n")
+                .replace("\r", "\n")
+                .replace("```markdown", "")
+                .replace("```md", "")
+                .replace("```", "")
+                .trim();
+        if (cleaned.isBlank()) {
+            return null;
+        }
+
+        List<String> bullets = cleaned.lines()
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .map(s -> BULLET_PREFIX.matcher(s).replaceFirst("").trim())
+                .filter(s -> !s.isBlank())
+                .limit(3)
+                .map(s -> "- " + truncate(s, 120))
+                .toList();
+
+        if (bullets.isEmpty()) {
+            return truncate(cleaned, 600);
+        }
+        return truncate(String.join("\n", bullets), 600);
     }
 
     /**
@@ -385,6 +497,10 @@ public class GlmService {
      */
     public boolean isEnabled() {
         return isEnabled;
+    }
+
+    public String getDisabledReason() {
+        return disabledReason;
     }
 
     public String getActiveModel() {
