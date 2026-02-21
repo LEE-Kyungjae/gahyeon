@@ -112,6 +112,7 @@ public class GlmService {
                     "messages", List.of(
                             Map.of("role", "user", "content", prompt)
                     ),
+                    "thinking", Map.of("type", "disabled"),
                     "max_tokens", MAX_TOKENS,
                     "temperature", 0.3
             );
@@ -202,6 +203,7 @@ public class GlmService {
                             Map.of("role", "system", "content", systemPrompt.formatted(DM_MAX_CHARS)),
                             Map.of("role", "user", "content", userPrompt)
                     ),
+                    "thinking", Map.of("type", "disabled"),
                     "max_tokens", DM_MAX_TOKENS,
                     "temperature", 0.5
             );
@@ -289,6 +291,7 @@ public class GlmService {
                             Map.of("role", "system", "content", systemPrompt),
                             Map.of("role", "user", "content", repoList)
                     ),
+                    "thinking", Map.of("type", "disabled"),
                     "max_tokens", TRENDING_MAX_TOKENS,
                     "temperature", 0.7
             );
@@ -353,6 +356,7 @@ public class GlmService {
                             Map.of("role", "system", "content", systemPrompt),
                             Map.of("role", "user", "content", userPrompt)
                     ),
+                    "thinking", Map.of("type", "disabled"),
                     "max_tokens", README_SUMMARY_MAX_TOKENS,
                     "temperature", 0.4
             );
