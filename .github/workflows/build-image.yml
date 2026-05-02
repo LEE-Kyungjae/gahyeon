@@ -16,6 +16,7 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: gahyeonbot
+  INFRA_REPO: ${{ vars.INFRA_REPO || format('{0}/infra', github.repository_owner) }}
 
 jobs:
   build-and-push:
@@ -66,6 +67,35 @@ jobs:
             ${{ steps.meta.outputs.image }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Check out infra repo
+        if: secrets.INFRA_REPO_TOKEN != ''
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.INFRA_REPO }}
+          token: ${{ secrets.INFRA_REPO_TOKEN }}
+          path: infra-repo
+
+      - name: Update infra image tag
+        if: secrets.INFRA_REPO_TOKEN != ''
+        run: |
+          set -euo pipefail
+          FILE="infra-repo/k8s/apps/gahyeonbot/deployment.yaml"
+          perl -0pi -e 's#image: \Q${{ steps.meta.outputs.image }}\E:[^\s]+#image: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha_tag }}#g' "$FILE"
+
+      - name: Commit infra image update
+        if: secrets.INFRA_REPO_TOKEN != ''
+        run: |
+          set -euo pipefail
+          if git -C infra-repo diff --quiet -- k8s/apps/gahyeonbot/deployment.yaml; then
+            echo "infra repo already up to date"
+            exit 0
+          fi
+          git -C infra-repo config user.name "github-actions[bot]"
+          git -C infra-repo config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C infra-repo add k8s/apps/gahyeonbot/deployment.yaml
+          git -C infra-repo commit -m "Deploy gahyeonbot ${{ steps.meta.outputs.sha_tag }}"
+          git -C infra-repo push origin main
 
       - name: Write summary
         run: |
