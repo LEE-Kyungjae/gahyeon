@@ -17,6 +17,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: gahyeonbot
   INFRA_REPO: ${{ vars.INFRA_REPO || format('{0}/infra', github.repository_owner) }}
+  HAS_INFRA_REPO_TOKEN: ${{ secrets.INFRA_REPO_TOKEN != '' }}
 
 jobs:
   build-and-push:
@@ -69,7 +70,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Check out infra repo
-        if: secrets.INFRA_REPO_TOKEN != ''
+        if: env.HAS_INFRA_REPO_TOKEN == 'true'
         uses: actions/checkout@v4
         with:
           repository: ${{ env.INFRA_REPO }}
@@ -77,14 +78,14 @@ jobs:
           path: infra-repo
 
       - name: Update infra image tag
-        if: secrets.INFRA_REPO_TOKEN != ''
+        if: env.HAS_INFRA_REPO_TOKEN == 'true'
         run: |
           set -euo pipefail
           FILE="infra-repo/k8s/apps/gahyeonbot/deployment.yaml"
           perl -0pi -e 's#image: \Q${{ steps.meta.outputs.image }}\E:[^\s]+#image: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha_tag }}#g' "$FILE"
 
       - name: Commit infra image update
-        if: secrets.INFRA_REPO_TOKEN != ''
+        if: env.HAS_INFRA_REPO_TOKEN == 'true'
         run: |
           set -euo pipefail
           if git -C infra-repo diff --quiet -- k8s/apps/gahyeonbot/deployment.yaml; then
