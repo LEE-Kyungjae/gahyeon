@@ -62,7 +62,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.38'
 
     // JDA (Discord API)
-    implementation 'net.dv8tion:JDA:5.2.1'
+    implementation 'net.dv8tion:JDA:6.4.1'
 
     // Lavaplayer (음악 재생)
     implementation 'dev.arbjerg:lavaplayer:2.2.2'
