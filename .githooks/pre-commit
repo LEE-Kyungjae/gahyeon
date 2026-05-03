@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+current_branch="$(git rev-parse --abbrev-ref HEAD)"
+
+if [[ "${GAHYEONBOT_ALLOW_MAIN_COMMIT:-0}" != "1" && "$current_branch" == "main" ]]; then
+  echo "Committing on 'main' is blocked. Switch to 'develop' first." >&2
+  echo "Override once with GAHYEONBOT_ALLOW_MAIN_COMMIT=1 if you intentionally need it." >&2
+  exit 1
+fi
