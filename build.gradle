@@ -58,8 +58,8 @@ dependencies {
     implementation 'org.flywaydb:flyway-database-postgresql'
 
     // Lombok
-    compileOnly 'org.projectlombok:lombok:1.18.38'
-    annotationProcessor 'org.projectlombok:lombok:1.18.38'
+    compileOnly 'org.projectlombok:lombok:1.18.46'
+    annotationProcessor 'org.projectlombok:lombok:1.18.46'
 
     // JDA (Discord API)
     implementation 'net.dv8tion:JDA:5.2.1'
