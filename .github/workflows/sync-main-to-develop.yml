@@ -1,0 +1,40 @@
+name: Sync Main To Develop
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-main-to-develop
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync main into develop
+        run: |
+          git fetch origin main develop
+          if git merge-base --is-ancestor origin/main origin/develop; then
+            echo "develop already contains main"
+            exit 0
+          fi
+          git checkout develop
+          git merge --no-ff --no-edit origin/main
+          git push origin develop

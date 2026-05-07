@@ -3,8 +3,11 @@ name: Build & Test
 on:
   push:
     branches:
-      - release
-      - release/**
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
   workflow_dispatch:
 
 jobs:

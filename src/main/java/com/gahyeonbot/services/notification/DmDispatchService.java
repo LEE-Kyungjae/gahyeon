@@ -36,7 +36,6 @@ public class DmDispatchService {
     @Value("${notifications.dm.enabled:true}")
     private boolean dmEnabled;
 
-    @Transactional
     public DispatchResult dispatchGeneratedMessage(String runId, Long userId, String content, String dedupeKey) {
         if (userId == null || content == null || content.trim().isEmpty() || dedupeKey == null || dedupeKey.isBlank()) {
             return DispatchResult.builder()
@@ -59,7 +58,6 @@ public class DmDispatchService {
         );
     }
 
-    @Transactional
     public DispatchResult dispatchEmbed(String runId, Long userId, MessageEmbed embed, String dedupeKey) {
         if (userId == null || embed == null || dedupeKey == null || dedupeKey.isBlank()) {
             return DispatchResult.builder()
@@ -117,9 +115,18 @@ public class DmDispatchService {
                     .build();
         }
 
+        String normalizedDedupeKey = dedupeKey.trim();
+        if (deliveryLogRepository.existsByDedupeKey(normalizedDedupeKey)) {
+            return DispatchResult.builder()
+                    .sent(false)
+                    .status("SKIPPED_DUPLICATE")
+                    .message("duplicate dedupeKey")
+                    .build();
+        }
+
         DmDeliveryLog logEntry = DmDeliveryLog.builder()
                 .runId(safeRunId(runId))
-                .dedupeKey(dedupeKey.trim())
+                .dedupeKey(normalizedDedupeKey)
                 .userId(userId)
                 .contentHash(contentHash)
                 .status("RECEIVED")
