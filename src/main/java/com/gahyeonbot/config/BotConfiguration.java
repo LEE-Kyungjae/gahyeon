@@ -3,8 +3,11 @@ package com.gahyeonbot.config;
 import com.gahyeonbot.core.audio.GuildMusicManager;
 import com.gahyeonbot.core.audio.SoundCloudSource;
 import com.gahyeonbot.core.audio.StreamingSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Configuration
 public class BotConfiguration {
+    private static final Logger logger = LoggerFactory.getLogger(BotConfiguration.class);
 
     /**
      * 서버별 음악 매니저를 관리하는 Map을 Spring Bean으로 등록합니다.
@@ -39,5 +43,16 @@ public class BotConfiguration {
     @Bean
     public StreamingSource streamingSource() {
         return new SoundCloudSource();
+    }
+
+    @Bean
+    public ThreadPoolTaskScheduler taskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(4);
+        scheduler.setThreadNamePrefix("scheduler-");
+        scheduler.setAwaitTerminationSeconds(20);
+        scheduler.setWaitForTasksToCompleteOnShutdown(true);
+        scheduler.setErrorHandler(t -> logger.error("스케줄 작업 실행 중 오류", t));
+        return scheduler;
     }
 }
