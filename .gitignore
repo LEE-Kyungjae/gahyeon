@@ -41,4 +41,5 @@ scripts/extract_*.py
 
 # Local agent config
 .claude/
+.serena/
 CLAUDE.md
