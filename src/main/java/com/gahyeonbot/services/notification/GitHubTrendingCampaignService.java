@@ -11,16 +11,21 @@ import com.gahyeonbot.services.ai.GlmService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,12 +34,14 @@ import java.util.stream.Collectors;
 public class GitHubTrendingCampaignService {
 
     private static final DateTimeFormatter RUN_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
+    private static final DateTimeFormatter CATCHUP_TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
     private final DmSubscriptionService dmSubscriptionService;
     private final DmDispatchService dmDispatchService;
     private final GitHubTrendingEventRepository trendingEventRepository;
     private final RepoReadmeCacheRepository repoReadmeCacheRepository;
     private final GlmService glmService;
+    private final AtomicBoolean campaignRunning = new AtomicBoolean(false);
 
     @Value("${notifications.dm.trending-enabled:true}")
     private boolean trendingEnabled;
@@ -42,19 +49,56 @@ public class GitHubTrendingCampaignService {
     @Value("${notifications.dm.schedule-zone:Asia/Seoul}")
     private String scheduleZone;
 
+    @Value("${notifications.dm.trending-catchup-on-startup:true}")
+    private boolean catchupOnStartup;
+
+    @Value("${notifications.dm.trending-catchup-current-day-after:07:00}")
+    private String catchupCurrentDayAfter;
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void runStartupCatchupAsync() {
+        if (!catchupOnStartup) {
+            return;
+        }
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                runPendingCampaign(resolveStartupCatchupUpToDate(), "startup-catchup");
+            } catch (Exception e) {
+                log.warn("GitHub 트렌딩 시작 시 누락 복구 실패: {}", e.getMessage());
+            }
+        });
+    }
+
     @Scheduled(
             cron = "${notifications.dm.trending-cron:0 0 7 * * *}",
             zone = "${notifications.dm.schedule-zone:Asia/Seoul}"
     )
     public void runTrendingCampaign() {
+        runPendingCampaign(LocalDate.now(ZoneId.of(scheduleZone)), "scheduled");
+    }
+
+    void runPendingCampaign(LocalDate upToDate, String trigger) {
         if (!trendingEnabled) {
             return;
         }
 
-        LocalDate today = LocalDate.now(ZoneId.of(scheduleZone));
-        List<LocalDate> pendingSnapshotDates = trendingEventRepository.findDistinctPendingSnapshotDatesUpTo(today);
+        if (!campaignRunning.compareAndSet(false, true)) {
+            log.info("GitHub 트렌딩 DM 캠페인 이미 실행 중 - trigger: {}", trigger);
+            return;
+        }
+
+        try {
+            runPendingCampaignInternal(upToDate, trigger);
+        } finally {
+            campaignRunning.set(false);
+        }
+    }
+
+    private void runPendingCampaignInternal(LocalDate upToDate, String trigger) {
+        List<LocalDate> pendingSnapshotDates = trendingEventRepository.findDistinctPendingSnapshotDatesUpTo(upToDate);
         if (pendingSnapshotDates.isEmpty()) {
-            log.info("GitHub 트렌딩 미발송 이벤트 없음 - upTo: {}", today);
+            log.info("GitHub 트렌딩 미발송 이벤트 없음 - trigger: {}, upTo: {}", trigger, upToDate);
             return;
         }
 
@@ -120,12 +164,34 @@ public class GitHubTrendingCampaignService {
 
             totalSent += sent;
             totalFailed += failed;
-            log.info("GitHub 트렌딩 DM 스냅샷 처리 - runId: {}, 레포: {}, 대상: {}, 성공: {}, 실패/스킵: {}",
-                    runId, repos.size(), subscribers.size(), sent, failed);
+            log.info("GitHub 트렌딩 DM 스냅샷 처리 - trigger: {}, runId: {}, 레포: {}, 대상: {}, 성공: {}, 실패/스킵: {}",
+                    trigger, runId, repos.size(), subscribers.size(), sent, failed);
         }
 
-        log.info("GitHub 트렌딩 DM 캠페인 완료 - snapshots: {}, marked: {}, 대상: {}, 레포: {}, 성공: {}, 실패/스킵: {}",
-                pendingSnapshotDates.size(), markedSnapshots, subscribers.size(), totalRepos, totalSent, totalFailed);
+        log.info("GitHub 트렌딩 DM 캠페인 완료 - trigger: {}, upTo: {}, snapshots: {}, marked: {}, 대상: {}, 레포: {}, 성공: {}, 실패/스킵: {}",
+                trigger, upToDate, pendingSnapshotDates.size(), markedSnapshots, subscribers.size(), totalRepos, totalSent, totalFailed);
+    }
+
+    private LocalDate resolveStartupCatchupUpToDate() {
+        ZoneId zone = ZoneId.of(scheduleZone);
+        LocalDate today = LocalDate.now(zone);
+        LocalTime now = LocalTime.now(zone);
+        LocalTime currentDayCutoff = parseCatchupCurrentDayAfter();
+
+        if (now.isBefore(currentDayCutoff)) {
+            return today.minusDays(1);
+        }
+        return today;
+    }
+
+    private LocalTime parseCatchupCurrentDayAfter() {
+        try {
+            return LocalTime.parse(catchupCurrentDayAfter, CATCHUP_TIME_FORMAT);
+        } catch (Exception e) {
+            log.warn("notifications.dm.trending-catchup-current-day-after 설정 오류: {}. 07:00을 사용합니다.",
+                    catchupCurrentDayAfter);
+            return LocalTime.of(7, 0);
+        }
     }
 
     private GitHubTrending toTrendingEntityForDigest(GitHubTrendingEvent e) {
