@@ -1,6 +1,7 @@
 package com.gahyeonbot.services.notification;
 
 import com.gahyeonbot.commands.util.EmbedUtil;
+import com.gahyeonbot.core.BotInitializerRunner;
 import com.gahyeonbot.entity.DmSubscription;
 import com.gahyeonbot.entity.GitHubTrending;
 import com.gahyeonbot.entity.GitHubTrendingEvent;
@@ -41,6 +42,7 @@ public class GitHubTrendingCampaignService {
     private final GitHubTrendingEventRepository trendingEventRepository;
     private final RepoReadmeCacheRepository repoReadmeCacheRepository;
     private final GlmService glmService;
+    private final BotInitializerRunner botInitializerRunner;
     private final AtomicBoolean campaignRunning = new AtomicBoolean(false);
 
     @Value("${notifications.dm.trending-enabled:true}")
@@ -55,6 +57,9 @@ public class GitHubTrendingCampaignService {
     @Value("${notifications.dm.trending-catchup-current-day-after:07:00}")
     private String catchupCurrentDayAfter;
 
+    @Value("${notifications.dm.trending-catchup-readiness-timeout-seconds:180}")
+    private long catchupReadinessTimeoutSeconds;
+
     @EventListener(ApplicationReadyEvent.class)
     public void runStartupCatchupAsync() {
         if (!catchupOnStartup) {
@@ -63,6 +68,10 @@ public class GitHubTrendingCampaignService {
 
         CompletableFuture.runAsync(() -> {
             try {
+                if (!awaitDiscordReadyForCatchup()) {
+                    log.warn("GitHub 트렌딩 시작 시 누락 복구 건너뜀 - Discord 봇 미준비");
+                    return;
+                }
                 runPendingCampaign(resolveStartupCatchupUpToDate(), "startup-catchup");
             } catch (Exception e) {
                 log.warn("GitHub 트렌딩 시작 시 누락 복구 실패: {}", e.getMessage());
@@ -93,6 +102,17 @@ public class GitHubTrendingCampaignService {
         } finally {
             campaignRunning.set(false);
         }
+    }
+
+    private boolean awaitDiscordReadyForCatchup() throws InterruptedException {
+        long deadline = System.currentTimeMillis() + Math.max(0, catchupReadinessTimeoutSeconds) * 1000;
+        while (System.currentTimeMillis() <= deadline) {
+            if (botInitializerRunner.hasLeadership() && botInitializerRunner.getShardManager() != null) {
+                return true;
+            }
+            Thread.sleep(1000);
+        }
+        return botInitializerRunner.hasLeadership() && botInitializerRunner.getShardManager() != null;
     }
 
     private void runPendingCampaignInternal(LocalDate upToDate, String trigger) {

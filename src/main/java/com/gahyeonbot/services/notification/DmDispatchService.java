@@ -115,6 +115,15 @@ public class DmDispatchService {
                     .build();
         }
 
+        ShardManager shardManager = botInitializerRunner.getShardManager();
+        if (shardManager == null) {
+            return DispatchResult.builder()
+                    .sent(false)
+                    .status("FAILED_NOT_READY")
+                    .message("discord shard manager is not ready")
+                    .build();
+        }
+
         String normalizedDedupeKey = dedupeKey.trim();
         if (deliveryLogRepository.existsByDedupeKey(normalizedDedupeKey)) {
             return DispatchResult.builder()
@@ -139,16 +148,6 @@ public class DmDispatchService {
                     .sent(false)
                     .status("SKIPPED_DUPLICATE")
                     .message("duplicate dedupeKey")
-                    .build();
-        }
-
-        ShardManager shardManager = botInitializerRunner.getShardManager();
-        if (shardManager == null) {
-            markFailed(logEntry, "FAILED_NOT_READY", "discord shard manager is not ready");
-            return DispatchResult.builder()
-                    .sent(false)
-                    .status("FAILED_NOT_READY")
-                    .message("discord shard manager is not ready")
                     .build();
         }
 
