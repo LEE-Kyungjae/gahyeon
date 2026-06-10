@@ -11,6 +11,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.context.event.EventListener;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,8 @@ public class WeatherService {
 
     private static final int CACHE_DURATION_MINUTES = 30;
     private static final int NEAR_DAYS_THRESHOLD = 2; // 2일 이내는 최신 예보 사용
+    private static final int WEATHER_CONNECT_TIMEOUT_MS = 5000;
+    private static final int WEATHER_READ_TIMEOUT_MS = 15000;
 
     private final WeatherRepository weatherRepository;
     private final WeatherForecastRepository forecastRepository;
@@ -59,7 +62,10 @@ public class WeatherService {
 
     @PostConstruct
     public void initialize() {
-        this.restTemplate = new RestTemplate();
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(WEATHER_CONNECT_TIMEOUT_MS);
+        requestFactory.setReadTimeout(WEATHER_READ_TIMEOUT_MS);
+        this.restTemplate = new RestTemplate(requestFactory);
         log.info("날씨 서비스 초기화 완료 - 대상 도시: {}개", City.values().length);
     }
 
