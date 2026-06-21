@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Temurin JDK 21
         uses: actions/setup-java@v4
@@ -94,7 +94,7 @@ jobs:
 
       - name: Check out infra repo
         if: (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.push_image == true)) && env.HAS_INFRA_REPO_TOKEN == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ${{ env.INFRA_REPO }}
           token: ${{ secrets.INFRA_REPO_TOKEN }}
