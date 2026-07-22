@@ -2,7 +2,10 @@ package com.gahyeonbot.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -15,6 +18,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "dm_subscription")
+@IdClass(DmSubscriptionId.class)
 @Data
 @Builder
 @NoArgsConstructor
@@ -24,6 +28,12 @@ public class DmSubscription {
     @Id
     @Column(name = "user_id", nullable = false)
     private Long userId;
+
+    @Id
+    @Enumerated(EnumType.STRING)
+    @Column(name = "theme", nullable = false, length = 50)
+    @Builder.Default
+    private NewsletterTheme theme = NewsletterTheme.GITHUB_TRENDING;
 
     @Column(name = "enabled", nullable = false)
     @Builder.Default
