@@ -67,6 +67,25 @@
 | `SPOTIFY_CLIENT_ID` | Spotify Client ID |
 | `SPOTIFY_CLIENT_SECRET` | Spotify Client Secret |
 | `OPENAI_API_KEY` | OpenAI API 키 (가현아 AI 대화 기능) |
+| `ASSISTANT_ENABLED` | 음성 비서 기능 활성화 (`false` 기본값) |
+| `ASSISTANT_STT_ENABLED` | 음성 비서 STT 활성화 (`false` 기본값) |
+| `ASSISTANT_STT_API_KEY` | STT 제공자 API 키 |
+| `ASSISTANT_STT_MODEL` | STT 모델 (`gpt-4o-mini-transcribe` 기본값) |
+| `ASSISTANT_OPENROUTER_ENABLED` | OpenRouter 비서 AI 활성화 (`false` 기본값) |
+| `OPENROUTER_API_KEY` | OpenRouter API 키 |
+| `OPENROUTER_MODEL` | OpenRouter에서 사용할 모델 ID |
+| `TTS_PROVIDER` | `voicebox`, `edge`, `custom` (`voicebox` 기본값) |
+| `VOICEBOX_BASE_URL` | Voicebox 백엔드 주소 (`http://127.0.0.1:17493` 기본값) |
+| `VOICEBOX_PROFILE_ID` | Discord 응답에 사용할 Voicebox 프로필 ID (녹음 9 기본값) |
+| `VOICEBOX_PROFILE_NAME` | profile ID가 비어 있을 때 찾을 프로필 이름 (`내 목소리 (녹음 9)`) |
+| `VOICEBOX_MODEL_SIZE` | Voicebox Qwen 모델 크기 (`0.6B` 기본값) |
+| `VOICEBOX_TIMEOUT_SECONDS` | 모델 로딩과 합성을 포함한 최대 대기 시간 (`300`) |
+| `TTS_FALLBACK_TO_EDGE` | 커스텀 음성 실패 시 Edge TTS 사용 |
+| `CUSTOM_TTS_ENDPOINT` | 커스텀 음성 추론 HTTP 엔드포인트 |
+| `CUSTOM_TTS_API_KEY` | 추론 서버 Bearer 토큰(선택) |
+| `CUSTOM_TTS_MODEL` | 추론 서버의 모델 이름/마운트 별칭 |
+| `CUSTOM_TTS_SPEAKER_ID` | 학습한 음성의 speaker ID |
+| `CUSTOM_TTS_FORMAT` | 응답 오디오 형식 (`wav` 또는 `mp3`) |
 | `POSTGRES_DEV_PASSWORD` | 개발용 Postgres 비밀번호 (`application-dev.yml` 참고) |
 
 ### 1. 프로젝트 클론

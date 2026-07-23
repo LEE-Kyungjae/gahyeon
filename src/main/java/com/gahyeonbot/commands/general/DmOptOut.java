@@ -2,10 +2,13 @@ package com.gahyeonbot.commands.general;
 
 import com.gahyeonbot.commands.util.AbstractCommand;
 import com.gahyeonbot.commands.util.Description;
+import com.gahyeonbot.entity.NewsletterTheme;
 import com.gahyeonbot.services.notification.DmSubscriptionService;
 import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.DiscordLocale;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.springframework.stereotype.Component;
 
@@ -40,13 +43,19 @@ public class DmOptOut extends AbstractCommand {
 
     @Override
     public List<OptionData> getOptions() {
-        return List.of();
+        OptionData theme = new OptionData(OptionType.STRING, "theme", "해제할 뉴스레터 테마 (미지정 시 GitHub 트렌딩)", false);
+        for (NewsletterTheme t : NewsletterTheme.values()) {
+            theme.addChoice(t.getDisplayName(), t.getCode());
+        }
+        return List.of(theme);
     }
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
-        dmSubscriptionService.optOut(event.getUser().getIdLong());
-        event.reply("개인 메시지 수신을 비활성화했습니다. 이후 정기 발송 대상에서 제외됩니다.")
+        NewsletterTheme theme = NewsletterTheme.fromCode(
+                event.getOption("theme", NewsletterTheme.GITHUB_TRENDING.getCode(), OptionMapping::getAsString));
+        dmSubscriptionService.optOut(event.getUser().getIdLong(), theme);
+        event.reply("[%s] 구독을 껐습니다. 이후 해당 테마 발송 대상에서 제외됩니다.".formatted(theme.getDisplayName()))
                 .setEphemeral(true)
                 .queue();
     }

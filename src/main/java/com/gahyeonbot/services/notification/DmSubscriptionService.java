@@ -1,6 +1,7 @@
 package com.gahyeonbot.services.notification;
 
 import com.gahyeonbot.entity.DmSubscription;
+import com.gahyeonbot.entity.NewsletterTheme;
 import com.gahyeonbot.repository.DmSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,17 +14,22 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DmSubscriptionService {
     private static final String DEFAULT_TIMEZONE = "Asia/Seoul";
+    private static final NewsletterTheme DEFAULT_THEME = NewsletterTheme.GITHUB_TRENDING;
 
     private final DmSubscriptionRepository subscriptionRepository;
 
-    @Transactional
-    public DmSubscription optIn(Long userId) {
-        DmSubscription subscription = subscriptionRepository.findById(userId)
+    private DmSubscription loadOrNew(Long userId, NewsletterTheme theme) {
+        return subscriptionRepository.findByUserIdAndTheme(userId, theme)
                 .orElseGet(() -> DmSubscription.builder()
                         .userId(userId)
+                        .theme(theme)
                         .timezone(DEFAULT_TIMEZONE)
                         .build());
+    }
 
+    @Transactional
+    public DmSubscription optIn(Long userId, NewsletterTheme theme) {
+        DmSubscription subscription = loadOrNew(userId, theme);
         subscription.setEnabled(true);
         subscription.setTimezone(DEFAULT_TIMEZONE);
         subscription.setOptedInAt(LocalDateTime.now());
@@ -32,13 +38,8 @@ public class DmSubscriptionService {
     }
 
     @Transactional
-    public DmSubscription optOut(Long userId) {
-        DmSubscription subscription = subscriptionRepository.findById(userId)
-                .orElseGet(() -> DmSubscription.builder()
-                        .userId(userId)
-                        .timezone(DEFAULT_TIMEZONE)
-                        .build());
-
+    public DmSubscription optOut(Long userId, NewsletterTheme theme) {
+        DmSubscription subscription = loadOrNew(userId, theme);
         subscription.setEnabled(false);
         subscription.setTimezone(DEFAULT_TIMEZONE);
         subscription.setOptedOutAt(LocalDateTime.now());
@@ -46,24 +47,59 @@ public class DmSubscriptionService {
     }
 
     @Transactional(readOnly = true)
-    public DmSubscription getOrDefault(Long userId) {
-        return subscriptionRepository.findById(userId)
+    public DmSubscription getOrDefault(Long userId, NewsletterTheme theme) {
+        return subscriptionRepository.findByUserIdAndTheme(userId, theme)
                 .orElseGet(() -> DmSubscription.builder()
                         .userId(userId)
+                        .theme(theme)
                         .enabled(false)
                         .timezone(DEFAULT_TIMEZONE)
                         .build());
     }
 
     @Transactional(readOnly = true)
-    public boolean isOptedIn(Long userId) {
-        return subscriptionRepository.findById(userId)
+    public boolean isOptedIn(Long userId, NewsletterTheme theme) {
+        return subscriptionRepository.findByUserIdAndTheme(userId, theme)
                 .map(subscription -> Boolean.TRUE.equals(subscription.getEnabled()))
                 .orElse(false);
     }
 
+    /** 특정 테마의 활성 구독자. */
+    @Transactional(readOnly = true)
+    public List<DmSubscription> getOptedInSubscriptions(NewsletterTheme theme) {
+        return subscriptionRepository.findByThemeAndEnabledTrue(theme);
+    }
+
+    /** 한 사용자의 모든 테마 구독. */
+    @Transactional(readOnly = true)
+    public List<DmSubscription> getUserSubscriptions(Long userId) {
+        return subscriptionRepository.findByUserId(userId);
+    }
+
+    // --- 하위호환: 테마 미지정 = 기본 테마(GitHub 트렌딩) ---
+
+    @Transactional
+    public DmSubscription optIn(Long userId) {
+        return optIn(userId, DEFAULT_THEME);
+    }
+
+    @Transactional
+    public DmSubscription optOut(Long userId) {
+        return optOut(userId, DEFAULT_THEME);
+    }
+
+    @Transactional(readOnly = true)
+    public DmSubscription getOrDefault(Long userId) {
+        return getOrDefault(userId, DEFAULT_THEME);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isOptedIn(Long userId) {
+        return isOptedIn(userId, DEFAULT_THEME);
+    }
+
     @Transactional(readOnly = true)
     public List<DmSubscription> getOptedInSubscriptions() {
-        return subscriptionRepository.findByEnabledTrue();
+        return getOptedInSubscriptions(DEFAULT_THEME);
     }
 }

@@ -70,6 +70,8 @@ weather:
 
 tts:
   enabled: ${TTS_ENABLED:true}
+  provider: ${TTS_PROVIDER:voicebox}
+  fallback-to-edge: ${TTS_FALLBACK_TO_EDGE:true}
   max-chars: ${TTS_MAX_CHARS:400}
   segment-max-chars: ${TTS_SEGMENT_MAX_CHARS:120}
   timeout-seconds: ${TTS_TIMEOUT_SECONDS:20}
@@ -78,9 +80,45 @@ tts:
     voice: ${TTS_EDGE_VOICE:ko-KR-SunHiNeural}
     rate: ${TTS_EDGE_RATE:+0%}
     pitch: ${TTS_EDGE_PITCH:+0Hz}
+  custom:
+    endpoint: ${CUSTOM_TTS_ENDPOINT:}
+    api-key: ${CUSTOM_TTS_API_KEY:}
+    model: ${CUSTOM_TTS_MODEL:}
+    speaker-id: ${CUSTOM_TTS_SPEAKER_ID:}
+    format: ${CUSTOM_TTS_FORMAT:wav}
+    timeout-seconds: ${CUSTOM_TTS_TIMEOUT_SECONDS:60}
+  voicebox:
+    base-url: ${VOICEBOX_BASE_URL:http://127.0.0.1:17493}
+    profile-id: ${VOICEBOX_PROFILE_ID:1df376d5-c74d-415c-a2f0-fdb1654f7331}
+    profile-name: ${VOICEBOX_PROFILE_NAME:내 목소리 (녹음 9)}
+    language: ${VOICEBOX_LANGUAGE:ko}
+    engine: ${VOICEBOX_ENGINE:qwen}
+    model-size: ${VOICEBOX_MODEL_SIZE:0.6B}
+    normalize: ${VOICEBOX_NORMALIZE:true}
+    timeout-seconds: ${VOICEBOX_TIMEOUT_SECONDS:300}
+    poll-millis: ${VOICEBOX_POLL_MILLIS:500}
   kss:
     python: ${TTS_PYTHON:python3}
     script: ${TTS_KSS_SCRIPT:/app/tts_split.py}
+
+assistant:
+  enabled: ${ASSISTANT_ENABLED:false}
+  max-utterance-seconds: ${ASSISTANT_MAX_UTTERANCE_SECONDS:20}
+  silence-millis: ${ASSISTANT_SILENCE_MILLIS:900}
+  speak-responses: ${ASSISTANT_SPEAK_RESPONSES:true}
+  stt:
+    enabled: ${ASSISTANT_STT_ENABLED:false}
+    base-url: ${ASSISTANT_STT_BASE_URL:https://api.openai.com/v1}
+    api-key: ${ASSISTANT_STT_API_KEY:}
+    model: ${ASSISTANT_STT_MODEL:gpt-4o-mini-transcribe}
+    language: ${ASSISTANT_STT_LANGUAGE:ko}
+    timeout-seconds: ${ASSISTANT_STT_TIMEOUT_SECONDS:30}
+  openrouter:
+    enabled: ${ASSISTANT_OPENROUTER_ENABLED:false}
+    api-key: ${OPENROUTER_API_KEY:}
+    base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api/v1}
+    model: ${OPENROUTER_MODEL:}
+    timeout-seconds: ${OPENROUTER_TIMEOUT_SECONDS:60}
 
 notifications:
   dm:

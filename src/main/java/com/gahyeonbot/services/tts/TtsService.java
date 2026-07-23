@@ -21,7 +21,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class TtsService {
     private final TtsProperties props;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+    private final List<TtsProvider> providers;
 
     public boolean isEnabled() {
         return props.isEnabled();
@@ -44,7 +45,31 @@ public class TtsService {
     }
 
     public Path synthesizeSegmentToAudio(String text) throws Exception {
-        return synthesizeToAudio(text);
+        TtsProvider selected = findProvider(props.getProvider());
+        if (selected.isReady()) {
+            try {
+                return selected.synthesize(text);
+            } catch (Exception e) {
+                if (!"edge".equals(selected.name()) && props.isFallbackToEdge()) {
+                    log.warn("커스텀 TTS 실패, Edge TTS로 폴백합니다: {}", e.getMessage());
+                    return findProvider("edge").synthesize(text);
+                }
+                throw e;
+            }
+        }
+        if (!"edge".equals(selected.name()) && props.isFallbackToEdge()) {
+            log.warn("선택한 TTS 제공자 '{}'가 준비되지 않아 Edge TTS를 사용합니다.", selected.name());
+            return findProvider("edge").synthesize(text);
+        }
+        throw new IllegalStateException("TTS 제공자 '" + selected.name() + "' 설정이 준비되지 않았습니다.");
+    }
+
+    private TtsProvider findProvider(String name) {
+        String requested = name == null ? "edge" : name.trim().toLowerCase();
+        return providers.stream()
+                .filter(provider -> provider.name().equals(requested))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("지원하지 않는 TTS 제공자: " + requested));
     }
 
     private List<String> splitAndChunk(String text) throws Exception {
@@ -108,56 +133,6 @@ public class TtsService {
         }
     }
 
-    private Path synthesizeToAudio(String text) throws Exception {
-        Path dir = Path.of(System.getProperty("java.io.tmpdir"), "gahyeonbot-tts");
-        Files.createDirectories(dir);
-        Path audio = Files.createTempFile(dir, "tts_", ".mp3");
-
-        ExecResult result = runEdgeSynthesis(text, audio);
-        if (!result.ok()) {
-            safeDelete(audio);
-            throw new IllegalStateException("Edge TTS failed: " + result.output());
-        }
-
-        // Basic sanity check.
-        if (!Files.exists(audio) || Files.size(audio) < 256) {
-            safeDelete(audio);
-            throw new IllegalStateException("Edge TTS produced empty audio");
-        }
-        return audio;
-    }
-
-    private ExecResult runEdgeSynthesis(String text, Path outputFile) throws Exception {
-        List<String> cmd = new ArrayList<>();
-        cmd.add(props.getEdge().getBin());
-        cmd.add("--voice");
-        cmd.add(props.getEdge().getVoice());
-        cmd.add("--rate");
-        cmd.add(props.getEdge().getRate());
-        cmd.add("--pitch");
-        cmd.add(props.getEdge().getPitch());
-        cmd.add("--text");
-        cmd.add(text);
-        cmd.add("--write-media");
-        cmd.add(outputFile.toString());
-
-        ProcessBuilder pb = new ProcessBuilder(cmd);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        StreamGobbler gobbler = StreamGobbler.start(p.getInputStream());
-        try (var os = p.getOutputStream()) {
-            os.write(text.getBytes(StandardCharsets.UTF_8));
-        }
-
-        boolean ok = p.waitFor(props.getTimeoutSeconds(), TimeUnit.SECONDS);
-        if (!ok) {
-            p.destroyForcibly();
-            return new ExecResult(false, "Edge TTS timeout");
-        }
-        return new ExecResult(p.exitValue() == 0, gobbler.getOutput());
-    }
-    private record ExecResult(boolean ok, String output) {}
-
     private static Optional<String> extractJsonPayload(String s) {
         if (s == null) return Optional.empty();
         int startArr = s.indexOf('[');
@@ -216,10 +191,4 @@ public class TtsService {
         }
     }
 
-    private static void safeDelete(Path p) {
-        try {
-            Files.deleteIfExists(p);
-        } catch (Exception ignored) {
-        }
-    }
 }
