@@ -106,13 +106,22 @@ assistant:
   max-utterance-seconds: ${ASSISTANT_MAX_UTTERANCE_SECONDS:20}
   silence-millis: ${ASSISTANT_SILENCE_MILLIS:900}
   speak-responses: ${ASSISTANT_SPEAK_RESPONSES:true}
+  vad:
+    enabled: ${ASSISTANT_VAD_ENABLED:true}
+    hop-size: ${ASSISTANT_VAD_HOP_SIZE:256}
+    threshold: ${ASSISTANT_VAD_THRESHOLD:0.5}
+    min-speech-millis: ${ASSISTANT_VAD_MIN_SPEECH_MILLIS:300}
+    end-silence-millis: ${ASSISTANT_VAD_END_SILENCE_MILLIS:1200}
+    pre-roll-millis: ${ASSISTANT_VAD_PRE_ROLL_MILLIS:240}
   stt:
     enabled: ${ASSISTANT_STT_ENABLED:false}
     base-url: ${ASSISTANT_STT_BASE_URL:https://api.openai.com/v1}
+    endpoint: ${ASSISTANT_STT_ENDPOINT:/audio/transcriptions}
     api-key: ${ASSISTANT_STT_API_KEY:}
     model: ${ASSISTANT_STT_MODEL:gpt-4o-mini-transcribe}
     language: ${ASSISTANT_STT_LANGUAGE:ko}
     timeout-seconds: ${ASSISTANT_STT_TIMEOUT_SECONDS:30}
+    api-key-required: ${ASSISTANT_STT_API_KEY_REQUIRED:true}
   openrouter:
     enabled: ${ASSISTANT_OPENROUTER_ENABLED:false}
     api-key: ${OPENROUTER_API_KEY:}

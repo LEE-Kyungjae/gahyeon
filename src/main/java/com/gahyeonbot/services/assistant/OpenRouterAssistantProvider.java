@@ -7,6 +7,9 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -55,16 +58,50 @@ public class OpenRouterAssistantProvider implements AssistantChatProvider {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(p.getApiKey());
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.TEXT_EVENT_STREAM));
         headers.set("HTTP-Referer", "https://github.com/LEE-Kyungjae/gahyeonbot");
-        headers.set("X-Title", "GahyeonBot Voice Assistant");
+        headers.set("X-OpenRouter-Title", "GahyeonBot Voice Assistant");
 
-        Map<String, Object> body = Map.of("model", p.getModel(), "messages", messages);
-        ResponseEntity<String> response = client.exchange(
-                trimSlash(p.getBaseUrl()) + "/chat/completions",
-                HttpMethod.POST, new HttpEntity<>(body, headers), String.class);
+        Map<String, Object> body = Map.of(
+                "model", p.getModel(),
+                "messages", messages,
+                "stream", true,
+                "stream_options", Map.of("include_usage", true));
         try {
-            JsonNode json = objectMapper.readTree(response.getBody());
-            String answer = json.path("choices").path(0).path("message").path("content").asText("").trim();
+            String requestJson = objectMapper.writeValueAsString(body);
+            String answer = client.execute(
+                    trimSlash(p.getBaseUrl()) + "/chat/completions",
+                    HttpMethod.POST,
+                    request -> {
+                        request.getHeaders().putAll(headers);
+                        request.getBody().write(requestJson.getBytes(StandardCharsets.UTF_8));
+                    },
+                    response -> {
+                        if (!response.getStatusCode().is2xxSuccessful()) {
+                            String error = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
+                            throw new IllegalStateException("OpenRouter HTTP "
+                                    + response.getStatusCode().value() + ": " + error);
+                        }
+                        StringBuilder result = new StringBuilder();
+                        try (BufferedReader reader = new BufferedReader(
+                                new InputStreamReader(response.getBody(), StandardCharsets.UTF_8))) {
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                if (!line.startsWith("data:")) continue; // includes SSE keep-alive comments
+                                String data = line.substring(5).trim();
+                                if (data.isEmpty() || "[DONE]".equals(data)) continue;
+                                JsonNode event = objectMapper.readTree(data);
+                                if (event.has("error")) {
+                                    throw new IllegalStateException(
+                                            "OpenRouter 스트림 오류: " + event.path("error").toString());
+                                }
+                                JsonNode content = event.path("choices").path(0).path("delta").path("content");
+                                if (content.isTextual()) result.append(content.asText());
+                            }
+                        }
+                        return result.toString();
+                    });
+            answer = answer == null ? "" : answer.trim();
             if (answer.isEmpty()) throw new IllegalStateException("OpenRouter 응답이 비어 있습니다.");
             history.add(Map.of("role", "assistant", "content", answer));
             return answer;

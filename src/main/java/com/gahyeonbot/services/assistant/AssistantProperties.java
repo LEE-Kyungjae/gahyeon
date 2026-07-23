@@ -14,6 +14,7 @@ public class AssistantProperties {
     private int maxUtteranceSeconds = 20;
     private long silenceMillis = 900;
     private boolean speakResponses = true;
+    private final Vad vad = new Vad();
     private final Stt stt = new Stt();
     private final OpenRouter openrouter = new OpenRouter();
 
@@ -22,10 +23,23 @@ public class AssistantProperties {
     public static class Stt {
         private boolean enabled;
         private String baseUrl = "https://api.openai.com/v1";
+        private String endpoint = "/audio/transcriptions";
         private String apiKey;
         private String model = "gpt-4o-mini-transcribe";
         private String language = "ko";
         private int timeoutSeconds = 30;
+        private boolean apiKeyRequired = true;
+    }
+
+    @Getter
+    @Setter
+    public static class Vad {
+        private boolean enabled = true;
+        private int hopSize = 256;
+        private float threshold = 0.5f;
+        private long minSpeechMillis = 300;
+        private long endSilenceMillis = 1_200;
+        private long preRollMillis = 240;
     }
 
     @Getter
