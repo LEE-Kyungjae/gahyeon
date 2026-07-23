@@ -37,3 +37,8 @@ jobs:
             ghcr.io/lee-kyungjae/gahyeonbot:voicebox-52f8d8d
           cache-from: type=gha,scope=voicebox-cpu
           cache-to: type=gha,mode=max,scope=voicebox-cpu
+
+      - name: Allow cluster pulls from the public image package
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api --method PATCH /user/packages/container/gahyeonbot -f visibility=public
