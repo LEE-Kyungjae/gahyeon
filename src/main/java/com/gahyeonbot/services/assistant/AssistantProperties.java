@@ -14,6 +14,7 @@ public class AssistantProperties {
     private int maxUtteranceSeconds = 20;
     private long silenceMillis = 900;
     private boolean speakResponses = true;
+    private String ttsProvider = "edge";
     private final Vad vad = new Vad();
     private final Stt stt = new Stt();
     private final OpenRouter openrouter = new OpenRouter();

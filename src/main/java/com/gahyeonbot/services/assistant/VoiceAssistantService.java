@@ -207,7 +207,8 @@ public class VoiceAssistantService {
 
         private void speak(String answer) throws Exception {
             for (String segment : ttsService.prepareSegments(answer)) {
-                Path audio = ttsService.synthesizeSegmentToAudio(segment);
+                Path audio = ttsService.synthesizeSegmentToAudio(
+                        segment, properties.getTtsProvider());
                 audioManager.getPlayerManager().loadItem(audio.toString(), new AudioLoadResultHandler() {
                     @Override public void trackLoaded(AudioTrack track) {
                         track.setUserData(new TtsTrackMetadata(audio, true));
