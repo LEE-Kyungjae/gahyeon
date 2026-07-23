@@ -2,8 +2,11 @@ package com.gahyeonbot.services.tts;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.http.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayOutputStream;
+import java.time.Duration;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,8 +28,30 @@ public class EdgeTtsProvider implements TtsProvider {
         Files.createDirectories(dir);
         Path audio = Files.createTempFile(dir, "tts_edge_", ".mp3");
         try {
-            List<String> command = new ArrayList<>();
             var edge = properties.getEdge();
+            if (edge.getEndpoint() != null && !edge.getEndpoint().isBlank()) {
+                var factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+                factory.setConnectTimeout(Duration.ofSeconds(properties.getTimeoutSeconds()));
+                factory.setReadTimeout(Duration.ofSeconds(properties.getTimeoutSeconds()));
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                ResponseEntity<byte[]> response = new RestTemplate(factory).exchange(
+                        edge.getEndpoint(), HttpMethod.POST,
+                        new HttpEntity<>(java.util.Map.of(
+                                "text", text,
+                                "voice", edge.getVoice(),
+                                "rate", edge.getRate(),
+                                "pitch", edge.getPitch()), headers),
+                        byte[].class);
+                byte[] bytes = response.getBody();
+                if (bytes == null || bytes.length < 256) {
+                    throw new IllegalStateException("Edge TTS sidecar produced empty audio");
+                }
+                Files.write(audio, bytes);
+                return audio;
+            }
+
+            List<String> command = new ArrayList<>();
             command.add(edge.getBin());
             command.add("--voice");
             command.add(edge.getVoice());

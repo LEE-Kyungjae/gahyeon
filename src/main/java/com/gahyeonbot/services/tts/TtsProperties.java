@@ -38,6 +38,8 @@ public class TtsProperties {
     public static class Edge {
         /** edge-tts executable. */
         private String bin = "edge-tts";
+        /** Optional HTTP sidecar endpoint returning MP3 bytes. */
+        private String endpoint;
 
         /** Korean female neural voice. */
         private String voice = "ko-KR-SunHiNeural";

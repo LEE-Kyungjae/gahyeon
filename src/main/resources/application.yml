@@ -77,6 +77,7 @@ tts:
   timeout-seconds: ${TTS_TIMEOUT_SECONDS:20}
   edge:
     bin: ${TTS_EDGE_BIN:edge-tts}
+    endpoint: ${TTS_EDGE_ENDPOINT:}
     voice: ${TTS_EDGE_VOICE:ko-KR-SunHiNeural}
     rate: ${TTS_EDGE_RATE:+0%}
     pitch: ${TTS_EDGE_PITCH:+0Hz}
