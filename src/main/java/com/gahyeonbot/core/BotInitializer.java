@@ -1,7 +1,10 @@
 package com.gahyeonbot.core;
 
 import com.gahyeonbot.config.AppCredentialsConfig;
+import moe.kyokobot.libdave.NativeDaveFactory;
+import moe.kyokobot.libdave.jda.LDJDADaveSessionFactory;
 import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.audio.AudioModuleConfig;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
@@ -47,7 +50,10 @@ public class BotInitializer {
         }
 
         try {
+            var daveSessionFactory = new LDJDADaveSessionFactory(new NativeDaveFactory());
             return DefaultShardManagerBuilder.createDefault(token)
+                    .setAudioModuleConfig(new AudioModuleConfig()
+                            .withDaveSessionFactory(daveSessionFactory))
                     .setStatus(OnlineStatus.ONLINE)
                     .setActivity(Activity.playing("데이트"))
                     .enableIntents(
