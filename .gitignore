@@ -43,3 +43,9 @@ scripts/extract_*.py
 .claude/
 .serena/
 CLAUDE.md
+
+# Local reference repositories
+ref/*
+
+# Local voice recordings, cloned profiles, and generated audio
+output/
