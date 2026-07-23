@@ -45,7 +45,11 @@ public class TtsService {
     }
 
     public Path synthesizeSegmentToAudio(String text) throws Exception {
-        TtsProvider selected = findProvider(props.getProvider());
+        return synthesizeSegmentToAudio(text, props.getProvider());
+    }
+
+    public Path synthesizeSegmentToAudio(String text, String provider) throws Exception {
+        TtsProvider selected = findProvider(provider);
         if (selected.isReady()) {
             try {
                 return selected.synthesize(text);

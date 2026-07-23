@@ -106,6 +106,7 @@ assistant:
   max-utterance-seconds: ${ASSISTANT_MAX_UTTERANCE_SECONDS:20}
   silence-millis: ${ASSISTANT_SILENCE_MILLIS:900}
   speak-responses: ${ASSISTANT_SPEAK_RESPONSES:true}
+  tts-provider: ${ASSISTANT_TTS_PROVIDER:edge}
   vad:
     enabled: ${ASSISTANT_VAD_ENABLED:true}
     hop-size: ${ASSISTANT_VAD_HOP_SIZE:256}
