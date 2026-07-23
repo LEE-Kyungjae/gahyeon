@@ -76,6 +76,7 @@ dependencies {
 
     // HTTP Client
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
+    implementation 'net.java.dev.jna:jna:5.17.0'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

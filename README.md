@@ -69,11 +69,21 @@
 | `OPENAI_API_KEY` | OpenAI API 키 (가현아 AI 대화 기능) |
 | `ASSISTANT_ENABLED` | 음성 비서 기능 활성화 (`false` 기본값) |
 | `ASSISTANT_STT_ENABLED` | 음성 비서 STT 활성화 (`false` 기본값) |
+| `ASSISTANT_VAD_ENABLED` | TEN VAD 기반 음성 구간 감지 (`true` 기본값) |
+| `ASSISTANT_VAD_THRESHOLD` | TEN VAD 음성 판정 임계값 (`0.5` 기본값) |
+| `ASSISTANT_VAD_END_SILENCE_MILLIS` | 한 발화를 확정할 연속 무음 시간 (`1200`ms 기본값) |
+| `ASSISTANT_STT_BASE_URL` | STT API 주소. 로컬 Voicebox 사용 시 `http://voicebox:17493` |
+| `ASSISTANT_STT_ENDPOINT` | STT 경로. 로컬 Voicebox 사용 시 `/transcribe` |
+| `ASSISTANT_STT_API_KEY_REQUIRED` | 로컬 STT처럼 인증이 없으면 `false` |
 | `ASSISTANT_STT_API_KEY` | STT 제공자 API 키 |
-| `ASSISTANT_STT_MODEL` | STT 모델 (`gpt-4o-mini-transcribe` 기본값) |
+| `ASSISTANT_STT_MODEL` | STT 모델 (Voicebox Whisper 사용 시 `base`) |
 | `ASSISTANT_OPENROUTER_ENABLED` | OpenRouter 비서 AI 활성화 (`false` 기본값) |
 | `OPENROUTER_API_KEY` | OpenRouter API 키 |
 | `OPENROUTER_MODEL` | OpenRouter에서 사용할 모델 ID |
+
+음성 비서는 TEN VAD가 사람 음성을 감지한 뒤 연속 무음으로 한 턴을 확정하므로,
+잡음이나 Discord의 빈 오디오 패킷만으로 STT/OpenRouter 요청을 만들지 않습니다.
+OpenRouter 응답은 한 발화당 한 번의 `stream: true` SSE 요청으로 수신합니다.
 | `TTS_PROVIDER` | `voicebox`, `edge`, `custom` (`voicebox` 기본값) |
 | `VOICEBOX_BASE_URL` | Voicebox 백엔드 주소 (`http://127.0.0.1:17493` 기본값) |
 | `VOICEBOX_PROFILE_ID` | Discord 응답에 사용할 Voicebox 프로필 ID (녹음 9 기본값) |

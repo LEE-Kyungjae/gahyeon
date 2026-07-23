@@ -22,7 +22,8 @@ public class OpenAiTranscriptionProvider implements SpeechToTextProvider {
     public boolean isReady() {
         var p = properties.getStt();
         return properties.isEnabled() && p.isEnabled()
-                && hasText(p.getApiKey()) && hasText(p.getModel());
+                && (!p.isApiKeyRequired() || hasText(p.getApiKey()))
+                && hasText(p.getModel());
     }
 
     @Override
@@ -36,7 +37,7 @@ public class OpenAiTranscriptionProvider implements SpeechToTextProvider {
         RestTemplate client = new RestTemplate(requestFactory);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(p.getApiKey());
+        if (hasText(p.getApiKey())) headers.setBearerAuth(p.getApiKey());
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -48,7 +49,7 @@ public class OpenAiTranscriptionProvider implements SpeechToTextProvider {
         if (hasText(p.getLanguage())) body.add("language", p.getLanguage());
 
         ResponseEntity<String> response = client.exchange(
-                trimSlash(p.getBaseUrl()) + "/audio/transcriptions",
+                trimSlash(p.getBaseUrl()) + normalizedEndpoint(p.getEndpoint()),
                 HttpMethod.POST, new HttpEntity<>(body, headers), String.class);
         try {
             JsonNode json = objectMapper.readTree(response.getBody());
@@ -64,5 +65,9 @@ public class OpenAiTranscriptionProvider implements SpeechToTextProvider {
 
     private static String trimSlash(String value) {
         return value != null && value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+    }
+
+    private static String normalizedEndpoint(String endpoint) {
+        return endpoint != null && endpoint.startsWith("/") ? endpoint : "/" + endpoint;
     }
 }

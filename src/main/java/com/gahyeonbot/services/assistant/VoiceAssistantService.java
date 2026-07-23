@@ -117,6 +117,7 @@ public class VoiceAssistantService {
         private void close() {
             closed = true;
             silenceTask.cancel(false);
+            utterances.values().forEach(Utterance::close);
             utterances.clear();
         }
 
@@ -128,12 +129,34 @@ public class VoiceAssistantService {
                 if (closed || userAudio.getUser().isBot()) return;
                 byte[] pcm = userAudio.getAudioData(1.0);
                 Utterance utterance = utterances.computeIfAbsent(
-                        userAudio.getUser().getIdLong(), ignored -> new Utterance(userAudio.getUser().getName()));
+                        userAudio.getUser().getIdLong(),
+                        ignored -> new Utterance(userAudio.getUser().getName(), properties.getVad()));
                 synchronized (utterance) {
                     int max = properties.getMaxUtteranceSeconds()
                             * WavEncoder.SAMPLE_RATE * WavEncoder.CHANNELS * WavEncoder.BITS_PER_SAMPLE / 8;
+                    long now = System.currentTimeMillis();
+                    if (utterance.vad == null) {
+                        if (utterance.pcm.size() + pcm.length <= max) utterance.pcm.writeBytes(pcm);
+                        utterance.lastVoiceAt = now;
+                        return;
+                    }
+
+                    TenVadDetector.Detection detection = utterance.vad.processDiscordPcm(pcm);
+                    if (!utterance.speechStarted) {
+                        if (detection.voice()) {
+                            utterance.speechStarted = true;
+                            utterance.pcm.writeBytes(utterance.preRoll.toByteArray());
+                            utterance.preRoll.reset();
+                        } else {
+                            utterance.appendPreRoll(pcm, properties.getVad().getPreRollMillis());
+                            return;
+                        }
+                    }
                     if (utterance.pcm.size() + pcm.length <= max) utterance.pcm.writeBytes(pcm);
-                    utterance.lastAudioAt = System.currentTimeMillis();
+                    if (detection.voice()) {
+                        utterance.lastVoiceAt = now;
+                        utterance.voiceSamples += (long) detection.voiceFrames() * properties.getVad().getHopSize();
+                    }
                 }
             }
         }
@@ -144,10 +167,20 @@ public class VoiceAssistantService {
             utterances.forEach((userId, utterance) -> {
                 byte[] pcm = null;
                 synchronized (utterance) {
-                    if (utterance.pcm.size() >= MIN_UTTERANCE_BYTES
-                            && now - utterance.lastAudioAt >= properties.getSilenceMillis()) {
+                    long requiredSilence = utterance.vad == null
+                            ? properties.getSilenceMillis()
+                            : properties.getVad().getEndSilenceMillis();
+                    long speechMillis = utterance.vad == null
+                            ? Long.MAX_VALUE
+                            : utterance.voiceSamples * 1_000 / 16_000;
+                    boolean maxLength = utterance.pcm.size() >= properties.getMaxUtteranceSeconds()
+                            * WavEncoder.SAMPLE_RATE * WavEncoder.CHANNELS * WavEncoder.BITS_PER_SAMPLE / 8;
+                    if (utterance.speechStarted
+                            && utterance.pcm.size() >= MIN_UTTERANCE_BYTES
+                            && speechMillis >= properties.getVad().getMinSpeechMillis()
+                            && (now - utterance.lastVoiceAt >= requiredSilence || maxLength)) {
                         pcm = utterance.pcm.toByteArray();
-                        utterance.pcm.reset();
+                        utterance.reset();
                     }
                 }
                 if (pcm != null) {
@@ -195,8 +228,41 @@ public class VoiceAssistantService {
     private static final class Utterance {
         private final String username;
         private final ByteArrayOutputStream pcm = new ByteArrayOutputStream();
-        private long lastAudioAt = System.currentTimeMillis();
-        private Utterance(String username) { this.username = username; }
+        private final ByteArrayOutputStream preRoll = new ByteArrayOutputStream();
+        private final TenVadDetector vad;
+        private long lastVoiceAt = System.currentTimeMillis();
+        private long voiceSamples;
+        private boolean speechStarted;
+
+        private Utterance(String username, AssistantProperties.Vad settings) {
+            this.username = username;
+            this.vad = settings.isEnabled()
+                    ? new TenVadDetector(settings.getHopSize(), settings.getThreshold())
+                    : null;
+            this.speechStarted = vad == null;
+        }
+
+        private void appendPreRoll(byte[] packet, long preRollMillis) {
+            int maxBytes = (int) (WavEncoder.SAMPLE_RATE * WavEncoder.CHANNELS
+                    * WavEncoder.BITS_PER_SAMPLE / 8 * preRollMillis / 1_000);
+            preRoll.writeBytes(packet);
+            if (preRoll.size() <= maxBytes) return;
+            byte[] bytes = preRoll.toByteArray();
+            preRoll.reset();
+            preRoll.write(bytes, bytes.length - maxBytes, maxBytes);
+        }
+
+        private void reset() {
+            pcm.reset();
+            preRoll.reset();
+            voiceSamples = 0;
+            speechStarted = vad == null;
+            lastVoiceAt = System.currentTimeMillis();
+        }
+
+        private void close() {
+            if (vad != null) vad.close();
+        }
     }
 
     private static String limit(String text, int max) {
