@@ -77,7 +77,13 @@ public class TtsService {
     }
 
     private List<String> splitAndChunk(String text) throws Exception {
-        List<String> sentences = splitSentences(text);
+        List<String> sentences;
+        try {
+            sentences = splitSentences(text);
+        } catch (Exception e) {
+            log.warn("KSS 문장 분리기를 사용할 수 없어 Java 분리기로 대체합니다: {}", e.getMessage());
+            sentences = splitSentencesLocally(text);
+        }
         List<String> out = new ArrayList<>();
         int max = Math.max(20, props.getSegmentMaxChars());
         for (String s : sentences) {
@@ -95,6 +101,17 @@ public class TtsService {
             }
         }
         return out;
+    }
+
+    static List<String> splitSentencesLocally(String text) {
+        if (text == null || text.isBlank()) return List.of();
+        String[] parts = text.trim().split("(?<=[.!?。！？])\\s+|\\R+");
+        List<String> sentences = new ArrayList<>(parts.length);
+        for (String part : parts) {
+            String trimmed = part.trim();
+            if (!trimmed.isEmpty()) sentences.add(trimmed);
+        }
+        return sentences.isEmpty() ? List.of(text.trim()) : sentences;
     }
 
     private List<String> splitSentences(String text) throws Exception {
