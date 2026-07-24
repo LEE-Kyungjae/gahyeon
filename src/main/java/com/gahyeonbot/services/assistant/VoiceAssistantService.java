@@ -211,7 +211,7 @@ public class VoiceAssistantService {
                         segment, properties.getTtsProvider());
                 audioManager.getPlayerManager().loadItem(audio.toString(), new AudioLoadResultHandler() {
                     @Override public void trackLoaded(AudioTrack track) {
-                        track.setUserData(new TtsTrackMetadata(audio, true));
+                        track.setUserData(new TtsTrackMetadata(audio, true, true));
                         musicManager.playOrQueueTrack(track);
                     }
                     @Override public void playlistLoaded(AudioPlaylist playlist) {

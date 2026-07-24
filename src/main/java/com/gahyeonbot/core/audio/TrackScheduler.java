@@ -70,10 +70,14 @@ public class TrackScheduler extends AudioEventAdapter {
      * 다음 트랙으로 넘어갑니다.
      */
     public void nextTrack() {
+        nextTrack(true);
+    }
+
+    private void nextTrack(boolean closeWhenEmpty) {
         AudioTrack nextTrack = trackQueue.pollTrack();
         if (nextTrack != null) {
             player.startTrack(nextTrack, false);
-        } else {
+        } else if (closeWhenEmpty) {
             closeConnection();
         }
     }
@@ -105,12 +109,13 @@ public class TrackScheduler extends AudioEventAdapter {
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
         cleanupIfTts(track);
-        if (endReason.mayStartNext) {
-            nextTrack();
-        } else {
+        boolean keepConnection = track != null
+                && track.getUserData() instanceof TtsTrackMetadata meta
+                && meta.keepConnection();
+        if (!endReason.mayStartNext) {
             System.out.println("트랙 종료: " + track.getInfo().title + " (이유: " + endReason + ")");
-            nextTrack();
         }
+        nextTrack(!keepConnection);
     }
 
     private void cleanupIfTts(AudioTrack track) {

@@ -5,5 +5,8 @@ import java.nio.file.Path;
 /**
  * Stored as Lavaplayer track userData to allow cleanup on track end.
  */
-public record TtsTrackMetadata(Path wavPath, boolean deleteOnEnd) {}
-
+public record TtsTrackMetadata(Path wavPath, boolean deleteOnEnd, boolean keepConnection) {
+    public TtsTrackMetadata(Path wavPath, boolean deleteOnEnd) {
+        this(wavPath, deleteOnEnd, false);
+    }
+}
