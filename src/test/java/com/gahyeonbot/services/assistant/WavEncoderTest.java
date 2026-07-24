@@ -2,22 +2,23 @@ package com.gahyeonbot.services.assistant;
 
 import org.junit.jupiter.api.Test;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class WavEncoderTest {
     @Test
-    void writesPcmAsDiscordCompatibleWav() {
-        byte[] pcm = {1, 2, 3, 4, 5, 6, 7, 8};
+    void convertsBigEndian16BitPcmToLittleEndian() {
+        byte[] bigEndian = {0x12, 0x34, (byte) 0xFE, (byte) 0xDC};
 
-        byte[] wav = WavEncoder.pcmToWav(pcm);
+        byte[] littleEndian = WavEncoder.bigEndianToLittleEndian(bigEndian);
 
-        assertThat(new String(wav, 0, 4)).isEqualTo("RIFF");
-        assertThat(new String(wav, 8, 4)).isEqualTo("WAVE");
-        assertThat(new String(wav, 36, 4)).isEqualTo("data");
-        assertThat(ByteBuffer.wrap(wav, 40, 4).order(ByteOrder.LITTLE_ENDIAN).getInt()).isEqualTo(pcm.length);
-        assertThat(wav).endsWith(pcm);
+        assertArrayEquals(new byte[]{0x34, 0x12, (byte) 0xDC, (byte) 0xFE}, littleEndian);
+        assertArrayEquals(new byte[]{0x12, 0x34, (byte) 0xFE, (byte) 0xDC}, bigEndian);
+    }
+
+    @Test
+    void rejectsIncomplete16BitSample() {
+        assertThrows(IllegalArgumentException.class,
+                () -> WavEncoder.bigEndianToLittleEndian(new byte[]{0x01}));
     }
 }

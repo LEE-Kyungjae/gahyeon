@@ -10,6 +10,19 @@ final class WavEncoder {
 
     private WavEncoder() {}
 
+    static byte[] bigEndianToLittleEndian(byte[] pcm) {
+        if ((pcm.length & 1) != 0) {
+            throw new IllegalArgumentException("16-bit PCM byte length must be even");
+        }
+        byte[] converted = pcm.clone();
+        for (int i = 0; i < converted.length; i += 2) {
+            byte high = converted[i];
+            converted[i] = converted[i + 1];
+            converted[i + 1] = high;
+        }
+        return converted;
+    }
+
     static byte[] pcmToWav(byte[] pcm) {
         int byteRate = SAMPLE_RATE * CHANNELS * BITS_PER_SAMPLE / 8;
         short blockAlign = (short) (CHANNELS * BITS_PER_SAMPLE / 8);
