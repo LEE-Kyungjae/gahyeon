@@ -27,9 +27,6 @@ public class Assistant extends AbstractCommand {
     public List<OptionData> getOptions() {
         return List.of(new OptionData(OptionType.STRING, "action", "실행할 동작", true)
                 .setNameLocalization(DiscordLocale.KOREAN, "동작")
-                .addChoice("start", "start")
-                .addChoice("stop", "stop")
-                .addChoice("status", "status")
                 .addChoice("시작", "start")
                 .addChoice("종료", "stop")
                 .addChoice("상태", "status"));
