@@ -127,7 +127,9 @@ public class VoiceAssistantService {
             @Override
             public void handleUserAudio(UserAudio userAudio) {
                 if (closed || userAudio.getUser().isBot()) return;
-                byte[] pcm = userAudio.getAudioData(1.0);
+                // JDA exposes decoded 16-bit PCM in big-endian byte order, while
+                // WAV and TEN VAD expect little-endian samples.
+                byte[] pcm = WavEncoder.bigEndianToLittleEndian(userAudio.getAudioData(1.0));
                 Utterance utterance = utterances.computeIfAbsent(
                         userAudio.getUser().getIdLong(),
                         ignored -> new Utterance(userAudio.getUser().getName(), properties.getVad()));
