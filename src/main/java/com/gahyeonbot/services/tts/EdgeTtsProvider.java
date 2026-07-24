@@ -1,5 +1,6 @@
 package com.gahyeonbot.services.tts;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.http.*;
@@ -35,13 +36,15 @@ public class EdgeTtsProvider implements TtsProvider {
                 factory.setReadTimeout(Duration.ofSeconds(properties.getTimeoutSeconds()));
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
+                byte[] requestBody = new ObjectMapper().writeValueAsBytes(java.util.Map.of(
+                        "text", text,
+                        "voice", edge.getVoice(),
+                        "rate", edge.getRate(),
+                        "pitch", edge.getPitch()));
+                headers.setContentLength(requestBody.length);
                 ResponseEntity<byte[]> response = new RestTemplate(factory).exchange(
                         edge.getEndpoint(), HttpMethod.POST,
-                        new HttpEntity<>(java.util.Map.of(
-                                "text", text,
-                                "voice", edge.getVoice(),
-                                "rate", edge.getRate(),
-                                "pitch", edge.getPitch()), headers),
+                        new HttpEntity<>(requestBody, headers),
                         byte[].class);
                 byte[] bytes = response.getBody();
                 if (bytes == null || bytes.length < 256) {
