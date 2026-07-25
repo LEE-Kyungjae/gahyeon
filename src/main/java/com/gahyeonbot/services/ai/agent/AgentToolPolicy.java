@@ -14,6 +14,8 @@ public class AgentToolPolicy {
             "get_collected_github_repository", AgentToolRisk.READ_ONLY,
             "search_collected_github_repositories", AgentToolRisk.READ_ONLY,
             "search_collected_ai_papers", AgentToolRisk.READ_ONLY,
+            "search_recent_collected_ai_papers", AgentToolRisk.READ_ONLY,
+            "get_collected_ai_paper_by_arxiv_id", AgentToolRisk.READ_ONLY,
             "get_internal_knowledge_freshness", AgentToolRisk.READ_ONLY
     );
     private final Map<String, AgentToolRisk> risks;

@@ -27,6 +27,7 @@ class PaperKnowledgeToolsTest {
                 .andExpect(header("X-API-Key", "secret"))
                 .andExpect(jsonPath("$.query").value("agent memory"))
                 .andExpect(jsonPath("$.top_k").value(5))
+                .andExpect(jsonPath("$.prefer_recent").value(false))
                 .andRespond(withSuccess("""
                         {
                           "embedding_model": "intfloat/multilingual-e5-large",
@@ -52,6 +53,33 @@ class PaperKnowledgeToolsTest {
     }
 
     @Test
+    void retrievesExactPaperByArxivId() {
+        PaperRagProperties properties = properties(true, "secret");
+        RestTemplate client = new RestTemplate();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(client).build();
+        server.expect(once(), requestTo("http://paper-rag.internal:8765/papers/2501.19393"))
+                .andExpect(method(HttpMethod.GET))
+                .andExpect(header("X-API-Key", "secret"))
+                .andRespond(withSuccess("""
+                        {
+                          "arxiv_id": "2501.19393",
+                          "date": "20250131",
+                          "source_url": "https://arxiv.org/abs/2501.19393",
+                          "chunks": [{"chunk": 0, "text": "s1: Simple test-time scaling"}]
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        String result = new PaperKnowledgeTools(properties, client)
+                .getPaperByArxivId("arXiv:2501.19393");
+
+        assertThat(result)
+                .contains("exact_match: true")
+                .contains("retrieved_paper_arxiv_id: 2501.19393")
+                .contains("s1: Simple test-time scaling");
+        server.verify();
+    }
+
+    @Test
     void reportsUnavailableWithoutCallingNetworkWhenDisabled() {
         PaperKnowledgeTools tools = new PaperKnowledgeTools(properties(false, "secret"), new RestTemplate());
 
@@ -73,7 +101,10 @@ class PaperKnowledgeToolsTest {
 
         assertThat(ToolCallbacks.from(tools))
                 .extracting(callback -> callback.getToolDefinition().name())
-                .containsExactly("search_collected_ai_papers");
+                .containsExactlyInAnyOrder(
+                        "search_collected_ai_papers",
+                        "search_recent_collected_ai_papers",
+                        "get_collected_ai_paper_by_arxiv_id");
     }
 
     private PaperRagProperties properties(boolean enabled, String apiKey) {
