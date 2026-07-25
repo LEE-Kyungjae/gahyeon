@@ -188,6 +188,11 @@ public class VoiceAssistantService {
                     long speechMillis = utterance.vad == null
                             ? Long.MAX_VALUE
                             : utterance.voiceSamples * 1_000 / 16_000;
+                    if (utterance.vad != null
+                            && speechMillis < properties.getVad().getShortSpeechMillis()) {
+                        requiredSilence = Math.max(requiredSilence,
+                                properties.getVad().getShortSpeechEndSilenceMillis());
+                    }
                     long silentMillis = now - utterance.lastVoiceAt;
                     boolean maxLength = utterance.pcm.size() >= properties.getMaxUtteranceSeconds()
                             * WavEncoder.SAMPLE_RATE * WavEncoder.CHANNELS * WavEncoder.BITS_PER_SAMPLE / 8;
@@ -240,6 +245,11 @@ public class VoiceAssistantService {
                 }
                 if (transcript.isBlank()) return;
                 RequestGuard guard = requestGuards.computeIfAbsent(userId, ignored -> new RequestGuard());
+                transcript = guard.mergeOrHold(transcript, System.currentTimeMillis());
+                if (transcript == null) {
+                    log.info("비서 짧은 전사 보류 guild={} user={}", guild.getIdLong(), userId);
+                    return;
+                }
                 if (!guard.allow(transcript, System.currentTimeMillis())) {
                     log.info("비서 AI 호출 차단 guild={} user={} reason=duplicate-or-rate-limit",
                             guild.getIdLong(), userId);
@@ -330,6 +340,28 @@ public class VoiceAssistantService {
         private final Deque<Long> requestTimes = new ArrayDeque<>();
         private String lastTranscript = "";
         private long lastTranscriptAt;
+        private String pendingFragment = "";
+        private long pendingFragmentAt;
+
+        private synchronized String mergeOrHold(String transcript, long now) {
+            String clean = transcript == null ? "" : transcript.trim();
+            if (!pendingFragment.isBlank()) {
+                if (now - pendingFragmentAt <= properties.getFragmentMergeMillis()) {
+                    clean = pendingFragment + " " + clean;
+                }
+                pendingFragment = "";
+                pendingFragmentAt = 0;
+            }
+            long meaningfulCharacters = clean.codePoints()
+                    .filter(Character::isLetterOrDigit)
+                    .count();
+            if (meaningfulCharacters < properties.getMinTranscriptCharacters()) {
+                pendingFragment = clean;
+                pendingFragmentAt = now;
+                return null;
+            }
+            return clean;
+        }
 
         private synchronized boolean allow(String transcript, long now) {
             String normalized = transcript.replaceAll("\\s+", "").trim();

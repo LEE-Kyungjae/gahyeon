@@ -17,6 +17,8 @@ public class AssistantProperties {
     private String ttsProvider = "edge";
     private int maxAiRequestsPerMinute = 12;
     private long duplicateTranscriptMillis = 10_000;
+    private int minTranscriptCharacters = 2;
+    private long fragmentMergeMillis = 3_500;
     private final Vad vad = new Vad();
     private final Stt stt = new Stt();
     private final OpenRouter openrouter = new OpenRouter();
@@ -30,8 +32,12 @@ public class AssistantProperties {
         private String apiKey;
         private String model = "gpt-4o-mini-transcribe";
         private String language = "ko";
+        private String prompt = "";
         private int timeoutSeconds = 30;
         private boolean apiKeyRequired = true;
+        private String fallbackBaseUrl = "";
+        private String fallbackEndpoint = "/transcribe";
+        private String fallbackModel = "sensevoice-small-int8";
     }
 
     @Getter
@@ -43,6 +49,8 @@ public class AssistantProperties {
         private long minSpeechMillis = 300;
         private long transcriptionSilenceMillis = 700;
         private long endSilenceMillis = 1_200;
+        private long shortSpeechMillis = 1_000;
+        private long shortSpeechEndSilenceMillis = 2_000;
         private long preRollMillis = 240;
     }
 

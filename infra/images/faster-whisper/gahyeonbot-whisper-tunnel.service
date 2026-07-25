@@ -1,0 +1,15 @@
+[Unit]
+Description=Reverse tunnel for GahyeonBot Whisper STT
+After=network-online.target ssh.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Environment=AUTOSSH_GATETIME=0
+ExecStart=/usr/bin/ssh -NT -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -R 127.0.0.1:18766:127.0.0.1:18766 zeze
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
