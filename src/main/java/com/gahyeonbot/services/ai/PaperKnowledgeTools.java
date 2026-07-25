@@ -2,6 +2,7 @@ package com.gahyeonbot.services.ai;
 
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -24,6 +25,7 @@ public class PaperKnowledgeTools {
     private final PaperRagProperties properties;
     private final RestTemplate client;
 
+    @Autowired
     public PaperKnowledgeTools(PaperRagProperties properties) {
         this(properties, createClient(properties));
     }
