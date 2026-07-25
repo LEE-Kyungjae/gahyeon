@@ -58,7 +58,8 @@ public class VoiceAssistantService {
         }
         AudioChannel channel = requester.getVoiceState().getChannel();
         GuildMusicManager musicManager = musicService.getOrCreateGuildMusicManager(guild);
-        Session session = new Session(guild, channel, textChannel, musicManager);
+        Session session = new Session(
+                guild, channel, textChannel, musicManager, requester.getIdLong());
         if (sessions.putIfAbsent(guild.getIdLong(), session) != null) {
             session.close();
             return new StartResult(false, "이 서버에서는 이미 비서 세션이 실행 중입니다.");
@@ -92,6 +93,16 @@ public class VoiceAssistantService {
         return sessions.containsKey(guildId);
     }
 
+    public boolean stopWhenOwnerLeaves(Guild guild, long memberId, long voiceChannelId) {
+        Session session = sessions.get(guild.getIdLong());
+        if (session == null
+                || session.ownerUserId != memberId
+                || session.voiceChannel.getIdLong() != voiceChannelId) {
+            return false;
+        }
+        return stop(guild);
+    }
+
     @PreDestroy
     void shutdown() {
         sessions.values().forEach(Session::close);
@@ -106,6 +117,7 @@ public class VoiceAssistantService {
         private final AudioChannel voiceChannel;
         private final MessageChannel textChannel;
         private final GuildMusicManager musicManager;
+        private final long ownerUserId;
         private final Map<Long, Utterance> utterances = new ConcurrentHashMap<>();
         private final Map<Long, RequestGuard> requestGuards = new ConcurrentHashMap<>();
         private final AudioReceiveHandler receiver = new Receiver();
@@ -113,11 +125,12 @@ public class VoiceAssistantService {
         private volatile boolean closed;
 
         private Session(Guild guild, AudioChannel voiceChannel, MessageChannel textChannel,
-                        GuildMusicManager musicManager) {
+                        GuildMusicManager musicManager, long ownerUserId) {
             this.guild = guild;
             this.voiceChannel = voiceChannel;
             this.textChannel = textChannel;
             this.musicManager = musicManager;
+            this.ownerUserId = ownerUserId;
             this.silenceTask = silenceDetector.scheduleWithFixedDelay(
                     this::flushSilent, 250, 250, TimeUnit.MILLISECONDS);
         }
@@ -274,7 +287,9 @@ public class VoiceAssistantService {
         }
 
         private void speak(String answer) throws Exception {
-            for (String segment : ttsService.prepareSegments(answer)) {
+            String spokenText = TtsSpeechText.sanitize(answer);
+            if (spokenText.isBlank()) return;
+            for (String segment : ttsService.prepareSegments(spokenText)) {
                 Path audio = ttsService.synthesizeSegmentToAudio(
                         segment, properties.getTtsProvider());
                 audioManager.getPlayerManager().loadItem(audio.toString(), new AudioLoadResultHandler() {

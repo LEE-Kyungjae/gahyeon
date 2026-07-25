@@ -36,9 +36,13 @@ public class AssistantVoiceChannelListener extends ListenerAdapter {
         }
 
         AudioChannel left = event.getChannelLeft();
-        if (left != null && left.getIdLong() == configured.getVoiceChannelId()
-                && left.getMembers().stream().noneMatch(member -> !member.getUser().isBot())) {
-            voiceAssistantService.stop(event.getGuild());
+        if (left != null && left.getIdLong() == configured.getVoiceChannelId()) {
+            boolean stoppedWithOwner = voiceAssistantService.stopWhenOwnerLeaves(
+                    event.getGuild(), event.getMember().getIdLong(), left.getIdLong());
+            if (!stoppedWithOwner
+                    && left.getMembers().stream().noneMatch(member -> !member.getUser().isBot())) {
+                voiceAssistantService.stop(event.getGuild());
+            }
         }
     }
 }
