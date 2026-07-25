@@ -68,6 +68,10 @@ paper-rag:
   min-score: ${PAPER_RAG_MIN_SCORE:0.35}
   connect-timeout-ms: ${PAPER_RAG_CONNECT_TIMEOUT_MS:3000}
   read-timeout-ms: ${PAPER_RAG_READ_TIMEOUT_MS:20000}
+  github-sync-enabled: ${GITHUB_RAG_SYNC_ENABLED:true}
+  github-sync-initial-delay-ms: ${GITHUB_RAG_SYNC_INITIAL_DELAY_MS:120000}
+  github-sync-fixed-delay-ms: ${GITHUB_RAG_SYNC_FIXED_DELAY_MS:21600000}
+  github-sync-batch-size: ${GITHUB_RAG_SYNC_BATCH_SIZE:20}
 
 tts:
   enabled: ${TTS_ENABLED:true}

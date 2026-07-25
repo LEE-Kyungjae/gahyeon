@@ -4,14 +4,21 @@ import com.gahyeonbot.entity.GitHubTrending;
 import com.gahyeonbot.entity.RepoReadmeCache;
 import com.gahyeonbot.repository.GitHubTrendingRepository;
 import com.gahyeonbot.repository.RepoReadmeCacheRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Airflow가 수집한 GitHub 스냅샷과 README 캐시를 조회하는 에이전트 도구.
@@ -20,7 +27,6 @@ import java.util.List;
  * 저장한 데이터만 근거로 반환합니다.
  */
 @Component
-@RequiredArgsConstructor
 public class GitHubKnowledgeTools {
 
     private static final int MAX_TRENDING_RESULTS = 15;
@@ -28,6 +34,80 @@ public class GitHubKnowledgeTools {
 
     private final GitHubTrendingRepository trendingRepository;
     private final RepoReadmeCacheRepository readmeRepository;
+    private final PaperRagProperties properties;
+    private final RestTemplate hybridClient;
+
+    @Autowired
+    public GitHubKnowledgeTools(
+            GitHubTrendingRepository trendingRepository,
+            RepoReadmeCacheRepository readmeRepository,
+            PaperRagProperties properties
+    ) {
+        this(trendingRepository, readmeRepository, properties,
+                PaperKnowledgeTools.createClient(properties));
+    }
+
+    GitHubKnowledgeTools(
+            GitHubTrendingRepository trendingRepository,
+            RepoReadmeCacheRepository readmeRepository
+    ) {
+        this(trendingRepository, readmeRepository, new PaperRagProperties(), new RestTemplate());
+    }
+
+    GitHubKnowledgeTools(
+            GitHubTrendingRepository trendingRepository,
+            RepoReadmeCacheRepository readmeRepository,
+            PaperRagProperties properties,
+            RestTemplate hybridClient
+    ) {
+        this.trendingRepository = trendingRepository;
+        this.readmeRepository = readmeRepository;
+        this.properties = properties;
+        this.hybridClient = hybridClient;
+    }
+
+    @Tool(
+            name = "search_collected_github_repositories",
+            description = """
+                    내부에서 수집한 GitHub README를 BM25와 multilingual vector search로 함께 검색한다.
+                    특정 기술, 기능, 라이브러리 또는 구현체에 맞는 저장소를 찾을 때 사용한다.
+                    정확한 저장소 이름을 이미 알면 get_collected_github_repository를 사용한다.
+                    """
+    )
+    public String searchRepositories(
+            @ToolParam(description = "찾으려는 구현, 기술 또는 저장소 특징을 담은 독립적인 검색 질의")
+            String query
+    ) {
+        if (query == null || query.isBlank()) {
+            return "tool_error: GitHub repository 검색 query가 필요해.";
+        }
+        if (!properties.isEnabled() || properties.getApiKey() == null
+                || properties.getApiKey().isBlank()) {
+            return "knowledge_unavailable: 내부 GitHub hybrid 검색이 비활성화되어 있어.";
+        }
+
+        String url = properties.getBaseUrl().replaceAll("/+$", "") + "/github/search";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-API-Key", properties.getApiKey());
+        Map<String, Object> request = Map.of(
+                "query", query.trim(),
+                "top_k", properties.getTopK(),
+                "min_score", properties.getMinScore()
+        );
+        try {
+            Map<String, Object> body = hybridClient.exchange(
+                    url,
+                    HttpMethod.POST,
+                    new HttpEntity<>(request, headers),
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            ).getBody();
+            return formatHybridResults(query.trim(), body);
+        } catch (Exception e) {
+            return "knowledge_unavailable: 내부 GitHub hybrid 검색에 실패했어. "
+                    + e.getClass().getSimpleName();
+        }
+    }
 
     @Tool(
             name = "get_collected_github_trending",
@@ -126,5 +206,34 @@ public class GitHubKnowledgeTools {
         if (value != null && !String.valueOf(value).isBlank()) {
             out.append("\n").append(label).append(": ").append(value);
         }
+    }
+
+    private String formatHybridResults(String query, Map<String, Object> body) {
+        if (body == null || !(body.get("results") instanceof List<?> results) || results.isEmpty()) {
+            return "knowledge_empty: '" + query + "'와 관련된 수집 GitHub 저장소를 찾지 못했어.";
+        }
+        StringBuilder out = new StringBuilder("query: ").append(query)
+                .append("\nsource: internal Qdrant github_readmes")
+                .append("\nretrievers: ").append(body.getOrDefault("retrievers", List.of("bm25", "vector")))
+                .append("\nfusion: ").append(body.getOrDefault("fusion", "rrf"));
+        for (Object rawResult : results) {
+            if (!(rawResult instanceof Map<?, ?> result)) continue;
+            out.append("\n\n- repository: ").append(result.get("repo_full_name"));
+            append(out, "url", result.get("repo_url"));
+            append(out, "readme_fetched_at", result.get("readme_fetched_at"));
+            append(out, "score", result.get("score"));
+            if (result.get("chunks") instanceof List<?> chunks) {
+                int evidenceNumber = 1;
+                for (Object rawChunk : chunks) {
+                    if (!(rawChunk instanceof Map<?, ?> chunk)) continue;
+                    Object rawText = chunk.get("text");
+                    String text = rawText == null ? "" : String.valueOf(rawText);
+                    if (text.length() > 1_200) text = text.substring(0, 1_200) + "...";
+                    out.append("\n  matched_by: ").append(chunk.get("matched_by"));
+                    out.append("\n  evidence_").append(evidenceNumber++).append(": ").append(text);
+                }
+            }
+        }
+        return out.toString();
     }
 }

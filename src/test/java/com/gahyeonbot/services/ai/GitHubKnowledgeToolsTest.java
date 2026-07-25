@@ -10,6 +10,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.support.ToolCallbacks;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -18,6 +21,10 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.client.ExpectedCount.once;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @ExtendWith(MockitoExtension.class)
 class GitHubKnowledgeToolsTest {
@@ -104,8 +111,49 @@ class GitHubKnowledgeToolsTest {
         assertThat(ToolCallbacks.from(tools))
                 .extracting(callback -> callback.getToolDefinition().name())
                 .containsExactlyInAnyOrder(
+                        "search_collected_github_repositories",
                         "get_collected_github_trending",
                         "get_collected_github_repository"
                 );
+    }
+
+    @Test
+    void formatsBm25VectorRrfResultsFromInternalIndex() {
+        PaperRagProperties properties = new PaperRagProperties();
+        properties.setEnabled(true);
+        properties.setBaseUrl("http://knowledge.internal:8765");
+        properties.setApiKey("secret");
+        RestTemplate client = new RestTemplate();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(client).build();
+        server.expect(once(), requestTo("http://knowledge.internal:8765/github/search"))
+                .andExpect(header("X-API-Key", "secret"))
+                .andRespond(withSuccess("""
+                        {
+                          "fusion": "rrf",
+                          "retrievers": ["bm25", "vector"],
+                          "results": [{
+                            "repo_full_name": "owner/rag-agent",
+                            "repo_url": "https://github.com/owner/rag-agent",
+                            "readme_fetched_at": "2026-07-25T00:00:00Z",
+                            "score": 0.032,
+                            "chunks": [{
+                              "matched_by": ["bm25", "vector"],
+                              "text": "Agent memory with retrieval augmented generation"
+                            }]
+                          }]
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        String result = new GitHubKnowledgeTools(
+                trendingRepository, readmeRepository, properties, client)
+                .searchRepositories("RAG agent memory");
+
+        assertThat(result)
+                .contains("source: internal Qdrant github_readmes")
+                .contains("retrievers: [bm25, vector]")
+                .contains("fusion: rrf")
+                .contains("owner/rag-agent")
+                .contains("matched_by: [bm25, vector]");
+        server.verify();
     }
 }
