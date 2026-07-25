@@ -113,10 +113,14 @@ public class PaperKnowledgeTools {
         }
     }
 
-    private static RestTemplate createClient(PaperRagProperties properties) {
+    static RestTemplate createClient(PaperRagProperties properties) {
+        return createClient(properties.getConnectTimeoutMs(), properties.getReadTimeoutMs());
+    }
+
+    static RestTemplate createClient(int connectTimeoutMs, int readTimeoutMs) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(properties.getConnectTimeoutMs());
-        factory.setReadTimeout(properties.getReadTimeoutMs());
+        factory.setConnectTimeout(connectTimeoutMs);
+        factory.setReadTimeout(readTimeoutMs);
         return new RestTemplate(factory);
     }
 }

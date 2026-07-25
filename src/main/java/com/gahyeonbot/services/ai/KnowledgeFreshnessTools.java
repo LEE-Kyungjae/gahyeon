@@ -55,8 +55,13 @@ public class KnowledgeFreshnessTools {
                 Map<String, Object> body = response.getBody();
                 paperStatus = body == null
                         ? "unknown"
-                        : "status=%s, collection=%s, points=%s".formatted(
-                                body.get("status"), body.get("collection"), body.get("points"));
+                        : "status=%s, collection=%s, points=%s, github_collection=%s, github_points=%s"
+                                .formatted(
+                                        body.get("status"),
+                                        body.get("collection"),
+                                        body.get("points"),
+                                        body.get("github_collection"),
+                                        body.get("github_points"));
             } catch (Exception e) {
                 paperStatus = "unavailable(" + e.getClass().getSimpleName() + ")";
             }
