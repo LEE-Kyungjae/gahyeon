@@ -119,6 +119,16 @@ public class AgentRunLedger {
         return transitionLocked(run, AgentRunStatus.FAILED, AgentEventType.RUN_FAILED, errorCode);
     }
 
+    @Transactional
+    public AgentRun cancel(String runId, long actorUserId, String reason) {
+        AgentRun run = locked(runId);
+        if (run.getUserId() != actorUserId) {
+            throw new SecurityException("이 실행을 취소할 권한이 없습니다.");
+        }
+        if (run.getStatus().terminal()) return run;
+        return transitionLocked(run, AgentRunStatus.CANCELLED, AgentEventType.RUN_CANCELLED, reason);
+    }
+
     private AgentRun transitionLocked(
             AgentRun run,
             AgentRunStatus target,

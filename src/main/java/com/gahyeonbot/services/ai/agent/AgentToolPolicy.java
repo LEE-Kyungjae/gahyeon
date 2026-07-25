@@ -6,18 +6,28 @@ import java.util.Map;
 
 @Component
 public class AgentToolPolicy {
-    private static final Map<String, AgentToolRisk> RISKS = Map.of(
+    private static final Map<String, AgentToolRisk> DEFAULT_RISKS = Map.of(
             "get_current_weather", AgentToolRisk.EXTERNAL_READ,
             "get_weather_forecast", AgentToolRisk.EXTERNAL_READ,
             "get_supported_weather_locations", AgentToolRisk.READ_ONLY,
             "get_collected_github_trending", AgentToolRisk.READ_ONLY,
             "get_collected_github_repository", AgentToolRisk.READ_ONLY,
+            "search_collected_github_repositories", AgentToolRisk.READ_ONLY,
             "search_collected_ai_papers", AgentToolRisk.READ_ONLY,
             "get_internal_knowledge_freshness", AgentToolRisk.READ_ONLY
     );
+    private final Map<String, AgentToolRisk> risks;
+
+    public AgentToolPolicy() {
+        this(DEFAULT_RISKS);
+    }
+
+    AgentToolPolicy(Map<String, AgentToolRisk> risks) {
+        this.risks = Map.copyOf(risks);
+    }
 
     public AgentToolDecision decide(AgentGateway gateway, String toolName) {
-        AgentToolRisk risk = RISKS.get(toolName);
+        AgentToolRisk risk = risks.get(toolName);
         if (risk == null) return AgentToolDecision.DENY;
         return switch (risk) {
             case READ_ONLY, EXTERNAL_READ -> AgentToolDecision.ALLOW;
@@ -27,6 +37,6 @@ public class AgentToolPolicy {
     }
 
     public AgentToolRisk riskOf(String toolName) {
-        return RISKS.get(toolName);
+        return risks.get(toolName);
     }
 }

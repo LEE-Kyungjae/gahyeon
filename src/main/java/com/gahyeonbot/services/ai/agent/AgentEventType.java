@@ -3,6 +3,7 @@ package com.gahyeonbot.services.ai.agent;
 public enum AgentEventType {
     RUN_CREATED,
     RUN_STARTED,
+    RUN_RESUMED,
     MODEL_CALL_STARTED,
     MODEL_CALL_COMPLETED,
     TOOL_CALL_REQUESTED,
@@ -11,6 +12,7 @@ public enum AgentEventType {
     TOOL_CALL_FAILED,
     APPROVAL_REQUESTED,
     APPROVAL_RESOLVED,
+    APPROVAL_CONSUMED,
     BACKGROUND_WAIT_STARTED,
     BACKGROUND_RESULT_RECEIVED,
     RUN_SUCCEEDED,

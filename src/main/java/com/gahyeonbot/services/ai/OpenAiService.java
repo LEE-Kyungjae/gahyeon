@@ -4,6 +4,7 @@ import com.gahyeonbot.config.AppCredentialsConfig;
 import com.gahyeonbot.entity.OpenAiUsage;
 import com.gahyeonbot.repository.OpenAiUsageRepository;
 import com.gahyeonbot.services.ai.agent.AgentGateway;
+import com.gahyeonbot.services.ai.agent.AgentApprovalRequiredException;
 import com.gahyeonbot.services.ai.agent.AgentRequest;
 import com.gahyeonbot.services.ai.agent.AgentResult;
 import com.gahyeonbot.services.ai.agent.AgentRuntime;
@@ -233,6 +234,10 @@ public class OpenAiService {
 
             return response;
 
+        } catch (AgentApprovalRequiredException approvalRequired) {
+            log.info("에이전트 승인 대기 - run={}, tool={}",
+                    approvalRequired.getRunId(), approvalRequired.getToolName());
+            throw approvalRequired;
         } catch (Exception e) {
             log.error("OpenAI API 호출 실패 - 사용자: {}, 메시지: {}", username, userMessage, e);
             logUsage(interactionId, userId, username, guildId, userMessage, null, false, e.getMessage());

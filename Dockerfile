@@ -4,7 +4,8 @@ FROM eclipse-temurin:21-jre-jammy
 # TTS runtime deps:
 # - python3 + pip: run kss splitter + edge-tts CLI
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 python3-pip ca-certificates \
+  && apt-get install -y --no-install-recommends \
+       python3 python3-pip ca-certificates libc++1 libc++abi1 libunwind-14 \
   && rm -rf /var/lib/apt/lists/*
 
 # Python deps for sentence splitting + Edge TTS synthesis.
@@ -21,6 +22,7 @@ COPY ${JAR_FILE} /app/bot.jar
 
 # TTS helper script.
 COPY scripts/tts_split.py /app/tts_split.py
+COPY scripts/edge_tts_server.py /app/edge_tts_server.py
 
 # 5. 포트 설정
 EXPOSE 8080

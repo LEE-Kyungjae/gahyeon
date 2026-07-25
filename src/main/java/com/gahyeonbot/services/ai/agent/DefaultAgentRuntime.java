@@ -1,6 +1,7 @@
 package com.gahyeonbot.services.ai.agent;
 
 import com.gahyeonbot.entity.AgentRun;
+import com.gahyeonbot.repository.AgentRunRepository;
 import com.gahyeonbot.services.ai.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -30,6 +31,8 @@ public class DefaultAgentRuntime implements AgentRuntime {
     private final ChatModel chatModel;
     private final ConversationHistoryService historyService;
     private final AgentRunLedger ledger;
+    private final AgentRunRepository runRepository;
+    private final AgentApprovalService approvalService;
     private final AgentToolPolicy toolPolicy;
     private final AgentPromptProvider promptProvider;
     private final MeterRegistry meterRegistry;
@@ -51,11 +54,66 @@ public class DefaultAgentRuntime implements AgentRuntime {
                     "이미 처리 중이거나 종료된 요청입니다: " + run.getStatus(), null);
         }
 
+        ledger.transition(run.getId(), AgentRunStatus.RUNNING, AgentEventType.RUN_STARTED, null);
+        return runLoop(request, run, startedNanos, null);
+    }
+
+    @Override
+    public AgentResult resume(String runId, long actorUserId) {
+        AgentRun run = runRepository.findByIdWithSession(runId)
+                .orElseThrow(() -> new IllegalArgumentException("실행을 찾을 수 없습니다: " + runId));
+        if (run.getUserId() != actorUserId) {
+            throw new SecurityException("이 실행을 재개할 권한이 없습니다.");
+        }
+        if (run.getStatus() != AgentRunStatus.WAITING_APPROVAL) {
+            throw new IllegalStateException("승인 대기 실행만 재개할 수 있습니다: " + run.getStatus());
+        }
+        if (!approvalService.hasApproved(runId)) {
+            throw new IllegalStateException("승인된 도구 호출이 없습니다.");
+        }
+        AgentRequest request = new AgentRequest(
+                run.getRequestId(),
+                run.getSession().getSessionKey(),
+                run.getGateway(),
+                run.getGuildId(),
+                run.getUserId(),
+                run.getUsername(),
+                run.getInputText(),
+                run.getMaxSteps());
+        ledger.transition(runId, AgentRunStatus.RUNNING, AgentEventType.RUN_RESUMED, "approval");
+        return runLoop(request, run, System.nanoTime(), null);
+    }
+
+    @Override
+    public AgentResult resumeBackground(String runId, String backgroundResult) {
+        AgentRun run = runRepository.findByIdWithSession(runId)
+                .orElseThrow(() -> new IllegalArgumentException("실행을 찾을 수 없습니다: " + runId));
+        if (run.getStatus() != AgentRunStatus.WAITING_BACKGROUND) {
+            throw new IllegalStateException("백그라운드 대기 실행만 재개할 수 있습니다: " + run.getStatus());
+        }
+        AgentRequest request = new AgentRequest(
+                run.getRequestId(),
+                run.getSession().getSessionKey(),
+                run.getGateway(),
+                run.getGuildId(),
+                run.getUserId(),
+                run.getUsername(),
+                run.getInputText(),
+                run.getMaxSteps());
+        ledger.transition(runId, AgentRunStatus.RUNNING,
+                AgentEventType.BACKGROUND_RESULT_RECEIVED, limited(backgroundResult));
+        return runLoop(request, run, System.nanoTime(), backgroundResult);
+    }
+
+    private AgentResult runLoop(
+            AgentRequest request,
+            AgentRun run,
+            long startedNanos,
+            String backgroundResult) {
         List<String> usedTools = new ArrayList<>();
         try {
-            ledger.transition(run.getId(), AgentRunStatus.RUNNING, AgentEventType.RUN_STARTED, null);
             ConversationHistoryService.AgentConversationContext memory = loadMemory(request.userId());
-            List<Message> messages = initialMessages(request, memory);
+            List<Message> messages = initialMessages(request, memory, backgroundResult);
             ToolCallback[] callbacks = MethodToolCallbackProvider.builder()
                     .toolObjects(weatherTools, gitHubKnowledgeTools, paperKnowledgeTools, knowledgeFreshnessTools)
                     .build()
@@ -68,7 +126,7 @@ public class DefaultAgentRuntime implements AgentRuntime {
                     .toolCallbacks(callbacks)
                     .internalToolExecutionEnabled(false)
                     .build();
-            Map<String, Integer> repeatedCalls = new HashMap<>();
+            AgentLoopGuard loopGuard = new AgentLoopGuard(REPEATED_TOOL_CALL_LIMIT);
 
             while (true) {
                 AgentRun stepped = ledger.advanceStep(
@@ -92,11 +150,7 @@ public class DefaultAgentRuntime implements AgentRuntime {
 
                 List<ToolResponseMessage.ToolResponse> toolResponses = new ArrayList<>();
                 for (AssistantMessage.ToolCall toolCall : assistant.getToolCalls()) {
-                    String signature = toolCall.name() + ":" + toolCall.arguments();
-                    int repeats = repeatedCalls.merge(signature, 1, Integer::sum);
-                    if (repeats >= REPEATED_TOOL_CALL_LIMIT) {
-                        throw new IllegalStateException("동일한 도구 호출이 반복되었습니다: " + toolCall.name());
-                    }
+                    loopGuard.recordToolCall(toolCall.name(), toolCall.arguments());
                     ToolCallback callback = callbackByName.get(toolCall.name());
                     if (callback == null) {
                         throw new IllegalStateException("등록되지 않은 도구입니다: " + toolCall.name());
@@ -108,10 +162,18 @@ public class DefaultAgentRuntime implements AgentRuntime {
                         throw new IllegalStateException("정책상 허용되지 않은 도구입니다: " + toolCall.name());
                     }
                     if (decision == AgentToolDecision.REQUIRE_APPROVAL) {
-                        ledger.transition(run.getId(), AgentRunStatus.WAITING_APPROVAL,
-                                AgentEventType.APPROVAL_REQUESTED, toolCall.name());
-                        throw new AgentApprovalRequiredException(
-                                run.getId(), toolCall.name(), toolCall.arguments());
+                        if (approvalService.consumeIfApproved(
+                                run.getId(), toolCall.name(), toolCall.arguments())) {
+                            ledger.appendToolEvent(run.getId(), AgentEventType.APPROVAL_CONSUMED,
+                                    toolCall.name(), limited(toolCall.arguments()));
+                        } else {
+                            var approval = approvalService.request(
+                                    run.getId(), toolCall.name(), toolCall.arguments());
+                            ledger.transition(run.getId(), AgentRunStatus.WAITING_APPROVAL,
+                                    AgentEventType.APPROVAL_REQUESTED, approval.getId());
+                            throw new AgentApprovalRequiredException(
+                                    run.getId(), toolCall.name(), toolCall.arguments());
+                        }
                     }
 
                     ledger.appendToolEvent(
@@ -167,7 +229,8 @@ public class DefaultAgentRuntime implements AgentRuntime {
 
     private List<Message> initialMessages(
             AgentRequest request,
-            ConversationHistoryService.AgentConversationContext memory) {
+            ConversationHistoryService.AgentConversationContext memory,
+            String backgroundResult) {
         List<Message> messages = new ArrayList<>();
         messages.add(new SystemMessage(promptProvider.systemPrompt(memory.summary())));
         messages.addAll(memory.messages());
@@ -184,6 +247,14 @@ public class DefaultAgentRuntime implements AgentRuntime {
                 request.gateway(),
                 ZonedDateTime.now(ZoneId.of("Asia/Seoul")),
                 request.message())));
+        if (backgroundResult != null && !backgroundResult.isBlank()) {
+            messages.add(new UserMessage("""
+                    [백그라운드 작업 완료 결과]
+                    %s
+
+                    위 결과를 반영해 원래 요청에 대한 최종 답변을 작성해.
+                    """.formatted(backgroundResult)));
+        }
         return messages;
     }
 
