@@ -3,21 +3,19 @@ package com.gahyeonbot.services.ai;
 import com.gahyeonbot.config.AppCredentialsConfig;
 import com.gahyeonbot.entity.OpenAiUsage;
 import com.gahyeonbot.repository.OpenAiUsageRepository;
+import com.gahyeonbot.services.ai.agent.AgentGateway;
+import com.gahyeonbot.services.ai.agent.AgentRequest;
+import com.gahyeonbot.services.ai.agent.AgentResult;
+import com.gahyeonbot.services.ai.agent.AgentRuntime;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -44,19 +42,14 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class OpenAiService {
 
-    private final OpenAiChatModel chatModel;
     private final OpenAiUsageRepository usageRepository;
     private final AppCredentialsConfig appCredentialsConfig;
-    private final ConversationHistoryService conversationHistoryService;
-    private final WeatherTools weatherTools;
-    private final GitHubKnowledgeTools gitHubKnowledgeTools;
-    private final PaperKnowledgeTools paperKnowledgeTools;
-    private final KnowledgeFreshnessTools knowledgeFreshnessTools;
+    private final AgentRuntime agentRuntime;
 
     private String apiKey;
+    private String agentApiKey;
     private boolean isEnabled = false;
     private RestTemplate restTemplate;
-    private String systemPrompt;
 
     // 사용자별 Lock: 동일 사용자의 동시 요청 방지 (ShardManager 동시성 제어)
     private final Map<Long, Lock> userLocks = new ConcurrentHashMap<>();
@@ -85,9 +78,10 @@ public class OpenAiService {
     public void initialize() {
         // AppCredentialsConfig에서 API 키 가져오기
         this.apiKey = appCredentialsConfig.getOpenaiApiKey();
+        this.agentApiKey = appCredentialsConfig.getAgentApiKey();
 
-        if (apiKey == null || apiKey.isEmpty() || apiKey.startsWith("your_")) {
-            log.warn("OPENAI_API_KEY가 설정되지 않았습니다. OpenAI 기능이 비활성화됩니다.");
+        if (agentApiKey == null || agentApiKey.isBlank() || agentApiKey.startsWith("your_")) {
+            log.warn("AgentRuntime API 키가 설정되지 않았습니다. AI 기능이 비활성화됩니다.");
             this.isEnabled = false;
             return;
         }
@@ -96,11 +90,8 @@ public class OpenAiService {
             // RestTemplate 초기화
             this.restTemplate = new RestTemplate();
 
-            // 시스템 프롬프트 로드
-            loadSystemPrompt();
-
             this.isEnabled = true;
-            log.info("OpenAI 서비스가 활성화되었습니다. 모델: gpt-4o-mini (가현이 캐릭터 + Rate Limiting + Moderation API 적용)");
+            log.info("AI 게이트웨이가 활성화되었습니다. AgentRuntime + Rate Limiting + Moderation API 적용");
         } catch (Exception e) {
             log.error("OpenAI 초기화 실패. OpenAI 기능이 비활성화됩니다.", e);
             this.isEnabled = false;
@@ -159,18 +150,20 @@ public class OpenAiService {
         }
 
         // 2. OpenAI Moderation API 체크 (가장 강력한 필터)
-        try {
-            boolean isFlagged = checkModeration(userMessage);
-            if (isFlagged) {
-                log.warn("OpenAI Moderation 차단 - 사용자: {}", username);
-                logUsage(interactionId, userId, username, guildId, userMessage, null, false, "Moderation API 차단");
-                throw new AdversarialPromptException("부적절한 요청이 감지되었습니다.");
+        if (apiKey != null && !apiKey.isBlank() && !apiKey.startsWith("your_")) {
+            try {
+                boolean isFlagged = checkModeration(userMessage);
+                if (isFlagged) {
+                    log.warn("OpenAI Moderation 차단 - 사용자: {}", username);
+                    logUsage(interactionId, userId, username, guildId, userMessage, null, false, "Moderation API 차단");
+                    throw new AdversarialPromptException("부적절한 요청이 감지되었습니다.");
+                }
+            } catch (AdversarialPromptException e) {
+                throw e; // 이미 차단된 경우 그대로 throw
+            } catch (Exception e) {
+                log.error("Moderation API 호출 실패 - 키워드 필터로 대체", e);
+                // Moderation API 실패 시 키워드 필터로 대체
             }
-        } catch (AdversarialPromptException e) {
-            throw e; // 이미 차단된 경우 그대로 throw
-        } catch (Exception e) {
-            log.error("Moderation API 호출 실패 - 키워드 필터로 대체", e);
-            // Moderation API 실패 시 키워드 필터로 대체
         }
 
         // 3. 키워드 기반 적대적 프롬프트 차단 (보조 필터)
@@ -219,58 +212,23 @@ public class OpenAiService {
             throw new RateLimitException("이번 달 AI 사용 한도가 모두 소진되었습니다. 다음 달에 다시 시도해주세요.");
         }
 
-        // 9. 역할 기반 대화 히스토리 로드
-        ConversationHistoryService.AgentConversationContext conversationContext =
-                new ConversationHistoryService.AgentConversationContext("", List.of());
+        // 9. 공통 에이전트 런타임 호출
         try {
-            conversationContext = conversationHistoryService.buildAgentContext(userId);
-            if (!conversationContext.messages().isEmpty() || !conversationContext.summary().isBlank()) {
-                log.debug("대화 컨텍스트 로드 - 사용자: {}, 메시지: {}건, 요약: {}자",
-                        username, conversationContext.messages().size(), conversationContext.summary().length());
-            }
-        } catch (Exception e) {
-            log.warn("대화 컨텍스트 로드 실패 - 무시하고 계속 진행", e);
-        }
+            log.info("에이전트 요청 시작 - 사용자: {}, 메시지 길이: {} 문자", username, userMessage.length());
+            AgentResult result = agentRuntime.execute(new AgentRequest(
+                    interactionId,
+                    "discord:text:" + userId,
+                    AgentGateway.TEXT,
+                    guildId,
+                    userId,
+                    username,
+                    userMessage,
+                    8));
+            String response = result.content();
+            log.info("에이전트 응답 성공 - run={}, 사용자={}, 도구={}, {}ms",
+                    result.runId(), username, result.tools(), result.duration().toMillis());
 
-        // 10. OpenAI API 호출
-        try {
-            log.info("OpenAI 요청 시작 - 사용자: {}, 메시지 길이: {} 문자", username, userMessage.length());
-
-            String currentUserMessage = new StringBuilder()
-                    .append("[현재 시각]\n")
-                    .append(java.time.ZonedDateTime.now(java.time.ZoneId.of("Asia/Seoul")))
-                    .append("\n\n[현재 질문]\n")
-                    .append(userMessage)
-                    .toString();
-            String requestSystemPrompt = systemPrompt;
-            if (!conversationContext.summary().isBlank()) {
-                requestSystemPrompt += "\n\n[사용자의 이전 대화 요약 - 참고 정보]\n"
-                        + conversationContext.summary();
-            }
-
-            ChatClient chatClient = ChatClient.create(chatModel);
-            ChatClient.ChatClientRequestSpec request = chatClient.prompt()
-                    .system(requestSystemPrompt);
-            List<Message> priorMessages = conversationContext.messages();
-            if (!priorMessages.isEmpty()) {
-                request.messages(priorMessages);
-            }
-            String response = request
-                    .user(currentUserMessage)
-                    .tools(weatherTools, gitHubKnowledgeTools, paperKnowledgeTools, knowledgeFreshnessTools)
-                    .call()
-                    .content();
-
-            log.info("OpenAI 응답 성공 - 사용자: {}, 응답 길이: {} 문자", username, response.length());
-
-            // 12. 대화 히스토리 저장
-            try {
-                conversationHistoryService.saveConversation(userId, userMessage, response);
-            } catch (Exception e) {
-                log.warn("대화 히스토리 저장 실패 - 무시하고 계속 진행", e);
-            }
-
-            // 13. DB 로깅
+            // 10. 사용량 DB 로깅
             logUsage(interactionId, userId, username, guildId, userMessage, response, true, null);
 
             return response;
@@ -297,7 +255,7 @@ public class OpenAiService {
                     .guildId(guildId)
                     .prompt(prompt)
                     .response(response)
-                    .model("gpt-4o-mini")
+                    .model("agent-runtime")
                     .success(success)
                     .errorMessage(errorMessage)
                     .createdAt(LocalDateTime.now())
@@ -332,20 +290,6 @@ public class OpenAiService {
             }
         }
         return false;
-    }
-
-    /**
-     * 시스템 프롬프트를 리소스에서 로드합니다.
-     */
-    private void loadSystemPrompt() {
-        try {
-            ClassPathResource resource = new ClassPathResource("prompts/gahyeon_system_prompt.txt");
-            this.systemPrompt = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            log.info("가현이 시스템 프롬프트 로드 완료 ({}자)", systemPrompt.length());
-        } catch (IOException e) {
-            log.warn("시스템 프롬프트 로드 실패, 기본 프롬프트 사용", e);
-            this.systemPrompt = "너는 '가현이'야. 친근하고 밝은 20대 여성이야. 반말로 짧게 대화해.";
-        }
     }
 
     /**

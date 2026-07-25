@@ -14,7 +14,7 @@ class AssistantProviderReadinessTest {
         properties.getOpenrouter().setEnabled(true);
 
         assertThat(new OpenAiTranscriptionProvider(properties, new ObjectMapper()).isReady()).isFalse();
-        assertThat(new OpenRouterAssistantProvider(properties, new ObjectMapper()).isReady()).isFalse();
+        assertThat(new OpenRouterAssistantProvider(properties, request -> null).isReady()).isFalse();
     }
 
     @Test
@@ -28,6 +28,6 @@ class AssistantProviderReadinessTest {
         properties.getOpenrouter().setModel("provider/model");
 
         assertThat(new OpenAiTranscriptionProvider(properties, new ObjectMapper()).isReady()).isTrue();
-        assertThat(new OpenRouterAssistantProvider(properties, new ObjectMapper()).isReady()).isTrue();
+        assertThat(new OpenRouterAssistantProvider(properties, request -> null).isReady()).isTrue();
     }
 }
