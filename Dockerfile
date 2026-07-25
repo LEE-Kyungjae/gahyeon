@@ -28,6 +28,7 @@ COPY ${JAR_FILE} /app/bot.jar
 
 # TTS helper script.
 COPY scripts/tts_split.py /app/tts_split.py
+COPY scripts/edge_tts_server.py /app/edge_tts_server.py
 
 # 5. 포트 설정
 EXPOSE 8080
