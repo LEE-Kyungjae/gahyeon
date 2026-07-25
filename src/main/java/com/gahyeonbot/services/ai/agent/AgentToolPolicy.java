@@ -12,6 +12,7 @@ public class AgentToolPolicy {
             "get_supported_weather_locations", AgentToolRisk.READ_ONLY,
             "get_collected_github_trending", AgentToolRisk.READ_ONLY,
             "get_collected_github_repository", AgentToolRisk.READ_ONLY,
+            "search_collected_github_repositories", AgentToolRisk.READ_ONLY,
             "search_collected_ai_papers", AgentToolRisk.READ_ONLY,
             "get_internal_knowledge_freshness", AgentToolRisk.READ_ONLY
     );
