@@ -14,6 +14,8 @@ public class ListenerManager {
     private final ShardManager shardManager;
     private final AppCredentialsConfig appCredentialsConfig;
     private final CommandManager commandManager;
+    private final MessageListener messageListener;
+    private final AssistantVoiceChannelListener assistantVoiceChannelListener;
 
     /**
      * ListenerManager 생성자.
@@ -22,18 +24,25 @@ public class ListenerManager {
      * @param appCredentialsConfig 설정 로더
      * @param commandManager 명령어 매니저
      */
-    public ListenerManager(ShardManager shardManager, AppCredentialsConfig appCredentialsConfig,CommandManager commandManager) {
+    public ListenerManager(
+            ShardManager shardManager,
+            AppCredentialsConfig appCredentialsConfig,
+            CommandManager commandManager,
+            MessageListener messageListener,
+            AssistantVoiceChannelListener assistantVoiceChannelListener) {
         this.shardManager = shardManager;
         this.appCredentialsConfig = appCredentialsConfig;
         this.commandManager = commandManager;
-
+        this.messageListener = messageListener;
+        this.assistantVoiceChannelListener = assistantVoiceChannelListener;
     }
 
     /**
      * 모든 이벤트 리스너를 ShardManager에 등록합니다.
      */
     public void registerListeners() {
-        shardManager.addEventListener(new MessageListener());
+        shardManager.addEventListener(messageListener);
+        shardManager.addEventListener(assistantVoiceChannelListener);
         shardManager.addEventListener(new MemberJoinListener());
         shardManager.addEventListener(new UserStatusUpdateListener(appCredentialsConfig));
         shardManager.addEventListener(commandManager);

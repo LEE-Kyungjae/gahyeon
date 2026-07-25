@@ -56,20 +56,25 @@ public class VoiceAssistantService {
                 || requester.getVoiceState().getChannel() == null) {
             return new StartResult(false, "먼저 음성 채널에 입장해 주세요.");
         }
-        if (sessions.containsKey(guild.getIdLong())) {
-            return new StartResult(false, "이 서버에서는 이미 비서 세션이 실행 중입니다.");
-        }
-
         AudioChannel channel = requester.getVoiceState().getChannel();
         GuildMusicManager musicManager = musicService.getOrCreateGuildMusicManager(guild);
         Session session = new Session(guild, channel, textChannel, musicManager);
-        sessions.put(guild.getIdLong(), session);
+        if (sessions.putIfAbsent(guild.getIdLong(), session) != null) {
+            session.close();
+            return new StartResult(false, "이 서버에서는 이미 비서 세션이 실행 중입니다.");
+        }
 
-        var manager = guild.getAudioManager();
-        manager.setSelfDeafened(false);
-        manager.setSendingHandler(musicManager.getSendHandler());
-        manager.setReceivingHandler(session.receiver);
-        manager.openAudioConnection(channel);
+        try {
+            var manager = guild.getAudioManager();
+            manager.setSelfDeafened(false);
+            manager.setSendingHandler(musicManager.getSendHandler());
+            manager.setReceivingHandler(session.receiver);
+            manager.openAudioConnection(channel);
+        } catch (RuntimeException e) {
+            sessions.remove(guild.getIdLong(), session);
+            session.close();
+            throw e;
+        }
         return new StartResult(true,
                 "음성 비서 세션을 시작했습니다. 종료 전까지 참여자의 음성이 외부 STT/AI로 전송되고 전사문이 이 채널에 표시됩니다.");
     }
