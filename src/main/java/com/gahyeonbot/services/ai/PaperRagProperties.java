@@ -18,8 +18,4 @@ public class PaperRagProperties {
     private double minScore = 0.35;
     private int connectTimeoutMs = 3_000;
     private int readTimeoutMs = 20_000;
-    private boolean githubSyncEnabled = true;
-    private long githubSyncInitialDelayMs = 120_000;
-    private long githubSyncFixedDelayMs = 21_600_000;
-    private int githubSyncBatchSize = 20;
 }
