@@ -238,6 +238,9 @@ public class DefaultAgentRuntime implements AgentRuntime {
                 [gateway]
                 %s
 
+                [응답 매체 지침]
+                %s
+
                 [현재 시각]
                 %s
 
@@ -245,6 +248,7 @@ public class DefaultAgentRuntime implements AgentRuntime {
                 %s
                 """.formatted(
                 request.gateway(),
+                gatewayGuidance(request.gateway()),
                 ZonedDateTime.now(ZoneId.of("Asia/Seoul")),
                 request.message())));
         if (backgroundResult != null && !backgroundResult.isBlank()) {
@@ -256,6 +260,21 @@ public class DefaultAgentRuntime implements AgentRuntime {
                     """.formatted(backgroundResult)));
         }
         return messages;
+    }
+
+    private static String gatewayGuidance(AgentGateway gateway) {
+        return switch (gateway) {
+            case VOICE -> """
+                    음성으로 듣기 편한 문장으로 답한다. 기본은 핵심부터 2~4문장으로 말하되,
+                    사용자가 설명·비교·방법·논문 내용을 요구하면 이해에 필요한 만큼 충분히 설명한다.
+                    마크다운, 이모지, URL 낭독, 표, 장식용 특수문자는 사용하지 않는다.
+                    """;
+            case TEXT -> """
+                    텍스트로 읽기 좋은 답변을 작성한다. 단순 질문은 짧게, 기술·논문·분석 질문은
+                    결론과 근거가 빠지지 않도록 필요한 만큼 자세히 답한다. 길이를 캐릭터성 때문에 줄이지 않는다.
+                    """;
+            case SYSTEM -> "업무 목적과 전달 대상에 맞춰 간결성과 완전성을 조절한다.";
+        };
     }
 
     private void recordMetrics(AgentGateway gateway, String status, Duration duration) {
