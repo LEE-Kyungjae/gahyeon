@@ -9,5 +9,9 @@ public interface RepoReadmeCacheRepository extends JpaRepository<RepoReadmeCache
 
     Optional<RepoReadmeCache> findTopByRepoFullNameOrderByReadmeFetchedAtDescIdDesc(String repoFullName);
 
+    Optional<RepoReadmeCache> findTopByRepoFullNameIgnoreCaseOrderByReadmeFetchedAtDescIdDesc(String repoFullName);
+
     Optional<RepoReadmeCache> findTopByRepoFullNameAndSummaryKoIsNotNullOrderBySummaryKoUpdatedAtDescIdDesc(String repoFullName);
+
+    Optional<RepoReadmeCache> findTopByOrderByReadmeFetchedAtDescIdDesc();
 }

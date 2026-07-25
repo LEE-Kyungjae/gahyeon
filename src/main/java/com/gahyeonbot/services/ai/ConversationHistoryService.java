@@ -5,6 +5,9 @@ import com.gahyeonbot.repository.ConversationHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,6 +107,41 @@ public class ConversationHistoryService {
             log.debug("컨텍스트 빌드 완료 - 사용자: {}, 길이: {}자", userId, result.length());
         }
         return result;
+    }
+
+    /**
+     * 에이전트 호출에 사용할 역할 기반 대화 메시지와 장기 요약을 반환합니다.
+     * 이전 대화를 하나의 사용자 문자열로 합치지 않아 user/assistant 경계가 보존됩니다.
+     */
+    @Transactional(readOnly = true)
+    public AgentConversationContext buildAgentContext(Long userId) {
+        List<ConversationHistory> summaries = repository.findLatestSummary(
+                userId, PageRequest.of(0, MAX_SUMMARY_CONTEXT_COUNT));
+        List<ConversationHistory> orderedSummaries = new ArrayList<>(summaries);
+        Collections.reverse(orderedSummaries);
+        String summary = orderedSummaries.stream()
+                .map(ConversationHistory::getSummary)
+                .filter(value -> value != null && !value.isBlank())
+                .map(String::trim)
+                .collect(Collectors.joining("\n- ", "- ", ""));
+
+        List<ConversationHistory> recent = repository.findRecentByUserId(
+                userId, PageRequest.of(0, RECENT_CONVERSATION_COUNT));
+        List<ConversationHistory> orderedRecent = new ArrayList<>(recent);
+        Collections.reverse(orderedRecent);
+        List<Message> messages = new ArrayList<>(orderedRecent.size() * 2);
+        for (ConversationHistory conversation : orderedRecent) {
+            if (conversation.getUserMessage() != null && !conversation.getUserMessage().isBlank()) {
+                messages.add(new UserMessage(conversation.getUserMessage()));
+            }
+            if (conversation.getAiResponse() != null && !conversation.getAiResponse().isBlank()) {
+                messages.add(new AssistantMessage(conversation.getAiResponse()));
+            }
+        }
+        return new AgentConversationContext(summary, List.copyOf(messages));
+    }
+
+    public record AgentConversationContext(String summary, List<Message> messages) {
     }
 
     /**
