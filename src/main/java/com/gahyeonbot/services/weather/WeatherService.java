@@ -556,7 +556,7 @@ public class WeatherService {
      * 7일 예보 응답 파싱
      */
     @SuppressWarnings("unchecked")
-    private List<WeatherForecast> parseForecastResponse(City city, Map<String, Object> response) {
+    List<WeatherForecast> parseForecastResponse(City city, Map<String, Object> response) {
         Map<String, Object> daily = (Map<String, Object>) response.get("daily");
         if (daily == null) {
             return Collections.emptyList();
@@ -571,18 +571,31 @@ public class WeatherService {
         List<WeatherForecast> forecasts = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
 
+        if (dates == null) {
+            return Collections.emptyList();
+        }
+
         for (int i = 0; i < dates.size(); i++) {
+            Number tempMax = valueAt(tempMaxList, i);
+            Number tempMin = valueAt(tempMinList, i);
+            Number weatherCode = valueAt(weatherCodes, i);
+            if (dates.get(i) == null || tempMax == null || tempMin == null || weatherCode == null) {
+                log.warn("불완전한 예보 행 건너뜀 - 도시: {}, index: {}", city.getKoreanName(), i);
+                continue;
+            }
             LocalDate forecastDate = LocalDate.parse(dates.get(i));
+            Number precipitationProbability = valueAt(precipProbList, i);
 
             WeatherForecast forecast = WeatherForecast.builder()
                     .city(city.name())
                     .cityName(city.getKoreanName())
                     .country(city.getCountry())
                     .forecastDate(forecastDate)
-                    .tempMax(tempMaxList.get(i).doubleValue())
-                    .tempMin(tempMinList.get(i).doubleValue())
-                    .weatherDescription(getWeatherDescription(weatherCodes.get(i).intValue()))
-                    .precipitationProbability(precipProbList != null ? precipProbList.get(i).intValue() : null)
+                    .tempMax(tempMax.doubleValue())
+                    .tempMin(tempMin.doubleValue())
+                    .weatherDescription(getWeatherDescription(weatherCode.intValue()))
+                    .precipitationProbability(
+                            precipitationProbability != null ? precipitationProbability.intValue() : null)
                     .fetchedAt(now)
                     .build();
 
@@ -590,6 +603,10 @@ public class WeatherService {
         }
 
         return forecasts;
+    }
+
+    private static Number valueAt(List<Number> values, int index) {
+        return values != null && index >= 0 && index < values.size() ? values.get(index) : null;
     }
 
     /**
