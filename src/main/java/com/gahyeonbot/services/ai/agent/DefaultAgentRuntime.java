@@ -139,7 +139,7 @@ public class DefaultAgentRuntime implements AgentRuntime {
                 messages.add(assistant);
 
                 if (!assistant.hasToolCalls()) {
-                    String content = assistant.getText() == null ? "" : assistant.getText().trim();
+                    String content = sanitizeFinalResponse(assistant.getText());
                     if (content.isBlank()) throw new IllegalStateException("모델의 최종 응답이 비어 있습니다.");
                     ledger.succeed(run.getId(), content);
                     historyService.saveConversation(request.userId(), request.message(), content);
@@ -274,5 +274,19 @@ public class DefaultAgentRuntime implements AgentRuntime {
         return value.length() <= MAX_EVENT_PAYLOAD
                 ? value
                 : value.substring(0, MAX_EVENT_PAYLOAD) + "...[truncated]";
+    }
+
+    static String sanitizeFinalResponse(String value) {
+        if (value == null || value.isBlank()) return "";
+        String content = value.trim();
+        int thinkingEnd = content.toLowerCase(Locale.ROOT).lastIndexOf("</think>");
+        if (thinkingEnd >= 0) {
+            String finalAnswer = content.substring(thinkingEnd + "</think>".length()).trim();
+            if (!finalAnswer.isBlank()) content = finalAnswer;
+        }
+        return content
+                .replaceAll("(?is)<think>.*?</think>", "")
+                .replaceAll("(?is)</?think>", "")
+                .trim();
     }
 }
