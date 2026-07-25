@@ -32,7 +32,7 @@ public class Description {
     public static final String WEATHER_NAME = "weather";
     public static final String WEATHER_NAME_KO = "날씨";
     public static final String WEATHER_DESC = "현재 날씨와 예보를 확인합니다.";
-    public static final String WEATHER_DETAIL = "기본은 서울입니다. 예) /날씨, /날씨 question:콜마르 다음주";
+    public static final String WEATHER_DETAIL = "전체 날씨 현황을 확인합니다. 자연어 날씨 질문은 /가현아에서 할 수 있습니다.";
 
     public static final String TTS_NAME = "tts";
     public static final String TTS_NAME_KO = "티";

@@ -3,12 +3,11 @@ package com.gahyeonbot.services.ai;
 import com.gahyeonbot.config.AppCredentialsConfig;
 import com.gahyeonbot.entity.OpenAiUsage;
 import com.gahyeonbot.repository.OpenAiUsageRepository;
-import com.gahyeonbot.services.weather.WeatherRagService;
-import com.gahyeonbot.services.weather.WeatherService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ClassPathResource;
@@ -21,9 +20,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * OpenAI API 서비스 클래스 (엄격한 Rate Limiting 및 보안 강화).
@@ -35,8 +34,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * 3. Rate Limiting: 사용자당 1시간 10회, 하루 30회 제한
  * 4. 봇 전체 제한: 하루 50회, 월 100회
  * 5. 중복 차단: 10초 내 재요청 차단
- * 6. 캐싱: 반복 질문 10분 TTL
- * 7. DB 로깅: 모든 요청 기록 및 비용 추적
+ * 6. DB 로깅: 모든 요청 기록 및 비용 추적
  *
  * @author GahyeonBot Team
  * @version 2.0
@@ -50,16 +48,15 @@ public class OpenAiService {
     private final OpenAiUsageRepository usageRepository;
     private final AppCredentialsConfig appCredentialsConfig;
     private final ConversationHistoryService conversationHistoryService;
-    private final WeatherService weatherService;
-    private final WeatherRagService weatherRagService;
+    private final WeatherTools weatherTools;
+    private final GitHubKnowledgeTools gitHubKnowledgeTools;
+    private final PaperKnowledgeTools paperKnowledgeTools;
+    private final KnowledgeFreshnessTools knowledgeFreshnessTools;
 
     private String apiKey;
     private boolean isEnabled = false;
     private RestTemplate restTemplate;
     private String systemPrompt;
-
-    // 캐시: 최근 질문과 답변 저장 (10분 TTL)
-    private final Map<String, CachedResponse> responseCache = new ConcurrentHashMap<>();
 
     // 사용자별 Lock: 동일 사용자의 동시 요청 방지 (ShardManager 동시성 제어)
     private final Map<Long, Lock> userLocks = new ConcurrentHashMap<>();
@@ -71,7 +68,6 @@ public class OpenAiService {
     private static final int MONTHLY_LIMIT_TOTAL = 100;       // 봇 전체 월 제한
     private static final int DUPLICATE_CHECK_SECONDS = 10;    // 중복 요청 차단 시간
     private static final int MAX_PROMPT_LENGTH = 1000;        // 프롬프트 최대 길이
-    private static final int CACHE_TTL_MINUTES = 10;          // 캐시 유효 시간
 
     // 적대적 프롬프트 키워드 (공백/특수문자 우회 방지)
     private static final List<String> ADVERSARIAL_KEYWORDS = Arrays.asList(
@@ -184,16 +180,7 @@ public class OpenAiService {
             throw new AdversarialPromptException("부적절한 요청이 감지되었습니다.");
         }
 
-        // 4. 캐시 확인 (동일 질문에 대한 응답)
-        String cacheKey = generateCacheKey(userMessage);
-        CachedResponse cached = responseCache.get(cacheKey);
-        if (cached != null && !cached.isExpired()) {
-            log.info("캐시 히트 - 사용자: {}", username);
-            logUsage(interactionId, userId, username, guildId, userMessage, cached.response, true, null);
-            return cached.response;
-        }
-
-        // 5. 중복 요청 차단 (10초 내)
+        // 4. 중복 요청 차단 (10초 내)
         LocalDateTime since = LocalDateTime.now().minusSeconds(DUPLICATE_CHECK_SECONDS);
         List<OpenAiUsage> duplicates = usageRepository.findDuplicatePrompt(userId, userMessage, since);
         if (!duplicates.isEmpty()) {
@@ -232,33 +219,45 @@ public class OpenAiService {
             throw new RateLimitException("이번 달 AI 사용 한도가 모두 소진되었습니다. 다음 달에 다시 시도해주세요.");
         }
 
-        // 10. 대화 히스토리 컨텍스트 빌드
-        String conversationContext = "";
+        // 9. 역할 기반 대화 히스토리 로드
+        ConversationHistoryService.AgentConversationContext conversationContext =
+                new ConversationHistoryService.AgentConversationContext("", List.of());
         try {
-            conversationContext = conversationHistoryService.buildContext(userId);
-            if (!conversationContext.isEmpty()) {
-                log.debug("대화 컨텍스트 로드 - 사용자: {}, 컨텍스트 길이: {}자", username, conversationContext.length());
+            conversationContext = conversationHistoryService.buildAgentContext(userId);
+            if (!conversationContext.messages().isEmpty() || !conversationContext.summary().isBlank()) {
+                log.debug("대화 컨텍스트 로드 - 사용자: {}, 메시지: {}건, 요약: {}자",
+                        username, conversationContext.messages().size(), conversationContext.summary().length());
             }
         } catch (Exception e) {
             log.warn("대화 컨텍스트 로드 실패 - 무시하고 계속 진행", e);
         }
 
-        // 11. OpenAI API 호출
+        // 10. OpenAI API 호출
         try {
             log.info("OpenAI 요청 시작 - 사용자: {}, 메시지 길이: {} 문자", username, userMessage.length());
 
-            // 컨텍스트 조합: 대화 히스토리 + 현재 질문
-            StringBuilder contextBuilder = new StringBuilder();
-            if (!conversationContext.isEmpty()) {
-                contextBuilder.append(conversationContext).append("\n\n");
+            String currentUserMessage = new StringBuilder()
+                    .append("[현재 시각]\n")
+                    .append(java.time.ZonedDateTime.now(java.time.ZoneId.of("Asia/Seoul")))
+                    .append("\n\n[현재 질문]\n")
+                    .append(userMessage)
+                    .toString();
+            String requestSystemPrompt = systemPrompt;
+            if (!conversationContext.summary().isBlank()) {
+                requestSystemPrompt += "\n\n[사용자의 이전 대화 요약 - 참고 정보]\n"
+                        + conversationContext.summary();
             }
-            contextBuilder.append("[현재 질문]\n").append(userMessage);
-            String fullUserMessage = contextBuilder.toString();
 
             ChatClient chatClient = ChatClient.create(chatModel);
-            String response = chatClient.prompt()
-                    .system(systemPrompt)
-                    .user(fullUserMessage)
+            ChatClient.ChatClientRequestSpec request = chatClient.prompt()
+                    .system(requestSystemPrompt);
+            List<Message> priorMessages = conversationContext.messages();
+            if (!priorMessages.isEmpty()) {
+                request.messages(priorMessages);
+            }
+            String response = request
+                    .user(currentUserMessage)
+                    .tools(weatherTools, gitHubKnowledgeTools, paperKnowledgeTools, knowledgeFreshnessTools)
                     .call()
                     .content();
 
@@ -271,10 +270,7 @@ public class OpenAiService {
                 log.warn("대화 히스토리 저장 실패 - 무시하고 계속 진행", e);
             }
 
-            // 13. 캐시에 저장
-            responseCache.put(cacheKey, new CachedResponse(response, LocalDateTime.now()));
-
-            // 14. DB 로깅
+            // 13. DB 로깅
             logUsage(interactionId, userId, username, guildId, userMessage, response, true, null);
 
             return response;
@@ -339,13 +335,6 @@ public class OpenAiService {
     }
 
     /**
-     * 캐시 키 생성 (질문 정규화)
-     */
-    private String generateCacheKey(String message) {
-        return message.trim().toLowerCase();
-    }
-
-    /**
      * 시스템 프롬프트를 리소스에서 로드합니다.
      */
     private void loadSystemPrompt() {
@@ -364,23 +353,6 @@ public class OpenAiService {
      */
     public boolean isEnabled() {
         return isEnabled;
-    }
-
-    /**
-     * 캐시된 응답 클래스
-     */
-    private static class CachedResponse {
-        String response;
-        LocalDateTime createdAt;
-
-        CachedResponse(String response, LocalDateTime createdAt) {
-            this.response = response;
-            this.createdAt = createdAt;
-        }
-
-        boolean isExpired() {
-            return LocalDateTime.now().isAfter(createdAt.plusMinutes(CACHE_TTL_MINUTES));
-        }
     }
 
     /**

@@ -45,7 +45,6 @@ public class WeatherService {
 
     private final WeatherRepository weatherRepository;
     private final WeatherForecastRepository forecastRepository;
-    private final WeatherRagService weatherRagService;
     private RestTemplate restTemplate;
 
     // 메모리 캐시 (도시별)
@@ -283,7 +282,6 @@ public class WeatherService {
                 if (weather != null) {
                     weatherRepository.save(weather);
                     weatherCache.put(city, weather);
-                    weatherRagService.indexCurrentWeather(weather);
                     successCount++;
                 } else {
                     failCount++;
@@ -318,7 +316,6 @@ public class WeatherService {
                 List<WeatherForecast> forecasts = fetchForecastsForCity(city);
                 if (!forecasts.isEmpty()) {
                     forecastRepository.saveAll(forecasts);
-                    weatherRagService.indexForecasts(forecasts);
                     successCount++;
                 } else {
                     failCount++;
@@ -476,7 +473,6 @@ public class WeatherService {
     public void cleanupOldForecasts() {
         LocalDate cutoffDate = LocalDate.now().minusDays(30);
         forecastRepository.deleteOldForecasts(cutoffDate);
-        weatherRagService.cleanupOldChunks(cutoffDate);
         log.info("오래된 예보 데이터 정리 완료 - 기준일: {}", cutoffDate);
     }
 

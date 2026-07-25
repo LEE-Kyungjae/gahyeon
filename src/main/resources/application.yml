@@ -58,15 +58,14 @@ management:
       exposure:
         include: health,info,metrics,prometheus
 
-weather:
-  rag:
-    enabled: ${WEATHER_RAG_ENABLED:true}
-    embedding-model: ${WEATHER_RAG_EMBEDDING_MODEL:text-embedding-3-small}
-    top-k: ${WEATHER_RAG_TOP_K:4}
-    min-similarity: ${WEATHER_RAG_MIN_SIMILARITY:0.35}
-    min-text-score: ${WEATHER_RAG_MIN_TEXT_SCORE:0.01}
-    vector-weight: ${WEATHER_RAG_VECTOR_WEIGHT:0.75}
-    text-weight: ${WEATHER_RAG_TEXT_WEIGHT:0.25}
+paper-rag:
+  enabled: ${PAPER_RAG_ENABLED:false}
+  base-url: ${PAPER_RAG_BASE_URL:http://127.0.0.1:8765}
+  api-key: ${PAPER_RAG_API_KEY:}
+  top-k: ${PAPER_RAG_TOP_K:5}
+  min-score: ${PAPER_RAG_MIN_SCORE:0.35}
+  connect-timeout-ms: ${PAPER_RAG_CONNECT_TIMEOUT_MS:3000}
+  read-timeout-ms: ${PAPER_RAG_READ_TIMEOUT_MS:20000}
 
 tts:
   enabled: ${TTS_ENABLED:true}

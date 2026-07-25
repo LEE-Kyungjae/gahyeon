@@ -1,0 +1,9 @@
+**
+!Dockerfile
+!build/
+build/**
+!build/libs/
+!build/libs/gahyeonbot-1.0.0.jar
+!scripts/
+scripts/**
+!scripts/tts_split.py
