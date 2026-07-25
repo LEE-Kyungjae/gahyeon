@@ -34,6 +34,11 @@ public class AppCredentialsConfig {
     private String openaiApiKey;
 
     /**
+     * 공통 AgentRuntime 모델 API 키. OpenRouter 또는 OpenAI 호환 API를 사용할 수 있습니다.
+     */
+    private String agentApiKey;
+
+    /**
      * Zhipu AI GLM API Key (선택적)
      * 설정되지 않으면 대화 요약 기능이 비활성화됩니다.
      */

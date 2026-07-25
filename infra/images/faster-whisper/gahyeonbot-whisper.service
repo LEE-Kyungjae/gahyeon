@@ -1,0 +1,22 @@
+[Unit]
+Description=GahyeonBot faster-whisper STT
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/gahyeonbot-whisper
+Environment=PATH=/home/ubuntu/gahyeonbot-whisper/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+Environment=LD_LIBRARY_PATH=/usr/lib/wsl/lib:/home/ubuntu/gahyeonbot-whisper/.venv/lib/python3.12/site-packages/nvidia/cublas/lib:/home/ubuntu/gahyeonbot-whisper/.venv/lib/python3.12/site-packages/nvidia/cudnn/lib
+Environment=WHISPER_MODEL=large-v3-turbo
+Environment=WHISPER_DEVICE=cuda
+Environment=WHISPER_COMPUTE_TYPE=int8_float16
+ExecStartPre=/home/ubuntu/gahyeonbot-whisper/wait-for-gpu.sh
+ExecStart=/home/ubuntu/gahyeonbot-whisper/.venv/bin/uvicorn server:app --host 0.0.0.0 --port 18766 --workers 1
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=infinity
+
+[Install]
+WantedBy=multi-user.target

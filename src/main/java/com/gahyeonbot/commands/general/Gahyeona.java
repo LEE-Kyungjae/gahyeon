@@ -2,6 +2,7 @@ package com.gahyeonbot.commands.general;
 
 import com.gahyeonbot.commands.util.*;
 import com.gahyeonbot.services.ai.OpenAiService;
+import com.gahyeonbot.services.ai.agent.AgentApprovalRequiredException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -113,6 +114,10 @@ public class Gahyeona extends AbstractCommand {
 
             log.info("OpenAI 응답 전송 완료 - 사용자: {}", event.getUser().getName());
 
+        } catch (AgentApprovalRequiredException e) {
+            safeEditOriginal(event, "도구 실행 승인이 필요해요.\nrun: `" + e.getRunId()
+                    + "`\n`/에이전트 동작:상태 아이디:" + e.getRunId()
+                    + "`에서 승인 ID를 확인해 주세요.");
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             log.warn("중복 Interaction 감지 - 다른 인스턴스가 이미 처리 중: {}", event.getUser().getName());
             // 다른 인스턴스가 처리 중이므로 조용히 종료 (사용자는 이미 응답을 받을 것)
