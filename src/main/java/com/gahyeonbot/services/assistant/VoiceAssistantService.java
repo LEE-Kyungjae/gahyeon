@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -100,6 +102,7 @@ public class VoiceAssistantService {
         private final MessageChannel textChannel;
         private final GuildMusicManager musicManager;
         private final Map<Long, Utterance> utterances = new ConcurrentHashMap<>();
+        private final Map<Long, RequestGuard> requestGuards = new ConcurrentHashMap<>();
         private final AudioReceiveHandler receiver = new Receiver();
         private final ScheduledFuture<?> silenceTask;
         private volatile boolean closed;
@@ -156,6 +159,12 @@ public class VoiceAssistantService {
                     }
                     if (utterance.pcm.size() + pcm.length <= max) utterance.pcm.writeBytes(pcm);
                     if (detection.voice()) {
+                        utterance.speechRevision++;
+                        if (utterance.provisionalRevision >= 0
+                                && utterance.provisionalRevision != utterance.speechRevision) {
+                            utterance.provisionalTranscript = null;
+                            utterance.provisionalRevision = -1;
+                        }
                         utterance.lastVoiceAt = now;
                         utterance.voiceSamples += (long) detection.voiceFrames() * properties.getVad().getHopSize();
                     }
@@ -172,33 +181,75 @@ public class VoiceAssistantService {
                     long requiredSilence = utterance.vad == null
                             ? properties.getSilenceMillis()
                             : properties.getVad().getEndSilenceMillis();
+                    long transcriptionSilence = utterance.vad == null
+                            ? requiredSilence
+                            : Math.min(requiredSilence,
+                                    properties.getVad().getTranscriptionSilenceMillis());
                     long speechMillis = utterance.vad == null
                             ? Long.MAX_VALUE
                             : utterance.voiceSamples * 1_000 / 16_000;
+                    long silentMillis = now - utterance.lastVoiceAt;
                     boolean maxLength = utterance.pcm.size() >= properties.getMaxUtteranceSeconds()
                             * WavEncoder.SAMPLE_RATE * WavEncoder.CHANNELS * WavEncoder.BITS_PER_SAMPLE / 8;
-                    if (utterance.speechStarted
+                    boolean validSpeech = utterance.speechStarted
                             && utterance.pcm.size() >= MIN_UTTERANCE_BYTES
-                            && speechMillis >= properties.getVad().getMinSpeechMillis()
-                            && (now - utterance.lastVoiceAt >= requiredSilence || maxLength)) {
-                        pcm = utterance.pcm.toByteArray();
-                        utterance.reset();
+                            && speechMillis >= properties.getVad().getMinSpeechMillis();
+                    if (validSpeech
+                            && !maxLength
+                            && silentMillis >= transcriptionSilence
+                            && utterance.provisionalTranscript == null) {
+                        byte[] provisionalPcm = utterance.pcm.toByteArray();
+                        long revision = utterance.speechRevision;
+                        utterance.provisionalRevision = revision;
+                        utterance.provisionalTranscript = CompletableFuture.supplyAsync(
+                                () -> speechToTextProvider.transcribe(
+                                        WavEncoder.pcmToWav(provisionalPcm)),
+                                workers);
                     }
-                }
-                if (pcm != null) {
-                    byte[] captured = pcm;
-                    workers.submit(() -> process(userId, utterance.username, captured));
+                    if (validSpeech && (silentMillis >= requiredSilence || maxLength)) {
+                        pcm = utterance.pcm.toByteArray();
+                        CompletableFuture<String> provisional =
+                                utterance.provisionalRevision == utterance.speechRevision
+                                        ? utterance.provisionalTranscript
+                                        : null;
+                        utterance.reset();
+                        byte[] captured = pcm;
+                        workers.submit(() -> process(
+                                userId, utterance.username, captured, provisional));
+                        pcm = null;
+                    }
                 }
             });
         }
 
-        private void process(long userId, String username, byte[] pcm) {
+        private void process(
+                long userId,
+                String username,
+                byte[] pcm,
+                CompletableFuture<String> provisionalTranscript) {
             if (closed) return;
             try {
-                String transcript = speechToTextProvider.transcribe(WavEncoder.pcmToWav(pcm));
+                String transcript;
+                try {
+                    transcript = provisionalTranscript == null
+                            ? speechToTextProvider.transcribe(WavEncoder.pcmToWav(pcm))
+                            : provisionalTranscript.get(
+                                    properties.getStt().getTimeoutSeconds(), TimeUnit.SECONDS);
+                } catch (Exception provisionalFailure) {
+                    transcript = speechToTextProvider.transcribe(WavEncoder.pcmToWav(pcm));
+                }
                 if (transcript.isBlank()) return;
+                RequestGuard guard = requestGuards.computeIfAbsent(userId, ignored -> new RequestGuard());
+                if (!guard.allow(transcript, System.currentTimeMillis())) {
+                    log.info("비서 AI 호출 차단 guild={} user={} reason=duplicate-or-rate-limit",
+                            guild.getIdLong(), userId);
+                    return;
+                }
                 textChannel.sendMessage("**" + username + "**: " + limit(transcript, 1500)).queue();
-                String answer = chatProvider.chat(guild.getIdLong(), userId, username, transcript);
+                String answer;
+                synchronized (guard.aiLock) {
+                    answer = chatProvider.chat(guild.getIdLong(), userId, username, transcript);
+                }
                 textChannel.sendMessage("**가현**: " + limit(answer, 1800)).queue();
                 if (properties.isSpeakResponses() && ttsService.isEnabled() && !closed) speak(answer);
             } catch (Exception e) {
@@ -235,6 +286,9 @@ public class VoiceAssistantService {
         private final TenVadDetector vad;
         private long lastVoiceAt = System.currentTimeMillis();
         private long voiceSamples;
+        private long speechRevision;
+        private long provisionalRevision = -1;
+        private CompletableFuture<String> provisionalTranscript;
         private boolean speechStarted;
 
         private Utterance(String username, AssistantProperties.Vad settings) {
@@ -259,12 +313,41 @@ public class VoiceAssistantService {
             pcm.reset();
             preRoll.reset();
             voiceSamples = 0;
+            speechRevision = 0;
+            provisionalRevision = -1;
+            provisionalTranscript = null;
             speechStarted = vad == null;
             lastVoiceAt = System.currentTimeMillis();
         }
 
         private void close() {
             if (vad != null) vad.close();
+        }
+    }
+
+    private final class RequestGuard {
+        private final Object aiLock = new Object();
+        private final Deque<Long> requestTimes = new ArrayDeque<>();
+        private String lastTranscript = "";
+        private long lastTranscriptAt;
+
+        private synchronized boolean allow(String transcript, long now) {
+            String normalized = transcript.replaceAll("\\s+", "").trim();
+            if (normalized.equals(lastTranscript)
+                    && now - lastTranscriptAt < properties.getDuplicateTranscriptMillis()) {
+                return false;
+            }
+            long cutoff = now - TimeUnit.MINUTES.toMillis(1);
+            while (!requestTimes.isEmpty() && requestTimes.peekFirst() < cutoff) {
+                requestTimes.removeFirst();
+            }
+            if (requestTimes.size() >= Math.max(1, properties.getMaxAiRequestsPerMinute())) {
+                return false;
+            }
+            requestTimes.addLast(now);
+            lastTranscript = normalized;
+            lastTranscriptAt = now;
+            return true;
         }
     }
 

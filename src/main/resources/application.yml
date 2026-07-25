@@ -108,11 +108,14 @@ assistant:
   silence-millis: ${ASSISTANT_SILENCE_MILLIS:900}
   speak-responses: ${ASSISTANT_SPEAK_RESPONSES:true}
   tts-provider: ${ASSISTANT_TTS_PROVIDER:edge}
+  max-ai-requests-per-minute: ${ASSISTANT_MAX_AI_REQUESTS_PER_MINUTE:12}
+  duplicate-transcript-millis: ${ASSISTANT_DUPLICATE_TRANSCRIPT_MILLIS:10000}
   vad:
     enabled: ${ASSISTANT_VAD_ENABLED:true}
     hop-size: ${ASSISTANT_VAD_HOP_SIZE:256}
     threshold: ${ASSISTANT_VAD_THRESHOLD:0.5}
     min-speech-millis: ${ASSISTANT_VAD_MIN_SPEECH_MILLIS:300}
+    transcription-silence-millis: ${ASSISTANT_VAD_TRANSCRIPTION_SILENCE_MILLIS:700}
     end-silence-millis: ${ASSISTANT_VAD_END_SILENCE_MILLIS:1200}
     pre-roll-millis: ${ASSISTANT_VAD_PRE_ROLL_MILLIS:240}
   stt:

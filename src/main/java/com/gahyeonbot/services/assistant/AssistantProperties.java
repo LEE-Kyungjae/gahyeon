@@ -15,6 +15,8 @@ public class AssistantProperties {
     private long silenceMillis = 900;
     private boolean speakResponses = true;
     private String ttsProvider = "edge";
+    private int maxAiRequestsPerMinute = 12;
+    private long duplicateTranscriptMillis = 10_000;
     private final Vad vad = new Vad();
     private final Stt stt = new Stt();
     private final OpenRouter openrouter = new OpenRouter();
@@ -39,6 +41,7 @@ public class AssistantProperties {
         private int hopSize = 256;
         private float threshold = 0.5f;
         private long minSpeechMillis = 300;
+        private long transcriptionSilenceMillis = 700;
         private long endSilenceMillis = 1_200;
         private long preRollMillis = 240;
     }
