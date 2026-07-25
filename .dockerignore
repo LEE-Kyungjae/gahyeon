@@ -7,3 +7,4 @@ build/**
 !scripts/
 scripts/**
 !scripts/tts_split.py
+!scripts/edge_tts_server.py
