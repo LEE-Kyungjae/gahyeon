@@ -16,6 +16,7 @@ ExecStartPre=/home/ubuntu/gahyeonbot-whisper/wait-for-gpu.sh
 ExecStart=/home/ubuntu/gahyeonbot-whisper/.venv/bin/uvicorn server:app --host 0.0.0.0 --port 18766 --workers 1
 Restart=on-failure
 RestartSec=5
+TimeoutStartSec=infinity
 
 [Install]
 WantedBy=multi-user.target
