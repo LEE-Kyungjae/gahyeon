@@ -5,6 +5,8 @@ import com.gahyeonbot.config.AppCredentialsConfig;
 import com.gahyeonbot.core.command.CommandRegistry;
 import com.gahyeonbot.listeners.CommandManager;
 import com.gahyeonbot.listeners.ListenerManager;
+import com.gahyeonbot.listeners.AssistantVoiceChannelListener;
+import com.gahyeonbot.listeners.MessageListener;
 import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
@@ -36,6 +38,8 @@ public class BotInitializerRunner implements CommandLineRunner {
     private final AppCredentialsConfig config;
     private final CommandRegistry commandRegistry;
     private final DataSource dataSource;
+    private final MessageListener messageListener;
+    private final AssistantVoiceChannelListener assistantVoiceChannelListener;
 
     @Value("${bot.enabled:true}")
     private boolean botEnabled;
@@ -109,7 +113,8 @@ public class BotInitializerRunner implements CommandLineRunner {
         commandManager.setShardManager(shardManager);
         commandManager.synchronizeCommands().join();
 
-        ListenerManager listenerManager = new ListenerManager(shardManager, config, commandManager);
+        ListenerManager listenerManager = new ListenerManager(
+                shardManager, config, commandManager, messageListener, assistantVoiceChannelListener);
         listenerManager.registerListeners();
 
         logger.info("Discord 봇이 성공적으로 초기화되었습니다. (leadership={})", hasLeadership);
