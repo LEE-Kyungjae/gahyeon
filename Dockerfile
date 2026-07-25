@@ -10,6 +10,13 @@ RUN apt-get update \
 # Python deps for sentence splitting + Edge TTS synthesis.
 RUN pip3 install --no-cache-dir kss edge-tts
 
+# Discord voice native runtime libraries. Keep this layer after the stable
+# Python dependency layer so adding/updating native packages does not force
+# slow multi-architecture KSS installation again.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends libc++1 libc++abi1 libunwind-14 \
+  && rm -rf /var/lib/apt/lists/*
+
 # 2. Build Arguments
 ARG JAR_FILE=build/libs/gahyeonbot-1.0.0.jar
 
