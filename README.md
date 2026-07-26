@@ -1,179 +1,173 @@
 # 가현봇 (GahyeonBot)
-```
-연인과 취침전에 보이스채널을 나가는 번거로움을 겪어보신적 있으신가요?
-다른 보이스채널 유저에게 공지사항이있어 모두 보이스채널로 집결시키고싶진 않으신가요?
-가현봇이 해결해줍니다!
-```
 
-가현봇은 디스코드 서버에서 예약 관리 및 일정 조율을 돕는 봇입니다. 간단한 명령어 입력으로 예약 생성, 취소, 조회 기능을 제공합니다.
+[한국어](README.md) | [English](README.en.md)
+
+가현봇은 Discord 서버에서 AI 업무 비서, 음성 대화, 음악 재생, 음성 채널 예약 및 관리 기능을 제공하는 Java 기반 봇입니다. 전용 채팅·음성 채널에서는 슬래시 명령을 반복하지 않고도 텍스트와 음성으로 비서와 대화할 수 있습니다.
 
 ## 주요 기능
-- **나가기 예약 생성:** 특정 날짜와 시간에 나가기 예약 생성
-- **같이나가기 예약 생성:** 여러 사람이 함께 나가는 예약 생성
-- **예약 취소:** 기존 예약 취소
-- **예약 목록 조회:** 모든 예약된 목록 확인
-- **뮤직봇 기능:** 음악 재생, 일시 정지, 스킵 등 기본 음악 관리 기능 제공
-- **유용한 뉴스레터 DM 기능:** 최신 기술동향, AI, 주식, 스포츠, 여행등 유용한 뉴스레터를 제공합니다. 사용자가 직접 원하는 테마의 뉴스레터를 구독할 수 있습니다.
 
----
+- **AI 에이전트**: `/가현아` 또는 전용 채팅 채널의 일반 메시지를 AI 에이전트로 전달합니다.
+- **서버별 비서 채널**: `/설정`으로 `가현봇-채팅`과 `가현봇-비서` 채널을 만들고 연결합니다.
+- **음성 비서**: 전용 음성 채널 입장을 감지해 봇이 자동 참여하고 STT → AI → TTS 파이프라인으로 응답합니다.
+- **안전한 턴 감지**: TEN VAD와 연속 무음 기준으로 발화 종료를 판단해 짧은 쉼마다 API를 호출하지 않습니다.
+- **대화 문맥 유지**: 사용자와 비서 메시지의 역할 경계를 보존해 후속 질문을 처리합니다.
+- **다중 TTS 제공자**: Voicebox, Edge TTS, 범용 HTTP 커스텀 TTS를 지원하며 실패 시 Edge로 전환할 수 있습니다.
+- **음악과 음성 채널 관리**: 재생·일시정지·스킵·큐 관리와 예약 나가기 기능을 제공합니다.
+- **뉴스레터 및 서버 관리**: 구독형 DM 콘텐츠와 관리 명령을 제공합니다.
 
-## 사용 방법
-### 1. 봇 초대
-가현봇을 디스코드 서버에 초대하세요.
-[가현봇 초대 링크](https://discord.com/oauth2/authorize?client_id=1220338955082399845)
-[가현봇 위키](https://github.com/LEE-Kyungjae/gahyeonbot/wiki)
-### 2. 명령어 사용
-디스코드 채팅 창에 다음과 같은 명령어를 입력하세요:
+## 비서 사용법
 
-- **나가기 예약 생성:**
-  ```
-  Out [날짜] [시간] [설명(선택)]
-  ```
-  예: `Out 2024-12-25 18:00 크리스마스 파티`
+### 서버 설정
 
-- **같이나가기 예약 생성:**
-  ```
-  WithOut [날짜] [시간] [설명(선택)]
-  ```
-  예: `WithOut 2024-12-31 23:30 연말 카운트다운`
+관리자가 Discord에서 다음 명령을 한 번 실행합니다.
 
-- **예약 취소:**
-  ```
-  CancelOut [예약 번호]
-  ```
-  예: `CancelOut 1`
+```text
+/설정
+```
 
-- **예약 목록 조회:**
-  ```
-  SearchOut
-  ```
-  예: `SearchOut`
-## 설치 및 실행
-가현봇은 Java 21과 Spring Boot 3 기반으로 제작되었으며, JDA와 LavaPlayer를 사용합니다.
+가현봇은 전용 채팅 채널과 음성 채널을 생성하거나 기존 설정을 복구합니다.
 
-### 요구 환경
-- Java 21 (OpenJDK/Eclipse Temurin 권장)
-- Gradle Wrapper (프로젝트에 포함)
-- Discord Bot Token 및 Spotify API 자격 증명
-- 로컬 개발용 PostgreSQL (docker-compose로 제공)
+- 전용 채팅 채널의 일반 메시지는 `/가현아`와 동일하게 처리됩니다.
+- 전용 음성 채널에 입장하면 음성 비서가 자동으로 참여합니다.
+- 수동 제어가 필요하면 `/비서 action:시작`, `종료`, `상태`를 사용합니다.
 
-### 필수 환경 변수
-다음 값은 애플리케이션 실행 전에 환경 변수로 설정해야 합니다.
+### 음성 처리 흐름
+
+```text
+Discord 음성 → TEN VAD → STT → AI 에이전트/OpenRouter → TTS → Discord 음성
+```
+
+발화는 설정된 최소 음성 길이와 연속 무음 시간을 충족할 때 한 번만 확정됩니다. OpenRouter 응답은 한 턴당 하나의 스트리밍 요청으로 수신합니다.
+
+## 기술 스택
+
+- Java 21, Spring Boot 3
+- JDA 5, LavaPlayer
+- PostgreSQL / H2, Flyway
+- OpenRouter 기반 에이전트 런타임
+- TEN VAD와 교체 가능한 HTTP STT
+- Voicebox, Edge TTS, 범용 커스텀 TTS
+- Docker, GitHub Actions, Blue/Green 배포
+
+자세한 구조는 [아키텍처 문서](docs/ARCHITECTURE.md)와 [에이전트 런타임 문서](docs/agent-runtime.md)를 참고하세요.
+
+## 요구 환경
+
+- Java 21
+- 프로젝트에 포함된 Gradle Wrapper
+- Discord Bot Token 및 Application ID
+- AI 비서를 사용할 경우 OpenRouter API 키
+- 음악 기능을 사용할 경우 Spotify API 자격 증명
+- 운영 환경의 PostgreSQL
+- 음성 비서를 사용할 경우 접근 가능한 STT/TTS 서비스
+
+## 주요 환경 변수
+
+### 기본 및 AI
 
 | 변수 | 설명 |
 | --- | --- |
 | `TOKEN` | Discord 봇 토큰 |
 | `APPLICATION_ID` | Discord 애플리케이션 ID |
+| `BOT_ENABLED` | Discord 연결 활성화 여부 |
+| `ASSISTANT_ENABLED` | 음성 비서 활성화 |
+| `ASSISTANT_OPENROUTER_ENABLED` | OpenRouter AI 제공자 활성화 |
+| `OPENROUTER_API_KEY` | OpenRouter API 키 |
+| `OPENROUTER_MODEL` | 사용할 OpenRouter 모델 ID |
 | `SPOTIFY_CLIENT_ID` | Spotify Client ID |
 | `SPOTIFY_CLIENT_SECRET` | Spotify Client Secret |
-| `OPENAI_API_KEY` | OpenAI API 키 (가현아 AI 대화 기능) |
-| `ASSISTANT_ENABLED` | 음성 비서 기능 활성화 (`false` 기본값) |
-| `ASSISTANT_STT_ENABLED` | 음성 비서 STT 활성화 (`false` 기본값) |
-| `ASSISTANT_VAD_ENABLED` | TEN VAD 기반 음성 구간 감지 (`true` 기본값) |
-| `ASSISTANT_VAD_THRESHOLD` | TEN VAD 음성 판정 임계값 (`0.5` 기본값) |
-| `ASSISTANT_VAD_END_SILENCE_MILLIS` | 한 발화를 확정할 연속 무음 시간 (`1200`ms 기본값) |
-| `ASSISTANT_STT_BASE_URL` | STT API 주소. 로컬 Voicebox 사용 시 `http://voicebox:17493` |
-| `ASSISTANT_STT_ENDPOINT` | STT 경로. 로컬 Voicebox 사용 시 `/transcribe` |
-| `ASSISTANT_STT_API_KEY_REQUIRED` | 로컬 STT처럼 인증이 없으면 `false` |
-| `ASSISTANT_STT_API_KEY` | STT 제공자 API 키 |
-| `ASSISTANT_STT_MODEL` | STT 모델 (Voicebox Whisper 사용 시 `base`) |
-| `ASSISTANT_OPENROUTER_ENABLED` | OpenRouter 비서 AI 활성화 (`false` 기본값) |
-| `OPENROUTER_API_KEY` | OpenRouter API 키 |
-| `OPENROUTER_MODEL` | OpenRouter에서 사용할 모델 ID |
 
-음성 비서는 TEN VAD가 사람 음성을 감지한 뒤 연속 무음으로 한 턴을 확정하므로,
-잡음이나 Discord의 빈 오디오 패킷만으로 STT/OpenRouter 요청을 만들지 않습니다.
-OpenRouter 응답은 한 발화당 한 번의 `stream: true` SSE 요청으로 수신합니다.
-| `TTS_PROVIDER` | `voicebox`, `edge`, `custom` (`voicebox` 기본값) |
-| `VOICEBOX_BASE_URL` | Voicebox 백엔드 주소 (`http://127.0.0.1:17493` 기본값) |
-| `VOICEBOX_PROFILE_ID` | Discord 응답에 사용할 Voicebox 프로필 ID (녹음 9 기본값) |
-| `VOICEBOX_PROFILE_NAME` | profile ID가 비어 있을 때 찾을 프로필 이름 (`내 목소리 (녹음 9)`) |
-| `VOICEBOX_MODEL_SIZE` | Voicebox Qwen 모델 크기 (`0.6B` 기본값) |
-| `VOICEBOX_TIMEOUT_SECONDS` | 모델 로딩과 합성을 포함한 최대 대기 시간 (`300`) |
-| `TTS_FALLBACK_TO_EDGE` | 커스텀 음성 실패 시 Edge TTS 사용 |
-| `CUSTOM_TTS_ENDPOINT` | 커스텀 음성 추론 HTTP 엔드포인트 |
-| `CUSTOM_TTS_API_KEY` | 추론 서버 Bearer 토큰(선택) |
-| `CUSTOM_TTS_MODEL` | 추론 서버의 모델 이름/마운트 별칭 |
-| `CUSTOM_TTS_SPEAKER_ID` | 학습한 음성의 speaker ID |
-| `CUSTOM_TTS_FORMAT` | 응답 오디오 형식 (`wav` 또는 `mp3`) |
-| `POSTGRES_DEV_PASSWORD` | 개발용 Postgres 비밀번호 (`application-dev.yml` 참고) |
+### STT와 발화 감지
 
-### 1. 프로젝트 클론
+| 변수 | 설명 |
+| --- | --- |
+| `ASSISTANT_STT_ENABLED` | STT 활성화 |
+| `ASSISTANT_STT_BASE_URL` | STT 서버 기본 URL |
+| `ASSISTANT_STT_ENDPOINT` | 전사 API 경로 |
+| `ASSISTANT_STT_API_KEY_REQUIRED` | STT 인증 필요 여부 |
+| `ASSISTANT_STT_API_KEY` | STT API 키 |
+| `ASSISTANT_STT_MODEL` | STT 모델 이름 |
+| `ASSISTANT_VAD_ENABLED` | TEN VAD 활성화 |
+| `ASSISTANT_VAD_THRESHOLD` | 음성 판정 임계값 |
+| `ASSISTANT_VAD_END_SILENCE_MILLIS` | 한 턴을 확정할 연속 무음 시간 |
+
+### TTS
+
+| 변수 | 설명 |
+| --- | --- |
+| `TTS_PROVIDER` | `voicebox`, `edge`, `custom` |
+| `TTS_FALLBACK_TO_EDGE` | 기본 TTS 실패 시 Edge 사용 |
+| `VOICEBOX_BASE_URL` | Voicebox 서버 URL |
+| `VOICEBOX_PROFILE_ID` | 사용할 Voicebox 프로필 ID |
+| `VOICEBOX_PROFILE_NAME` | ID가 없을 때 검색할 프로필 이름 |
+| `VOICEBOX_MODEL_SIZE` | Voicebox 모델 크기 |
+| `VOICEBOX_TIMEOUT_SECONDS` | Voicebox 요청 제한 시간 |
+| `CUSTOM_TTS_ENDPOINT` | 커스텀 합성 HTTP 엔드포인트 |
+| `CUSTOM_TTS_API_KEY` | 커스텀 TTS Bearer 토큰 |
+| `CUSTOM_TTS_MODEL` | 추론 서버의 모델 별칭 |
+| `CUSTOM_TTS_SPEAKER_ID` | 추론 서버의 화자 ID |
+| `CUSTOM_TTS_FORMAT` | `wav` 또는 `mp3` |
+
+전체 설정과 HTTP 계약은 [커스텀 음성 TTS 문서](docs/CUSTOM_VOICE_TTS.md)를 참고하세요. 비밀키는 저장소나 이미지에 넣지 말고 환경 변수 또는 GitHub Actions Secrets로 주입하세요.
+
+## 로컬 실행
+
 ```bash
 git clone https://github.com/LEE-Kyungjae/gahyeonbot.git
 cd gahyeonbot
+./gradlew clean test
+./gradlew bootRun
 ```
 
-### 2. 개발용 데이터베이스 (선택)
-로컬에서 PostgreSQL을 실행하려면 다음 명령으로 컨테이너를 띄울 수 있습니다.
+Discord 연결 없이 애플리케이션만 확인하려면:
+
 ```bash
-docker compose up -d postgres-dev
+BOT_ENABLED=false ./gradlew bootRun
 ```
-(기본 설정은 `localhost:5433` 포트로 매핑됩니다.)
 
-### 3. 빌드 및 실행
-```bash
-./gradlew clean shadowJar
-java -jar build/libs/gahyeonbot-1.0.0.jar --spring.profiles.active=dev
-```
-> 기본 실행(`--spring.profiles.active` 생략)은 `dev` 프로필입니다. 로컬에서는 별도 설정이 없으면 In-memory H2(`jdbc:h2:mem:gahyeonbot-dev`)를 사용하고 Flyway는 비활성화됩니다. 실제 PostgreSQL+Flyway 환경으로 실행하려면 `POSTGRES_DEV_URL`/`POSTGRES_DEV_DRIVER`/`POSTGRES_DEV_USERNAME`/`POSTGRES_DEV_PASSWORD`/`FLYWAY_ENABLED=true`를 환경 변수로 지정하고 `docker compose up -d postgres-dev`로 DB를 띄워주세요. Discord 봇 연결을 잠시 끄고 싶다면 `BOT_ENABLED=false ./gradlew bootRun`처럼 환경 변수로 제어할 수 있습니다.
+기본 개발 프로필은 별도 DB 설정이 없으면 인메모리 H2를 사용합니다. PostgreSQL을 사용하려면 관련 `POSTGRES_DEV_*` 변수와 `FLYWAY_ENABLED=true`를 설정하세요.
 
-### 4. Docker 이미지로 실행 (선택)
+## Docker
+
 ```bash
 docker build -t gahyeonbot:latest .
-docker run --rm -p 8080:8080 \
-  -e TOKEN=your_token \
-  -e APPLICATION_ID=your_app_id \
-  -e SPOTIFY_CLIENT_ID=your_client_id \
-  -e SPOTIFY_CLIENT_SECRET=your_client_secret \
-  -e POSTGRES_DEV_PASSWORD=your_password \
+docker run --rm \
+  -e TOKEN \
+  -e APPLICATION_ID \
+  -e OPENROUTER_API_KEY \
   gahyeonbot:latest
 ```
-Dockerfile은 Java 21 JRE(Eclipse Temurin)를 기반으로 하며, `docker-compose.yml`은 개발용 Postgres 컨테이너만 제공합니다.
 
-## CI/CD & 배포 전략
-- **CI**: GitHub Actions 워크플로(`.github/workflows/ci-cd.yml`)가 PR·main 브랜치 푸시에서 `./gradlew clean test`를 실행합니다.
-- **버전 태깅**: main 브랜치에 머지되면 자동으로 패치 버전 태그(`vX.Y.Z`)가 생성되고 GHCR에 새 Docker 이미지가 빌드·푸시됩니다.
-- **CD**: 같은 워크플로에서 프로덕션 환경 승인 후 SSH를 통해 `scripts/remote-deploy.sh`를 실행하여 Blue/Green 컨테이너를 교대 배포합니다.
-- **헬스체크**: 컨테이너 기동 후 `/api/health` 응답을 확인한 뒤 이전 환경 컨테이너를 정리합니다. 실패 시 새 컨테이너를 중단하고 로그를 출력합니다.
+컨테이너에서 `127.0.0.1`은 컨테이너 자신을 가리킵니다. STT, Voicebox 또는 커스텀 TTS가 다른 호스트에 있다면 컨테이너에서 접근 가능한 주소를 지정해야 합니다.
 
-### GitHub Actions Secrets
-배포를 위해 아래 시크릿을 저장해야 합니다.
+## 커스텀 음성 연구 상태
 
-| 이름 | 설명 |
-| --- | --- |
-| `TOKEN` | Discord 봇 토큰 |
-| `APPLICATION_ID` | Discord 애플리케이션 ID |
-| `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | Spotify API 자격 증명 |
-| `OPENAI_API_KEY` | OpenAI API 키 (가현아 AI 대화 기능) |
-| `POSTGRES_PROD_PASSWORD` | 운영용 Postgres 비밀번호 (`application-prod.yml`) |
-| `SSH_HOST` / `SSH_PORT` / `SSH_USER` / `SSH_KEY` | 배포 대상 서버 접근 정보 (OpenSSH private key) |
+- **Voicebox**: 녹음 기반 프로필을 통한 음성 복제를 지원합니다.
+- **Piper 증류**: Voicebox 교사 음성을 경량 Piper 모델로 증류하는 실험 도구가 `scripts/`에 있습니다. 현재 연구 단계이며 기본 Discord TTS로 간주하지 않습니다.
+- 생성 음성의 사용 권한과 화자 동의를 확인하고, 모델·원본 녹음·프로필 ID를 비밀정보에 준해 관리하세요.
 
-필요시 아래 변수를 추가로 설정할 수 있습니다.
+## 테스트와 배포
 
-| 이름 | 설명 |
-| --- | --- |
-| `BLUE_PORT` / `GREEN_PORT` | Blue/Green 컨테이너가 노출할 호스트 포트 (기본 8080/8081) |
-| `HEALTH_PATH` | 헬스체크 엔드포인트 (기본 `/api/health`) |
-| `POSTGRES_PROD_HOST` | 운영 Postgres 호스트명 (기본 `postgres.internal`) |
-| `POSTGRES_PROD_PORT` | 운영 Postgres 포트 (기본 `5432`) |
-| `POSTGRES_PROD_USERNAME` | 운영 Postgres 사용자명 (기본 `gahyeonbot_app`) |
+```bash
+./gradlew clean test
+./gradlew clean shadowJar
+```
 
-> **참고:** `scripts/remote-deploy.sh`는 원격 서버에 전달되어 실행되므로, 서버 측에서 Docker가 설치되어 있고 GHCR 이미지를 가져올 수 있어야 합니다. 최초 실행 전에는 `chmod +x scripts/remote-deploy.sh`로 실행 권한을 부여하세요.
+GitHub Actions는 PR과 `main` 푸시에서 테스트를 실행하고, 버전 이미지 생성 및 승인된 Blue/Green 배포를 수행합니다. 자세한 절차는 [배포 문서](docs/DEPLOYMENT.md)를 참고하세요.
 
-## 기여하기
-1. 이슈 등록
-2. Fork 후 새 브랜치 생성
-3. 수정 후 Pull Request 제출
+## 문서
 
----
+- [API](docs/API.md)
+- [아키텍처](docs/ARCHITECTURE.md)
+- [에이전트 런타임](docs/agent-runtime.md)
+- [커스텀 음성 TTS](docs/CUSTOM_VOICE_TTS.md)
+- [배포](docs/DEPLOYMENT.md)
 
-## 라이선스
-이 프로젝트는 [MIT 라이선스](LICENSE)를 따릅니다.<br>
-해당 조건하에 누구나 가현봇을 확장하여 자신이 원하는 봇을 만드시는게 가능합니다.
+## 기여 및 라이선스
 
----
+이슈나 Pull Request를 환영합니다. 프로젝트는 [MIT License](LICENSE)를 따릅니다.
 
 ## 문의
-- 개발자: [LEE-Kyungjae](https://github.com/LEE-Kyungjae)
-- 이메일: ze2@kakao.com
+
+- [LEE-Kyungjae](https://github.com/LEE-Kyungjae)
+- ze2@kakao.com
