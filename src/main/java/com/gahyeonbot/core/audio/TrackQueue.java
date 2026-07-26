@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Predicate;
 
 /**
  * 음악 트랙 대기열을 관리하는 클래스.
@@ -64,5 +65,18 @@ public class TrackQueue {
      */
     public void clear() {
         queue.clear();
+    }
+
+    /**
+     * 조건에 맞는 대기 트랙을 제거하고 반환합니다.
+     */
+    public List<AudioTrack> removeIf(Predicate<AudioTrack> predicate) {
+        List<AudioTrack> removed = new ArrayList<>();
+        for (AudioTrack track : queue) {
+            if (predicate.test(track) && queue.remove(track)) {
+                removed.add(track);
+            }
+        }
+        return removed;
     }
 }

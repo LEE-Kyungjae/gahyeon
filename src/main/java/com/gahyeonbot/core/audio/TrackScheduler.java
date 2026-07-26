@@ -89,6 +89,20 @@ public class TrackScheduler extends AudioEventAdapter {
         trackQueue.clear();
     }
 
+    /** 제거된 TTS 파일까지 정리하면서 대기 중인 TTS만 버립니다. */
+    public void clearTtsQueue() {
+        trackQueue.removeIf(this::isTts).forEach(this::cleanupIfTts);
+    }
+
+    /** 음악은 보존하고 현재/대기 중인 비서 TTS만 중단합니다. */
+    public void interruptTtsPlayback() {
+        clearTtsQueue();
+        AudioTrack current = player.getPlayingTrack();
+        if (isTts(current)) {
+            player.stopTrack();
+        }
+    }
+
     /**
      * 보이스 채널 연결을 종료합니다.
      */
@@ -128,5 +142,9 @@ public class TrackScheduler extends AudioEventAdapter {
                 // Best-effort cleanup.
             }
         }
+    }
+
+    private boolean isTts(AudioTrack track) {
+        return track != null && track.getUserData() instanceof TtsTrackMetadata;
     }
 }

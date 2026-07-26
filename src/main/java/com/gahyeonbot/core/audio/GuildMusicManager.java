@@ -174,6 +174,10 @@ public class GuildMusicManager {
         scheduler.clearQueue();
     }
 
+    public void interruptTtsPlayback() {
+        scheduler.interruptTtsPlayback();
+    }
+
     public void stopPlayback(AudioManager audioManager) {
         stop(); // 음악 정지 및 대기열 초기화
         if (audioManager != null && audioManager.isConnected()) {
@@ -188,4 +192,3 @@ public class GuildMusicManager {
     public void setPaused(boolean b) {
     }
 }
-

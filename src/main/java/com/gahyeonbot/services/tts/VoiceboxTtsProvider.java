@@ -16,12 +16,14 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 
 @Component
 @RequiredArgsConstructor
 public class VoiceboxTtsProvider implements TtsProvider {
     private final TtsProperties properties;
     private final ObjectMapper objectMapper;
+    private final Semaphore generationSlot = new Semaphore(1, true);
 
     @Override
     public String name() {
@@ -42,6 +44,15 @@ public class VoiceboxTtsProvider implements TtsProvider {
             throw new IllegalStateException("Voicebox URL과 복제 음성 profile ID가 필요합니다.");
         }
 
+        generationSlot.acquire();
+        try {
+            return synthesizeOne(text);
+        } finally {
+            generationSlot.release();
+        }
+    }
+
+    private Path synthesizeOne(String text) throws Exception {
         var config = properties.getVoicebox();
         RestTemplate client = client(config.getTimeoutSeconds());
         String baseUrl = stripTrailingSlash(config.getBaseUrl());

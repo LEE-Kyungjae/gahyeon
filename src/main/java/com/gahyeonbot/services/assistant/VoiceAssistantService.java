@@ -25,6 +25,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
@@ -122,6 +123,9 @@ public class VoiceAssistantService {
         private final Map<Long, RequestGuard> requestGuards = new ConcurrentHashMap<>();
         private final AudioReceiveHandler receiver = new Receiver();
         private final ScheduledFuture<?> silenceTask;
+        private final ExecutorService ttsWorker = Executors.newSingleThreadExecutor(
+                Thread.ofVirtual().name("assistant-tts-", 0).factory());
+        private final AtomicLong responseRevision = new AtomicLong();
         private volatile boolean closed;
 
         private Session(Guild guild, AudioChannel voiceChannel, MessageChannel textChannel,
@@ -137,7 +141,10 @@ public class VoiceAssistantService {
 
         private void close() {
             closed = true;
+            responseRevision.incrementAndGet();
             silenceTask.cancel(false);
+            ttsWorker.shutdownNow();
+            musicManager.interruptTtsPlayback();
             utterances.values().forEach(Utterance::close);
             utterances.clear();
         }
@@ -273,27 +280,53 @@ public class VoiceAssistantService {
                             guild.getIdLong(), userId);
                     return;
                 }
+                long revision = responseRevision.incrementAndGet();
+                musicManager.interruptTtsPlayback();
                 textChannel.sendMessage("**" + username + "**: " + limit(transcript, 1500)).queue();
                 String answer;
                 synchronized (guard.aiLock) {
                     answer = chatProvider.chat(guild.getIdLong(), userId, username, transcript);
                 }
                 textChannel.sendMessage("**가현**: " + limit(answer, 1800)).queue();
-                if (properties.isSpeakResponses() && ttsService.isEnabled() && !closed) speak(answer);
+                if (properties.isSpeakResponses() && ttsService.isEnabled() && !closed) {
+                    queueSpeech(answer, revision);
+                }
             } catch (Exception e) {
                 log.error("음성 비서 처리 실패 guild={} user={}", guild.getIdLong(), userId, e);
                 textChannel.sendMessage("음성 비서 처리에 실패했습니다. 잠시 후 다시 말해 주세요.").queue();
             }
         }
 
-        private void speak(String answer) throws Exception {
+        private void queueSpeech(String answer, long revision) {
+            ttsWorker.submit(() -> {
+                try {
+                    speakLatest(answer, revision);
+                } catch (Exception e) {
+                    if (!closed && revision == responseRevision.get()) {
+                        log.error("비서 TTS 처리 실패 guild={} revision={}",
+                                guild.getIdLong(), revision, e);
+                    }
+                }
+            });
+        }
+
+        private void speakLatest(String answer, long revision) throws Exception {
             String spokenText = TtsSpeechText.sanitize(answer);
             if (spokenText.isBlank()) return;
             for (String segment : ttsService.prepareSegments(spokenText)) {
+                if (closed || revision != responseRevision.get()) return;
                 Path audio = ttsService.synthesizeSegmentToAudio(
                         segment, properties.getTtsProvider());
+                if (closed || revision != responseRevision.get()) {
+                    java.nio.file.Files.deleteIfExists(audio);
+                    return;
+                }
                 audioManager.getPlayerManager().loadItem(audio.toString(), new AudioLoadResultHandler() {
                     @Override public void trackLoaded(AudioTrack track) {
+                        if (closed || revision != responseRevision.get()) {
+                            try { java.nio.file.Files.deleteIfExists(audio); } catch (Exception ignored) {}
+                            return;
+                        }
                         track.setUserData(new TtsTrackMetadata(audio, true, true));
                         musicManager.playOrQueueTrack(track);
                     }
