@@ -33,3 +33,7 @@ jobs:
             ghcr.io/lee-kyungjae/gahyeonbot:piper-${{ github.sha }}
           cache-from: type=gha,scope=piper-tts
           cache-to: type=gha,mode=max,scope=piper-tts
+      - name: Keep container package public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api --method PATCH /user/packages/container/gahyeonbot -f visibility=public
