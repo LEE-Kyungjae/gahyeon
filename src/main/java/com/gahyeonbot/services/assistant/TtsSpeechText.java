@@ -17,4 +17,12 @@ final class TtsSpeechText {
                 .replaceAll("\\s+", " ")
                 .trim();
     }
+
+    static boolean isSafeToSpeak(String value) {
+        if (value == null || value.isBlank()) return false;
+        return !value.matches("(?is).*\\b(exception|stack\\s*trace|too_many_requests)\\b.*")
+                && !value.matches("(?is).*\\b(http|status)\\s*[:=]?\\s*[45]\\d\\d\\b.*")
+                && !value.matches("(?is).*\\berror\\s*[:=].*")
+                && !value.matches("(?s).*(오류|에러)\\s*(코드|단계)\\s*[:=]?.*");
+    }
 }

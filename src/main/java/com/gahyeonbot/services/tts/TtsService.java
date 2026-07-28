@@ -41,7 +41,10 @@ public class TtsService {
         if (trimmed.length() <= props.getSegmentMaxChars()) {
             return List.of(trimmed);
         }
-        return splitAndChunk(trimmed);
+        // Starting a Python/KSS process on the response path can add its full
+        // timeout before the first audio. Punctuation-aware local splitting is
+        // deterministic and keeps voice replies responsive.
+        return chunkSentences(splitSentencesLocally(trimmed));
     }
 
     public Path synthesizeSegmentToAudio(String text) throws Exception {
@@ -84,6 +87,10 @@ public class TtsService {
             log.warn("KSS 문장 분리기를 사용할 수 없어 Java 분리기로 대체합니다: {}", e.getMessage());
             sentences = splitSentencesLocally(text);
         }
+        return chunkSentences(sentences);
+    }
+
+    private List<String> chunkSentences(List<String> sentences) {
         List<String> out = new ArrayList<>();
         int max = Math.max(20, props.getSegmentMaxChars());
         for (String s : sentences) {

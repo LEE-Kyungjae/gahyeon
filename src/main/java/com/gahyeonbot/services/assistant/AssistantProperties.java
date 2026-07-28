@@ -15,6 +15,8 @@ public class AssistantProperties {
     private long silenceMillis = 900;
     private boolean speakResponses = true;
     private String ttsProvider = "edge";
+    private long responseAcknowledgementMillis = 1_500;
+    private String responseAcknowledgementText = "잠시만요, 확인해 볼게요.";
     private int maxAiRequestsPerMinute = 12;
     private long duplicateTranscriptMillis = 10_000;
     private int minTranscriptCharacters = 2;

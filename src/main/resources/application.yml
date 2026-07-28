@@ -109,6 +109,8 @@ assistant:
   silence-millis: ${ASSISTANT_SILENCE_MILLIS:900}
   speak-responses: ${ASSISTANT_SPEAK_RESPONSES:true}
   tts-provider: ${ASSISTANT_TTS_PROVIDER:edge}
+  response-acknowledgement-millis: ${ASSISTANT_RESPONSE_ACKNOWLEDGEMENT_MILLIS:1500}
+  response-acknowledgement-text: ${ASSISTANT_RESPONSE_ACKNOWLEDGEMENT_TEXT:잠시만요, 확인해 볼게요.}
   max-ai-requests-per-minute: ${ASSISTANT_MAX_AI_REQUESTS_PER_MINUTE:12}
   duplicate-transcript-millis: ${ASSISTANT_DUPLICATE_TRANSCRIPT_MILLIS:10000}
   vad:

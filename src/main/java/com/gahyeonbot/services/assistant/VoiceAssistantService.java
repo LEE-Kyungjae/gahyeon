@@ -25,6 +25,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
@@ -260,17 +261,85 @@ public class VoiceAssistantService {
                 long revision = responseRevision.incrementAndGet();
                 musicManager.interruptTtsPlayback();
                 textChannel.sendMessage("**" + username + "**: " + limit(transcript, 1500)).queue();
+                AtomicBoolean waitingForAnswer = new AtomicBoolean(true);
+                ScheduledFuture<?> acknowledgement = scheduleAcknowledgement(
+                        revision, waitingForAnswer);
                 String answer;
-                synchronized (guard.aiLock) {
-                    answer = chatProvider.chat(guild.getIdLong(), userId, username, transcript);
+                try {
+                    synchronized (guard.aiLock) {
+                        answer = chatProvider.chat(guild.getIdLong(), userId, username, transcript);
+                    }
+                } finally {
+                    waitingForAnswer.set(false);
+                    if (acknowledgement != null) acknowledgement.cancel(false);
                 }
+                // A progress acknowledgement may already be playing when the answer arrives.
+                musicManager.interruptTtsPlayback();
                 textChannel.sendMessage("**가현**: " + limit(answer, 1800)).queue();
-                if (properties.isSpeakResponses() && ttsService.isEnabled() && !closed) {
+                if (properties.isSpeakResponses() && ttsService.isEnabled() && !closed
+                        && TtsSpeechText.isSafeToSpeak(answer)) {
                     queueSpeech(answer, revision);
+                } else if (!TtsSpeechText.isSafeToSpeak(answer)) {
+                    log.warn("내부 오류 형태의 응답은 음성 출력을 생략합니다. guild={} revision={}",
+                            guild.getIdLong(), revision);
                 }
             } catch (Exception e) {
                 log.error("음성 비서 처리 실패 guild={} user={}", guild.getIdLong(), userId, e);
                 textChannel.sendMessage("음성 비서 처리에 실패했습니다. 잠시 후 다시 말해 주세요.").queue();
+            }
+        }
+
+        private ScheduledFuture<?> scheduleAcknowledgement(
+                long revision,
+                AtomicBoolean waitingForAnswer) {
+            long delay = properties.getResponseAcknowledgementMillis();
+            String message = properties.getResponseAcknowledgementText();
+            if (!properties.isSpeakResponses() || !ttsService.isEnabled()
+                    || delay < 0 || message == null || message.isBlank()) {
+                return null;
+            }
+            return silenceDetector.schedule(
+                    () -> ttsWorker.submit(() -> speakAcknowledgement(
+                            message, revision, waitingForAnswer)),
+                    delay, TimeUnit.MILLISECONDS);
+        }
+
+        private void speakAcknowledgement(
+                String message,
+                long revision,
+                AtomicBoolean waitingForAnswer) {
+            if (closed || revision != responseRevision.get() || !waitingForAnswer.get()) return;
+            try {
+                Path audio = ttsService.synthesizeSegmentToAudio(
+                        message, properties.getTtsProvider());
+                if (closed || revision != responseRevision.get() || !waitingForAnswer.get()) {
+                    java.nio.file.Files.deleteIfExists(audio);
+                    return;
+                }
+                audioManager.getPlayerManager().loadItem(audio.toString(), new AudioLoadResultHandler() {
+                    @Override public void trackLoaded(AudioTrack track) {
+                        if (closed || revision != responseRevision.get() || !waitingForAnswer.get()) {
+                            try { java.nio.file.Files.deleteIfExists(audio); } catch (Exception ignored) {}
+                            return;
+                        }
+                        track.setUserData(new TtsTrackMetadata(audio, true, true));
+                        musicManager.playOrQueueTrack(track);
+                    }
+                    @Override public void playlistLoaded(AudioPlaylist playlist) {
+                        if (!playlist.getTracks().isEmpty()) trackLoaded(playlist.getTracks().getFirst());
+                    }
+                    @Override public void noMatches() {
+                        log.warn("비서 대기 안내 TTS 파일을 로드하지 못함: {}", audio);
+                    }
+                    @Override public void loadFailed(FriendlyException exception) {
+                        log.warn("비서 대기 안내 TTS 로딩 실패: {}", exception.getMessage());
+                    }
+                });
+            } catch (Exception e) {
+                if (!closed && waitingForAnswer.get()) {
+                    log.warn("비서 대기 안내 TTS 처리 실패 guild={}: {}",
+                            guild.getIdLong(), e.getMessage());
+                }
             }
         }
 
