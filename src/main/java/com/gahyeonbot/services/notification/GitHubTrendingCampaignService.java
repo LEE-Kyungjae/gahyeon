@@ -259,7 +259,7 @@ public class GitHubTrendingCampaignService {
             }
 
             latest.setSummaryKo(generated.trim());
-            latest.setSummaryKoModel(glmService.getActiveModel());
+            latest.setSummaryKoModel(glmService.getReadmeSummaryModel());
             latest.setSummaryKoUpdatedAt(OffsetDateTime.now());
             repoReadmeCacheRepository.save(latest);
             return latest.getSummaryKo();

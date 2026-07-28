@@ -41,7 +41,7 @@ public class RepoReadmeSummaryScheduler {
     private String scheduleZone;
 
     @Scheduled(
-            cron = "${notifications.dm.trending-summary-cron:0 50 6 * * *}",
+            cron = "${notifications.dm.trending-summary-cron:0 30 6 * * *}",
             zone = "${notifications.dm.schedule-zone:Asia/Seoul}"
     )
     public void fillKoreanSummaries() {
@@ -93,7 +93,8 @@ public class RepoReadmeSummaryScheduler {
                     skippedNoReadme++;
                     continue;
                 }
-                if (latest.getSummaryKo() != null && !latest.getSummaryKo().isBlank()) {
+                if (latest.getSummaryKo() != null && !latest.getSummaryKo().isBlank()
+                        && glmService.isCurrentReadmeSummaryModel(latest.getSummaryKoModel())) {
                     skippedAlready++;
                     continue;
                 }
@@ -117,7 +118,8 @@ public class RepoReadmeSummaryScheduler {
         if (latest == null) {
             return false;
         }
-        if (latest.getSummaryKo() != null && !latest.getSummaryKo().isBlank()) {
+        if (latest.getSummaryKo() != null && !latest.getSummaryKo().isBlank()
+                && glmService.isCurrentReadmeSummaryModel(latest.getSummaryKoModel())) {
             return false;
         }
         String readmeText = latest.getReadmeText();
@@ -131,7 +133,7 @@ public class RepoReadmeSummaryScheduler {
         }
 
         latest.setSummaryKo(summary.trim());
-        latest.setSummaryKoModel(glmService.getActiveModel());
+        latest.setSummaryKoModel(glmService.getReadmeSummaryModel());
         latest.setSummaryKoUpdatedAt(OffsetDateTime.now());
         repoReadmeCacheRepository.save(latest);
         return true;

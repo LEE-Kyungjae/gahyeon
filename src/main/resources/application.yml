@@ -146,4 +146,4 @@ notifications:
     trending-cron: ${NOTIFICATIONS_DM_TRENDING_CRON:0 0 7 * * *}
     schedule-zone: ${NOTIFICATIONS_DM_SCHEDULE_ZONE:Asia/Seoul}
     trending-summary-enabled: ${NOTIFICATIONS_DM_TRENDING_SUMMARY_ENABLED:true}
-    trending-summary-cron: ${NOTIFICATIONS_DM_TRENDING_SUMMARY_CRON:0 50 6 * * *}
+    trending-summary-cron: ${NOTIFICATIONS_DM_TRENDING_SUMMARY_CRON:0 30 6 * * *}

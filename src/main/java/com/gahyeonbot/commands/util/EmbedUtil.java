@@ -17,6 +17,9 @@ import java.util.StringJoiner;
 
 public class EmbedUtil {
 
+    private static final int TRENDING_EMBED_TARGET_LENGTH = 5_500;
+    private static final int TRENDING_DESCRIPTION_MAX = 520;
+
     private static final Color BRAND_PRIMARY = new Color(0x06B6D4);
     private static final Color BRAND_SUCCESS = new Color(0x06B6A0);
     private static final Color BRAND_WARNING = new Color(0xF59E0B);
@@ -210,27 +213,53 @@ public class EmbedUtil {
                 .setDescription(digest);
 
         int limit = Math.min(repos.size(), 10);
+        int used = "GitHub 트렌딩".length() + (digest == null ? 0 : digest.length()) + BOT_NAME.length();
         for (int i = 0; i < limit; i++) {
             GitHubTrending repo = repos.get(i);
             String name = "[" + repo.getRepoFullName() + "](" + repo.getRepoUrl() + ")";
 
-            StringBuilder value = new StringBuilder();
-            if (repo.getDescription() != null && !repo.getDescription().isBlank()) {
-                String desc = repo.getDescription();
-                if (desc.length() > 100) {
-                    desc = desc.substring(0, 97) + "...";
-                }
-                value.append(desc);
-            }
-            value.append(" · ☆ ").append(repo.getStarsTotal());
+            String metadata = "☆ " + repo.getStarsTotal();
             if (repo.getLanguage() != null && !repo.getLanguage().isBlank()) {
-                value.append(" · ").append(repo.getLanguage());
+                metadata += " · " + repo.getLanguage();
             }
 
-            embed.addField(name, value.toString(), false);
+            int reposLeft = limit - i;
+            int remaining = TRENDING_EMBED_TARGET_LENGTH - used;
+            int fieldBudget = Math.min(1_024, Math.max(220, remaining / reposLeft - name.length()));
+            int descriptionBudget = Math.min(
+                    TRENDING_DESCRIPTION_MAX,
+                    Math.max(120, fieldBudget - metadata.length() - 1));
+            String description = completeSentences(repo.getDescription(), descriptionBudget);
+            String value = description.isBlank() ? metadata : description + "\n" + metadata;
+
+            embed.addField(name, value, false);
+            used += name.length() + value.length();
         }
 
         return embed;
+    }
+
+    static String completeSentences(String text, int maxLength) {
+        if (text == null || text.isBlank()) return "";
+        String normalized = text.replace("\r", "")
+                .replaceAll("(?m)^\\s*[-*•]\\s*", "")
+                .replaceAll("\\s*\\n+\\s*", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+        if (normalized.length() <= maxLength) return normalized;
+
+        int boundary = -1;
+        for (int i = 0; i < Math.min(maxLength, normalized.length()); i++) {
+            char c = normalized.charAt(i);
+            if (c == '.' || c == '?' || c == '!' || c == '。' || c == '？' || c == '！') {
+                boundary = i + 1;
+            }
+        }
+        if (boundary > 0) return normalized.substring(0, boundary).trim();
+
+        // A generated summary should contain complete sentences. If malformed input
+        // has none, prefer a short, complete fallback over exposing a cut-off clause.
+        return "프로젝트의 목적과 핵심 기능은 저장소 README에서 자세히 확인할 수 있습니다.";
     }
 
     private static void setAlbumCover(EmbedBuilder embed, String albumCoverUrl) {
