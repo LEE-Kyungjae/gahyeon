@@ -184,12 +184,6 @@ public class VoiceAssistantService {
                     }
                     if (utterance.pcm.size() + pcm.length <= max) utterance.pcm.writeBytes(pcm);
                     if (detection.voice()) {
-                        utterance.speechRevision++;
-                        if (utterance.provisionalRevision >= 0
-                                && utterance.provisionalRevision != utterance.speechRevision) {
-                            utterance.provisionalTranscript = null;
-                            utterance.provisionalRevision = -1;
-                        }
                         utterance.lastVoiceAt = now;
                         utterance.voiceSamples += (long) detection.voiceFrames() * properties.getVad().getHopSize();
                     }
@@ -206,10 +200,6 @@ public class VoiceAssistantService {
                     long requiredSilence = utterance.vad == null
                             ? properties.getSilenceMillis()
                             : properties.getVad().getEndSilenceMillis();
-                    long transcriptionSilence = utterance.vad == null
-                            ? requiredSilence
-                            : Math.min(requiredSilence,
-                                    properties.getVad().getTranscriptionSilenceMillis());
                     long speechMillis = utterance.vad == null
                             ? Long.MAX_VALUE
                             : utterance.voiceSamples * 1_000 / 16_000;
@@ -224,28 +214,17 @@ public class VoiceAssistantService {
                     boolean validSpeech = utterance.speechStarted
                             && utterance.pcm.size() >= MIN_UTTERANCE_BYTES
                             && speechMillis >= properties.getVad().getMinSpeechMillis();
-                    if (validSpeech
-                            && !maxLength
-                            && silentMillis >= transcriptionSilence
-                            && utterance.provisionalTranscript == null) {
-                        byte[] provisionalPcm = utterance.pcm.toByteArray();
-                        long revision = utterance.speechRevision;
-                        utterance.provisionalRevision = revision;
-                        utterance.provisionalTranscript = CompletableFuture.supplyAsync(
-                                () -> speechToTextProvider.transcribe(
-                                        WavEncoder.pcmToWav(provisionalPcm)),
-                                workers);
-                    }
                     if (validSpeech && (silentMillis >= requiredSilence || maxLength)) {
                         pcm = utterance.pcm.toByteArray();
-                        CompletableFuture<String> provisional =
-                                utterance.provisionalRevision == utterance.speechRevision
-                                        ? utterance.provisionalTranscript
-                                        : null;
+                        long detectedSpeechMillis = speechMillis;
+                        long capturedAudioMillis = pcm.length * 1_000L
+                                / (WavEncoder.SAMPLE_RATE * WavEncoder.CHANNELS
+                                * WavEncoder.BITS_PER_SAMPLE / 8);
                         utterance.reset();
                         byte[] captured = pcm;
                         workers.submit(() -> process(
-                                userId, utterance.username, captured, provisional));
+                                userId, utterance.username, captured,
+                                capturedAudioMillis, detectedSpeechMillis));
                         pcm = null;
                     }
                 }
@@ -256,18 +235,16 @@ public class VoiceAssistantService {
                 long userId,
                 String username,
                 byte[] pcm,
-                CompletableFuture<String> provisionalTranscript) {
+                long capturedAudioMillis,
+                long detectedSpeechMillis) {
             if (closed) return;
             try {
-                String transcript;
-                try {
-                    transcript = provisionalTranscript == null
-                            ? speechToTextProvider.transcribe(WavEncoder.pcmToWav(pcm))
-                            : provisionalTranscript.get(
-                                    properties.getStt().getTimeoutSeconds(), TimeUnit.SECONDS);
-                } catch (Exception provisionalFailure) {
-                    transcript = speechToTextProvider.transcribe(WavEncoder.pcmToWav(pcm));
-                }
+                long sttStartedAt = System.nanoTime();
+                String transcript = speechToTextProvider.transcribe(WavEncoder.pcmToWav(pcm));
+                long sttMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - sttStartedAt);
+                log.info("비서 STT 완료 guild={} user={} audioMs={} detectedSpeechMs={} sttMs={} chars={}",
+                        guild.getIdLong(), userId, capturedAudioMillis, detectedSpeechMillis,
+                        sttMillis, transcript.length());
                 if (transcript.isBlank()) return;
                 RequestGuard guard = requestGuards.computeIfAbsent(userId, ignored -> new RequestGuard());
                 transcript = guard.mergeOrHold(transcript, System.currentTimeMillis());
@@ -349,9 +326,6 @@ public class VoiceAssistantService {
         private final TenVadDetector vad;
         private long lastVoiceAt = System.currentTimeMillis();
         private long voiceSamples;
-        private long speechRevision;
-        private long provisionalRevision = -1;
-        private CompletableFuture<String> provisionalTranscript;
         private boolean speechStarted;
 
         private Utterance(String username, AssistantProperties.Vad settings) {
@@ -376,9 +350,6 @@ public class VoiceAssistantService {
             pcm.reset();
             preRoll.reset();
             voiceSamples = 0;
-            speechRevision = 0;
-            provisionalRevision = -1;
-            provisionalTranscript = null;
             speechStarted = vad == null;
             lastVoiceAt = System.currentTimeMillis();
         }

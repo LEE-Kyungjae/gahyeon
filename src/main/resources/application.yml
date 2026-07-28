@@ -114,11 +114,11 @@ assistant:
   vad:
     enabled: ${ASSISTANT_VAD_ENABLED:true}
     hop-size: ${ASSISTANT_VAD_HOP_SIZE:256}
-    threshold: ${ASSISTANT_VAD_THRESHOLD:0.5}
+    threshold: ${ASSISTANT_VAD_THRESHOLD:0.3}
     min-speech-millis: ${ASSISTANT_VAD_MIN_SPEECH_MILLIS:300}
     transcription-silence-millis: ${ASSISTANT_VAD_TRANSCRIPTION_SILENCE_MILLIS:700}
-    end-silence-millis: ${ASSISTANT_VAD_END_SILENCE_MILLIS:1200}
-    pre-roll-millis: ${ASSISTANT_VAD_PRE_ROLL_MILLIS:240}
+    end-silence-millis: ${ASSISTANT_VAD_END_SILENCE_MILLIS:1500}
+    pre-roll-millis: ${ASSISTANT_VAD_PRE_ROLL_MILLIS:500}
   stt:
     enabled: ${ASSISTANT_STT_ENABLED:false}
     base-url: ${ASSISTANT_STT_BASE_URL:https://api.openai.com/v1}
@@ -126,6 +126,7 @@ assistant:
     api-key: ${ASSISTANT_STT_API_KEY:}
     model: ${ASSISTANT_STT_MODEL:gpt-4o-mini-transcribe}
     language: ${ASSISTANT_STT_LANGUAGE:ko}
+    prompt: ${ASSISTANT_STT_PROMPT:GitHub, 깃허브, 레포, 레포지토리, 가현봇, 에이전트, OpenRouter, 큐드란트, Qdrant, Piper, Voicebox, Whisper}
     timeout-seconds: ${ASSISTANT_STT_TIMEOUT_SECONDS:30}
     api-key-required: ${ASSISTANT_STT_API_KEY_REQUIRED:true}
   openrouter:
