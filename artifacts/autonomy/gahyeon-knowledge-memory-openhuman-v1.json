@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "contractId": "c07e807e446710fb",
+  "policyId": "gahyeon-autonomy-v1",
+  "objective": "Complete Gahyeon knowledge base and OpenHuman-inspired memory architecture with strict per-user isolation",
+  "domain": "agent",
+  "constraints": [
+    "Do not deploy or activate production features without explicit deployment authority",
+    "Enforce subject and source authorization filters in SQL and vector retrieval",
+    "Keep anonymous or uncertain-speaker memories ephemeral and non-recallable as personal memory",
+    "Never mix memories across character, world, or subject namespaces",
+    "Propagate user deletion to PostgreSQL, vector indexes, caches, and derived memories",
+    "Require explicit user approval before merging pre-link identities",
+    "Use immutable ZezeStudio user UUID as the canonical subject when linked"
+  ],
+  "requiredGates": [
+    {
+      "name": "impact-analysis",
+      "status": "passed",
+      "evidence": "2026-08-26 GitNexus upstream analysis: DiscordIdentityMapper LOW (0 direct callers, 0 processes); CharacterConversationMemoryListener CRITICAL (1 direct caller, 87 processes, 20 modules); JpaCharacterMemoryStore CRITICAL lower-bound (1 direct caller, 1 indexed process, 20 modules, 5 interface implementations). User was warned and explicitly directed continuation of the full plan."
+    },
+    {
+      "name": "knowledge-ingestion-and-search",
+      "status": "passed",
+      "evidence": "2026-08-26 KnowledgeBaseService implements idempotent ingestion, deterministic chunking, Spring AI embeddings when available, lexical+cosine hybrid ranking, and SQL-first service/owner authorization. KnowledgeBaseServiceTest passed exact private isolation, service isolation, deduplication, and deletion tests."
+    },
+    {
+      "name": "identity-merge-and-deletion",
+      "status": "passed",
+      "evidence": "2026-08-26 MemoryGovernanceServiceTest passed: provisional-to-linked UUID memories do not move before explicit hashed approval; subject deletion removes relational and derived rows and invokes configured vector/cache ports with layer completion ledger."
+    },
+    {
+      "name": "memory-graph-soul-and-autonomy",
+      "status": "passed",
+      "evidence": "2026-08-26 CharacterAutonomyWorkspaceServiceTest passed immutable/activated Soul revisions, single-claim TODO lifecycle, and cross-subject graph-edge rejection. Active Soul and authorized current-query knowledge are included in the agent prompt; heartbeat remains fail-closed without a ready executor."
+    },
+    {
+      "name": "admin-operations-surface",
+      "status": "passed",
+      "evidence": "2026-08-26 fail-closed 32+ character admin token tests and controller delegation tests passed; admin HTML inline JavaScript syntax validated. No browser instance was available for visual QA, so no visual-fidelity claim is made."
+    },
+    {
+      "name": "regression-test",
+      "status": "passed",
+      "evidence": "2026-08-26 deterministic tests passed: CharacterMemorySubjectIsolationTest and JpaMemorySubjectResolutionAdapterTest verify exact subject recall, ephemeral exclusion, canonical ZezeStudio UUID resolution, provisional isolation, and scoped-key round trip. Existing conversation/listener tests also passed. Regression recorded as agent-personal-memory-subject-isolation."
+    },
+    {
+      "name": "ai-quality-gate",
+      "status": "passed",
+      "evidence": "2026-08-26 bash scripts/run_ai_quality_gate.sh passed after implementation: catalog validation found 57 executable incident contracts, including the KnowledgeBaseService Spring runtime-constructor startup regression; Python quality suites and the full Gradle test task completed successfully."
+    },
+    {
+      "name": "release-preflight",
+      "status": "passed",
+      "evidence": "2026-08-26 disposable pgvector/pgvector:0.8.6-pg16-bookworm preflight passed empty V1-V41 and authoritative V24-to-V29,V36-V41 upgrade paths with Hibernate validation (build/reports/postgres-migration-preflight/20260825T160815Z-1384/summary.txt). ARM64 image sha256:f236dd26b78a98105a716fe7c600bbb0be27a3b0b5d9f7b9b3963b64d2ce3e0e and AMD64 image sha256:8567ee588ba6f880e6505a50bfd7deb5c62bcdd45659b3122dccbca6de15c5a4 both passed the headless fail-closed smoke. These are local/disposable artifacts, not deployed production identities."
+    }
+  ],
+  "humanGates": [
+    {
+      "name": "production-deploy",
+      "status": "pending",
+      "approvedBy": null,
+      "evidence": null
+    }
+  ],
+  "deployment": {
+    "authorized": false,
+    "identity": {
+      "sourceCommit": null,
+      "artifactDigest": null,
+      "deploymentRevision": null,
+      "configurationIdentity": null
+    },
+    "canary": {
+      "minimumObservationSeconds": 1800,
+      "minimumQualifyingRequests": 30,
+      "requiredIdentity": [
+        "sourceCommit",
+        "artifactDigest",
+        "deploymentRevision",
+        "configurationIdentity"
+      ],
+      "rollbackThresholds": [
+        {
+          "metric": "errorRate",
+          "operator": ">",
+          "value": 0.01
+        },
+        {
+          "metric": "p95LatencyRegressionMs",
+          "operator": ">",
+          "value": 300
+        },
+        {
+          "metric": "unexpectedTranscriptCount",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "metric": "emptyAudioCount",
+          "operator": ">",
+          "value": 0
+        }
+      ]
+    }
+  },
+  "status": "active"
+}

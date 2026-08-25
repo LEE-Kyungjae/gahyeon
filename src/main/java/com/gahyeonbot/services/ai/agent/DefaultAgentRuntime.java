@@ -6,6 +6,7 @@ import com.gahyeonbot.core.memory.MemorySnapshot;
 import com.gahyeonbot.core.memory.MemoryUseCase;
 import com.gahyeonbot.core.tool.ToolDecision;
 import com.gahyeonbot.core.tool.ToolPolicy;
+import com.gahyeonbot.application.life.CharacterConversationContext;
 import com.gahyeonbot.entity.AgentRun;
 import com.gahyeonbot.repository.AgentRunRepository;
 import com.gahyeonbot.services.ai.*;
@@ -40,6 +41,13 @@ public class DefaultAgentRuntime implements AgentRuntime {
     private static final int EMPTY_FINAL_RESPONSE_RETRY_LIMIT = 1;
     private static final String EMPTY_FINAL_RESPONSE_FALLBACK =
             "답변을 정리하는 중 문제가 생겼어요. 같은 질문을 한 번만 다시 말해 주세요.";
+    private static final java.util.regex.Pattern TOOL_ARGUMENT_ONLY_JSON = java.util.regex.Pattern.compile(
+            "(?s)^\\{\\s*\\\"(?:query|arxivId|city|repoFullName)\\\"\\s*:\\s*\\\"(?:[^\\\"\\\\]|\\\\.)*\\\"\\s*}$");
+    private static final java.util.regex.Pattern PLAINTEXT_REASONING_PREAMBLE =
+            java.util.regex.Pattern.compile(
+                    "(?is)^(?:okay,\\s*let['’]s\\s+(?:see|analy[sz]e|reason|think)"
+                            + "|first,?\\s+i\\s+need\\s+to"
+                            + "|the\\s+user\\s+(?:said|is\\s+asking|wants))\\b");
 
     private final ChatModel chatModel;
     private final MemoryUseCase memoryUseCase;
@@ -53,7 +61,9 @@ public class DefaultAgentRuntime implements AgentRuntime {
     private final GitHubKnowledgeTools gitHubKnowledgeTools;
     private final PaperKnowledgeTools paperKnowledgeTools;
     private final KnowledgeFreshnessTools knowledgeFreshnessTools;
+    private final NewsKnowledgeTools newsKnowledgeTools;
     private final AgentRuntimeAvailability availability;
+    private final ToolOutputArchive toolOutputArchive = new EphemeralToolOutputArchive();
 
     @Value("${gahyeon.agent.streaming.tool-text-exclusive-enabled:false}")
     private boolean toolTextExclusiveStreamingEnabled;
@@ -210,7 +220,8 @@ public class DefaultAgentRuntime implements AgentRuntime {
             MemorySnapshot memory = loadMemory(request.actorId());
             List<Message> messages = initialMessages(request, memory, backgroundResult);
             ToolCallback[] callbacks = MethodToolCallbackProvider.builder()
-                    .toolObjects(weatherTools, gitHubKnowledgeTools, paperKnowledgeTools, knowledgeFreshnessTools)
+                    .toolObjects(weatherTools, gitHubKnowledgeTools, paperKnowledgeTools,
+                            knowledgeFreshnessTools, newsKnowledgeTools)
                     .build()
                     .getToolCallbacks();
             Map<String, ToolCallback> callbackByName = new LinkedHashMap<>();
@@ -295,7 +306,9 @@ public class DefaultAgentRuntime implements AgentRuntime {
                     boolean committed = control.commitIfActive(() -> {
                         ensureNotCancelled(streamObserver, control);
                         ledger.succeed(run.getId(), finalContent);
-                        memoryUseCase.remember(request.actorId(), request.message(), finalContent);
+                        if (usesSharedActorMemory(request.sessionKey())) {
+                            memoryUseCase.remember(request.actorId(), request.message(), finalContent);
+                        }
                     });
                     if (!committed) throw new AgentStreamCancelledException();
                     Duration duration = Duration.ofNanos(System.nanoTime() - startedNanos);
@@ -346,11 +359,22 @@ public class DefaultAgentRuntime implements AgentRuntime {
                         throw toolFailure;
                     }
                     ensureNotCancelled(streamObserver, control);
+                    var compressed = RecoverableToolOutputCompressor.compress(
+                            toolCall.name(), toolResult, toolOutputArchive);
                     ledger.appendToolEvent(run.getId(), AgentEventType.TOOL_CALL_COMPLETED,
-                            toolCall.name(), limited(toolResult));
+                            toolCall.name(), "chars=" + compressed.originalCharacters()
+                                    + ", compressed=" + compressed.compressed()
+                                    + ", sha256=" + compressed.originalDigest());
+                    if (compressed.compressed()) {
+                        meterRegistry.counter("gahyeonbot.agent.tool_output.compressions",
+                                "tool", toolCall.name()).increment();
+                        log.info("도구 출력 축약 run={} tool={} originalChars={} modelChars={} sha256={}",
+                                run.getId(), toolCall.name(), compressed.originalCharacters(),
+                                compressed.modelContent().length(), compressed.originalDigest());
+                    }
                     usedTools.add(toolCall.name());
                     toolResponses.add(new ToolResponseMessage.ToolResponse(
-                            toolCall.id(), toolCall.name(), toolResult));
+                            toolCall.id(), toolCall.name(), compressed.modelContent()));
                 }
                 messages.add(new ToolResponseMessage(toolResponses));
 
@@ -427,11 +451,14 @@ public class DefaultAgentRuntime implements AgentRuntime {
             MemorySnapshot memory,
             String backgroundResult) {
         List<Message> messages = new ArrayList<>();
-        messages.add(new SystemMessage(promptProvider.systemPrompt(memory.summary())));
-        memory.recentMessages().forEach(message -> messages.add(
-                message.role() == MemoryRole.USER
-                        ? new UserMessage(message.content())
-                        : new AssistantMessage(message.content())));
+        messages.add(new SystemMessage(promptProvider.systemPrompt(
+                memory.summary(), request.sessionKey(), request.message())));
+        if (usesSharedActorMemory(request.sessionKey())) {
+            memory.recentMessages().forEach(message -> messages.add(
+                    message.role() == MemoryRole.USER
+                            ? new UserMessage(message.content())
+                            : new AssistantMessage(message.content())));
+        }
         messages.add(new UserMessage("""
                 [modality]
                 %s
@@ -460,11 +487,14 @@ public class DefaultAgentRuntime implements AgentRuntime {
         return messages;
     }
 
-    private static String modalityGuidance(AgentModality modality) {
+    static String modalityGuidance(AgentModality modality) {
         return switch (modality) {
             case VOICE -> """
-                    음성으로 듣기 편한 문장으로 답한다. 기본은 핵심부터 2~4문장으로 말하되,
+                    음성으로 듣기 편한 문장으로 답한다. 인사·감사·짧은 행동 요청은 한 문장,
+                    일반 질문은 핵심부터 2~3문장으로 말하되,
                     사용자가 설명·비교·방법·논문 내용을 요구하면 이해에 필요한 만큼 충분히 설명한다.
+                    웃어봐 같은 음성 행동 요청에는 능력이 없다는 설명이나 도움 제안을 덧붙이지 말고
+                    하하, 후후 같은 짧고 자연스러운 소리로 직접 반응한다.
                     마크다운, 이모지, URL 낭독, 표, 장식용 특수문자는 사용하지 않는다.
                     """;
             case TEXT -> """
@@ -473,6 +503,10 @@ public class DefaultAgentRuntime implements AgentRuntime {
                     """;
             case SYSTEM -> "업무 목적과 전달 대상에 맞춰 간결성과 완전성을 조절한다.";
         };
+    }
+
+    static boolean usesSharedActorMemory(String sessionKey) {
+        return CharacterConversationContext.fromScopedSessionKey(sessionKey).isEmpty();
     }
 
     private void recordMetrics(AgentModality modality, String status, Duration duration) {
@@ -517,6 +551,13 @@ public class DefaultAgentRuntime implements AgentRuntime {
                 .replaceAll("(?is)</?response>", "")
                 .replaceAll("(?i)(?:<pad>|<unk>|<s>|</s>)+", "")
                 .trim();
+        String possibleToolArguments = content
+                .replaceFirst("(?s)^```(?:json)?\\s*", "")
+                .replaceFirst("(?s)\\s*```$", "")
+                .trim();
+        if (TOOL_ARGUMENT_ONLY_JSON.matcher(possibleToolArguments).matches()) {
+            return "";
+        }
         String lower = content.toLowerCase(Locale.ROOT);
         for (String marker : List.of(
                 "\nfinal answer:", "\nfinal response:",
@@ -527,7 +568,8 @@ public class DefaultAgentRuntime implements AgentRuntime {
                 if (!finalAnswer.isBlank()) return finalAnswer;
             }
         }
-        if (lower.startsWith("here's a thinking process:")
+        if (PLAINTEXT_REASONING_PREAMBLE.matcher(content).find()
+                || lower.startsWith("here's a thinking process:")
                 || lower.startsWith("here is a thinking process:")
                 || lower.startsWith("thinking process:")
                 || lower.startsWith("analysis:")

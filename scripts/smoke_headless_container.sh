@@ -106,6 +106,13 @@ curl -fsS --max-time 5 -H "$auth_header" "$base/gahyeon/desktop/speech/status" \
 curl -fsS --max-time 5 -H "$auth_header" \
   "$base/gahyeon/desktop/worlds/container-smoke-world" \
   >"$smoke_dir/world-before.json"
+admin_status="$(curl -sS --max-time 5 -o /dev/null -w '%{http_code}' \
+  -H 'X-Gahyeon-Admin-Token: deliberately-invalid' \
+  "$base/admin/gahyeon/overview")"
+[[ "$admin_status" == "404" ]] || {
+  echo "disabled admin API must fail closed with 404, got $admin_status" >&2
+  exit 1
+}
 
 revision="$(python3 - "$smoke_dir" <<'PY'
 import json, pathlib, sys
@@ -127,7 +134,11 @@ assert health["status"] == "STARTING" and health["bot"] == "DISABLED", health
 assert health["botState"] == "DISABLED" and health["botReason"] == "bot.enabled=false", health
 assert health["db"] == "UP", health
 assert health["conversationRequired"] is True and health["conversation"] == "DOWN", health
-assert speech == {"transcriptionReady": False, "synthesisReady": False}, speech
+assert speech == {
+    "transcriptionReady": False,
+    "synthesisReady": False,
+    "expressiveSynthesisReady": False,
+}, speech
 assert world["revision"] == 0 and world["activity"] == "IDLE", world
 print(world["revision"])
 PY
