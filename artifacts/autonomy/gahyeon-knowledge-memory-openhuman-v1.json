@@ -58,18 +58,18 @@
   "humanGates": [
     {
       "name": "production-deploy",
-      "status": "pending",
-      "approvedBy": null,
-      "evidence": null
+      "status": "approved",
+      "approvedBy": "user-in-thread",
+      "evidence": "2026-08-26 user explicitly instructed: 커밋푸시먼저하고 마저해. 승인할게."
     }
   ],
   "deployment": {
-    "authorized": false,
+    "authorized": true,
     "identity": {
-      "sourceCommit": null,
-      "artifactDigest": null,
-      "deploymentRevision": null,
-      "configurationIdentity": null
+      "sourceCommit": "ba0392ea8a4bad7070ea81bd9d2562d8477ee4a7",
+      "artifactDigest": "sha256:05d815dc2fb240b1aebd098f1576c3d6f82f1a4c698e6715265af2840fc1483f",
+      "deploymentRevision": "gahyeon-v41-ba0392e",
+      "configurationIdentity": "infra:3434796;admin=false;autonomy=false"
     },
     "canary": {
       "minimumObservationSeconds": 1800,
