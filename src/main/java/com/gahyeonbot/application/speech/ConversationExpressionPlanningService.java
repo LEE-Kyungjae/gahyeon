@@ -7,9 +7,9 @@ import com.gahyeonbot.core.life.CharacterId;
 import com.gahyeonbot.core.life.CharacterLifeState;
 import com.gahyeonbot.core.speech.VoiceExpression;
 import com.gahyeonbot.core.world.WorldId;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -59,7 +59,11 @@ public final class ConversationExpressionPlanningService {
         String style = "natural";
         String intent = "conversation";
         double intensity = 0.30;
-        if (containsAny(normalized, "ㅋㅋ", "ㅎㅎ", "재밌", "웃겨", "좋아", "고마워")) {
+        if (containsAny(normalized, "웃어", "웃음")) {
+            style = "suppressed_laugh";
+            intent = "respond_with_audible_laughter";
+            intensity = 0.72;
+        } else if (containsAny(normalized, "ㅋㅋ", "ㅎㅎ", "재밌", "웃겨", "좋아", "고마워")) {
             style = "bright";
             intent = "share_positive_affect";
             intensity = 0.58;

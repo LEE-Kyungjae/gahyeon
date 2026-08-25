@@ -94,6 +94,8 @@ grep -q 'BOOT-INF/classes/db/migration/V39__Add_character_memories.sql' \
   "$report_dir/bootjar-entries.txt" || fail "bootJar does not contain V39"
 grep -q 'BOOT-INF/classes/db/migration/V40__Add_character_relationship_states.sql' \
   "$report_dir/bootjar-entries.txt" || fail "bootJar does not contain V40"
+grep -q 'BOOT-INF/classes/db/migration/V41__Add_scoped_knowledge_and_identity_governance.sql' \
+  "$report_dir/bootjar-entries.txt" || fail "bootJar does not contain V41"
 if grep -Eq 'BOOT-INF/classes/db/migration/V3[0-5]__' "$report_dir/bootjar-entries.txt"; then
   fail "bootJar unexpectedly contains a forbidden V30-V35 migration"
 fi
@@ -406,7 +408,7 @@ assert_history() {
 
 assert_current_schema() {
   local database="$1"
-  assert_history "$database" 40
+  assert_history "$database" 29
   assert_query "V7 vector column is missing" "$database" "t" \
     "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='weather_rag_chunks' AND column_name='embedding' AND udt_name='vector');"
   assert_query "V25 world action table is missing" "$database" "gahyeon_world_actions" \
@@ -433,10 +435,28 @@ assert_current_schema() {
     "SELECT i.indisvalid AND i.indisready FROM pg_index i JOIN pg_class c ON c.oid=i.indexrelid WHERE c.relname='idx_character_life_states_world_updated';"
   assert_query "V39 character memory table is missing" "$database" "character_memories" \
     "SELECT COALESCE(to_regclass('public.character_memories')::text, '');"
-  assert_query "V39 namespace index is missing or invalid" "$database" "t" \
+  assert_query "V39 subject namespace index is missing or invalid" "$database" "t" \
     "SELECT i.indisvalid AND i.indisready FROM pg_index i JOIN pg_class c ON c.oid=i.indexrelid WHERE c.relname='idx_character_memories_namespace_created';"
-  assert_query "V40 character relationship table is missing" "$database" "character_relationship_states" \
+  assert_query "V40 relationship table is missing" "$database" "character_relationship_states" \
     "SELECT COALESCE(to_regclass('public.character_relationship_states')::text, '');"
+  assert_query "V41 knowledge source table is missing" "$database" "knowledge_sources" \
+    "SELECT COALESCE(to_regclass('public.knowledge_sources')::text, '');"
+  assert_query "V41 private source owner constraint is missing" "$database" "t" \
+    "SELECT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.knowledge_sources'::regclass AND conname='ck_knowledge_source_private_owner');"
+  assert_query "V41 knowledge authorization index is missing or invalid" "$database" "t" \
+    "SELECT i.indisvalid AND i.indisready FROM pg_index i JOIN pg_class c ON c.oid=i.indexrelid WHERE c.relname='idx_knowledge_chunk_authorization';"
+  assert_query "V41 identity merge ledger is missing" "$database" "memory_identity_merge_requests" \
+    "SELECT COALESCE(to_regclass('public.memory_identity_merge_requests')::text, '');"
+  assert_query "V41 deletion ledger is missing" "$database" "privacy_deletion_jobs" \
+    "SELECT COALESCE(to_regclass('public.privacy_deletion_jobs')::text, '');"
+  assert_query "V41 Soul revision table is missing" "$database" "character_identity_revisions" \
+    "SELECT COALESCE(to_regclass('public.character_identity_revisions')::text, '');"
+  assert_query "V41 autonomy todo table is missing" "$database" "character_autonomy_todos" \
+    "SELECT COALESCE(to_regclass('public.character_autonomy_todos')::text, '');"
+  assert_query "V41 memory graph tables are missing" "$database" "2" \
+    "SELECT count(*) FROM pg_class WHERE oid IN (to_regclass('public.memory_graph_nodes'), to_regclass('public.memory_graph_edges'));"
+  assert_query "V41 heartbeat ledger is missing" "$database" "character_heartbeat_runs" \
+    "SELECT COALESCE(to_regclass('public.character_heartbeat_runs')::text, '');"
   assert_query "agent_runs no longer uses the V24 physical columns" "$database" \
     "gateway,guild_id,user_id,username" \
     "SELECT string_agg(column_name, ',' ORDER BY column_name) FROM information_schema.columns WHERE table_schema='public' AND table_name='agent_runs' AND column_name IN ('actor_id','user_id','modality','gateway','tool_scope_id','guild_id','actor_display_name','username');"
@@ -507,14 +527,12 @@ vector_version="$(query "$empty_db" "SELECT extversion FROM pg_extension WHERE e
   printf 'postgres_image_requested=%s\n' "$postgres_image"
   printf 'postgres_image_id=%s\n' "$resolved_image_id"
   printf 'pgvector_version=%s\n' "$vector_version"
-  printf 'empty_database=V1-V29,V36-V40; application_validate=passed\n'
-  printf 'upgrade_database=authoritative_V24_to_V28_seed_to_V29,V36-V40; application_validate=passed\n'
+  printf 'empty_database=V1-V29,V36-V41; application_validate=passed\n'
+  printf 'upgrade_database=authoritative_V24_to_V28_seed_to_V29,V36-V41; application_validate=passed\n'
   printf 'v29_backfill_not_null=passed\n'
   printf 'v36_user_id_status_created_index=passed\n'
   printf 'v37_personalized_news_schema=passed\n'
-  printf 'v38_character_life_schema=passed\n'
-  printf 'v39_character_memory_schema=passed\n'
-  printf 'v40_character_relationship_schema=passed\n'
+  printf 'v38_v41_character_knowledge_memory_governance_schema=passed\n'
 } >"$report_dir/summary.txt"
 
 echo "Disposable PostgreSQL migration preflight passed"

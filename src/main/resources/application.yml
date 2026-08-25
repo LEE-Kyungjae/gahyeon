@@ -52,6 +52,16 @@ server:
   shutdown: graceful
 
 gahyeon:
+  admin:
+    enabled: ${GAHYEON_ADMIN_ENABLED:false}
+    token: ${GAHYEON_ADMIN_TOKEN:}
+  autonomy:
+    enabled: ${GAHYEON_AUTONOMY_ENABLED:false}
+    character-id: ${GAHYEON_AUTONOMY_CHARACTER_ID:gahyeon}
+    world-id: ${GAHYEON_AUTONOMY_WORLD_ID:gahyeon-home}
+    heartbeat-millis: ${GAHYEON_AUTONOMY_HEARTBEAT_MILLIS:60000}
+  knowledge:
+    embedding-model: ${GAHYEON_KNOWLEDGE_EMBEDDING_MODEL:configured-spring-ai-embedding}
   memory:
     compaction:
       # Provider calls never run on the conversation/TTS path. A single bounded
@@ -82,6 +92,10 @@ gahyeon:
     maximum-event-subscriptions-per-session: ${GAHYEON_DESKTOP_MAXIMUM_EVENT_SUBSCRIPTIONS_PER_SESSION:4}
   identity-link:
     cleanup-millis: ${GAHYEON_IDENTITY_LINK_CLEANUP_MILLIS:3600000}
+    zezestudio:
+      authorize-url: ${GAHYEON_ZEZESTUDIO_AUTHORIZE_URL:http://localhost:3000/connect/gahyeon}
+      shared-secret: ${GAHYEON_ZEZESTUDIO_LINK_SECRET:}
+      signature-max-age-seconds: ${GAHYEON_ZEZESTUDIO_SIGNATURE_MAX_AGE_SECONDS:120}
   speech:
     expression-planner:
       small-model:

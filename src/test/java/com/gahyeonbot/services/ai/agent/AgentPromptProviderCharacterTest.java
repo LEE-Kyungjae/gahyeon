@@ -1,12 +1,15 @@
 package com.gahyeonbot.services.ai.agent;
 
 import com.gahyeonbot.application.life.*;
+import com.gahyeonbot.application.knowledge.KnowledgeBaseService;
 import com.gahyeonbot.core.life.*;
 import com.gahyeonbot.core.world.WorldId;
 import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class AgentPromptProviderCharacterTest {
     @Test
@@ -34,7 +37,7 @@ class AgentPromptProviderCharacterTest {
     }
 
     @Test
-    void selectsOnlyGlobalAndCurrentUserMemoriesForTheSameCharacter() {
+    void selectsOnlyExactCurrentUserMemoriesForTheSameCharacter() {
         var memories = new InMemoryStore();
         memories.append(memory("gahyeon", null, "공용 세계 기억"));
         memories.append(memory("gahyeon", "actor:42", "42번 사용자 기억"));
@@ -47,8 +50,8 @@ class AgentPromptProviderCharacterTest {
         String prompt = provider.systemPrompt(null,
                 "character:gahyeon:gahyeon-home:actor:42|desktop:room-1");
 
-        assertThat(prompt).contains("공용 세계 기억", "42번 사용자 기억")
-                .doesNotContain("77번 사용자 비밀");
+        assertThat(prompt).contains("42번 사용자 기억")
+                .doesNotContain("공용 세계 기억", "77번 사용자 비밀");
     }
 
     @Test
@@ -74,9 +77,33 @@ class AgentPromptProviderCharacterTest {
         assertThat(prompt).contains("familiarity=0.400 trust=0.800 affinity=0.700 tension=0.100");
     }
 
+    @Test
+    void includesOnlyExplicitlyActivatedSoulAndAuthorizedKnowledgeForTheCurrentQuery() {
+        var provider = new AgentPromptProvider();
+        provider.load();
+        provider.configureCharacters(
+                new CharacterDefinitionRegistry(CharacterCatalogProperties.standard()), new InMemoryStore());
+        var workspace = mock(CharacterAutonomyWorkspaceService.class);
+        when(workspace.activeSoul("gahyeon")).thenReturn(Optional.of(
+                new CharacterAutonomyWorkspaceService.SoulRevision("rev", "gahyeon", 3,
+                        "사실을 솔직하게 말한다.", true)));
+        provider.configureWorkspace(workspace);
+        var knowledge = mock(KnowledgeBaseService.class);
+        when(knowledge.search(any())).thenReturn(List.of(new KnowledgeBaseService.SearchResult(
+                "chunk", "document", "source", "사용자 취향", "사용자는 재즈를 좋아한다.", .9, .8, 1)));
+        provider.configureKnowledge(knowledge);
+
+        String prompt = provider.systemPrompt(null,
+                "character:gahyeon:gahyeon-home:zezestudio:user-a|desktop:room-1", "무슨 음악 좋아하지?");
+
+        assertThat(prompt).contains("활성 Identity/Soul 리비전 3", "사실을 솔직하게 말한다.",
+                "권한 검증된 통합 지식 검색 결과", "사용자는 재즈를 좋아한다.");
+        verify(knowledge).search(argThat(request -> request.subjectId().equals("zezestudio:user-a")
+                && request.query().equals("무슨 음악 좋아하지?")));
+    }
+
     private static CharacterMemory memory(String id, String content) {
-        return new CharacterMemory(0, new CharacterId(id), new WorldId("gahyeon-home"),
-                "episodic", content, 0.7, Instant.EPOCH);
+        return memory(id, "actor:42", content);
     }
 
     private static CharacterMemory memory(String id, String subject, String content) {

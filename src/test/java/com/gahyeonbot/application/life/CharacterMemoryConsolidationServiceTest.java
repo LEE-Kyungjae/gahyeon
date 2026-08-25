@@ -38,7 +38,7 @@ class CharacterMemoryConsolidationServiceTest {
         assertThat(store.values).extracting(CharacterMemory::kind)
                 .containsExactly(CharacterMemoryKind.EPISODIC, CharacterMemoryKind.SEMANTIC,
                         CharacterMemoryKind.PROSPECTIVE);
-        assertThat(store.values).extracting(CharacterMemory::subjectId).containsOnly("actor:42");
+        assertThat(store.values).extracting(CharacterMemory::subjectId).containsOnly("principal:42");
         assertThat(drafts).extracting(GahyeonEventDraft::type)
                 .containsOnly("character.memory.consolidation.completed");
         verify(life, times(1)).observe(eq(new CharacterId("gahyeon")), eq(new WorldId("gahyeon-home")),
@@ -79,7 +79,7 @@ class CharacterMemoryConsolidationServiceTest {
         assertThat(service.consolidate(conversation(77))).isEqualTo(1);
 
         assertThat(store.values).extracting(CharacterMemory::subjectId)
-                .containsExactly("actor:42", "actor:77");
+                .containsExactly("principal:42", "principal:77");
     }
 
     @Test
@@ -93,7 +93,7 @@ class CharacterMemoryConsolidationServiceTest {
 
         assertThat(service.consolidate(conversation(42))).isEqualTo(2);
 
-        verify(relationships).apply(new CharacterId("gahyeon"), new WorldId("gahyeon-home"), "actor:42", candidate);
+        verify(relationships).apply(new CharacterId("gahyeon"), new WorldId("gahyeon-home"), "principal:42", candidate);
     }
 
     private static CharacterMemoryConsolidationService service(InMemoryStore store,

@@ -130,6 +130,56 @@
       "testMethod": "acceptsOfficialOrTwoIndependentDomainsAndRejectsSingleSecondarySource",
       "productionSignal": "Per digest: selected event count, official-source flag, distinct source-domain count, and publication age without article body content.",
       "rollbackTrigger": "A single unverified secondary source is delivered, a source URL/publication time is missing, or a future-dated article is accepted."
+    },
+    {
+      "id": "agent-personal-memory-subject-isolation",
+      "domain": "agent",
+      "incident": "The pre-hardening character-memory fallback admitted subject-null rows during personalized recall and represented every caller only as a local actor ID, leaving canonical account continuity and strict per-user exclusion incomplete.",
+      "invariant": "Every durable personal-memory read is filtered by character, world, and an exact non-null subject; linked accounts use the immutable ZezeStudio UUID, unlinked known principals remain in isolated provisional namespaces, and explicitly uncertain speakers have no persistent memory context.",
+      "testFile": "src/test/java/com/gahyeonbot/application/life/CharacterMemorySubjectIsolationTest.java",
+      "testMethod": "recallNeverIncludesAnotherSubjectOrUnscopedMemory",
+      "productionSignal": "Hashed subject namespace class, character/world scope, persistence class, filtered candidate count, and recall outcome without UUIDs, conversation text, or memory content.",
+      "rollbackTrigger": "A recall returns a null-subject or different-subject row, an uncertain speaker is persisted, a linked account does not resolve to the attested ZezeStudio UUID namespace, or a pre-link namespace is merged without explicit approval."
+    },
+    {
+      "id": "agent-integrated-knowledge-authorization",
+      "domain": "agent",
+      "incident": "Before the integrated knowledge layer, domain RAG stores were separate and there was no generic document ingestion path with mandatory service and subject authorization before ranking.",
+      "invariant": "Knowledge ingestion is content-idempotent, private chunks are retrieved only for the exact service and owner subject, and authorization filtering occurs in SQL before lexical or semantic ranking.",
+      "testFile": "src/test/java/com/gahyeonbot/application/knowledge/KnowledgeBaseServiceTest.java",
+      "testMethod": "privateKnowledgeIsRetrievedOnlyForItsExactOwnerAndService",
+      "productionSignal": "Service ID, access-scope class, hashed subject class, authorized candidate count, ranking mode, and result count without document or query text.",
+      "rollbackTrigger": "A private chunk is returned to another subject or service, ranking evaluates an unauthorized candidate, duplicate ingestion creates a second document, or a deleted source remains recallable."
+    },
+    {
+      "id": "agent-knowledge-service-spring-constructor",
+      "domain": "agent",
+      "incident": "The first V41 disposable PostgreSQL boot reached a valid migrated schema but Core failed because the multi-constructor KnowledgeBaseService did not identify its Spring runtime injection constructor.",
+      "invariant": "KnowledgeBaseService has exactly one runtime constructor explicitly annotated for Spring injection while retaining its package-private clock-injected test constructor.",
+      "testFile": "src/test/java/com/gahyeonbot/application/knowledge/KnowledgeBaseServiceTest.java",
+      "testMethod": "runtimeConstructorIsExplicitForSpring",
+      "productionSignal": "Application startup outcome, bean class, migration version, and failure class without database credentials, knowledge text, or user identifiers.",
+      "rollbackTrigger": "Core reports a missing default constructor, cannot instantiate KnowledgeBaseService, or fails after V41 migration before readiness."
+    },
+    {
+      "id": "agent-memory-merge-explicit-approval",
+      "domain": "agent",
+      "incident": "Account linking previously had no governed workflow for moving provisional personal memories to the canonical ZezeStudio UUID namespace.",
+      "invariant": "Only an owned principal namespace can merge into its linked ZezeStudio UUID, and no memory or relationship row moves before a single explicit approval proof is durably hashed.",
+      "testFile": "src/test/java/com/gahyeonbot/application/privacy/MemoryGovernanceServiceTest.java",
+      "testMethod": "preLinkMemoryMovesOnlyAfterExplicitApproval",
+      "productionSignal": "Merge request ID, namespace classes, state transition, approval digest presence, and moved row counts without raw proof, UUID, or memory content.",
+      "rollbackTrigger": "Any pre-link memory moves without APPROVED state, a target is not linked to the principal, raw approval proof is persisted, or cross-principal namespaces merge."
+    },
+    {
+      "id": "agent-subject-deletion-propagation",
+      "domain": "agent",
+      "incident": "Personal data deletion had no single auditable operation spanning relational memories, derived knowledge, external vectors, and caches.",
+      "invariant": "An authorized deletion job removes subject data from PostgreSQL and derived rows, invokes every configured vector and cache deletion port, and records per-layer completion before declaring success.",
+      "testFile": "src/test/java/com/gahyeonbot/application/privacy/MemoryGovernanceServiceTest.java",
+      "testMethod": "deletionPropagatesAcrossPostgresVectorCacheAndDerivedMemory",
+      "productionSignal": "Deletion job ID, hashed subject class, per-layer completion booleans, deleted row count, and failure class without UUID, memory content, or conversation text.",
+      "rollbackTrigger": "A job reports COMPLETED while a configured deletion layer did not run, an unauthorized principal deletes another subject, or any subject-owned relational or derived row remains."
     }
   ]
 }

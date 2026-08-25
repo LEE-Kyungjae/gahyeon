@@ -14,7 +14,7 @@ class JpaCharacterMemoryStoreTest {
     @Autowired CharacterMemoryRecordRepository repository;
 
     @Test
-    void returnsOnlyGlobalAndRequestedSubjectAndDeduplicatesConsolidatedFacts() {
+    void returnsOnlyTheExactRequestedSubjectAndDeduplicatesConsolidatedFacts() {
         var store = new JpaCharacterMemoryStore(repository);
         var character = new CharacterId("gahyeon");
         var world = new WorldId("gahyeon-home");
@@ -28,8 +28,8 @@ class JpaCharacterMemoryStoreTest {
 
         assertThat(store.recent(character, world, "actor:42", 20))
                 .extracting(CharacterMemory::content)
-                .contains("공용 기억", "42번 기억", "사용자는 차를 좋아한다.")
-                .doesNotContain("77번 비밀");
+                .contains("42번 기억", "사용자는 차를 좋아한다.")
+                .doesNotContain("공용 기억", "77번 비밀");
     }
 
     @Test

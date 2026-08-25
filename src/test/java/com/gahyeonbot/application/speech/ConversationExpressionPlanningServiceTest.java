@@ -37,6 +37,8 @@ class ConversationExpressionPlanningServiceTest {
         assertThat(service.plan(gahyeon, world, "42", "헐, 진짜?").style()).isEqualTo("surprised");
         assertThat(service.plan(gahyeon, world, "42", "오늘 너무 속상해").style()).isEqualTo("sad");
         assertThat(service.plan(gahyeon, world, "42", "그만 약올려").style()).isEqualTo("annoyed");
+        assertThat(service.plan(gahyeon, world, "42", "아니, 그냥 웃어봐").style())
+                .isEqualTo("suppressed_laugh");
         assertThat(service.plan(gahyeon, world, "42", "오늘 일정 알려줘").style()).isEqualTo("natural");
     }
 

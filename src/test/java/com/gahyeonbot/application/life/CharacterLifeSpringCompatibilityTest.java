@@ -30,9 +30,9 @@ class CharacterLifeSpringCompatibilityTest {
                 CharacterLifeService.class,
                 CharacterRelationshipService.class,
                 CharacterCognitionService.class,
+                ConversationExpressionPlanningService.class,
                 CharacterConversationMemoryListener.class,
-                CharacterMemoryConsolidationService.class,
-                ConversationExpressionPlanningService.class
+                CharacterMemoryConsolidationService.class
         ).forEach(type -> assertThat(List.of(type.getDeclaredConstructors()).stream()
                 .anyMatch(constructor -> constructor.isAnnotationPresent(Autowired.class)))
                 .as("%s must identify its Spring runtime constructor", type.getSimpleName())
