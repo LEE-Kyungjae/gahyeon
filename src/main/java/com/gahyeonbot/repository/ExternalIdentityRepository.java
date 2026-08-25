@@ -14,4 +14,9 @@ public interface ExternalIdentityRepository extends JpaRepository<ExternalIdenti
             String externalId);
 
     boolean existsByProviderAndPrincipal_Id(IdentityProvider provider, Long principalId);
+
+    @EntityGraph(attributePaths = "principal")
+    Optional<ExternalIdentity> findByProviderAndPrincipal_Id(
+            IdentityProvider provider,
+            Long principalId);
 }

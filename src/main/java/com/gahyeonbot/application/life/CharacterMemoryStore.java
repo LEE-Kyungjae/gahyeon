@@ -23,7 +23,7 @@ public interface CharacterMemoryStore {
 
     default List<CharacterMemory> recent(CharacterId characterId, WorldId worldId, String subjectId, int limit) {
         return recent(characterId, worldId, limit).stream()
-                .filter(memory -> memory.subjectId() == null || memory.subjectId().equals(subjectId))
+                .filter(memory -> memory.subjectId() != null && memory.subjectId().equals(subjectId))
                 .limit(limit)
                 .toList();
     }

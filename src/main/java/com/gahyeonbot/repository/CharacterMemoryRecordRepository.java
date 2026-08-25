@@ -18,7 +18,7 @@ public interface CharacterMemoryRecordRepository extends JpaRepository<Character
             where memory.characterId = :characterId and memory.worldId = :worldId
               and memory.supersededAt is null
               and ((:subjectId is null and memory.subjectId is null)
-                   or (:subjectId is not null and (memory.subjectId = :subjectId or memory.subjectId is null)))
+                   or (:subjectId is not null and memory.subjectId = :subjectId))
             order by memory.createdAt desc
             """)
     List<CharacterMemoryRecord> findVisible(
