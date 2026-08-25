@@ -143,6 +143,15 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-std
 
 ## 배포 방법
 
+### 데이터베이스 마이그레이션 게이트
+
+현재 릴리스는 V41까지 포함합니다. 배포 전에 반드시
+`./scripts/preflight_postgres_migrations.sh`를 실행해 빈 PostgreSQL과 authoritative V24 업그레이드
+경로 모두에서 `V1–V29,V36–V41` 이력, V41 지식 권한 인덱스, 기억 병합·삭제 원장,
+Identity/Soul·Memory Graph·heartbeat 테이블을 검증합니다. 이 결과는 disposable PostgreSQL
+증거이며 live production 이력을 대신하지 않습니다. 운영 DB의 `flyway_schema_history`는
+[DEPLOYMENT_MIGRATION_BLOCKER.md](DEPLOYMENT_MIGRATION_BLOCKER.md)의 read-only 절차로 별도 확인합니다.
+
 ### 자동 배포 (추천)
 
 #### main 브랜치 푸시로 배포

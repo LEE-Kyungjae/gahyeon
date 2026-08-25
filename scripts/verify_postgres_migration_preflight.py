@@ -40,6 +40,14 @@ RUNTIME_MARKERS = (
     "V37__Add_personalized_news_articles.sql",
     "V37 personalized news table is missing",
     "v37_personalized_news_schema=passed",
+    "V41__Add_scoped_knowledge_and_identity_governance.sql",
+    "V1-V29,V36-V41",
+    "idx_knowledge_chunk_authorization",
+    "memory_identity_merge_requests",
+    "privacy_deletion_jobs",
+    "character_identity_revisions",
+    "character_heartbeat_runs",
+    "v38_v41_character_knowledge_memory_governance_schema=passed",
     "V3[0-5]__",
     "live_production_evidence=false",
     'refusing to replace existing container',
@@ -67,6 +75,7 @@ DOC_MARKERS = (
     "V29",
     "V36",
     "V37",
+    "V41",
     "not live-production",
 )
 

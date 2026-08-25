@@ -9,6 +9,9 @@ import com.gahyeonbot.core.event.GahyeonEventDraft;
 import com.gahyeonbot.core.event.GahyeonEventTypes;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import com.gahyeonbot.application.life.CharacterConversationCompleted;
+import com.gahyeonbot.application.life.MemorySubjectResolutionPort;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -18,21 +21,38 @@ public class GahyeonConversationService implements ConversationUseCase, Conversa
     private final ConversationAgentPort agentPort;
     private final GahyeonEventPublisher events;
     private final ConversationPresencePort presence;
+    private final MemorySubjectResolutionPort memorySubjects;
+    private ApplicationEventPublisher internalEvents = event -> {};
 
     @Autowired
     public GahyeonConversationService(
             ConversationAgentPort agentPort,
             GahyeonEventPublisher events,
-            ConversationPresencePort presence) {
+            ConversationPresencePort presence,
+            MemorySubjectResolutionPort memorySubjects) {
         this.agentPort = agentPort;
         this.events = events;
         this.presence = presence;
+        this.memorySubjects = memorySubjects;
     }
 
     GahyeonConversationService(
             ConversationAgentPort agentPort,
             GahyeonEventPublisher events) {
-        this(agentPort, events, session -> ConversationPresencePort.PresenceLease.NOOP);
+        this(agentPort, events, session -> ConversationPresencePort.PresenceLease.NOOP,
+                MemorySubjectResolutionPort.passthrough());
+    }
+
+    GahyeonConversationService(
+            ConversationAgentPort agentPort,
+            GahyeonEventPublisher events,
+            ConversationPresencePort presence) {
+        this(agentPort, events, presence, MemorySubjectResolutionPort.passthrough());
+    }
+
+    @Autowired
+    void setInternalEvents(ApplicationEventPublisher internalEvents) {
+        this.internalEvents = internalEvents;
     }
 
     @Override
@@ -51,6 +71,7 @@ public class GahyeonConversationService implements ConversationUseCase, Conversa
     private ConversationResponse execute(
             ConversationRequest request,
             ConversationStreamObserver observer) {
+        request = withResolvedMemorySubject(request);
         DeltaTrackingObserver tracking = observer == null ? null : new DeltaTrackingObserver(observer);
         try (var ignored = presence.enter(request.session())) {
             events.publish(new GahyeonEventDraft(
@@ -79,6 +100,7 @@ public class GahyeonConversationService implements ConversationUseCase, Conversa
                     request.session().id(),
                     request.requestId(),
                     payload));
+            internalEvents.publishEvent(new CharacterConversationCompleted(request, response));
             // Cognition completion is not Speaking. The local audio-device
             // callback owns that Reflex transition if prepared speech arrives.
             publishCharacterState(request, "idle");
@@ -102,6 +124,12 @@ public class GahyeonConversationService implements ConversationUseCase, Conversa
             }
             throw failure;
         }
+    }
+
+    private ConversationRequest withResolvedMemorySubject(ConversationRequest request) {
+        var resolved = memorySubjects.resolve(request.session());
+        return resolved == request.session() ? request : new ConversationRequest(
+                request.requestId(), resolved, request.displayName(), request.message());
     }
 
     private void publishCharacterState(ConversationRequest request, String state) {

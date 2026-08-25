@@ -34,7 +34,7 @@ public class AgentApprovalService {
                             .id(UUID.randomUUID().toString())
                             .run(run)
                             .toolName(toolName)
-                            .toolArguments(arguments)
+                            .toolArguments(SensitiveDataRedactor.redact(arguments))
                             .argumentHash(hash)
                             .status(AgentApprovalStatus.PENDING)
                             .requestedAt(LocalDateTime.now())

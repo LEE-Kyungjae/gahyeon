@@ -8,6 +8,7 @@ import com.gahyeonbot.entity.AgentRun;
 import com.gahyeonbot.repository.AgentRunRepository;
 import com.gahyeonbot.services.ai.GitHubKnowledgeTools;
 import com.gahyeonbot.services.ai.KnowledgeFreshnessTools;
+import com.gahyeonbot.services.ai.NewsKnowledgeTools;
 import com.gahyeonbot.services.ai.PaperKnowledgeTools;
 import com.gahyeonbot.services.ai.WeatherTools;
 import com.gahyeonbot.services.weather.WeatherService;
@@ -15,6 +16,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -34,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -41,6 +44,60 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class DefaultAgentRuntimeCancellationTest {
+    @Test
+    void sendsBoundedRecoverableToolOutputToTheNextModelCall() {
+        ChatModel model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class)))
+                .thenReturn(toolCall("get_current_weather", "{\"cityCode\":\"SEOUL\"}"))
+                .thenReturn(new ChatResponse(List.of(new Generation(
+                        new AssistantMessage("큰 결과를 요약했습니다.")))));
+        String output = "BEGIN-" + "a".repeat(10_000)
+                + "MIDDLE-SHOULD-BE-OMITTED" + "b".repeat(10_000) + "-END";
+        WeatherService weatherService = mock(WeatherService.class);
+        when(weatherService.buildCurrentWeatherMessage(any())).thenReturn(output);
+        DefaultAgentRuntime runtime = runtime(
+                model, emptyMemory(), runningLedger("run-large-tool-output"),
+                mock(AgentRunRepository.class), mock(AgentApprovalService.class),
+                new ToolPolicy(), new WeatherTools(weatherService));
+
+        AgentResult result = runtime.execute(request("large-tool-output"));
+
+        var promptCaptor = forClass(Prompt.class);
+        verify(model, times(2)).call(promptCaptor.capture());
+        ToolResponseMessage responseMessage = promptCaptor.getAllValues().get(1).getInstructions()
+                .stream()
+                .filter(ToolResponseMessage.class::isInstance)
+                .map(ToolResponseMessage.class::cast)
+                .findFirst()
+                .orElseThrow();
+        String modelToolOutput = responseMessage.getResponses().getFirst().responseData();
+        assertThat(result.content()).isEqualTo("큰 결과를 요약했습니다.");
+        assertThat(modelToolOutput)
+                .hasSizeLessThanOrEqualTo(12_000)
+                .contains("tool-output truncated", "sha256=", "BEGIN-", "-END")
+                .doesNotContain("MIDDLE-SHOULD-BE-OMITTED");
+    }
+
+    @Test
+    void retriesWhenToolArgumentsAreReturnedAsTheFinalAnswer() {
+        ChatModel model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class)))
+                .thenReturn(new ChatResponse(List.of(new Generation(
+                        new AssistantMessage("{\"query\":\"latest AI research papers\"}")))))
+                .thenReturn(new ChatResponse(List.of(new Generation(
+                        new AssistantMessage("최신 AI 논문 검색 결과를 한국어로 정리했습니다.")))));
+        AgentRunLedger ledger = runningLedger("run-tool-json-retry");
+        DefaultAgentRuntime runtime = runtime(
+                model, emptyMemory(), ledger, mock(AgentRunRepository.class),
+                mock(AgentApprovalService.class), new ToolPolicy(),
+                new WeatherTools(mock(WeatherService.class)));
+
+        AgentResult result = runtime.execute(request("tool-json-retry"));
+
+        assertThat(result.content()).isEqualTo("최신 AI 논문 검색 결과를 한국어로 정리했습니다.");
+        verify(model, times(2)).call(any(Prompt.class));
+    }
+
     @Test
     void retriesOnceWhenSanitizationRemovesTheEntireFinalResponse() {
         ChatModel model = mock(ChatModel.class);
@@ -116,6 +173,7 @@ class DefaultAgentRuntimeCancellationTest {
                 mock(GitHubKnowledgeTools.class),
                 mock(PaperKnowledgeTools.class),
                 mock(KnowledgeFreshnessTools.class),
+                mock(NewsKnowledgeTools.class),
                 new AgentRuntimeAvailability(5_000, System::nanoTime));
         var providerEntered = new CountDownLatch(1);
         var releaseProvider = new CountDownLatch(1);
@@ -303,6 +361,7 @@ class DefaultAgentRuntimeCancellationTest {
                 new SimpleMeterRegistry(), weatherTools,
                 mock(GitHubKnowledgeTools.class), mock(PaperKnowledgeTools.class),
                 mock(KnowledgeFreshnessTools.class),
+                mock(NewsKnowledgeTools.class),
                 new AgentRuntimeAvailability(5_000, System::nanoTime));
     }
 

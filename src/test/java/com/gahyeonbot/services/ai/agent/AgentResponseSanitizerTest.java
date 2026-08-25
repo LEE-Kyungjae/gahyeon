@@ -5,6 +5,22 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AgentResponseSanitizerTest {
+    @Test
+    void rejectsToolArgumentJsonPresentedAsTheFinalAnswer() {
+        assertThat(DefaultAgentRuntime.sanitizeFinalResponse("""
+                {
+                  "query": "latest AI research papers"
+                }
+                """)).isBlank();
+    }
+
+    @Test
+    void preservesRequestedStructuredJsonThatIsNotAToolArgumentEnvelope() {
+        assertThat(DefaultAgentRuntime.sanitizeFinalResponse(
+                "{\"headline\":\"주요 뉴스\",\"count\":3}"))
+                .isEqualTo("{\"headline\":\"주요 뉴스\",\"count\":3}");
+    }
+
 
     @Test
     void keepsOnlyFinalAnswerAfterThinkingBlock() {
@@ -28,6 +44,16 @@ class AgentResponseSanitizerTest {
                 1. Analyze User Input
                 2. Draft Response
                 "아니에요, 언제든 도와드릴게요."
+                """))
+                .isEmpty();
+    }
+
+    @Test
+    void rejectsConversationalEnglishReasoningPreambleWithoutTags() {
+        assertThat(DefaultAgentRuntime.sanitizeFinalResponse("""
+                Okay, let's see. The user is asking for a brief acknowledgement.
+                First, I need to inspect the voice instructions.
+                Possible response: a short Korean sentence.
                 """))
                 .isEmpty();
     }
