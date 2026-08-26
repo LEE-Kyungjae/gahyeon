@@ -130,6 +130,36 @@
       "testMethod": "acceptsOfficialOrTwoIndependentDomainsAndRejectsSingleSecondarySource",
       "productionSignal": "Per digest: selected event count, official-source flag, distinct source-domain count, and publication age without article body content.",
       "rollbackTrigger": "A single unverified secondary source is delivered, a source URL/publication time is missing, or a future-dated article is accepted."
+    },
+    {
+      "id": "voice-default-korean-language",
+      "domain": "agent",
+      "incident": "A Korean voice request unexpectedly received an English answer.",
+      "invariant": "Voice answers remain Korean unless the user explicitly requests another response language, while English names and technical terms retain their spelling.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/DefaultAgentRuntimeVoiceGuidanceTest.java",
+      "testMethod": "defaultsVoiceAnswersToKoreanUnlessAnotherLanguageIsExplicitlyRequested",
+      "productionSignal": "Voice modality, detected request language class, and response language class without conversation content.",
+      "rollbackTrigger": "A Korean voice request produces an unsolicited English answer."
+    },
+    {
+      "id": "voice-self-echo-interruption",
+      "domain": "stt",
+      "incident": "The bot microphone captured its own speech and interrupted the answer in progress.",
+      "invariant": "Recent bot speech echoes are rejected before response revision or playback interruption, while distinct user barge-in remains accepted.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceBargeInPolicyTest.java",
+      "testMethod": "blocksRecentSelfEchoWithoutBlockingMeaningfulBargeIn",
+      "productionSignal": "Echo-guard decision, normalized similarity bucket, elapsed time since bot speech, and interruption outcome without raw transcript.",
+      "rollbackTrigger": "A likely self-echo increments the response revision or stops active TTS."
+    },
+    {
+      "id": "voice-concerned-expression-selection",
+      "domain": "tts",
+      "incident": "Concerned speech was flattened to neutral delivery and became too quiet or emotionally weak.",
+      "invariant": "Concern requests select the concerned Qwen expression with the calibrated intensity instead of silently falling back to neutral speech.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceAssistantExpressionPolicyTest.java",
+      "testMethod": "mapsConcernAndEnglishPronunciationRequestsWithoutFlatteningThem",
+      "productionSignal": "Expression style, intensity bucket, attested model identity, audio byte count, and synthesis latency.",
+      "rollbackTrigger": "A concern request routes to neutral Piper or the Qwen request lacks the concerned style."
     }
   ]
 }
