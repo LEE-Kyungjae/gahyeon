@@ -15,46 +15,46 @@
   "requiredGates": [
     {
       "name": "impact-analysis",
-      "status": "pending",
-      "evidence": null
+      "status": "passed",
+      "evidence": "GitNexus pre-change LOW for voice-only symbols; global sanitizer HIGH (21 affected, 11 direct, 3 processes) was explicitly excluded. Final staged detection: MEDIUM, limited to three expected speech synthesis flows."
     },
     {
       "name": "regression-test",
-      "status": "pending",
-      "evidence": null
+      "status": "passed",
+      "evidence": "Focused voice policy, routing, echo, language, and session tests passed on production main candidate 2bd99781b9d3b4cf02ab935347aeebc451914918."
     },
     {
       "name": "ai-quality-gate",
-      "status": "pending",
-      "evidence": null
+      "status": "passed",
+      "evidence": "bash scripts/run_ai_quality_gate.sh passed locally; PR #81 Build & Test, AI Quality Gate, streaming contract, and boundary checks passed."
     },
     {
       "name": "blind-listening",
-      "status": "pending",
-      "evidence": null
+      "status": "passed",
+      "evidence": "User listening decision in this conversation: concerned loudness was confirmed improved and Qwen 1.7B production rollout was requested."
     }
   ],
   "humanGates": [
     {
       "name": "blind-listening",
-      "status": "pending",
-      "approvedBy": null,
-      "evidence": null
+      "status": "approved",
+      "approvedBy": "user",
+      "evidence": "User stated the corrected sample was clearly improved."
     },
     {
       "name": "production-deploy",
-      "status": "pending",
-      "approvedBy": null,
-      "evidence": null
+      "status": "approved",
+      "approvedBy": "user",
+      "evidence": "User explicitly requested applying and redeploying the improvements to production."
     }
   ],
   "deployment": {
-    "authorized": false,
+    "authorized": true,
     "identity": {
-      "sourceCommit": null,
-      "artifactDigest": null,
-      "deploymentRevision": null,
-      "configurationIdentity": null
+      "sourceCommit": "622b525da8bc45ea273ca934f91e5afa2fe72962",
+      "artifactDigest": "ghcr.io/lee-kyungjae/gahyeonbot@sha256:3148f8cd7d2c496a10e6baaa40f4eb371f04868350e497e77c4cd6fba2f9b19e",
+      "deploymentRevision": "infra:cdd24f48494f6c20978e433ef8b9f7364b96bc38;pod:09946678-47dd-41e2-a9b2-5e9ecc312a4e",
+      "configurationIdentity": "Qwen/Qwen3-TTS-12Hz-1.7B-Base|c-int4-cuda-sm75-mixed|bridge-sha256:54c3d055344d3fa14bf2bcd2e2ad3f38152875be38d76efc070c254ca7d716e6|endpoint:http://10.42.0.1:18773/v1/speech"
     },
     "canary": {
       "minimumObservationSeconds": 1800,
