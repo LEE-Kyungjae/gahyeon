@@ -102,6 +102,22 @@ class AgentPromptProviderCharacterTest {
                 && request.query().equals("무슨 음악 좋아하지?")));
     }
 
+    @Test
+    void characterSessionsKeepSharedGroundingAndToolBehaviorWithoutLosingPersona() {
+        var provider = new AgentPromptProvider();
+        provider.load();
+        provider.configureCharacters(
+                new CharacterDefinitionRegistry(CharacterCatalogProperties.standard()), new InMemoryStore());
+
+        String prompt = provider.systemPrompt(null,
+                "character:gahyeon:gahyeon-home:actor:42|desktop:room-1", "오늘 최신 뉴스 알려줘");
+
+        assertThat(prompt)
+                .contains("너는 가현이다", "최신 정보나 외부 사실", "사용 가능한 도구를 사용한다")
+                .contains("도구 호출 과정", "다른 캐릭터나 다른 사용자의 기억")
+                .doesNotContain("너는 디스코드에서");
+    }
+
     private static CharacterMemory memory(String id, String content) {
         return memory(id, "actor:42", content);
     }

@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public class AgentPromptProvider {
     private String systemPrompt;
+    private String sharedCharacterBehavior;
     private CharacterDefinitionRegistry characters;
     private CharacterMemoryStore characterMemories;
     private CharacterRelationshipStore relationships;
@@ -51,9 +52,12 @@ public class AgentPromptProvider {
         try {
             ClassPathResource resource = new ClassPathResource("prompts/gahyeon_system_prompt.txt");
             systemPrompt = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            ClassPathResource shared = new ClassPathResource("prompts/shared_character_behavior.txt");
+            sharedCharacterBehavior = new String(shared.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         } catch (Exception e) {
             log.warn("에이전트 시스템 프롬프트 로드 실패, 기본 프롬프트 사용", e);
             systemPrompt = "너는 가현이야. 모르는 것은 추측하지 말고 도구 결과에 근거해 짧게 답해.";
+            sharedCharacterBehavior = "질문에 먼저 답하고, 기억이나 도구 결과에 없는 사실을 만들지 않는다.";
         }
     }
 
@@ -88,7 +92,7 @@ public class AgentPromptProvider {
                 .map(state -> "familiarity=%.3f trust=%.3f affinity=%.3f tension=%.3f".formatted(
                         state.familiarity(), state.trust(), state.affinity(), state.tension()))
                 .orElse("(초기 관계)");
-        return persona + activeSoul + retrievedKnowledge + """
+        return persona + "\n\n" + sharedCharacterBehavior + activeSoul + retrievedKnowledge + """
 
                 [선택된 캐릭터]
                 id=%s, name=%s
