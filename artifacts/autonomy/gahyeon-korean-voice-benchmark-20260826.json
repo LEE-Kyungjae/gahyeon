@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "contractId": "a99b98625ce4d126",
+  "policyId": "gahyeon-autonomy-v1",
+  "objective": "Benchmark Gahyeon Korean STT and TTS end-to-end latency, accuracy, and blinded listening quality",
+  "domain": "tts",
+  "constraints": [
+    "Do not deploy, promote, or switch providers",
+    "Preserve checkpoint, prompt-set, runtime, and synthesis-setting identities",
+    "Use a fixed Korean prompt and audio set with identical preprocessing and loudness",
+    "Verify every blind listening review before requesting human selection"
+  ],
+  "requiredGates": [
+    {
+      "name": "impact-analysis",
+      "status": "passed",
+      "evidence": "2026-08-26 GitNexus upstream impact for scripts/build_piper_listening_review.py:main was LOW with one direct file entry point and zero affected processes. Staged detect_changes found one changed function, zero affected processes, LOW risk."
+    },
+    {
+      "name": "regression-test",
+      "status": "passed",
+      "evidence": "python3 scripts/test_piper_listening_review.py passed 3 tests, including one objectively selected candidate plus the operating baseline. The generated review was independently accepted by scripts/verify_blind_tts_review.py with 2 candidates and 5 matched prompts each."
+    },
+    {
+      "name": "ai-quality-gate",
+      "status": "passed",
+      "evidence": "2026-08-26 GRADLE_USER_HOME=/tmp/gahyeon-gradle-persona.ZmI4N0 bash scripts/run_ai_quality_gate.sh passed with 63 executable incident contracts, Piper runtime tests, Qwen original-voice identity contract, and selected Gradle integration suites."
+    },
+    {
+      "name": "blind-listening",
+      "status": "passed",
+      "evidence": "Review 18f53a0f19823b31 randomized the operating baseline and step40000 across 5 fixed Korean prompts. The owner selected B across the full set; the sealed key resolves B to step40000, model SHA-256 9a016fa24c258faeccf9e9aa607ed807b7b567b8441f179451c94ff636ebde65."
+    }
+  ],
+  "humanGates": [
+    {
+      "name": "blind-listening",
+      "status": "approved",
+      "approvedBy": "owner",
+      "evidence": "Owner selected B after blinded A-to-B playback of all five fixed Korean prompts on 2026-08-26. Decision gates for identity, pronunciation, naturalness, and artifact absence were recorded as passed."
+    },
+    {
+      "name": "production-deploy",
+      "status": "pending",
+      "approvedBy": null,
+      "evidence": null
+    }
+  ],
+  "deployment": {
+    "authorized": false,
+    "identity": {
+      "sourceCommit": null,
+      "artifactDigest": null,
+      "deploymentRevision": null,
+      "configurationIdentity": null
+    },
+    "canary": {
+      "minimumObservationSeconds": 1800,
+      "minimumQualifyingRequests": 30,
+      "requiredIdentity": [
+        "sourceCommit",
+        "artifactDigest",
+        "deploymentRevision",
+        "configurationIdentity"
+      ],
+      "rollbackThresholds": [
+        {
+          "metric": "errorRate",
+          "operator": ">",
+          "value": 0.01
+        },
+        {
+          "metric": "p95LatencyRegressionMs",
+          "operator": ">",
+          "value": 300
+        },
+        {
+          "metric": "unexpectedTranscriptCount",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "metric": "emptyAudioCount",
+          "operator": ">",
+          "value": 0
+        }
+      ]
+    }
+  },
+  "benchmark": {
+    "tts": {
+      "outcome": "validated-local",
+      "baselineMeanCer": 0.1759,
+      "selectedMeanCer": 0.0623,
+      "baselineMeanSpeakerSimilarity": 0.8387,
+      "selectedMeanSpeakerSimilarity": 0.8777,
+      "reviewId": "18f53a0f19823b31",
+      "selectedStep": 40000,
+      "selectedModelSha256": "9a016fa24c258faeccf9e9aa607ed807b7b567b8441f179451c94ff636ebde65"
+    },
+    "stt": {
+      "outcome": "inconclusive-no-traffic",
+      "suiteWavs": 10,
+      "plannedTrials": 20,
+      "qualifyingTrials": 0,
+      "reason": "Core production transport was not listening on port 8080; provider credential and six required feature flags were missing. No provider or runtime was activated."
+    }
+  },
+  "status": "completed-local-stt-inconclusive-no-traffic"
+}
