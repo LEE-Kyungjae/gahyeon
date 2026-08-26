@@ -1,0 +1,14 @@
+{
+  "identity": {
+    "sourceCommit": "d7aa74f603735f46a8c451a7544c31db03a9296b",
+    "artifactDigest": "sha256:8813d19a795604f5b427254d9d5f58f95f37817b892c81ee4b26ab8e0a5eebd1",
+    "deploymentRevision": "land:gahyeon-qwen-c-bridge.service:2026-08-26T20:02:39+09:00:pid-312116",
+    "configurationIdentity": "sha256:6d34bc3bf03089003fc059d2ae73d96412a0a4b38d2290ad78c904aa332d0932:qwen-1.7b-base-c-int4-cuda-sm75-mixed-concerned-gain-3.72"
+  },
+  "windowStart": "2026-08-26T20:02:39+09:00",
+  "windowEnd": "2026-08-26T20:04:39+09:00",
+  "observationSeconds": 120,
+  "qualifyingRequests": 0,
+  "metrics": {},
+  "privacySafeSignal": "Service health and HTTP method/status counts only; no transcript, response text, audio, API key, or user identifier retained."
+}
