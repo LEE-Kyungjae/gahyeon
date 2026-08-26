@@ -200,6 +200,16 @@
       "testMethod": "ranksACompleteKoreanPhraseAboveARecentSingleTermDistractor",
       "productionSignal": "Hashed query class, authorized candidate count, title/phrase match buckets, retriever availability, and selected source ID without query or document content.",
       "rollbackTrigger": "A partial generic-term distractor outranks a complete phrase match, a score leaves 0..1, or an unauthorized source enters ranking."
+    },
+    {
+      "id": "conversation-character-shared-agent-behavior",
+      "domain": "agent",
+      "incident": "Character-scoped sessions replaced the legacy system prompt with a persona and therefore lost shared grounding, current-data tool use, failure honesty, and internal-state non-disclosure rules.",
+      "invariant": "Every selected character combines its isolated persona with identity-neutral shared agent behavior while never inheriting Gahyeon Discord identity text.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentPromptProviderCharacterTest.java",
+      "testMethod": "characterSessionsKeepSharedGroundingAndToolBehaviorWithoutLosingPersona",
+      "productionSignal": "Character ID, shared-behavior revision, tool-required decision, and grounding/failure outcome without prompt or conversation content.",
+      "rollbackTrigger": "A character session loses current-data tool guidance, invents tool success, exposes internal state, or receives another character identity."
     }
   ]
 }
