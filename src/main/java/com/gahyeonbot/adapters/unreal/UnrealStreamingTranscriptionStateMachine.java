@@ -1,6 +1,7 @@
 package com.gahyeonbot.adapters.unreal;
 
 import com.gahyeonbot.application.speech.StreamingTranscriptionPort;
+import com.gahyeonbot.application.speech.TranscriptHallucinationPolicy;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -101,6 +102,7 @@ public final class UnrealStreamingTranscriptionStateMachine implements AutoClose
         }
         stream.lastAudioSequence = sequence;
         stream.nextAudioSequence++;
+        stream.capturedFrames += pcm.length / stream.format.bytesPerFrame();
     }
 
     public synchronized boolean end(StreamingTranscriptionPort.StreamKey key, long lastAudioSequence) {
@@ -266,7 +268,9 @@ public final class UnrealStreamingTranscriptionStateMachine implements AutoClose
             synchronized (UnrealStreamingTranscriptionStateMachine.this) {
                 if (!owner.ending || !acceptResult(owner, resultSequence)
                         || text == null || text.isBlank() || text.length() > 8_192
-                        || language == null || !language.matches("^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$")) {
+                        || language == null || !language.matches("^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$")
+                        || TranscriptHallucinationPolicy.rejects(
+                                text, owner.capturedAudioMillis(), owner.capturedAudioMillis())) {
                     if (active == owner) fail(owner, ErrorCode.PROVIDER_ERROR, true,
                             StreamingTranscriptionPort.CancelReason.CLIENT_RESET);
                     return;
@@ -308,6 +312,7 @@ public final class UnrealStreamingTranscriptionStateMachine implements AutoClose
         private long nextAudioSequence;
         private long lastAudioSequence = -1;
         private long nextResultSequence;
+        private long capturedFrames;
         private boolean ending;
         private boolean terminal;
 
@@ -316,6 +321,10 @@ public final class UnrealStreamingTranscriptionStateMachine implements AutoClose
                 StreamingTranscriptionPort.AudioFormat format) {
             this.key = key;
             this.format = format;
+        }
+
+        private long capturedAudioMillis() {
+            return capturedFrames * 1_000 / format.sampleRate();
         }
     }
 }

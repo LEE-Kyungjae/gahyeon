@@ -128,6 +128,25 @@ class UnrealStreamingTranscriptionStateMachineTest {
     }
 
     @Test
+    void rejectsKnownShortHallucinationBeforeItReachesCanonicalRuntime() {
+        FakeProvider provider = new FakeProvider();
+        RecordingSink sink = new RecordingSink();
+        var machine = new UnrealStreamingTranscriptionStateMachine(provider, sink);
+        machine.start(new StreamingTranscriptionPort.StartRequest(KEY, 10, FORMAT));
+        for (int sequence = 0; sequence < 50; sequence++) {
+            machine.acceptBinary(frame(sequence, 320 * Float.BYTES));
+        }
+        machine.end(KEY, 49);
+
+        provider.listener.onFinal(0, "감사합니다.", "ko-KR");
+
+        assertThat(sink.events).doesNotContain("final:0:감사합니다.:ko-KR");
+        assertThat(sink.errors).containsExactly("stream-1:provider_error:true");
+        assertThat(provider.cancelled).isEqualTo(
+                StreamingTranscriptionPort.CancelReason.CLIENT_RESET);
+    }
+
+    @Test
     void unavailableProviderDoesNotOpenSession() {
         FakeProvider provider = new FakeProvider();
         provider.ready = false;
