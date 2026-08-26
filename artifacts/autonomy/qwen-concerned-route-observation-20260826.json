@@ -1,0 +1,14 @@
+{
+  "identity": {
+    "sourceCommit": "fd91fa5",
+    "artifactDigest": "ghcr.io/lee-kyungjae/gahyeonbot@sha256:05d815dc2fb240b1aebd098f1576c3d6f82f1a4c698e6715265af2840fc1483f",
+    "deploymentRevision": "infra:c0d0a1aa9cf6797e3a9b196a3a75cdf0d5d812b8;pod:6d03b8a1-c612-47b1-8c12-f1d6b2261d26",
+    "configurationIdentity": "qwen-1.7b-base:c-int4-cuda-sm75-mixed:http://10.42.0.1:18773/v1/speech"
+  },
+  "windowStart": "2026-08-26T20:15:51+09:00",
+  "windowEnd": "2026-08-26T20:17:51+09:00",
+  "observationSeconds": 120,
+  "qualifyingRequests": 0,
+  "metrics": {},
+  "privacySafeSignal": "Pod readiness, restart count, provider attestation, and HTTP method/status counts only; no transcript, response text, audio, API key, or user identifier retained."
+}
