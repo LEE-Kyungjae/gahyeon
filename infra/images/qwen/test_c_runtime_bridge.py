@@ -121,6 +121,14 @@ class CRuntimeBridgeTest(unittest.TestCase):
         self.assertIn("strong and unmistakable", captured["instruct"])
         self.assertNotIn("emotion", captured)
 
+    def test_selects_language_for_english_and_code_switched_text(self):
+        self.assertEqual("English", bridge.detected_language(
+            "Please check the GitHub repository.", "Korean"))
+        self.assertEqual("Auto", bridge.detected_language(
+            "GitHub 저장소를 확인했어요.", "Korean"))
+        self.assertEqual("Korean", bridge.detected_language(
+            "저장소를 확인했어요.", "Korean"))
+
     def test_streams_only_attested_mono_pcm_and_releases_slot(self):
         profile = self.profile()
         profile["styles"]["fake_cute"] = {"instruct": "Speak playfully."}

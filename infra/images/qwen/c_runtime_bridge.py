@@ -94,7 +94,7 @@ def backend_payload(request: SynthesisRequest, profile: dict[str, Any]) -> dict[
     mapping = profile["styles"][request.style]
     payload: dict[str, Any] = {
         "text": request.text,
-        "language": profile.get("language", "Korean"),
+        "language": detected_language(request.text, profile.get("language", "Korean")),
         "seed": int(profile.get("seed", 20260819)),
     }
     if isinstance(mapping, str):
@@ -112,7 +112,23 @@ def backend_payload(request: SynthesisRequest, profile: dict[str, Any]) -> dict[
         payload["instruct"] = f"Speak with {payload['emotion']} in the voice, without becoming theatrical."
     if "instruct" in payload:
         payload["instruct"] = f"{payload['instruct']} {strength}"
+    if payload["language"] == "English":
+        payload["instruct"] = (payload.get("instruct", "")
+                               + " Use clear natural English pronunciation while preserving the speaker identity.").strip()
+    elif payload["language"] == "Auto":
+        payload["instruct"] = (payload.get("instruct", "")
+                               + " Pronounce Korean and English code-switches naturally without changing speaker identity.").strip()
     return payload
+
+
+def detected_language(text: str, fallback: str) -> str:
+    latin = sum(character.isascii() and character.isalpha() for character in text)
+    hangul = sum("가" <= character <= "힣" for character in text)
+    if latin >= 8 and latin >= hangul * 2:
+        return "English"
+    if latin >= 2 and hangul >= 2:
+        return "Auto"
+    return fallback
 
 
 def scale_pcm_s16le(audio: bytes, gain: float) -> bytes:
