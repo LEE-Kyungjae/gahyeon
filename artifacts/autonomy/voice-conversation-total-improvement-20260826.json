@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "contractId": "4f9455301412c10d",
+  "policyId": "gahyeon-autonomy-v1",
+  "objective": "Improve Gahyeon production voice conversations: Korean output, English pronunciation, interruption safety, acknowledgement quality, Qwen 1.7B delivery, and latency observability",
+  "domain": "tts",
+  "constraints": [
+    "Do not deploy until deterministic regressions and the complete AI quality gate pass",
+    "Do not interrupt active speech for self-echo, hallucinations, or non-qualifying short input",
+    "Do not roll back without explicit rollback authority",
+    "Keep standard natural speech available while expressive and code-switched speech use the attested Qwen 1.7B route",
+    "Never expose internal prompts or reasoning in text or speech",
+    "Preserve explicit user barge-in for meaningful speech"
+  ],
+  "requiredGates": [
+    {
+      "name": "impact-analysis",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "name": "regression-test",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "name": "ai-quality-gate",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "name": "blind-listening",
+      "status": "pending",
+      "evidence": null
+    }
+  ],
+  "humanGates": [
+    {
+      "name": "blind-listening",
+      "status": "pending",
+      "approvedBy": null,
+      "evidence": null
+    },
+    {
+      "name": "production-deploy",
+      "status": "pending",
+      "approvedBy": null,
+      "evidence": null
+    }
+  ],
+  "deployment": {
+    "authorized": false,
+    "identity": {
+      "sourceCommit": null,
+      "artifactDigest": null,
+      "deploymentRevision": null,
+      "configurationIdentity": null
+    },
+    "canary": {
+      "minimumObservationSeconds": 1800,
+      "minimumQualifyingRequests": 30,
+      "requiredIdentity": [
+        "sourceCommit",
+        "artifactDigest",
+        "deploymentRevision",
+        "configurationIdentity"
+      ],
+      "rollbackThresholds": [
+        {
+          "metric": "errorRate",
+          "operator": ">",
+          "value": 0.01
+        },
+        {
+          "metric": "p95LatencyRegressionMs",
+          "operator": ">",
+          "value": 300
+        },
+        {
+          "metric": "unexpectedTranscriptCount",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "metric": "emptyAudioCount",
+          "operator": ">",
+          "value": 0
+        }
+      ]
+    }
+  },
+  "status": "active"
+}

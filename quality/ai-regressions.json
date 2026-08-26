@@ -252,6 +252,46 @@
       "testMethod": "test_approved_original_voice_cannot_regress_to_named_female_or_short_output",
       "productionSignal": "Provider class, style, endpoint port, model and quantization attestation, HTTP outcome, latency, and audio byte-count bucket without transcript, audio, API key, or user identifier.",
       "rollbackTrigger": "Expressive traffic returns to port 18771 or Vulkan attestation, port 18773 receives no qualifying expressive request while another provider speaks it, or the corrected route increases synthesis failures beyond the canary threshold."
+    },
+    {
+      "id": "voice-default-korean-language",
+      "domain": "agent",
+      "incident": "A Korean voice conversation produced an unsolicited English final answer that was accepted as speakable output.",
+      "invariant": "Voice answers default to Korean and switch languages only when the user explicitly requests it, while preserving original English spellings for technical terms and names.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/DefaultAgentRuntimeVoiceGuidanceTest.java",
+      "testMethod": "directVoiceActionsArePerformedBrieflyWithoutCapabilityDisclaimers",
+      "productionSignal": "Voice modality, requested-language class, response-language class, and policy revision without transcript or response text.",
+      "rollbackTrigger": "A Korean voice request produces a predominantly non-Korean answer without an explicit language request, or requested English terms are forcibly transliterated."
+    },
+    {
+      "id": "voice-self-echo-interruption",
+      "domain": "stt",
+      "incident": "Gahyeon's own recently played speech was recaptured through a user's microphone, admitted as a new request, and stopped the active TTS track mid-sentence.",
+      "invariant": "A recent high-similarity echo of bot speech is rejected before revision increment and playback interruption, while semantically different user speech remains eligible for barge-in.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceBargeInPolicyTest.java",
+      "testMethod": "blocksARecentMicrophoneEchoWithoutBlockingMeaningfulBargeIn",
+      "productionSignal": "Guild, hashed speaker class, transcript length bucket, similarity bucket, echo-window bucket, and admission outcome without transcript or audio.",
+      "rollbackTrigger": "A likely self-echo increments the response revision or stops TTS, or a clearly different meaningful user utterance is suppressed as echo."
+    },
+    {
+      "id": "voice-concerned-expression-selection",
+      "domain": "tts",
+      "incident": "The Discord voice expression policy recognized only laughter and gratitude, so requests for a worried tone never selected the corrected concerned Qwen profile.",
+      "invariant": "Concern and anxiety requests select the bounded concerned expression, and explicit English-pronunciation requests carry a pronunciation intent to the expressive provider.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceAssistantExpressionPolicyTest.java",
+      "testMethod": "mapsConcernAndEnglishPronunciationRequestsWithoutFlatteningThem",
+      "productionSignal": "Hashed intent class, selected style, intensity bucket, provider readiness, and synthesis outcome without transcript or audio.",
+      "rollbackTrigger": "A concern request remains natural, an English-pronunciation request loses its intent, or an unsupported style reaches synthesis."
+    },
+    {
+      "id": "qwen-bilingual-pronunciation-routing",
+      "domain": "tts",
+      "incident": "English and mixed Korean-English output was always sent to the Qwen runtime with Korean language control, producing Koreanized English pronunciation.",
+      "invariant": "The Qwen bridge selects English for English-dominant text, Auto for mixed Korean-English text, and Korean otherwise without logging or persisting text.",
+      "testFile": "infra/images/qwen/test_c_runtime_bridge.py",
+      "testMethod": "test_selects_language_for_english_and_code_switched_text",
+      "productionSignal": "Language class, style, character-count buckets, model attestation, latency, and outcome without text or audio.",
+      "rollbackTrigger": "English-dominant text is synthesized in Korean mode, Korean text unexpectedly switches language, or speaker identity attestation changes."
     }
   ]
 }
