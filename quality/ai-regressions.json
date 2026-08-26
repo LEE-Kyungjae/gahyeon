@@ -180,6 +180,26 @@
       "testMethod": "deletionPropagatesAcrossPostgresVectorCacheAndDerivedMemory",
       "productionSignal": "Deletion job ID, hashed subject class, per-layer completion booleans, deleted row count, and failure class without UUID, memory content, or conversation text.",
       "rollbackTrigger": "A job reports COMPLETED while a configured deletion layer did not run, an unauthorized principal deletes another subject, or any subject-owned relational or derived row remains."
+    },
+    {
+      "id": "conversation-gahyeon-persona-depth",
+      "domain": "agent",
+      "incident": "Gahyeon character prompt was only a few generic sentences, so her identity could collapse into a helpful default assistant or imitate shallow character-chat mannerisms.",
+      "invariant": "Gahyeon persona defines a stable identity, relationship-sensitive behavior, conversational rhythm, grounded memory and knowledge use, intentional silence, and anti-dependency boundaries without relying on repeated catchphrases.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/GahyeonPersonaContractTest.java",
+      "testMethod": "personaDefinesStableIdentityAdaptiveRelationshipAndGroundedKnowledgeUse",
+      "productionSignal": "Persona profile revision, character ID, response-style bucket, grounded-context presence, and boundary-violation counters without prompt or conversation content.",
+      "rollbackTrigger": "Gahyeon loses her stable identity, exposes relationship scores, invents memories or retrieved facts, repeatedly uses a catchphrase, pressures the user to stay, or cannot choose intentional silence."
+    },
+    {
+      "id": "knowledge-korean-phrase-ranking",
+      "domain": "agent",
+      "incident": "Unified knowledge search ranked chunks only by unweighted substring coverage, allowing a recent document with one generic matching term to compete with a document whose title and body matched the complete Korean information need.",
+      "invariant": "Authorized candidates matching the complete normalized Korean phrase and title terms rank above partial single-term distractors while lexical and semantic scores remain bounded.",
+      "testFile": "src/test/java/com/gahyeonbot/application/knowledge/KnowledgeBaseServiceTest.java",
+      "testMethod": "ranksACompleteKoreanPhraseAboveARecentSingleTermDistractor",
+      "productionSignal": "Hashed query class, authorized candidate count, title/phrase match buckets, retriever availability, and selected source ID without query or document content.",
+      "rollbackTrigger": "A partial generic-term distractor outranks a complete phrase match, a score leaves 0..1, or an unauthorized source enters ranking."
     }
   ]
 }

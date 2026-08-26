@@ -111,8 +111,9 @@ public class KnowledgeBaseService {
         KnowledgeEmbeddingPort embedder = embeddings.getIfAvailable();
         List<Double> queryVector = embedder != null && embedder.isReady() ? embedder.embed(request.query()) : List.of();
         Set<String> terms = terms(request.query());
+        String normalizedQuery = searchable(request.query());
         return candidates.stream()
-                .map(candidate -> score(candidate, terms, queryVector))
+                .map(candidate -> score(candidate, terms, normalizedQuery, queryVector))
                 .filter(result -> result.score() > 0)
                 .sorted(Comparator.comparingDouble(SearchResult::score).reversed()
                         .thenComparing(SearchResult::chunkId))
@@ -132,10 +133,17 @@ public class KnowledgeBaseService {
         jdbc.update("update knowledge_chunks set deleted_at = current_timestamp where source_id = ?", sourceId);
     }
 
-    private SearchResult score(Candidate candidate, Set<String> terms, List<Double> queryVector) {
-        String haystack = (candidate.title() + " " + candidate.content()).toLowerCase(Locale.ROOT);
-        long matches = terms.stream().filter(haystack::contains).count();
-        double lexical = terms.isEmpty() ? 0 : (double) matches / terms.size();
+    private SearchResult score(Candidate candidate, Set<String> terms, String normalizedQuery,
+            List<Double> queryVector) {
+        String title = searchable(candidate.title());
+        String content = searchable(candidate.content());
+        long contentMatches = terms.stream().filter(content::contains).count();
+        long titleMatches = terms.stream().filter(title::contains).count();
+        double coverage = terms.isEmpty() ? 0 : (double) contentMatches / terms.size();
+        double titleCoverage = terms.isEmpty() ? 0 : (double) titleMatches / terms.size();
+        boolean phraseMatch = normalizedQuery.length() >= 4
+                && (title.contains(normalizedQuery) || content.contains(normalizedQuery));
+        double lexical = Math.min(1, coverage * 0.70 + titleCoverage * 0.20 + (phraseMatch ? 0.10 : 0));
         double semantic = queryVector.isEmpty() ? 0 : cosine(queryVector, readVector(candidate.embeddingJson()));
         double score = queryVector.isEmpty() ? lexical : lexical * 0.45 + Math.max(0, semantic) * 0.55;
         return new SearchResult(candidate.id(), candidate.documentId(), candidate.sourceId(), candidate.title(),
@@ -184,6 +192,10 @@ public class KnowledgeBaseService {
     private static Set<String> terms(String query) {
         return new LinkedHashSet<>(Arrays.stream(query.toLowerCase(Locale.ROOT).split("[^\\p{L}\\p{N}]+"))
                 .filter(term -> term.length() > 1).toList());
+    }
+
+    private static String searchable(String value) {
+        return value.toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]+", " ").trim();
     }
 
     private static String normalize(String value) { return value.trim().replace("\r\n", "\n"); }
