@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "contractId": "b48fe70044876c3c",
+  "policyId": "gahyeon-autonomy-v1",
+  "objective": "Improve Gahyeon persona, LLM grounding, STT, TTS, and RAG against OpenHuman and character-chat quality baselines",
+  "domain": "agent",
+  "constraints": [
+    "Commit only changes created for this task",
+    "Do not deploy or activate a new provider without explicit approval",
+    "Exclude character visual and animation work",
+    "Preserve exact character, world, subject, and source authorization boundaries"
+  ],
+  "requiredGates": [
+    {
+      "name": "impact-analysis",
+      "status": "passed",
+      "evidence": "2026-08-26 GitNexus upstream analysis: AgentPromptProvider systemPrompt LOW (2 direct, 1 Agent module, 4 runLoop flows); Unreal acceptBinary LOW (1 direct Unreal handler, 0 indexed flows); Unreal onFinal LOW (0 upstream); KnowledgeBaseService search/score/terms HIGH (2 direct consumers, Admin and agent prompt flows). The user explicitly approved the HIGH RAG change before implementation. Staged detect_changes was MEDIUM and limited to the expected search, prompt, and STT final-admission flows."
+    },
+    {
+      "name": "regression-test",
+      "status": "passed",
+      "evidence": "Focused Gradle suites passed for GahyeonPersonaContractTest, AgentPromptProviderCharacterTest, KnowledgeBaseServiceTest, TranscriptHallucinationPolicyTest, UnrealStreamingTranscriptionStateMachineTest, and OpenAiRealtimeStreamingTranscriptionProviderTest."
+    },
+    {
+      "name": "ai-quality-gate",
+      "status": "passed",
+      "evidence": "2026-08-26 GRADLE_USER_HOME=/tmp/gahyeon-gradle-persona.ZmI4N0 bash scripts/run_ai_quality_gate.sh passed with 62 executable incident contracts, Piper runtime tests, Qwen original-voice identity contract, and the selected Gradle integration suites."
+    }
+  ],
+  "humanGates": [
+    {
+      "name": "production-deploy",
+      "status": "pending",
+      "approvedBy": null,
+      "evidence": null
+    }
+  ],
+  "deployment": {
+    "authorized": false,
+    "identity": {
+      "sourceCommit": null,
+      "artifactDigest": null,
+      "deploymentRevision": null,
+      "configurationIdentity": null
+    },
+    "canary": {
+      "minimumObservationSeconds": 1800,
+      "minimumQualifyingRequests": 30,
+      "requiredIdentity": [
+        "sourceCommit",
+        "artifactDigest",
+        "deploymentRevision",
+        "configurationIdentity"
+      ],
+      "rollbackThresholds": [
+        {
+          "metric": "errorRate",
+          "operator": ">",
+          "value": 0.01
+        },
+        {
+          "metric": "p95LatencyRegressionMs",
+          "operator": ">",
+          "value": 300
+        },
+        {
+          "metric": "unexpectedTranscriptCount",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "metric": "emptyAudioCount",
+          "operator": ">",
+          "value": 0
+        }
+      ]
+    }
+  },
+  "status": "completed-local-not-deployed"
+}
