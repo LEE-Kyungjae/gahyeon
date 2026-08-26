@@ -1,0 +1,24 @@
+{
+  "identity": {
+    "sourceCommit": "622b525da8bc45ea273ca934f91e5afa2fe72962",
+    "artifactDigest": "ghcr.io/lee-kyungjae/gahyeonbot@sha256:3148f8cd7d2c496a10e6baaa40f4eb371f04868350e497e77c4cd6fba2f9b19e",
+    "deploymentRevision": "infra:cdd24f48494f6c20978e433ef8b9f7364b96bc38;pod:09946678-47dd-41e2-a9b2-5e9ecc312a4e",
+    "configurationIdentity": "Qwen/Qwen3-TTS-12Hz-1.7B-Base|c-int4-cuda-sm75-mixed|bridge-sha256:54c3d055344d3fa14bf2bcd2e2ad3f38152875be38d76efc070c254ca7d716e6|endpoint:http://10.42.0.1:18773/v1/speech"
+  },
+  "windowStart": "2026-08-26T21:04:30+09:00",
+  "windowEnd": "2026-08-26T21:04:59+09:00",
+  "observationSeconds": 29,
+  "qualifyingRequests": 0,
+  "metrics": {},
+  "signals": {
+    "argocdSynced": true,
+    "argocdHealthy": true,
+    "applicationHealthUp": true,
+    "applicationPodReady": true,
+    "applicationRestarts": 0,
+    "workerHealthy": true,
+    "workerRestarts": 0,
+    "qwenSpeechPosts": 0
+  },
+  "privacySafeSignal": "Deployment identity, health, restart counts, and Qwen HTTP method/status counts only; no transcript, response text, audio, credential, or user identifier retained."
+}
