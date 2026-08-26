@@ -231,5 +231,17 @@
       "productionSignal": "Review ID, candidate count, prompt count, checksum verification outcome, and identity-leak validation without model labels or audio content.",
       "rollbackTrigger": "A one-candidate-plus-baseline completion cannot build, either identity leaks into the page, checksums are bypassed, or the review contains fewer than five matched prompts."
     }
+  ],
+  "incidents": [
+    {
+      "id": "qwen-concerned-production-loudness",
+      "domain": "tts",
+      "incident": "The Qwen 1.7B concerned style averaged -35.6 dB while the natural style averaged -24.2 dB, making concerned speech difficult to hear.",
+      "invariant": "The approved concerned profile applies a bounded 3.72 output gain to WAV and streaming PCM while leaving every other expression unchanged and clipping safely to signed 16-bit limits.",
+      "testFile": "infra/images/qwen/test_c_runtime_bridge.py",
+      "testMethod": "test_applies_style_output_gain_to_wav_without_overflow",
+      "productionSignal": "Attested model/profile identity, style, output-gain bucket, clipped-sample count bucket, latency, and synthesis outcome without text, audio, or user identifier.",
+      "rollbackTrigger": "Concerned output is materially quieter than natural speech, clips audibly, causes synthesis failures or latency regression, or any non-concerned style receives output gain."
+    }
   ]
 }
