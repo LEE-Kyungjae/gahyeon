@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "reviewId": "18f53a0f19823b31",
+  "completion": "/Users/ze/work/gahyeonbot/artifacts/piper-voicebox-long-80000-release/COMPLETED.json",
+  "candidates": [
+    {
+      "label": "A",
+      "kind": "baseline",
+      "step": null,
+      "modelSha256": "12195fd32ca3264b1b45bb0e94d4d9530b2984c50ae0af3e693c69ce310b07e7"
+    },
+    {
+      "label": "B",
+      "kind": "candidate",
+      "step": 40000,
+      "modelSha256": "9a016fa24c258faeccf9e9aa607ed807b7b567b8441f179451c94ff636ebde65"
+    }
+  ]
+}

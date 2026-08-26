@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "status": "approved",
+  "reviewId": "18f53a0f19823b31",
+  "completion": "/Users/ze/work/gahyeonbot/artifacts/piper-voicebox-long-80000-release/COMPLETED.json",
+  "selectedLabel": "B",
+  "selectedKind": "candidate",
+  "selectedStep": 40000,
+  "modelSha256": "9a016fa24c258faeccf9e9aa607ed807b7b567b8441f179451c94ff636ebde65",
+  "gates": {
+    "identity": true,
+    "pronunciation": true,
+    "naturalness": true,
+    "artifactFree": true
+  },
+  "approvedBy": "owner",
+  "notes": "Owner selected B across the five fixed Korean prompts after blinded A-to-B playback on 2026-08-26.",
+  "approvedAt": "2026-08-26T10:44:25.253478+00:00"
+}
