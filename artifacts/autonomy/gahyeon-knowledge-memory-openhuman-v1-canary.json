@@ -1,0 +1,34 @@
+{
+  "identity": {
+    "sourceCommit": "ba0392ea8a4bad7070ea81bd9d2562d8477ee4a7",
+    "artifactDigest": "sha256:05d815dc2fb240b1aebd098f1576c3d6f82f1a4c698e6715265af2840fc1483f",
+    "deploymentRevision": "gahyeon-v41-ba0392e",
+    "configurationIdentity": "infra:511c6108093df632e9013317934dd7cc05fc219b;admin=false;autonomy=false"
+  },
+  "window": {
+    "startedAt": "2026-08-25T23:58:00Z",
+    "endedAt": "2026-08-26T00:00:13Z"
+  },
+  "observationSeconds": 133,
+  "qualifyingRequests": 0,
+  "metrics": {
+    "errorRate": 0.0,
+    "p95LatencyRegressionMs": 0,
+    "unexpectedTranscriptCount": 0,
+    "emptyAudioCount": 0
+  },
+  "productionSignals": {
+    "applicationPodReady": true,
+    "applicationContainerRestarts": 0,
+    "actuatorInfoStatus": 200,
+    "disabledAdminEndpointStatus": 404,
+    "flywayVersion": "41",
+    "flywaySuccess": true,
+    "argocdSync": "Synced",
+    "argocdHealth": "Healthy",
+    "conversationHistoryRows": 0,
+    "agentRunRows": 0
+  },
+  "privacy": "Counts, status codes, deployment identity, and health signals only; no transcript, prompt, response, username, or user identifier was collected.",
+  "rollbackTrigger": "Use the contract thresholds. No rollback was performed because there was no qualifying traffic and rollback authority was not separately granted."
+}

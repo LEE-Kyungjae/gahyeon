@@ -69,7 +69,7 @@
       "sourceCommit": "ba0392ea8a4bad7070ea81bd9d2562d8477ee4a7",
       "artifactDigest": "sha256:05d815dc2fb240b1aebd098f1576c3d6f82f1a4c698e6715265af2840fc1483f",
       "deploymentRevision": "gahyeon-v41-ba0392e",
-      "configurationIdentity": "infra:3434796;admin=false;autonomy=false"
+      "configurationIdentity": "infra:511c6108093df632e9013317934dd7cc05fc219b;admin=false;autonomy=false"
     },
     "canary": {
       "minimumObservationSeconds": 1800,
