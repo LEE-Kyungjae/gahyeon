@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.RestTemplate;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.io.FilterInputStream;
@@ -22,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** Fail-closed adapter for a separately hosted, quantized Qwen expressive TTS worker. */
+@Slf4j
 public final class QwenExpressiveTtsAdapter implements ExpressiveSpeechSynthesisPort {
     static final String VOICE_PROFILE_HEADER = "X-Gahyeon-Voice-Profile";
     static final String MODEL_HEADER = "X-Gahyeon-Model-Id";
@@ -57,6 +59,11 @@ public final class QwenExpressiveTtsAdapter implements ExpressiveSpeechSynthesis
     @Override
     public AudioOutput synthesize(ExpressiveSpeechRequest request) {
         if (!isReady(request.voiceProfile())) throw new IllegalStateException("Qwen expressive TTS is not ready");
+        long startedAt = System.nanoTime();
+        log.info("Qwen expressive TTS request voiceProfile={} modelId={} quantization={} style={} intensityBucket={} chars={}",
+                request.voiceProfile().value(), properties.getModelId().trim(),
+                properties.getQuantization().trim(), request.expression().style(),
+                Math.round(request.expression().intensity() * 10), request.segment().text().length());
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(java.util.List.of(MediaType.parseMediaType("audio/wav")));
@@ -84,6 +91,11 @@ public final class QwenExpressiveTtsAdapter implements ExpressiveSpeechSynthesis
                 || audio[8] != 'W' || audio[9] != 'A' || audio[10] != 'V' || audio[11] != 'E') {
             throw new IllegalStateException("Qwen expressive TTS did not return PCM WAV");
         }
+        log.info("Qwen expressive TTS attested voiceProfile={} modelId={} quantization={} style={} intensityBucket={} bytes={} latencyMs={} outcome=success",
+                request.voiceProfile().value(), properties.getModelId().trim(),
+                properties.getQuantization().trim(), request.expression().style(),
+                Math.round(request.expression().intensity() * 10), audio.length,
+                Duration.ofNanos(System.nanoTime() - startedAt).toMillis());
         return new AudioOutput(audio, "audio/wav", "wav");
     }
 

@@ -465,11 +465,13 @@ public class DefaultAgentRuntime implements AgentRuntime {
         return messages;
     }
 
-    private static String modalityGuidance(AgentModality modality) {
+    static String modalityGuidance(AgentModality modality) {
         return switch (modality) {
             case VOICE -> """
                     음성으로 듣기 편한 문장으로 답한다. 기본은 핵심부터 2~4문장으로 말하되,
                     사용자가 설명·비교·방법·논문 내용을 요구하면 이해에 필요한 만큼 충분히 설명한다.
+                    기본 응답 언어는 한국어다. 사용자가 영어 또는 다른 언어로 답해 달라고 명시한 경우에만
+                    해당 언어로 답하며, 영문 고유명사와 기술 용어는 원래 철자를 유지한다.
                     마크다운, 이모지, URL 낭독, 표, 장식용 특수문자는 사용하지 않는다.
                     """;
             case TEXT -> """
