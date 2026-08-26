@@ -55,8 +55,8 @@ def main() -> None:
     if completion.get("status") != "complete":
         raise RuntimeError("Piper training is not complete")
     candidates = completion.get("ranking", {}).get("candidates", [])
-    if len(candidates) < 2:
-        raise RuntimeError("blind review requires at least two candidates")
+    if len(candidates) < 1:
+        raise RuntimeError("blind review requires at least one candidate plus the baseline")
     prepared = []
     for candidate in candidates:
         stage = Path(candidate["model"]).resolve().parent

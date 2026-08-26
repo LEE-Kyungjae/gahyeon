@@ -114,6 +114,25 @@ class PiperListeningReviewTest(unittest.TestCase):
             self.assertNotEqual(built.returncode, 0)
             self.assertIn("checksum mismatch", built.stderr)
 
+    def test_builds_two_way_review_for_one_candidate_and_the_baseline(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            completion = self.fixture(root)
+            payload = json.loads(completion.read_text(encoding="utf-8"))
+            payload["ranking"]["candidates"] = payload["ranking"]["candidates"][:1]
+            completion.write_text(json.dumps(payload), encoding="utf-8")
+
+            review = root / "review"
+            built = subprocess.run([
+                "python3", str(BUILD), "--completion", str(completion),
+                "--output", str(review),
+            ], text=True, capture_output=True)
+
+            self.assertEqual(built.returncode, 0, built.stderr)
+            key = json.loads((review / "review-key.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(key["candidates"]), 2)
+            self.assertEqual({item["kind"] for item in key["candidates"]}, {"candidate", "baseline"})
+
 
 if __name__ == "__main__":
     unittest.main()
