@@ -15,10 +15,12 @@ import com.gahyeonbot.core.session.ConversationSession;
 import com.gahyeonbot.core.session.ConversationSessionId;
 import com.gahyeonbot.core.speech.AudioInput;
 import com.gahyeonbot.core.speech.AudioOutput;
+import com.gahyeonbot.core.speech.ExpressiveSpeechSynthesisUseCase;
 import com.gahyeonbot.core.speech.SpeechSegment;
 import com.gahyeonbot.core.speech.SpeechSynthesisUseCase;
 import com.gahyeonbot.core.speech.TranscriptionUseCase;
 import com.gahyeonbot.core.speech.VoiceProfileId;
+import com.gahyeonbot.core.speech.VoiceExpression;
 import com.gahyeonbot.adapters.discord.music.MusicService;
 import com.gahyeonbot.services.assistant.AssistantProperties;
 import com.gahyeonbot.services.tts.TtsTrackMetadata;
@@ -27,7 +29,6 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import jakarta.annotation.PreDestroy;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.audio.AudioReceiveHandler;
 import net.dv8tion.jda.api.audio.UserAudio;
@@ -36,6 +37,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.nio.file.Path;
 import java.util.ArrayDeque;
@@ -50,7 +52,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class VoiceAssistantService {
     private final AssistantProperties properties;
     private final TranscriptionUseCase transcription;
@@ -61,6 +62,51 @@ public class VoiceAssistantService {
     private final DiscordAudioFileMaterializer audioFiles;
     private final MusicService musicService;
     private final com.gahyeonbot.adapters.discord.audio.AudioManager audioManager;
+    private final ExpressiveSpeechSynthesisUseCase expressiveSpeech;
+    private final VoiceAssistantExpressionPolicy expressionPolicy;
+    private final VoiceAssistantSpeechRouter speechRouter;
+
+    @Autowired
+    public VoiceAssistantService(
+            AssistantProperties properties,
+            TranscriptionUseCase transcription,
+            ConversationUseCase conversation,
+            ConversationReadiness conversationReadiness,
+            DiscordIdentityMapper identityMapper,
+            SpeechSynthesisUseCase speechSynthesis,
+            DiscordAudioFileMaterializer audioFiles,
+            MusicService musicService,
+            com.gahyeonbot.adapters.discord.audio.AudioManager audioManager,
+            ExpressiveSpeechSynthesisUseCase expressiveSpeech,
+            VoiceAssistantExpressionPolicy expressionPolicy) {
+        this.properties = properties;
+        this.transcription = transcription;
+        this.conversation = conversation;
+        this.conversationReadiness = conversationReadiness;
+        this.identityMapper = identityMapper;
+        this.speechSynthesis = speechSynthesis;
+        this.audioFiles = audioFiles;
+        this.musicService = musicService;
+        this.audioManager = audioManager;
+        this.expressiveSpeech = expressiveSpeech;
+        this.expressionPolicy = expressionPolicy;
+        this.speechRouter = new VoiceAssistantSpeechRouter(speechSynthesis, expressiveSpeech);
+    }
+
+    VoiceAssistantService(
+            AssistantProperties properties,
+            TranscriptionUseCase transcription,
+            ConversationUseCase conversation,
+            ConversationReadiness conversationReadiness,
+            DiscordIdentityMapper identityMapper,
+            SpeechSynthesisUseCase speechSynthesis,
+            DiscordAudioFileMaterializer audioFiles,
+            MusicService musicService,
+            com.gahyeonbot.adapters.discord.audio.AudioManager audioManager) {
+        this(properties, transcription, conversation, conversationReadiness, identityMapper,
+                speechSynthesis, audioFiles, musicService, audioManager, null,
+                new VoiceAssistantExpressionPolicy());
+    }
 
     private final Map<Long, Session> sessions = new ConcurrentHashMap<>();
     private final ScheduledExecutorService silenceDetector =
@@ -132,7 +178,7 @@ public class VoiceAssistantService {
         }
         long revision = session.responseRevision.incrementAndGet();
         session.musicManager.interruptTtsPlayback();
-        session.queueSpeech(answer, revision);
+        session.queueSpeech(answer, revision, VoiceExpression.NATURAL);
         return true;
     }
 
@@ -171,6 +217,7 @@ public class VoiceAssistantService {
         private final AtomicLong responseRevision = new AtomicLong();
         private final VoiceAcknowledgementPolicy acknowledgementPolicy =
                 new VoiceAcknowledgementPolicy();
+        private final VoiceBargeInPolicy bargeInPolicy = new VoiceBargeInPolicy();
         private volatile boolean closed;
 
         private Session(Guild guild, AudioChannel voiceChannel, MessageChannel textChannel,
@@ -254,6 +301,11 @@ public class VoiceAssistantService {
                             detectedSpeechMillis, transcript.length());
                     return;
                 }
+                if (bargeInPolicy.isLikelySelfEcho(transcript, System.currentTimeMillis())) {
+                    log.info("비서 자기음성 에코 차단 guild={} user={} chars={}",
+                            guild.getIdLong(), userId, transcript.length());
+                    return;
+                }
                 RequestGuard guard = requestGuards.computeIfAbsent(userId, ignored -> new RequestGuard());
                 transcript = guard.mergeOrHold(transcript, System.currentTimeMillis());
                 if (transcript == null) {
@@ -266,6 +318,7 @@ public class VoiceAssistantService {
                     return;
                 }
                 long revision = responseRevision.incrementAndGet();
+                VoiceExpression expression = expressionPolicy.plan(transcript);
                 musicManager.interruptTtsPlayback();
                 textChannel.sendMessage("**" + username + "**: " + limit(transcript, 1500)).queue();
                 AtomicBoolean waitingForAnswer = new AtomicBoolean(true);
@@ -296,7 +349,7 @@ public class VoiceAssistantService {
                 if (properties.isSpeakResponses()
                         && speechSynthesis.isReady(VoiceProfileId.ASSISTANT) && !closed
                         && TtsSpeechText.isSafeToSpeak(answer)) {
-                    queueSpeech(answer, revision);
+                    queueSpeech(answer, revision, expression);
                 } else if (!TtsSpeechText.isSafeToSpeak(answer)) {
                     log.warn("내부 오류 형태의 응답은 음성 출력을 생략합니다. guild={} revision={}",
                             guild.getIdLong(), revision);
@@ -340,6 +393,7 @@ public class VoiceAssistantService {
                 if (segments.isEmpty()) return;
                 AudioOutput output = speechSynthesis.synthesize(
                         segments.getFirst(), VoiceProfileId.ASSISTANT);
+                bargeInPolicy.rememberBotSpeech(acknowledgement.message(), System.currentTimeMillis());
                 Path audio = audioFiles.materialize(output);
                 if (closed || revision != responseRevision.get() || !waitingForAnswer.get()) {
                     java.nio.file.Files.deleteIfExists(audio);
@@ -372,10 +426,10 @@ public class VoiceAssistantService {
             }
         }
 
-        private void queueSpeech(String answer, long revision) {
+        private void queueSpeech(String answer, long revision, VoiceExpression expression) {
             ttsWorker.submit(() -> {
                 try {
-                    speakLatest(answer, revision);
+                    speakLatest(answer, revision, expression);
                 } catch (Exception e) {
                     if (!closed && revision == responseRevision.get()) {
                         log.error("비서 TTS 처리 실패 guild={} revision={}",
@@ -385,13 +439,23 @@ public class VoiceAssistantService {
             });
         }
 
-        private void speakLatest(String answer, long revision) throws Exception {
+        private void speakLatest(String answer, long revision, VoiceExpression expression) throws Exception {
             String spokenText = TtsSpeechText.sanitize(answer);
             if (spokenText.isBlank()) return;
             for (SpeechSegment segment : speechSynthesis.prepare(spokenText)) {
                 if (closed || revision != responseRevision.get()) return;
-                AudioOutput output = speechSynthesis.synthesize(
-                        segment, VoiceProfileId.ASSISTANT);
+                boolean expressiveReady = expressiveSpeech != null
+                        && expressiveSpeech.isExpressiveReady(VoiceProfileId.ASSISTANT);
+                AudioOutput output = speechRouter.synthesize(
+                        segment, VoiceProfileId.ASSISTANT, expression);
+                bargeInPolicy.rememberBotSpeech(segment.text(), System.currentTimeMillis());
+                if (expressiveReady) {
+                    log.info("비서 표현형 TTS 완료 guild={} revision={} style={} intensityBucket={}",
+                            guild.getIdLong(), revision, expression.style(),
+                            Math.round(expression.intensity() * 10));
+                } else {
+                    log.info("비서 일반 TTS 완료 guild={} revision={} style=natural", guild.getIdLong(), revision);
+                }
                 Path audio = audioFiles.materialize(output);
                 if (closed || revision != responseRevision.get()) {
                     java.nio.file.Files.deleteIfExists(audio);
