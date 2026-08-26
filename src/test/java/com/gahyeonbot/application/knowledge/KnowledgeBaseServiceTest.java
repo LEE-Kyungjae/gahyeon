@@ -91,6 +91,21 @@ class KnowledgeBaseServiceTest {
                 .isEmpty();
     }
 
+    @Test
+    void ranksACompleteKoreanPhraseAboveARecentSingleTermDistractor() {
+        service.ingest(request("gahyeon", null, KnowledgeBaseService.AccessScope.SERVICE,
+                "프로젝트에 관한 일반적인 회의 기록이다."));
+        service.ingest(new KnowledgeBaseService.IngestionRequest(
+                "gahyeon", null, "text", "release-plan", null,
+                KnowledgeBaseService.AccessScope.SERVICE, "가현 프로젝트 배포 일정", "ko",
+                "가현 프로젝트 배포 일정은 금요일 오후 세 시다.", "{}"));
+
+        assertThat(service.search(new KnowledgeBaseService.SearchRequest(
+                "gahyeon", null, "가현 프로젝트 배포 일정", 10)))
+                .extracting(KnowledgeBaseService.SearchResult::title)
+                .startsWith("가현 프로젝트 배포 일정", "테스트 문서");
+    }
+
     private static KnowledgeBaseService.IngestionRequest request(String serviceId, String owner,
             KnowledgeBaseService.AccessScope scope, String body) {
         return new KnowledgeBaseService.IngestionRequest(serviceId, owner, "text", "test", null, scope,
