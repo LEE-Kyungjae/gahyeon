@@ -242,6 +242,16 @@
       "testMethod": "test_applies_style_output_gain_to_wav_without_overflow",
       "productionSignal": "Attested model/profile identity, style, output-gain bucket, clipped-sample count bucket, latency, and synthesis outcome without text, audio, or user identifier.",
       "rollbackTrigger": "Concerned output is materially quieter than natural speech, clips audibly, causes synthesis failures or latency regression, or any non-concerned style receives output gain."
+    },
+    {
+      "id": "qwen-concerned-production-route",
+      "domain": "tts",
+      "incident": "Production speech remained on Piper or the legacy zeze Vulkan Qwen endpoint, so the approved concerned loudness correction deployed to the land CUDA bridge received zero requests.",
+      "invariant": "The zeze Core expressive route targets the attested land Qwen 1.7B CUDA bridge at 10.42.0.1:18773 with c-int4-cuda-sm75-mixed while standard non-expressive speech retains its approved provider.",
+      "testFile": "scripts/test_qwen_original_voice_contract.py",
+      "testMethod": "test_approved_original_voice_cannot_regress_to_named_female_or_short_output",
+      "productionSignal": "Provider class, style, endpoint port, model and quantization attestation, HTTP outcome, latency, and audio byte-count bucket without transcript, audio, API key, or user identifier.",
+      "rollbackTrigger": "Expressive traffic returns to port 18771 or Vulkan attestation, port 18773 receives no qualifying expressive request while another provider speaks it, or the corrected route increases synthesis failures beyond the canary threshold."
     }
   ]
 }
