@@ -7,9 +7,9 @@
   },
   "window": {
     "startedAt": "2026-08-25T23:58:00Z",
-    "endedAt": "2026-08-26T00:00:13Z"
+    "endedAt": "2026-08-26T03:20:34Z"
   },
-  "observationSeconds": 133,
+  "observationSeconds": 12154,
   "qualifyingRequests": 0,
   "metrics": {
     "errorRate": 0.0,
@@ -26,6 +26,7 @@
     "flywaySuccess": true,
     "argocdSync": "Synced",
     "argocdHealth": "Healthy",
+    "argocdObservedRevision": "7e0ec6dd6b1c054f4049c240ab569f6f654c2b18",
     "conversationHistoryRows": 0,
     "agentRunRows": 0
   },
