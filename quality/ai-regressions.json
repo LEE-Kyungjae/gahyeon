@@ -210,6 +210,16 @@
       "testMethod": "characterSessionsKeepSharedGroundingAndToolBehaviorWithoutLosingPersona",
       "productionSignal": "Character ID, shared-behavior revision, tool-required decision, and grounding/failure outcome without prompt or conversation content.",
       "rollbackTrigger": "A character session loses current-data tool guidance, invents tool success, exposes internal state, or receives another character identity."
+    },
+    {
+      "id": "stt-unreal-hallucination-admission",
+      "domain": "stt",
+      "incident": "Discord rejected characteristic short-audio hallucinations, but the canonical Unreal streaming path accepted any nonblank bounded provider transcript and could forward the same hallucination to the agent.",
+      "invariant": "Canonical streaming STT measures admitted audio duration and rejects known short-audio hallucinations, implausible transcript lengths, and dominant token repetition before emitting a final transcript.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/unreal/UnrealStreamingTranscriptionStateMachineTest.java",
+      "testMethod": "rejectsKnownShortHallucinationBeforeItReachesCanonicalRuntime",
+      "productionSignal": "Hashed stream ID, captured-duration bucket, transcript-shape bucket, rejection reason, and provider class without transcript or audio content.",
+      "rollbackTrigger": "A known short-audio hallucination, impossible-length transcript, or dominant repeated token reaches the Unreal final-transcript sink."
     }
   ]
 }
