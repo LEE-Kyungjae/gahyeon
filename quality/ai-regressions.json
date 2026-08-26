@@ -220,6 +220,16 @@
       "testMethod": "rejectsKnownShortHallucinationBeforeItReachesCanonicalRuntime",
       "productionSignal": "Hashed stream ID, captured-duration bucket, transcript-shape bucket, rejection reason, and provider class without transcript or audio content.",
       "rollbackTrigger": "A known short-audio hallucination, impossible-length transcript, or dominant repeated token reaches the Unreal final-transcript sink."
+    },
+    {
+      "id": "tts-single-candidate-baseline-blind-review",
+      "domain": "tts",
+      "incident": "The blind listening builder rejected a completed promotion set containing one objectively selected candidate and the operating baseline, preventing the required two-way human comparison.",
+      "invariant": "A complete, checksum-verified candidate plus a complete, checksum-verified operating baseline produces a randomized two-label five-prompt blind review without leaking model identity.",
+      "testFile": "scripts/test_piper_listening_review.py",
+      "testMethod": "test_builds_two_way_review_for_one_candidate_and_the_baseline",
+      "productionSignal": "Review ID, candidate count, prompt count, checksum verification outcome, and identity-leak validation without model labels or audio content.",
+      "rollbackTrigger": "A one-candidate-plus-baseline completion cannot build, either identity leaks into the page, checksums are bypassed, or the review contains fewer than five matched prompts."
     }
   ]
 }
