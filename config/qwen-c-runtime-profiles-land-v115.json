@@ -1,0 +1,61 @@
+{
+  "gahyeon.assistant": {
+    "backendUrl": "http://127.0.0.1:18772/v1/tts",
+    "language": "Korean",
+    "seed": 42,
+    "minimumEmotionStrength": 0.15,
+    "maximumEmotionStrength": 0.35,
+    "styles": {
+      "natural": null,
+      "warm": {
+        "instruct": "Speak with a naturally warm and familiar tone, softly smiling without sounding theatrical."
+      },
+      "gentle": {
+        "instruct": "Speak gently and patiently, with soft consonants and relaxed pacing."
+      },
+      "bright": {
+        "emotion": "joy"
+      },
+      "surprised": {
+        "emotion": "surprise"
+      },
+      "concerned": {
+        "emotion": "sad",
+        "instruct": "Speak with attentive concern rather than grief, keeping the voice caring and grounded.",
+        "outputGain": 3.72
+      },
+      "serious": {
+        "instruct": "Speak in a calm, serious and focused voice with firm sentence endings."
+      },
+      "playful": {
+        "instruct": "Speak playfully and teasingly, with lively pitch movement and a knowing smile."
+      },
+      "fake_cute": {
+        "instruct": "Speak in a deliberately cute, playful and teasing voice, with a brighter pitch and slightly stretched vowels, as if knowingly pretending to be adorable.",
+        "rate": 0.95
+      },
+      "sarcastic": {
+        "instruct": "Speak with dry, restrained sarcasm and a subtly exaggerated sentence ending."
+      },
+      "sleepy": {
+        "instruct": "Speak in a sleepy, low-energy voice with slower pacing and soft breathiness.",
+        "rate": 0.9
+      },
+      "whisper": {
+        "instruct": "Speak very quietly in a close, breathy whisper without losing intelligibility."
+      },
+      "excited": {
+        "emotion": "excited"
+      },
+      "annoyed": {
+        "emotion": "annoyed"
+      },
+      "sad": {
+        "emotion": "sad"
+      },
+      "suppressed_laugh": {
+        "instruct": "Speak while visibly trying to suppress a laugh, letting amusement leak into the voice without adding new words."
+      }
+    }
+  }
+}
