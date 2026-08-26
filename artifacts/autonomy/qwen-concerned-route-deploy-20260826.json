@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "contractId": "fb8a8b56d7addfd6",
+  "policyId": "gahyeon-autonomy-v1",
+  "objective": "Route production expressive TTS through the corrected Qwen 1.7B CUDA bridge and redeploy Gahyeon Core",
+  "domain": "tts",
+  "constraints": [
+    "Do not roll back without explicit rollback authority",
+    "Keep standard non-expressive speech on the approved custom provider",
+    "Require the 1.7B Base and c-int4-cuda-sm75-mixed attestation"
+  ],
+  "requiredGates": [
+    {
+      "name": "impact-analysis",
+      "status": "passed",
+      "evidence": "GitNexus LOW risk with zero affected symbols and execution flows for the expressive provider configuration consumer."
+    },
+    {
+      "name": "regression-test",
+      "status": "passed",
+      "evidence": "python3 scripts/test_qwen_original_voice_contract.py and kubectl kustomize both passed."
+    },
+    {
+      "name": "ai-quality-gate",
+      "status": "passed",
+      "evidence": "bash scripts/run_ai_quality_gate.sh passed with 65 executable incident contracts."
+    },
+    {
+      "name": "blind-listening",
+      "status": "passed",
+      "evidence": "User approved the +11.4 dB concerned candidate after repeated A/B listening."
+    }
+  ],
+  "humanGates": [
+    {
+      "name": "blind-listening",
+      "status": "approved",
+      "approvedBy": "user",
+      "evidence": "User confirmed the corrected candidate was clearly improved."
+    },
+    {
+      "name": "production-deploy",
+      "status": "approved",
+      "approvedBy": "user",
+      "evidence": "User explicitly requested routing connection and redeployment."
+    }
+  ],
+  "deployment": {
+    "authorized": true,
+    "identity": {
+      "sourceCommit": "fd91fa5",
+      "artifactDigest": "ghcr.io/lee-kyungjae/gahyeonbot@sha256:05d815dc2fb240b1aebd098f1576c3d6f82f1a4c698e6715265af2840fc1483f",
+      "deploymentRevision": "infra:c0d0a1aa9cf6797e3a9b196a3a75cdf0d5d812b8;pod:6d03b8a1-c612-47b1-8c12-f1d6b2261d26",
+      "configurationIdentity": "qwen-1.7b-base:c-int4-cuda-sm75-mixed:http://10.42.0.1:18773/v1/speech"
+    },
+    "canary": {
+      "minimumObservationSeconds": 1800,
+      "minimumQualifyingRequests": 30,
+      "requiredIdentity": [
+        "sourceCommit",
+        "artifactDigest",
+        "deploymentRevision",
+        "configurationIdentity"
+      ],
+      "rollbackThresholds": [
+        {
+          "metric": "errorRate",
+          "operator": ">",
+          "value": 0.01
+        },
+        {
+          "metric": "p95LatencyRegressionMs",
+          "operator": ">",
+          "value": 300
+        },
+        {
+          "metric": "unexpectedTranscriptCount",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "metric": "emptyAudioCount",
+          "operator": ">",
+          "value": 0
+        }
+      ]
+    }
+  },
+  "status": "active"
+}
