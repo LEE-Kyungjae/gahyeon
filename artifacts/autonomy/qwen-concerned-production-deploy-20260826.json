@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "contractId": "04e82fba2ea84705",
+  "policyId": "gahyeon-autonomy-v1",
+  "objective": "Deploy the listener-approved Qwen 1.7B concerned loudness correction with bounded gain and observe production canary evidence",
+  "domain": "tts",
+  "constraints": [
+    "Apply output gain only to concerned style",
+    "Do not roll back without explicit rollback authority",
+    "Do not synthesize artificial canary traffic while land GPU free memory is below 4 GB",
+    "Preserve attested 1.7B Base voice identity and every non-concerned style"
+  ],
+  "requiredGates": [
+    {
+      "name": "impact-analysis",
+      "status": "passed",
+      "evidence": "GitNexus LOW risk for load_profiles, backend_request, and backend_stream; one direct bridge consumer each and no affected execution flows. Java adapter HIGH path avoided."
+    },
+    {
+      "name": "regression-test",
+      "status": "passed",
+      "evidence": "python3 -m unittest infra/images/qwen/test_c_runtime_bridge.py: 9 passed"
+    },
+    {
+      "name": "ai-quality-gate",
+      "status": "passed",
+      "evidence": "bash scripts/run_ai_quality_gate.sh passed with 64 executable incident contracts"
+    },
+    {
+      "name": "blind-listening",
+      "status": "passed",
+      "evidence": "User compared original A against +11.4 dB B twice and confirmed B was clearly improved."
+    }
+  ],
+  "humanGates": [
+    {
+      "name": "blind-listening",
+      "status": "approved",
+      "approvedBy": "user",
+      "evidence": "User stated that the corrected candidate was clearly improved."
+    },
+    {
+      "name": "production-deploy",
+      "status": "approved",
+      "approvedBy": "user",
+      "evidence": "User explicitly requested production application."
+    }
+  ],
+  "deployment": {
+    "authorized": true,
+    "identity": {
+      "sourceCommit": "d7aa74f603735f46a8c451a7544c31db03a9296b",
+      "artifactDigest": "sha256:8813d19a795604f5b427254d9d5f58f95f37817b892c81ee4b26ab8e0a5eebd1",
+      "deploymentRevision": "land:gahyeon-qwen-c-bridge.service:2026-08-26T20:02:39+09:00:pid-312116",
+      "configurationIdentity": "sha256:6d34bc3bf03089003fc059d2ae73d96412a0a4b38d2290ad78c904aa332d0932:qwen-1.7b-base-c-int4-cuda-sm75-mixed-concerned-gain-3.72"
+    },
+    "canary": {
+      "minimumObservationSeconds": 1800,
+      "minimumQualifyingRequests": 30,
+      "requiredIdentity": [
+        "sourceCommit",
+        "artifactDigest",
+        "deploymentRevision",
+        "configurationIdentity"
+      ],
+      "rollbackThresholds": [
+        {
+          "metric": "errorRate",
+          "operator": ">",
+          "value": 0.01
+        },
+        {
+          "metric": "p95LatencyRegressionMs",
+          "operator": ">",
+          "value": 300
+        },
+        {
+          "metric": "unexpectedTranscriptCount",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "metric": "emptyAudioCount",
+          "operator": ">",
+          "value": 0
+        }
+      ]
+    }
+  },
+  "status": "active"
+}
