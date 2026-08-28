@@ -1,0 +1,25 @@
+{
+  "identity": {
+    "sourceCommit": "5a3d9d1b021086b4916489c85894de7890c9fd51",
+    "artifactDigest": "ghcr.io/lee-kyungjae/gahyeonbot@sha256:0177c43277b2924f6a8d446810a73feb3f52a433ec5b17efb83216ef23f942ed",
+    "deploymentRevision": "infra:b4062c9d34bd61e9a88c296aab57062e210f20df;pod:12434144-5b34-459b-8987-46cf1c21c05d",
+    "configurationIdentity": "core:sha-5a3d9d1|sidecar:sha-622b525|qwen:Qwen3-TTS-1.7B-c-int4-cuda-sm75-mixed"
+  },
+  "windowStart": "2026-08-28T17:12:49+09:00",
+  "windowEnd": "2026-08-28T17:13:52+09:00",
+  "observationSeconds": 63,
+  "qualifyingRequests": 0,
+  "metrics": {},
+  "signals": {
+    "argocdSynced": true,
+    "argocdHealthy": true,
+    "coreImageTargetCorrect": true,
+    "sidecarImageUnchanged": true,
+    "applicationHealthUp": true,
+    "discordLeadership": true,
+    "applicationRestarts": 0,
+    "workerHealthy": true,
+    "qwenSpeechPosts": 0
+  },
+  "privacySafeSignal": "Named container images, release digest, Pod identity, health, restart counts, and Qwen request count only; no transcript, audio, credential, or user identifier retained."
+}
