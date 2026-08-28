@@ -130,6 +130,16 @@
       "testMethod": "mapsConcernAndEnglishPronunciationRequestsWithoutFlatteningThem",
       "productionSignal": "Expression style, intensity bucket, attested model identity, audio byte count, and synthesis latency.",
       "rollbackTrigger": "A concern request routes to neutral Piper or the Qwen request lacks the concerned style."
+    },
+    {
+      "id": "deployment-core-image-targeting",
+      "domain": "tts",
+      "incident": "The release workflow updated the edge-tts sidecar image while the gahyeonbot Core container remained pinned to an older digest, so new Qwen routing code never ran.",
+      "invariant": "A Core release updates exactly the container named gahyeonbot and leaves every sidecar image unchanged.",
+      "testFile": "scripts/test_update_k8s_container_image.py",
+      "testMethod": "test_updates_core_by_name_without_touching_first_sidecar",
+      "productionSignal": "Expected source tag, Core container image digest, sidecar image identity, Pod UID, and Qwen request count without conversation content.",
+      "rollbackTrigger": "The running Core image does not resolve to the release digest or any sidecar image is changed by the Core release step."
     }
   ]
 }

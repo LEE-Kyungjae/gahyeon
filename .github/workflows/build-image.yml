@@ -113,7 +113,10 @@ jobs:
         run: |
           set -euo pipefail
           FILE="infra-repo/k8s/apps/gahyeonbot/deployment.yaml"
-          perl -0pi -e 's#image: \Q${{ steps.meta.outputs.image }}\E:[^\s]+#image: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha_tag }}#g' "$FILE"
+          python3 scripts/update_k8s_container_image.py \
+            --file "$FILE" \
+            --container gahyeonbot \
+            --image "${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha_tag }}"
 
       - name: Commit infra image update
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.push_image == true)) && env.HAS_INFRA_REPO_TOKEN == 'true'
