@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BUILD_WORKFLOW = ROOT / ".github/workflows/build-image.yml"
 VERIFY_WORKFLOW = ROOT / ".github/workflows/verify-production.yml"
 CONTAINER_SMOKE = ROOT / "scripts/smoke_headless_container.sh"
+IMAGE_UPDATER = ROOT / "scripts/update_k8s_container_image.py"
 
 PUBLISH_CONDITION = (
     "if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || "
@@ -76,6 +77,15 @@ def verify() -> list[str]:
         errors.append("the Headless container smoke referenced by Build Image is not executable")
     if 'GAHYEON_HEADLESS_CONTAINER_SKIP_BUILD: "true"' not in build:
         errors.append("container smoke does not target the validation image built by the workflow")
+    infra_update = steps.get("Update infra image tag", "")
+    if "scripts/update_k8s_container_image.py" not in infra_update:
+        errors.append("infra update does not use the checked-in named-container updater")
+    if "--container gahyeonbot" not in infra_update:
+        errors.append("infra update does not target the gahyeonbot Core container by name")
+    if "perl -0pi" in infra_update:
+        errors.append("infra update still uses an unscoped image regex")
+    if not IMAGE_UPDATER.is_file():
+        errors.append("the named-container image updater referenced by Build Image is missing")
 
     if "workflows:\n      - Build Image" not in production:
         errors.append("Verify Production no longer follows the Build Image workflow")

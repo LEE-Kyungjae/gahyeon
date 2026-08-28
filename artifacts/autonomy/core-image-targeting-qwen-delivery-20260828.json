@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "contractId": "56ce1ed6f02aa9b0",
+  "policyId": "gahyeon-autonomy-v1",
+  "objective": "Fix production image automation so the gahyeonbot Core container, never the edge-tts sidecar, receives the built release image and verify Qwen delivery",
+  "domain": "tts",
+  "constraints": [
+    "Do not deploy until the full AI quality gate passes",
+    "Do not modify edge-tts image while deploying Core",
+    "Do not roll back without explicit authority",
+    "Fail closed unless exactly one named gahyeonbot container is updated"
+  ],
+  "requiredGates": [
+    {
+      "name": "impact-analysis",
+      "status": "passed",
+      "evidence": "GitNexus impact for the deployment contract verifier was LOW (3 direct, 0 execution flows); staged detection was LOW with 0 affected processes."
+    },
+    {
+      "name": "regression-test",
+      "status": "passed",
+      "evidence": "scripts/test_update_k8s_container_image.py reproduced the sidecar-first/Core-digest manifest and proved only the named gahyeonbot container changes; missing and duplicate targets fail closed."
+    },
+    {
+      "name": "ai-quality-gate",
+      "status": "passed",
+      "evidence": "bash scripts/run_ai_quality_gate.sh passed, including 14 executable incident contracts and the complete Gradle suite."
+    },
+    {
+      "name": "blind-listening",
+      "status": "passed",
+      "evidence": "Not applicable to image-targeting automation; no checkpoint, prompt, synthesis setting, or audio output changed."
+    }
+  ],
+  "humanGates": [
+    {
+      "name": "blind-listening",
+      "status": "approved",
+      "approvedBy": "not-applicable",
+      "evidence": "Deployment automation correction does not change subjective audio."
+    },
+    {
+      "name": "production-deploy",
+      "status": "approved",
+      "approvedBy": "user",
+      "evidence": "User explicitly requested production application earlier and requested this diagnosed delivery failure be improved."
+    }
+  ],
+  "deployment": {
+    "authorized": true,
+    "identity": {
+      "sourceCommit": null,
+      "artifactDigest": null,
+      "deploymentRevision": null,
+      "configurationIdentity": null
+    },
+    "canary": {
+      "minimumObservationSeconds": 1800,
+      "minimumQualifyingRequests": 30,
+      "requiredIdentity": [
+        "sourceCommit",
+        "artifactDigest",
+        "deploymentRevision",
+        "configurationIdentity"
+      ],
+      "rollbackThresholds": [
+        {
+          "metric": "errorRate",
+          "operator": ">",
+          "value": 0.01
+        },
+        {
+          "metric": "p95LatencyRegressionMs",
+          "operator": ">",
+          "value": 300
+        },
+        {
+          "metric": "unexpectedTranscriptCount",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "metric": "emptyAudioCount",
+          "operator": ">",
+          "value": 0
+        }
+      ]
+    }
+  },
+  "status": "active"
+}
