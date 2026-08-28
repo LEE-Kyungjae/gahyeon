@@ -1,0 +1,10 @@
+{
+  "name": "gahyeon-looking-glass-bridge",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Official Bridge protocol dependency for the canonical Unreal macOS runtime",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "holoplay-core": "0.0.11"
+  }
+}
