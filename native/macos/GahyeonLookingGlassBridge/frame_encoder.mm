@@ -75,6 +75,7 @@ int main() {
     [glContext makeCurrentContext];
     [glContext update];
     const bool flatMode = std::getenv("GAHYEON_LOOKING_GLASS_FLAT") != nullptr;
+    const bool staticMode = std::getenv("GAHYEON_LOOKING_GLASS_STATIC_QA") != nullptr;
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     if (!device || !initialize_bridge("Gahyeon Looking Glass GPU")) return 4;
     WINDOW_HANDLE window = 0;
@@ -129,9 +130,14 @@ int main() {
     id<MTLTexture> input = nil;
     bool shown = false;
     bool flatCaptured = false;
+    bool staticCaptured = false;
     auto lastPresented = std::chrono::steady_clock::now();
     while (Running.load()) @autoreleasepool {
         PumpAppEvents();
+        if (staticCaptured) {
+            if (!draw_interop_quilt_texture_metal(window, outputRaw, QuiltColumns, QuiltRows, 0.5625f, 1.0f)) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(8)); continue;
+        }
         if (flatCaptured) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10)); continue;
         }
@@ -158,7 +164,10 @@ int main() {
             || (QuiltColumns * QuiltRows) % viewCount != 0 || viewIndex >= viewCount) {
             lastSequence = header->sequence; continue;
         }
-        if (flatMode && (viewCount <= 1 || viewIndex != viewCount / 2)) {
+        if ((flatMode || staticMode) && viewCount <= 1) {
+            lastSequence = header->sequence; continue;
+        }
+        if (flatMode && viewIndex != viewCount / 2) {
             lastSequence = header->sequence; continue;
         }
         ComposeParameters parameters{flatMode ? 0u : viewIndex,
@@ -181,6 +190,9 @@ int main() {
             if (flatMode) {
                 flatCaptured = true;
                 std::fprintf(stderr, "GAHYEON_LKG_FLAT_IMAGE_READY source_view=%u\n", viewIndex);
+            } else if (staticMode) {
+                staticCaptured = true;
+                std::fprintf(stderr, "GAHYEON_LKG_STATIC_QUILT_READY views=%u\n", viewCount);
             }
             lastPresented = now;
         }
