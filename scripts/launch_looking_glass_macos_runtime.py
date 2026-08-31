@@ -26,7 +26,8 @@ def build_encoder() -> None:
     subprocess.run([
         "clang++", "-std=c++17", "-Werror", "-Wall", "-Wextra", "-fobjc-arc",
         "-I", str(BRIDGE_APP / "runtime"), str(source),
-        "-framework", "Foundation", "-framework", "CoreGraphics", "-framework", "Metal",
+        "-framework", "Foundation", "-framework", "AppKit",
+        "-framework", "CoreGraphics", "-framework", "Metal",
         str(BRIDGE_APP / "MacOS/libbridge_inproc.dylib"),
         "-Wl,-rpath," + str(BRIDGE_APP / "MacOS"), "-o", str(ENCODER),
     ], cwd=ROOT, check=True)

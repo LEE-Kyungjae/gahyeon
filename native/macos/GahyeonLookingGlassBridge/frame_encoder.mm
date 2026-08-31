@@ -1,3 +1,4 @@
+#import <AppKit/AppKit.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
@@ -37,10 +38,25 @@ static_assert(sizeof(FrameHeader) == HeaderBytes);
 
 void Stop(int) { Running.store(false); }
 
+void PumpAppEvents() {
+    for (;;) {
+        NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
+                                         untilDate:[NSDate distantPast]
+                                            inMode:NSDefaultRunLoopMode
+                                           dequeue:YES];
+        if (!event) break;
+        [NSApp sendEvent:event];
+    }
+    [NSApp updateWindows];
+}
+
 }
 
 int main() {
     signal(SIGINT, Stop); signal(SIGTERM, Stop);
+    [NSApplication sharedApplication];
+    [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+    [NSApp finishLaunching];
     id<MTLDevice> metalDevice = MTLCreateSystemDefaultDevice();
     if (!metalDevice || !initialize_bridge("Gahyeon Looking Glass")) {
         std::fprintf(stderr, "GAHYEON_LKG_METAL_INIT_FAILED\n");
@@ -66,7 +82,7 @@ int main() {
         return 6;
     }
     id<MTLTexture> bridgeTexture = (__bridge id<MTLTexture>)bridgeTextureRaw;
-    show_window(window, true);
+    set_window_polling(window, true);
     std::fprintf(stderr, "GAHYEON_LKG_METAL_READY display=%lu quilt=%zux%zu views=%zux%zu\n",
                  displayIndex, OutputWidth, OutputHeight, QuiltColumns, QuiltRows);
     int fd = -1;
@@ -81,6 +97,7 @@ int main() {
     if (region == MAP_FAILED) return 3;
 
     uint64_t lastSequence = 0;
+    bool windowShown = false;
     auto nextFrame = std::chrono::steady_clock::now();
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     const size_t outputStride = OutputWidth * 4;
@@ -94,6 +111,7 @@ int main() {
     CGContextTranslateCTM(context, 0, OutputHeight);
     CGContextScaleCTM(context, 1, -1);
     while (Running.load()) @autoreleasepool {
+        PumpAppEvents();
         const auto* header = reinterpret_cast<const FrameHeader*>(region);
         if (header->magic != FrameMagic || header->sequence == 0 || header->sequence == lastSequence ||
             std::chrono::steady_clock::now() < nextFrame) {
@@ -160,6 +178,16 @@ int main() {
             presented = draw_interop_quilt_texture_metal(
                 window, bridgeTextureRaw, QuiltColumns, QuiltRows, 0.5625f, 1.0f);
             if (!presented) std::fprintf(stderr, "GAHYEON_LKG_METAL_DRAW_FAILED\n");
+            if (presented && !windowShown) {
+                windowShown = show_window(window, true);
+                unsigned long windowWidth = 0, windowHeight = 0;
+                long windowX = 0, windowY = 0;
+                get_window_dimensions(window, &windowWidth, &windowHeight);
+                get_window_position(window, &windowX, &windowY);
+                std::fprintf(stderr,
+                    "GAHYEON_LKG_METAL_PRESENTED shown=%d window=%lux%lu position=%ld,%ld\n",
+                    windowShown, windowWidth, windowHeight, windowX, windowY);
+            }
             for (size_t pixel = 0; pixel < OutputWidth * OutputHeight; ++pixel) {
                 std::swap(outputPixels[pixel * 4], outputPixels[pixel * 4 + 2]);
             }
