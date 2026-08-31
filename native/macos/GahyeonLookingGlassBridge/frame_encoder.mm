@@ -50,18 +50,6 @@ void PumpAppEvents() {
     [NSApp updateWindows];
 }
 
-void FlipQuiltForMetal(uint8_t* pixels, size_t stride) {
-    for (size_t top = 0; top < OutputHeight / 2; ++top) {
-        const size_t bottom = OutputHeight - 1 - top;
-        for (size_t byte = 0; byte < stride; ++byte) {
-            std::swap(pixels[top * stride + byte], pixels[bottom * stride + byte]);
-        }
-    }
-    for (size_t pixel = 0; pixel < OutputWidth * OutputHeight; ++pixel) {
-        std::swap(pixels[pixel * 4], pixels[pixel * 4 + 2]);
-    }
-}
-
 }
 
 int main() {
@@ -116,12 +104,10 @@ int main() {
     auto* outputPixels = static_cast<uint8_t*>(std::calloc(OutputHeight, outputStride));
     CGContextRef context = CGBitmapContextCreate(
         outputPixels, OutputWidth, OutputHeight, 8, outputStride, colorSpace,
-        kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+        kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast);
     CGContextSetRGBFillColor(context, 0, 0, 0, 1);
     CGContextFillRect(context, CGRectMake(0, 0, OutputWidth, OutputHeight));
     CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
-    CGContextTranslateCTM(context, 0, OutputHeight);
-    CGContextScaleCTM(context, 1, -1);
     while (Running.load()) @autoreleasepool {
         PumpAppEvents();
         const auto* header = reinterpret_cast<const FrameHeader*>(region);
@@ -152,14 +138,20 @@ int main() {
             CGFloat(TileHeight) / CGFloat(CGImageGetHeight(croppedImage)));
         const CGSize fitted = CGSizeMake(CGImageGetWidth(croppedImage) * scale,
                                          CGImageGetHeight(croppedImage) * scale);
-        if (header->viewCount == QuiltColumns * QuiltRows) {
+        const size_t quiltSlots = QuiltColumns * QuiltRows;
+        const bool validMultiview = header->viewCount > 0 && header->viewCount <= quiltSlots
+            && quiltSlots % header->viewCount == 0 && header->viewIndex < header->viewCount;
+        if (validMultiview) {
             if (header->viewIndex == 0) {
                 CGContextSetRGBFillColor(context, 0, 0, 0, 1);
                 CGContextFillRect(context, CGRectMake(0, 0, OutputWidth, OutputHeight));
             }
-            const size_t row = header->viewIndex / QuiltColumns;
-            const size_t column = header->viewIndex % QuiltColumns;
-            if (row < QuiltRows) {
+            const size_t copiesPerView = quiltSlots / header->viewCount;
+            const size_t firstSlot = header->viewIndex * copiesPerView;
+            for (size_t copy = 0; copy < copiesPerView; ++copy) {
+                const size_t slot = firstSlot + copy;
+                const size_t row = slot / QuiltColumns;
+                const size_t column = slot % QuiltColumns;
                 const CGRect destinationRect = CGRectMake(
                     column * TileWidth + (TileWidth - fitted.width) * 0.5,
                     row * TileHeight + (TileHeight - fitted.height) * 0.5,
@@ -177,11 +169,9 @@ int main() {
                 }
             }
         }
-        const bool quiltComplete = header->viewCount != QuiltColumns * QuiltRows
-            || header->viewIndex == QuiltColumns * QuiltRows - 1;
+        const bool quiltComplete = !validMultiview || header->viewIndex + 1 == header->viewCount;
         bool presented = true;
         if (quiltComplete) {
-            FlipQuiltForMetal(outputPixels, outputStride);
             const MTLRegion textureRegion = MTLRegionMake2D(0, 0, OutputWidth, OutputHeight);
             [bridgeTexture replaceRegion:textureRegion mipmapLevel:0
                               withBytes:outputPixels bytesPerRow:outputStride];
@@ -198,7 +188,6 @@ int main() {
                     "GAHYEON_LKG_METAL_PRESENTED shown=%d window=%lux%lu position=%ld,%ld\n",
                     windowShown, windowWidth, windowHeight, windowX, windowY);
             }
-            FlipQuiltForMetal(outputPixels, outputStride);
         }
 
         CGImageRelease(croppedImage);
