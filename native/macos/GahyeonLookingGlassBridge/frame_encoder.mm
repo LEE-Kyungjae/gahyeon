@@ -2,6 +2,7 @@
 #import <Foundation/Foundation.h>
 #import <IOSurface/IOSurface.h>
 #import <Metal/Metal.h>
+#import <OpenGL/OpenGL.h>
 
 #include "bridge.h"
 #include <atomic>
@@ -54,6 +55,25 @@ int main() {
     [NSApplication sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
     [NSApp finishLaunching];
+    NSOpenGLPixelFormatAttribute glAttributes[] = {
+        NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
+        NSOpenGLPFAAccelerated,
+        NSOpenGLPFADoubleBuffer,
+        0
+    };
+    NSOpenGLPixelFormat* glPixelFormat = [[NSOpenGLPixelFormat alloc]
+        initWithAttributes:glAttributes];
+    NSOpenGLContext* glContext = glPixelFormat
+        ? [[NSOpenGLContext alloc] initWithFormat:glPixelFormat shareContext:nil] : nil;
+    NSWindow* glHostWindow = [[NSWindow alloc]
+        initWithContentRect:NSMakeRect(-10000, -10000, 16, 16)
+                  styleMask:NSWindowStyleMaskBorderless
+                    backing:NSBackingStoreBuffered
+                      defer:NO];
+    if (!glContext || !glHostWindow) return 3;
+    [glContext setView:glHostWindow.contentView];
+    [glContext makeCurrentContext];
+    [glContext update];
     const bool flatMode = std::getenv("GAHYEON_LOOKING_GLASS_FLAT") != nullptr;
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     if (!device || !initialize_bridge("Gahyeon Looking Glass GPU")) return 4;
@@ -62,7 +82,7 @@ int main() {
         uninitialize_bridge(); return 5;
     }
     set_window_polling(window, true);
-    std::fprintf(stderr, "GAHYEON_LKG_METAL_READY gpu_iosurface=1\n");
+    std::fprintf(stderr, "GAHYEON_LKG_METAL_READY gpu_iosurface=1 gl_bootstrap=1\n");
 
     MTLTextureDescriptor* outputDescriptor = [MTLTextureDescriptor
         texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
