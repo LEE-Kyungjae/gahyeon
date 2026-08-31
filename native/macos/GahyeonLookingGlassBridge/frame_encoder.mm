@@ -8,6 +8,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/mman.h>
@@ -53,6 +54,7 @@ int main() {
     [NSApplication sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
     [NSApp finishLaunching];
+    const bool flatMode = std::getenv("GAHYEON_LOOKING_GLASS_FLAT") != nullptr;
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     if (!device || !initialize_bridge("Gahyeon Looking Glass GPU")) return 4;
     WINDOW_HANDLE window = 0;
@@ -106,9 +108,13 @@ int main() {
     IOSurfaceRef surface = nullptr;
     id<MTLTexture> input = nil;
     bool shown = false;
+    bool flatCaptured = false;
     auto lastPresented = std::chrono::steady_clock::now();
     while (Running.load()) @autoreleasepool {
         PumpAppEvents();
+        if (flatCaptured) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10)); continue;
+        }
         if (header->magic != SurfaceMagic || header->sequence == 0 || header->sequence == lastSequence) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1)); continue;
         }
@@ -125,12 +131,19 @@ int main() {
             activeSurfaceID = header->surfaceID;
         }
         const uint32_t viewCount = header->viewCount;
+        const uint32_t viewIndex = header->viewIndex;
+        const uint32_t cropMinX = header->cropMinX, cropMinY = header->cropMinY;
+        const uint32_t cropMaxX = header->cropMaxX, cropMaxY = header->cropMaxY;
         if (!input || viewCount == 0 || viewCount > QuiltColumns * QuiltRows
-            || (QuiltColumns * QuiltRows) % viewCount != 0 || header->viewIndex >= viewCount) {
+            || (QuiltColumns * QuiltRows) % viewCount != 0 || viewIndex >= viewCount) {
             lastSequence = header->sequence; continue;
         }
-        ComposeParameters parameters{header->viewIndex, uint32_t((QuiltColumns * QuiltRows) / viewCount),
-            header->cropMinX, header->cropMinY, header->cropMaxX, header->cropMaxY};
+        if (flatMode && (viewCount <= 1 || viewIndex != viewCount / 2)) {
+            lastSequence = header->sequence; continue;
+        }
+        ComposeParameters parameters{flatMode ? 0u : viewIndex,
+            flatMode ? uint32_t(QuiltColumns * QuiltRows) : uint32_t((QuiltColumns * QuiltRows) / viewCount),
+            cropMinX, cropMinY, cropMaxX, cropMaxY};
         id<MTLCommandBuffer> command = [queue commandBuffer];
         id<MTLComputeCommandEncoder> encoder = [command computeCommandEncoder];
         [encoder setComputePipelineState:pipeline];
@@ -139,12 +152,16 @@ int main() {
         [encoder dispatchThreads:MTLSizeMake(TileWidth, TileHeight, parameters.copiesPerView)
             threadsPerThreadgroup:MTLSizeMake(16, 16, 1)];
         [encoder endEncoding]; [command commit]; [command waitUntilCompleted];
-        if (header->viewIndex + 1 == viewCount) {
+        if (flatMode || viewIndex + 1 == viewCount) {
             if (!draw_interop_quilt_texture_metal(window, outputRaw, QuiltColumns, QuiltRows, 0.5625f, 1.0f)) break;
             if (!shown) shown = show_window(window, true);
             const auto now = std::chrono::steady_clock::now();
             const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastPresented).count();
             std::fprintf(stderr, "GAHYEON_LKG_GPU_QUILT interval_ms=%lld shown=%d\n", static_cast<long long>(ms), shown);
+            if (flatMode) {
+                flatCaptured = true;
+                std::fprintf(stderr, "GAHYEON_LKG_FLAT_IMAGE_READY source_view=%u\n", viewIndex);
+            }
             lastPresented = now;
         }
         lastSequence = header->sequence;
