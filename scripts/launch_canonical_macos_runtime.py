@@ -160,24 +160,27 @@ def main() -> int:
     terminate_existing_runtime(command, overlay_binary)
     unlink_stale_shared_memory()
     unreal = subprocess.Popen(command, cwd=ROOT)
-    overlay = subprocess.Popen([str(overlay_binary)], cwd=ROOT)
+    overlay = None if os.environ.get("GAHYEON_LOOKING_GLASS_NO_OVERLAY") == "1" else subprocess.Popen(
+        [str(overlay_binary)], cwd=ROOT
+    )
     try:
         time.sleep(5)
         reactivate_application(prior_application)
-        while unreal.poll() is None and overlay.poll() is None:
+        while unreal.poll() is None and (overlay is None or overlay.poll() is None):
             time.sleep(0.25)
-        if overlay.poll() is not None and unreal.poll() is None:
+        if overlay is not None and overlay.poll() is not None and unreal.poll() is None:
             unreal.terminate()
         return unreal.wait()
     finally:
         if unreal.poll() is None:
             unreal.terminate()
-        if overlay.poll() is None:
+        if overlay is not None and overlay.poll() is None:
             overlay.terminate()
-        try:
-            overlay.wait(timeout=3)
-        except subprocess.TimeoutExpired:
-            overlay.kill()
+        if overlay is not None:
+            try:
+                overlay.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                overlay.kill()
 
 
 if __name__ == "__main__":
