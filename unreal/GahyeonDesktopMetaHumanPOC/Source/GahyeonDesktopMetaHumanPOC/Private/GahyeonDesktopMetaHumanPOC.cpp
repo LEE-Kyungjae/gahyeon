@@ -270,7 +270,9 @@ private:
                 LookingGlassViewCount,
                 LookingGlassViewConeDegrees);
         }
-        const float ViewT = (float(CurrentViewIndex) / float(LookingGlassViewCount - 1)) * 2.0f - 1.0f;
+        // Looking Glass quilt slots advance from the observer's right-hand view to left-hand view.
+        const float ViewT = 1.0f
+            - (float(CurrentViewIndex) / float(LookingGlassViewCount - 1)) * 2.0f;
         const FVector Forward = OriginalCameraRotation.Vector();
         const FVector Right = FRotationMatrix(OriginalCameraRotation).GetUnitAxis(EAxis::Y);
         const float FocusDistance = FVector::DotProduct(
