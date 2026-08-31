@@ -12,6 +12,19 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class CanonicalMacosRuntimeTest(unittest.TestCase):
+    def test_looking_glass_mode_uses_bounded_memory_quality(self):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from launch_canonical_macos_runtime import build_command, load_manifest
+
+        with patch.dict("os.environ", {"GAHYEON_LOOKING_GLASS_QUILT": "1"}, clear=True):
+            command = build_command(load_manifest())
+        commands = next(item for item in command if item.startswith("-ExecCmds="))
+        self.assertIn("r.TextureStreaming 1", commands)
+        self.assertIn("r.Streaming.PoolSize 512", commands)
+        self.assertIn("r.ScreenPercentage 70", commands)
+        self.assertIn("r.SkeletalMeshLODBias 0", commands)
+        self.assertNotIn("r.TextureStreaming 0", commands)
+
     def test_looking_glass_mode_is_explicitly_opt_in(self):
         sys.path.insert(0, str(ROOT / "scripts"))
         from launch_canonical_macos_runtime import build_command, load_manifest

@@ -43,22 +43,24 @@ def build_command(value: dict) -> list[str]:
     missing = [str(path) for path in (editor, project) if not path.is_file()]
     if missing:
         raise RuntimeError(f"canonical Unreal prerequisites missing: {missing}")
+    looking_glass_mode = os.environ.get("GAHYEON_LOOKING_GLASS_QUILT") == "1"
     quality_commands = ",".join((
         "r.MotionBlurQuality 0",
         "r.DefaultFeature.MotionBlur 0",
-        "r.ScreenPercentage 100",
-        "r.MaxAnisotropy 16",
-        "r.SkeletalMeshLODBias -1",
-        "r.MipMapLODBias -1",
-        "r.TextureStreaming 0",
-        "sg.AntiAliasingQuality 4",
+        f"r.ScreenPercentage {70 if looking_glass_mode else 100}",
+        f"r.MaxAnisotropy {8 if looking_glass_mode else 16}",
+        f"r.SkeletalMeshLODBias {0 if looking_glass_mode else -1}",
+        f"r.MipMapLODBias {0 if looking_glass_mode else -1}",
+        f"r.TextureStreaming {1 if looking_glass_mode else 0}",
+        f"r.Streaming.PoolSize {512 if looking_glass_mode else 0}",
+        f"sg.AntiAliasingQuality {2 if looking_glass_mode else 4}",
         "r.AntiAliasingMethod 1",
         "r.ExposureOffset 0.5",
         "r.PostProcessing.PropagateAlpha 1",
-        "sg.ShadowQuality 4",
-        "sg.TextureQuality 4",
-        "sg.EffectsQuality 4",
-        "sg.PostProcessQuality 4",
+        f"sg.ShadowQuality {2 if looking_glass_mode else 4}",
+        f"sg.TextureQuality {2 if looking_glass_mode else 4}",
+        f"sg.EffectsQuality {2 if looking_glass_mode else 4}",
+        f"sg.PostProcessQuality {2 if looking_glass_mode else 4}",
     ))
     command = [
         str(editor), str(project), macos["runtimeMap"],
@@ -66,7 +68,7 @@ def build_command(value: dict) -> list[str]:
         "-nosourcecontrol", "-nop4", "-GahyeonCPUAlphaFallback",
         "-GahyeonAutoStartMicrophone", f"-ExecCmds={quality_commands}",
     ]
-    if os.environ.get("GAHYEON_LOOKING_GLASS_QUILT") == "1":
+    if looking_glass_mode:
         command.append("-GahyeonLookingGlassQuilt")
     return command
 
