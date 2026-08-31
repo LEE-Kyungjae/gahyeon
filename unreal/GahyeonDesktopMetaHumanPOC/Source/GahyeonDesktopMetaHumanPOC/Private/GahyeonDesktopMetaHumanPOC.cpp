@@ -20,7 +20,7 @@ namespace
 {
 constexpr uint32 FrameMagic = 0x47485247; // GHRG
 constexpr uint32 FrameVersion = 1;
-constexpr uint32 LookingGlassViewCount = 66;
+constexpr uint32 LookingGlassViewCount = 11;
 constexpr float LookingGlassViewConeHalfAngle = 10.0f;
 constexpr int32 FrameWidth = 1600;
 constexpr int32 FrameHeight = 1258;
