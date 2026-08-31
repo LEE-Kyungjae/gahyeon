@@ -14,6 +14,7 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
                    "GahyeonDesktopMetaHumanPOC/Private/GahyeonDesktopMetaHumanPOC.cpp").read_text()
         encoder = (ROOT / "native/macos/GahyeonLookingGlassBridge/frame_encoder.mm").read_text()
         self.assertIn('runtime_environment["GAHYEON_LOOKING_GLASS_QUILT"] = "1"', launcher)
+        self.assertIn('runtime_environment["GAHYEON_LOOKING_GLASS_NO_OVERLAY"] = "1"', launcher)
         self.assertIn("time.sleep(2.0)", launcher)
         self.assertIn("LookingGlassViewCount = 66", runtime)
         self.assertIn("PrepareLookingGlassView", runtime)
@@ -25,14 +26,17 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn("launch_canonical_macos_runtime.py", source)
         self.assertIn("setup_looking_glass_macos.py", source)
         self.assertIn("GahyeonLookingGlassFrameEncoder", source)
-        self.assertIn("stream_unreal_to_looking_glass.cjs", source)
+        self.assertIn('stream = subprocess.Popen([str(ENCODER)]', source)
         self.assertNotIn("desktop/package", source)
         self.assertNotIn("electron", source.lower())
 
-    def test_stream_uses_dedicated_official_protocol_dependency(self):
-        source = (ROOT / "scripts/stream_unreal_to_looking_glass.cjs").read_text()
-        self.assertIn("native/macos/GahyeonLookingGlassBridge/node_modules/holoplay-core", source)
-        self.assertNotIn("desktop/node_modules", source)
+    def test_stream_uses_native_bridge_metal_interop(self):
+        source = (ROOT / "native/macos/GahyeonLookingGlassBridge/frame_encoder.mm").read_text()
+        self.assertIn("instance_window_metal", source)
+        self.assertIn("draw_interop_quilt_texture_metal", source)
+        self.assertIn("create_metal_texture_with_iosurface", source)
+        self.assertIn("FIRST_LOOKING_GLASS_DEVICE", source)
+        self.assertIn("GAHYEON_LKG_METAL_READY", source)
 
 
 if __name__ == "__main__":

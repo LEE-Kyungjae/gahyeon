@@ -1,6 +1,8 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
-#import <ImageIO/ImageIO.h>
+#import <Metal/Metal.h>
+
+#include "bridge.h"
 
 #include <algorithm>
 #include <atomic>
@@ -35,20 +37,38 @@ static_assert(sizeof(FrameHeader) == HeaderBytes);
 
 void Stop(int) { Running.store(false); }
 
-bool WriteAll(const void* source, size_t bytes) {
-    const auto* cursor = static_cast<const uint8_t*>(source);
-    while (bytes > 0) {
-        const ssize_t written = write(STDOUT_FILENO, cursor, bytes);
-        if (written <= 0) return false;
-        cursor += written;
-        bytes -= static_cast<size_t>(written);
-    }
-    return true;
-}
 }
 
 int main() {
-    signal(SIGINT, Stop); signal(SIGTERM, Stop); signal(SIGPIPE, Stop);
+    signal(SIGINT, Stop); signal(SIGTERM, Stop);
+    id<MTLDevice> metalDevice = MTLCreateSystemDefaultDevice();
+    if (!metalDevice || !initialize_bridge("Gahyeon Looking Glass")) {
+        std::fprintf(stderr, "GAHYEON_LKG_METAL_INIT_FAILED\n");
+        return 4;
+    }
+    WINDOW_HANDLE window = 0;
+    if (!instance_window_metal((__bridge void*)metalDevice, &window, FIRST_LOOKING_GLASS_DEVICE)) {
+        std::fprintf(stderr, "GAHYEON_LKG_METAL_WINDOW_FAILED\n");
+        uninitialize_bridge();
+        return 5;
+    }
+    unsigned long displayIndex = 0;
+    get_display_for_window(window, &displayIndex);
+    MTLTextureDescriptor* descriptor = [MTLTextureDescriptor
+        texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
+        width:OutputWidth height:OutputHeight mipmapped:NO];
+    descriptor.usage = MTLTextureUsageShaderRead;
+    descriptor.storageMode = MTLStorageModeShared;
+    void* bridgeTextureRaw = nullptr;
+    if (!create_metal_texture_with_iosurface(window, (__bridge void*)descriptor, &bridgeTextureRaw)) {
+        std::fprintf(stderr, "GAHYEON_LKG_METAL_TEXTURE_FAILED\n");
+        uninitialize_bridge();
+        return 6;
+    }
+    id<MTLTexture> bridgeTexture = (__bridge id<MTLTexture>)bridgeTextureRaw;
+    show_window(window, true);
+    std::fprintf(stderr, "GAHYEON_LKG_METAL_READY display=%lu quilt=%zux%zu views=%zux%zu\n",
+                 displayIndex, OutputWidth, OutputHeight, QuiltColumns, QuiltRows);
     int fd = -1;
     while (Running.load() && fd < 0) {
         fd = shm_open("/gahyeon_rgba_v003", O_RDONLY, 0);
@@ -129,30 +149,32 @@ int main() {
         }
         const bool quiltComplete = header->viewCount != QuiltColumns * QuiltRows
             || header->viewIndex == QuiltColumns * QuiltRows - 1;
-        CGImageRef image = quiltComplete ? CGBitmapContextCreateImage(context) : nullptr;
-        CFMutableDataRef encoded = CFDataCreateMutable(kCFAllocatorDefault, 0);
-        CGImageDestinationRef destination = image ? CGImageDestinationCreateWithData(
-            encoded, CFSTR("public.jpeg"), 1, nullptr) : nullptr;
-        const void* keys[] = { kCGImageDestinationLossyCompressionQuality };
-        const void* values[] = { (__bridge CFNumberRef)@(0.82) };
-        CFDictionaryRef options = CFDictionaryCreate(
-            kCFAllocatorDefault, keys, values, 1,
-            &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-        if (destination) CGImageDestinationAddImage(destination, image, options);
-        const bool finalized = destination && CGImageDestinationFinalize(destination);
-        const uint32_t length = finalized ? static_cast<uint32_t>(CFDataGetLength(encoded)) : 0;
-        const uint32_t networkLength = __builtin_bswap32(length);
-        const bool written = length > 0 && WriteAll(&networkLength, sizeof(networkLength)) &&
-            WriteAll(CFDataGetBytePtr(encoded), length);
+        bool presented = true;
+        if (quiltComplete) {
+            for (size_t pixel = 0; pixel < OutputWidth * OutputHeight; ++pixel) {
+                std::swap(outputPixels[pixel * 4], outputPixels[pixel * 4 + 2]);
+            }
+            const MTLRegion textureRegion = MTLRegionMake2D(0, 0, OutputWidth, OutputHeight);
+            [bridgeTexture replaceRegion:textureRegion mipmapLevel:0
+                              withBytes:outputPixels bytesPerRow:outputStride];
+            presented = draw_interop_quilt_texture_metal(
+                window, bridgeTextureRaw, QuiltColumns, QuiltRows, 0.5625f, 1.0f);
+            if (!presented) std::fprintf(stderr, "GAHYEON_LKG_METAL_DRAW_FAILED\n");
+            for (size_t pixel = 0; pixel < OutputWidth * OutputHeight; ++pixel) {
+                std::swap(outputPixels[pixel * 4], outputPixels[pixel * 4 + 2]);
+            }
+        }
 
-        CFRelease(options); if (destination) CFRelease(destination); CFRelease(encoded);
-        if (image) CGImageRelease(image); CGImageRelease(croppedImage);
+        CGImageRelease(croppedImage);
         CGImageRelease(sourceImage);
         CGDataProviderRelease(provider); CFRelease(pixels);
-        if (quiltComplete && !written) break;
+        if (!presented) break;
         lastSequence = header->sequence;
         nextFrame = std::chrono::steady_clock::now() + std::chrono::milliseconds(10);
     }
+    show_window(window, false);
+    release_metal_texture(window, bridgeTextureRaw);
+    uninitialize_bridge();
     CGContextRelease(context); std::free(outputPixels); CGColorSpaceRelease(colorSpace);
     munmap(region, regionBytes); close(fd);
     return 0;

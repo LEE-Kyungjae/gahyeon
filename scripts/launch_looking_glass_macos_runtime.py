@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 NATIVE = ROOT / "native/macos/GahyeonLookingGlassBridge"
 BUILD = ROOT / ".build/macos-looking-glass"
 ENCODER = BUILD / "GahyeonLookingGlassFrameEncoder"
-PACKAGE_LOCK = NATIVE / "package-lock.json"
+BRIDGE_APP = Path("/Applications/Looking Glass Bridge 2.6.3.app/Contents")
 
 
 def build_encoder() -> None:
@@ -25,17 +25,11 @@ def build_encoder() -> None:
         return
     subprocess.run([
         "clang++", "-std=c++17", "-Werror", "-Wall", "-Wextra", "-fobjc-arc",
-        str(source), "-framework", "Foundation", "-framework", "CoreGraphics",
-        "-framework", "ImageIO", "-o", str(ENCODER),
+        "-I", str(BRIDGE_APP / "runtime"), str(source),
+        "-framework", "Foundation", "-framework", "CoreGraphics", "-framework", "Metal",
+        str(BRIDGE_APP / "MacOS/libbridge_inproc.dylib"),
+        "-Wl,-rpath," + str(BRIDGE_APP / "MacOS"), "-o", str(ENCODER),
     ], cwd=ROOT, check=True)
-
-
-def install_protocol_dependency() -> None:
-    module = NATIVE / "node_modules/holoplay-core"
-    if module.is_dir():
-        return
-    command = ["npm", "ci"] if PACKAGE_LOCK.is_file() else ["npm", "install", "--package-lock-only=false"]
-    subprocess.run(command, cwd=NATIVE, check=True)
 
 
 def terminate(process: subprocess.Popen) -> None:
@@ -54,10 +48,10 @@ def main() -> int:
     subprocess.run([sys.executable, str(ROOT / "scripts/setup_looking_glass_macos.py"),
                     "--no-open-download"], cwd=ROOT, check=True)
     build_encoder()
-    install_protocol_dependency()
 
     runtime_environment = os.environ.copy()
     runtime_environment["GAHYEON_LOOKING_GLASS_QUILT"] = "1"
+    runtime_environment["GAHYEON_LOOKING_GLASS_NO_OVERLAY"] = "1"
     runtime = subprocess.Popen(
         [sys.executable, str(ROOT / "scripts/launch_canonical_macos_runtime.py")],
         cwd=ROOT,
@@ -66,9 +60,7 @@ def main() -> int:
     # The canonical launcher removes stale shared-memory segments before Unreal starts.
     # Do not let the encoder attach to the previous segment during that short window.
     time.sleep(2.0)
-    stream = subprocess.Popen(
-        ["node", str(ROOT / "scripts/stream_unreal_to_looking_glass.cjs")], cwd=ROOT
-    )
+    stream = subprocess.Popen([str(ENCODER)], cwd=ROOT)
     stopping = False
 
     def stop(_signum=None, _frame=None):
