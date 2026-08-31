@@ -23,7 +23,7 @@ function sendLatest() {
   latestFrame = null
   sending = true
   client.sendMessage(new HoloPlayCore.ShowMessage(
-    { vx: 1, vy: 1, aspect: 0.5625 }, frame, 0,
+    { vx: 11, vy: 6, aspect: 0.5625 }, frame, 0,
   ), 5).then(() => {
     if (!sendLatest.announced) {
       console.log('GAHYEON_LKG_LIVE_STREAM_READY')

@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+"""Launch only the explicitly promoted canonical Unreal macOS runtime."""
+
+from __future__ import annotations
+
+import json
+import ctypes
+import os
+from pathlib import Path
+import platform
+import signal
+import subprocess
+import time
+
+
+ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = ROOT / "config/canonical-character-runtime.json"
+OVERLAY_SOURCE = ROOT / "native/macos/GahyeonUnrealOverlay/main.swift"
+OVERLAY_BINARY = ROOT / ".build/macos-overlay/GahyeonUnrealOverlay"
+SHARED_MEMORY_NAME = b"/gahyeon_rgba_v003"
+IOSURFACE_MEMORY_NAME = b"/gahyeon_iosurface_v001"
+OVERLAY_CONTROL_MEMORY_NAME = b"/gahyeon_overlay_control_v001"
+
+
+def load_manifest() -> dict:
+    value = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    if value.get("schemaVersion") != 1 or value.get("runtime") != "unreal":
+        raise RuntimeError("canonical runtime manifest must select Unreal")
+    if "electron" not in value.get("retiredRuntimes", []):
+        raise RuntimeError("canonical runtime manifest must keep Electron retired")
+    return value
+
+
+def build_command(value: dict) -> list[str]:
+    if platform.system() != "Darwin":
+        raise RuntimeError("this launcher is for macOS")
+    macos = value["macos"]
+    if value.get("status") != "ready" or not macos.get("runtimeMap"):
+        blockers = "; ".join(value.get("blockers", [])) or "runtime is not promoted"
+        raise RuntimeError(f"canonical Unreal service is not ready: {blockers}")
+    editor = Path(macos["engineRoot"]) / "Engine/Binaries/Mac/UnrealEditor.app/Contents/MacOS/UnrealEditor"
+    project = ROOT / macos["project"]
+    missing = [str(path) for path in (editor, project) if not path.is_file()]
+    if missing:
+        raise RuntimeError(f"canonical Unreal prerequisites missing: {missing}")
+    quality_commands = ",".join((
+        "r.MotionBlurQuality 0",
+        "r.DefaultFeature.MotionBlur 0",
+        "r.ScreenPercentage 100",
+        "r.MaxAnisotropy 16",
+        "r.SkeletalMeshLODBias -1",
+        "r.MipMapLODBias -1",
+        "r.TextureStreaming 0",
+        "sg.AntiAliasingQuality 4",
+        "r.AntiAliasingMethod 1",
+        "r.ExposureOffset 0.5",
+        "r.PostProcessing.PropagateAlpha 1",
+        "sg.ShadowQuality 4",
+        "sg.TextureQuality 4",
+        "sg.EffectsQuality 4",
+        "sg.PostProcessQuality 4",
+    ))
+    command = [
+        str(editor), str(project), macos["runtimeMap"],
+        "-game", "-windowed", "-ForceRes", "-ResX=1600", "-ResY=1258", "-NoSplash",
+        "-nosourcecontrol", "-nop4", "-GahyeonCPUAlphaFallback",
+        "-GahyeonAutoStartMicrophone", f"-ExecCmds={quality_commands}",
+    ]
+    if os.environ.get("GAHYEON_LOOKING_GLASS_QUILT") == "1":
+        command.append("-GahyeonLookingGlassQuilt")
+    return command
+
+
+def build_overlay() -> Path:
+    OVERLAY_BINARY.parent.mkdir(parents=True, exist_ok=True)
+    if not OVERLAY_BINARY.is_file() or OVERLAY_BINARY.stat().st_mtime < OVERLAY_SOURCE.stat().st_mtime:
+        subprocess.run(
+            ["swiftc", "-swift-version", "5", str(OVERLAY_SOURCE), "-o", str(OVERLAY_BINARY)],
+            cwd=ROOT,
+            check=True,
+        )
+    return OVERLAY_BINARY
+
+
+def frontmost_application_name() -> str:
+    result = subprocess.run(
+        ["osascript", "-e", 'tell application "System Events" to get name of first process whose frontmost is true'],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return result.stdout.strip()
+
+
+def reactivate_application(name: str) -> None:
+    if not name or name == "UnrealEditor":
+        return
+    escaped = name.replace('"', '\\"')
+    subprocess.run(["osascript", "-e", f'tell application "{escaped}" to activate'], check=False)
+
+
+def unlink_stale_shared_memory() -> None:
+    libc = ctypes.CDLL(None, use_errno=True)
+    libc.shm_unlink.argtypes = [ctypes.c_char_p]
+    libc.shm_unlink(SHARED_MEMORY_NAME)
+    libc.shm_unlink(IOSURFACE_MEMORY_NAME)
+    libc.shm_unlink(OVERLAY_CONTROL_MEMORY_NAME)
+
+
+def terminate_existing_runtime(command: list[str], overlay_binary: Path) -> None:
+    """Remove only orphaned instances of this exact Unreal project and overlay."""
+    result = subprocess.run(
+        ["ps", "-axo", "pid=,command="], text=True, capture_output=True, check=True
+    )
+    editor, project = command[:2]
+    targets: list[int] = []
+    for line in result.stdout.splitlines():
+        fields = line.strip().split(maxsplit=1)
+        if len(fields) != 2:
+            continue
+        pid_text, process_command = fields
+        if process_command == str(overlay_binary) or (
+            process_command.startswith(editor + " ") and project in process_command
+        ):
+            pid = int(pid_text)
+            if pid != os.getpid():
+                targets.append(pid)
+    for pid in targets:
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    deadline = time.monotonic() + 3.0
+    remaining = set(targets)
+    while remaining and time.monotonic() < deadline:
+        remaining = {pid for pid in remaining if _process_exists(pid)}
+        if remaining:
+            time.sleep(0.05)
+    for pid in remaining:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+
+def _process_exists(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+
+
+def main() -> int:
+    command = build_command(load_manifest())
+    prior_application = frontmost_application_name()
+    overlay_binary = build_overlay()
+    terminate_existing_runtime(command, overlay_binary)
+    unlink_stale_shared_memory()
+    unreal = subprocess.Popen(command, cwd=ROOT)
+    overlay = subprocess.Popen([str(overlay_binary)], cwd=ROOT)
+    try:
+        time.sleep(5)
+        reactivate_application(prior_application)
+        while unreal.poll() is None and overlay.poll() is None:
+            time.sleep(0.25)
+        if overlay.poll() is not None and unreal.poll() is None:
+            unreal.terminate()
+        return unreal.wait()
+    finally:
+        if unreal.poll() is None:
+            unreal.terminate()
+        if overlay.poll() is None:
+            overlay.terminate()
+        try:
+            overlay.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            overlay.kill()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

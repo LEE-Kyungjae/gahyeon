@@ -56,9 +56,16 @@ def main() -> int:
     build_encoder()
     install_protocol_dependency()
 
+    runtime_environment = os.environ.copy()
+    runtime_environment["GAHYEON_LOOKING_GLASS_QUILT"] = "1"
     runtime = subprocess.Popen(
-        [sys.executable, str(ROOT / "scripts/launch_canonical_macos_runtime.py")], cwd=ROOT
+        [sys.executable, str(ROOT / "scripts/launch_canonical_macos_runtime.py")],
+        cwd=ROOT,
+        env=runtime_environment,
     )
+    # The canonical launcher removes stale shared-memory segments before Unreal starts.
+    # Do not let the encoder attach to the previous segment during that short window.
+    time.sleep(2.0)
     stream = subprocess.Popen(
         ["node", str(ROOT / "scripts/stream_unreal_to_looking_glass.cjs")], cwd=ROOT
     )

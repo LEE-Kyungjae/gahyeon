@@ -17,15 +17,19 @@
 namespace {
 constexpr uint32_t FrameMagic = 0x47485247;
 constexpr size_t HeaderBytes = 64;
-constexpr size_t OutputWidth = 720;
-constexpr size_t OutputHeight = 1280;
+constexpr size_t QuiltColumns = 11;
+constexpr size_t QuiltRows = 6;
+constexpr size_t TileWidth = 372;
+constexpr size_t TileHeight = 682;
+constexpr size_t OutputWidth = QuiltColumns * TileWidth;
+constexpr size_t OutputHeight = QuiltRows * TileHeight;
 std::atomic<bool> Running{true};
 
 struct FrameHeader {
     uint32_t magic, version, width, height, stride, activeBuffer;
     uint64_t sequence;
     uint32_t alphaMin, alphaMax, boundsMinX, boundsMinY, boundsMaxX, boundsMaxY;
-    uint8_t reserved[8];
+    uint32_t viewIndex, viewCount;
 };
 static_assert(sizeof(FrameHeader) == HeaderBytes);
 
@@ -58,6 +62,17 @@ int main() {
 
     uint64_t lastSequence = 0;
     auto nextFrame = std::chrono::steady_clock::now();
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    const size_t outputStride = OutputWidth * 4;
+    auto* outputPixels = static_cast<uint8_t*>(std::calloc(OutputHeight, outputStride));
+    CGContextRef context = CGBitmapContextCreate(
+        outputPixels, OutputWidth, OutputHeight, 8, outputStride, colorSpace,
+        kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+    CGContextSetRGBFillColor(context, 0, 0, 0, 1);
+    CGContextFillRect(context, CGRectMake(0, 0, OutputWidth, OutputHeight));
+    CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
+    CGContextTranslateCTM(context, 0, OutputHeight);
+    CGContextScaleCTM(context, 1, -1);
     while (Running.load()) @autoreleasepool {
         const auto* header = reinterpret_cast<const FrameHeader*>(region);
         if (header->magic != FrameMagic || header->sequence == 0 || header->sequence == lastSequence ||
@@ -71,7 +86,6 @@ int main() {
 
         CFDataRef pixels = CFDataCreate(kCFAllocatorDefault, region + offset, frameBytes);
         CGDataProviderRef provider = CGDataProviderCreateWithCFData(pixels);
-        CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
         CGImageRef sourceImage = CGImageCreate(
             header->width, header->height, 8, 32, header->stride, colorSpace,
             kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst,
@@ -83,49 +97,63 @@ int main() {
         const CGRect cropRect = CGRectMake(left, top, std::max(1u, right - left),
                                            std::max(1u, bottom - top));
         CGImageRef croppedImage = CGImageCreateWithImageInRect(sourceImage, cropRect);
-        const size_t outputStride = OutputWidth * 4;
-        auto* outputPixels = static_cast<uint8_t*>(std::calloc(OutputHeight, outputStride));
-        CGContextRef context = CGBitmapContextCreate(
-            outputPixels, OutputWidth, OutputHeight, 8, outputStride, colorSpace,
-            kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
         const CGFloat scale = std::min(
-            CGFloat(OutputWidth) / CGFloat(CGImageGetWidth(croppedImage)),
-            CGFloat(OutputHeight) / CGFloat(CGImageGetHeight(croppedImage)));
+            CGFloat(TileWidth) / CGFloat(CGImageGetWidth(croppedImage)),
+            CGFloat(TileHeight) / CGFloat(CGImageGetHeight(croppedImage)));
         const CGSize fitted = CGSizeMake(CGImageGetWidth(croppedImage) * scale,
                                          CGImageGetHeight(croppedImage) * scale);
-        const CGRect destinationRect = CGRectMake(
-            (OutputWidth - fitted.width) * 0.5, (OutputHeight - fitted.height) * 0.5,
-            fitted.width, fitted.height);
-        CGContextSetRGBFillColor(context, 0, 0, 0, 1);
-        CGContextFillRect(context, CGRectMake(0, 0, OutputWidth, OutputHeight));
-        CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
-        CGContextTranslateCTM(context, 0, OutputHeight);
-        CGContextScaleCTM(context, 1, -1);
-        CGContextDrawImage(context, destinationRect, croppedImage);
-        CGImageRef image = CGBitmapContextCreateImage(context);
+        if (header->viewCount == QuiltColumns * QuiltRows) {
+            if (header->viewIndex == 0) {
+                CGContextSetRGBFillColor(context, 0, 0, 0, 1);
+                CGContextFillRect(context, CGRectMake(0, 0, OutputWidth, OutputHeight));
+            }
+            const size_t row = header->viewIndex / QuiltColumns;
+            const size_t column = header->viewIndex % QuiltColumns;
+            if (row < QuiltRows) {
+                const CGRect destinationRect = CGRectMake(
+                    column * TileWidth + (TileWidth - fitted.width) * 0.5,
+                    row * TileHeight + (TileHeight - fitted.height) * 0.5,
+                    fitted.width, fitted.height);
+                CGContextDrawImage(context, destinationRect, croppedImage);
+            }
+        } else {
+            for (size_t row = 0; row < QuiltRows; ++row) {
+                for (size_t column = 0; column < QuiltColumns; ++column) {
+                    const CGRect destinationRect = CGRectMake(
+                        column * TileWidth + (TileWidth - fitted.width) * 0.5,
+                        row * TileHeight + (TileHeight - fitted.height) * 0.5,
+                        fitted.width, fitted.height);
+                    CGContextDrawImage(context, destinationRect, croppedImage);
+                }
+            }
+        }
+        const bool quiltComplete = header->viewCount != QuiltColumns * QuiltRows
+            || header->viewIndex == QuiltColumns * QuiltRows - 1;
+        CGImageRef image = quiltComplete ? CGBitmapContextCreateImage(context) : nullptr;
         CFMutableDataRef encoded = CFDataCreateMutable(kCFAllocatorDefault, 0);
-        CGImageDestinationRef destination = CGImageDestinationCreateWithData(
-            encoded, CFSTR("public.jpeg"), 1, nullptr);
+        CGImageDestinationRef destination = image ? CGImageDestinationCreateWithData(
+            encoded, CFSTR("public.jpeg"), 1, nullptr) : nullptr;
         const void* keys[] = { kCGImageDestinationLossyCompressionQuality };
         const void* values[] = { (__bridge CFNumberRef)@(0.82) };
         CFDictionaryRef options = CFDictionaryCreate(
             kCFAllocatorDefault, keys, values, 1,
             &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-        CGImageDestinationAddImage(destination, image, options);
-        const bool finalized = CGImageDestinationFinalize(destination);
+        if (destination) CGImageDestinationAddImage(destination, image, options);
+        const bool finalized = destination && CGImageDestinationFinalize(destination);
         const uint32_t length = finalized ? static_cast<uint32_t>(CFDataGetLength(encoded)) : 0;
         const uint32_t networkLength = __builtin_bswap32(length);
         const bool written = length > 0 && WriteAll(&networkLength, sizeof(networkLength)) &&
             WriteAll(CFDataGetBytePtr(encoded), length);
 
-        CFRelease(options); CFRelease(destination); CFRelease(encoded); CGImageRelease(image);
-        CGContextRelease(context); std::free(outputPixels); CGImageRelease(croppedImage);
+        CFRelease(options); if (destination) CFRelease(destination); CFRelease(encoded);
+        if (image) CGImageRelease(image); CGImageRelease(croppedImage);
         CGImageRelease(sourceImage);
-        CGColorSpaceRelease(colorSpace); CGDataProviderRelease(provider); CFRelease(pixels);
-        if (!written) break;
+        CGDataProviderRelease(provider); CFRelease(pixels);
+        if (quiltComplete && !written) break;
         lastSequence = header->sequence;
-        nextFrame = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+        nextFrame = std::chrono::steady_clock::now() + std::chrono::milliseconds(10);
     }
+    CGContextRelease(context); std::free(outputPixels); CGColorSpaceRelease(colorSpace);
     munmap(region, regionBytes); close(fd);
     return 0;
 }
