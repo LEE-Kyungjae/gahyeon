@@ -37,6 +37,7 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn("create_metal_texture_with_iosurface", source)
         self.assertIn("set_window_polling(window, true)", source)
         self.assertIn("PumpAppEvents", source)
+        self.assertIn("FlipQuiltForMetal", source)
         self.assertIn("GAHYEON_LKG_METAL_PRESENTED", source)
         self.assertIn("FIRST_LOOKING_GLASS_DEVICE", source)
         self.assertIn("GAHYEON_LKG_METAL_READY", source)

@@ -50,6 +50,18 @@ void PumpAppEvents() {
     [NSApp updateWindows];
 }
 
+void FlipQuiltForMetal(uint8_t* pixels, size_t stride) {
+    for (size_t top = 0; top < OutputHeight / 2; ++top) {
+        const size_t bottom = OutputHeight - 1 - top;
+        for (size_t byte = 0; byte < stride; ++byte) {
+            std::swap(pixels[top * stride + byte], pixels[bottom * stride + byte]);
+        }
+    }
+    for (size_t pixel = 0; pixel < OutputWidth * OutputHeight; ++pixel) {
+        std::swap(pixels[pixel * 4], pixels[pixel * 4 + 2]);
+    }
+}
+
 }
 
 int main() {
@@ -169,9 +181,7 @@ int main() {
             || header->viewIndex == QuiltColumns * QuiltRows - 1;
         bool presented = true;
         if (quiltComplete) {
-            for (size_t pixel = 0; pixel < OutputWidth * OutputHeight; ++pixel) {
-                std::swap(outputPixels[pixel * 4], outputPixels[pixel * 4 + 2]);
-            }
+            FlipQuiltForMetal(outputPixels, outputStride);
             const MTLRegion textureRegion = MTLRegionMake2D(0, 0, OutputWidth, OutputHeight);
             [bridgeTexture replaceRegion:textureRegion mipmapLevel:0
                               withBytes:outputPixels bytesPerRow:outputStride];
@@ -188,9 +198,7 @@ int main() {
                     "GAHYEON_LKG_METAL_PRESENTED shown=%d window=%lux%lu position=%ld,%ld\n",
                     windowShown, windowWidth, windowHeight, windowX, windowY);
             }
-            for (size_t pixel = 0; pixel < OutputWidth * OutputHeight; ++pixel) {
-                std::swap(outputPixels[pixel * 4], outputPixels[pixel * 4 + 2]);
-            }
+            FlipQuiltForMetal(outputPixels, outputStride);
         }
 
         CGImageRelease(croppedImage);
