@@ -65,11 +65,13 @@ def build_command(value: dict) -> list[str]:
     command = [
         str(editor), str(project), macos["runtimeMap"],
         "-game", "-windowed", "-ForceRes", "-ResX=1600", "-ResY=1258", "-NoSplash",
-        "-nosourcecontrol", "-nop4", "-GahyeonCPUAlphaFallback",
+        "-nosourcecontrol", "-nop4",
         "-GahyeonAutoStartMicrophone", f"-ExecCmds={quality_commands}",
     ]
     if looking_glass_mode:
         command.append("-GahyeonLookingGlassQuilt")
+    else:
+        command.append("-GahyeonCPUAlphaFallback")
     return command
 
 

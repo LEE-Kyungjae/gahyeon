@@ -19,7 +19,7 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn("LookingGlassViewCount = 11", runtime)
         self.assertIn("PrepareLookingGlassView", runtime)
         self.assertIn("header->viewIndex", encoder)
-        self.assertIn("quiltComplete", encoder)
+        self.assertIn("header->viewIndex + 1 == viewCount", encoder)
 
     def test_one_stop_launcher_uses_canonical_unreal_and_native_bridge(self):
         source = (ROOT / "scripts/launch_looking_glass_macos_runtime.py").read_text()
@@ -37,8 +37,9 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn("create_metal_texture_with_iosurface", source)
         self.assertIn("set_window_polling(window, true)", source)
         self.assertIn("PumpAppEvents", source)
-        self.assertIn("copiesPerView", source)
-        self.assertIn("GAHYEON_LKG_METAL_PRESENTED", source)
+        self.assertIn("IOSurfaceLookup", source)
+        self.assertIn("GAHYEON_LKG_GPU_QUILT", source)
+        self.assertIn("GAHYEON_LKG_GPU_QUILT", source)
         self.assertIn("FIRST_LOOKING_GLASS_DEVICE", source)
         self.assertIn("GAHYEON_LKG_METAL_READY", source)
 
