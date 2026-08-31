@@ -21,6 +21,7 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn('stream_environment["GAHYEON_LOOKING_GLASS_STATIC_QA"] = "1"', launcher)
         self.assertIn("time.sleep(2.0)", launcher)
         self.assertIn("LookingGlassViewCount = 66", runtime)
+        self.assertIn("const float ViewT = 1.0f", runtime)
         self.assertIn("GetHorizontalProjectionOffset", runtime)
         self.assertIn("SensorHorizontalOffset", runtime)
         self.assertIn("PrepareLookingGlassView", runtime)
