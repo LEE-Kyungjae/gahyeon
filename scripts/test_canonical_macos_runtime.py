@@ -31,8 +31,10 @@ class CanonicalMacosRuntimeTest(unittest.TestCase):
 
         with patch.dict("os.environ", {}, clear=True):
             self.assertNotIn("-GahyeonLookingGlassQuilt", build_command(load_manifest()))
+            self.assertIn("-GahyeonCPUAlphaFallback", build_command(load_manifest()))
         with patch.dict("os.environ", {"GAHYEON_LOOKING_GLASS_QUILT": "1"}, clear=True):
             self.assertIn("-GahyeonLookingGlassQuilt", build_command(load_manifest()))
+            self.assertNotIn("-GahyeonCPUAlphaFallback", build_command(load_manifest()))
 
     def test_manifest_selects_unreal_and_retires_electron(self):
         value = json.loads((ROOT / "config/canonical-character-runtime.json").read_text())

@@ -74,6 +74,11 @@ public:
         const bool bEnableCPUFallback = FParse::Param(FCommandLine::Get(), TEXT("GahyeonCPUAlphaFallback"));
         bEnableLookingGlassQuilt = FParse::Param(
             FCommandLine::Get(), TEXT("GahyeonLookingGlassQuilt"));
+        if (bEnableLookingGlassQuilt)
+        {
+            TickHandle = FTSTicker::GetCoreTicker().AddTicker(
+                FTickerDelegate::CreateRaw(this, &FGahyeonDesktopMetaHumanPOCModule::Tick));
+        }
         if (!bEnableCPUFallback)
         {
             UE_LOG(LogTemp, Display, TEXT("Gahyeon GPU IOSurface bridge active; CPU fallback disabled"));
@@ -87,8 +92,11 @@ public:
         {
             FMemory::Memzero(SharedRegion->GetAddress(), RegionBytes);
             new (SharedRegion->GetAddress()) FSharedFrameHeader();
-            TickHandle = FTSTicker::GetCoreTicker().AddTicker(
-                FTickerDelegate::CreateRaw(this, &FGahyeonDesktopMetaHumanPOCModule::Tick));
+            if (!TickHandle.IsValid())
+            {
+                TickHandle = FTSTicker::GetCoreTicker().AddTicker(
+                    FTickerDelegate::CreateRaw(this, &FGahyeonDesktopMetaHumanPOCModule::Tick));
+            }
         }
         ControlRegion = FPlatformMemory::MapNamedSharedMemoryRegion(
             TEXT("gahyeon_overlay_control_v001"), true,
@@ -140,6 +148,24 @@ private:
     {
 #if PLATFORM_MAC
         ApplyOverlayControl();
+        if (bEnableLookingGlassQuilt && !FrameGrabber)
+        {
+            const uint64 GPUSequence = GetGahyeonMacIOSurfaceSequence();
+            if (!bGPUViewPrepared || GPUSequence != LastGPUSequence)
+            {
+                if (bGPUViewPrepared)
+                {
+                    CurrentViewIndex = (CurrentViewIndex + 1) % LookingGlassViewCount;
+                }
+                if (PrepareLookingGlassView())
+                {
+                    ConfigureGahyeonMacIOSurfaceQuilt(CurrentViewIndex, LookingGlassViewCount);
+                    LastGPUSequence = GPUSequence;
+                    bGPUViewPrepared = true;
+                }
+            }
+            return true;
+        }
         if (!FrameGrabber && GEngine && GEngine->GameViewport && FSlateApplication::IsInitialized())
         {
             TSharedPtr<SViewport> ViewportWidget = FSlateApplication::Get().GetGameViewport();
@@ -211,7 +237,8 @@ private:
             FVector Extent;
             Character->GetActorBounds(false, LookingGlassFocus, Extent, true);
             UE_LOG(LogTemp, Display,
-                TEXT("Gahyeon Looking Glass 66-view capture active: cone=%.1f degrees"),
+                TEXT("Gahyeon Looking Glass %u-view GPU capture active: cone=%.1f degrees"),
+                LookingGlassViewCount,
                 LookingGlassViewConeHalfAngle * 2.0f);
         }
         const float ViewT = (float(CurrentViewIndex) / float(LookingGlassViewCount - 1)) * 2.0f - 1.0f;
@@ -321,6 +348,8 @@ private:
     uint32 PendingViewIndex = 0;
     bool bCapturePending = false;
     bool bEnableLookingGlassQuilt = false;
+    bool bGPUViewPrepared = false;
+    uint64 LastGPUSequence = 0;
     double CaptureAccumulator = 0.0;
 };
 
