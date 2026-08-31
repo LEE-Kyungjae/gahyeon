@@ -63,7 +63,9 @@ def main() -> int:
     # The canonical launcher removes stale shared-memory segments before Unreal starts.
     # Do not let the encoder attach to the previous segment during that short window.
     time.sleep(2.0)
-    stream = subprocess.Popen([str(ENCODER)], cwd=ROOT)
+    stream_environment = os.environ.copy()
+    stream_environment["GAHYEON_LOOKING_GLASS_STATIC_QA"] = "1"
+    stream = subprocess.Popen([str(ENCODER)], cwd=ROOT, env=stream_environment)
     stopping = False
 
     def stop(_signum=None, _frame=None):

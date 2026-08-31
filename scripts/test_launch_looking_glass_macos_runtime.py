@@ -15,6 +15,7 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         encoder = (ROOT / "native/macos/GahyeonLookingGlassBridge/frame_encoder.mm").read_text()
         self.assertIn('runtime_environment["GAHYEON_LOOKING_GLASS_QUILT"] = "1"', launcher)
         self.assertIn('runtime_environment["GAHYEON_LOOKING_GLASS_NO_OVERLAY"] = "1"', launcher)
+        self.assertIn('stream_environment["GAHYEON_LOOKING_GLASS_STATIC_QA"] = "1"', launcher)
         self.assertIn("time.sleep(2.0)", launcher)
         self.assertIn("LookingGlassViewCount = 11", runtime)
         self.assertIn("PrepareLookingGlassView", runtime)
@@ -27,6 +28,7 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn("setup_looking_glass_macos.py", source)
         self.assertIn("GahyeonLookingGlassFrameEncoder", source)
         self.assertIn('stream = subprocess.Popen([str(ENCODER)]', source)
+        self.assertIn("GAHYEON_LOOKING_GLASS_STATIC_QA", source)
         self.assertNotIn("desktop/package", source)
         self.assertNotIn("electron", source.lower())
 
