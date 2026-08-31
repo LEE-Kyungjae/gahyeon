@@ -2,6 +2,8 @@
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
 #include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
+#include "CineCameraComponent.h"
 #include "Animation/SkeletalMeshActor.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -20,8 +22,6 @@ namespace
 {
 constexpr uint32 FrameMagic = 0x47485247; // GHRG
 constexpr uint32 FrameVersion = 1;
-constexpr uint32 LookingGlassViewCount = 11;
-constexpr float LookingGlassViewConeHalfAngle = 10.0f;
 constexpr int32 FrameWidth = 1600;
 constexpr int32 FrameHeight = 1258;
 constexpr int32 FrameStride = FrameWidth * 4;
@@ -76,6 +76,18 @@ public:
             FCommandLine::Get(), TEXT("GahyeonLookingGlassQuilt"));
         if (bEnableLookingGlassQuilt)
         {
+            const FString ViewCountValue = FPlatformMisc::GetEnvironmentVariable(
+                TEXT("GAHYEON_LOOKING_GLASS_VIEW_COUNT"));
+            const FString ViewConeValue = FPlatformMisc::GetEnvironmentVariable(
+                TEXT("GAHYEON_LOOKING_GLASS_VIEW_CONE"));
+            if (!ViewCountValue.IsEmpty())
+            {
+                LookingGlassViewCount = FMath::Clamp(uint32(FCString::Atoi(*ViewCountValue)), 2u, 256u);
+            }
+            if (!ViewConeValue.IsEmpty())
+            {
+                LookingGlassViewConeDegrees = FMath::Clamp(FCString::Atof(*ViewConeValue), 1.0f, 180.0f);
+            }
             TickHandle = FTSTicker::GetCoreTicker().AddTicker(
                 FTickerDelegate::CreateRaw(this, &FGahyeonDesktopMetaHumanPOCModule::Tick));
         }
@@ -118,6 +130,11 @@ public:
         {
             LookingGlassCamera->SetActorLocation(OriginalCameraLocation);
             LookingGlassCamera->SetActorRotation(OriginalCameraRotation);
+            if (UCineCameraComponent* CineCamera = Cast<UCineCameraComponent>(
+                    LookingGlassCamera->GetCameraComponent()))
+            {
+                CineCamera->Filmback.SensorHorizontalOffset = OriginalSensorHorizontalOffset;
+            }
         }
         StopGahyeonMacIOSurfaceBridge();
         if (TickHandle.IsValid())
@@ -222,9 +239,21 @@ private:
             {
                 if (!It->IsHidden())
                 {
-                    LookingGlassCamera = *It;
-                    OriginalCameraLocation = It->GetActorLocation();
-                    OriginalCameraRotation = It->GetActorRotation();
+                LookingGlassCamera = *It;
+                OriginalCameraLocation = It->GetActorLocation();
+                OriginalCameraRotation = It->GetActorRotation();
+                if (UCineCameraComponent* CineCamera = Cast<UCineCameraComponent>(
+                        It->GetCameraComponent()))
+                {
+                    OriginalSensorHorizontalOffset = CineCamera->Filmback.SensorHorizontalOffset;
+                    OriginalProjectionOffset = CineCamera->GetHorizontalProjectionOffset();
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Error,
+                        TEXT("Gahyeon Looking Glass requires a CineCameraActor for off-axis projection"));
+                    return false;
+                }
                     break;
                 }
             }
@@ -239,15 +268,36 @@ private:
             UE_LOG(LogTemp, Display,
                 TEXT("Gahyeon Looking Glass %u-view GPU capture active: cone=%.1f degrees"),
                 LookingGlassViewCount,
-                LookingGlassViewConeHalfAngle * 2.0f);
+                LookingGlassViewConeDegrees);
         }
         const float ViewT = (float(CurrentViewIndex) / float(LookingGlassViewCount - 1)) * 2.0f - 1.0f;
-        const FVector BaseOffset = OriginalCameraLocation - LookingGlassFocus;
-        const FVector RotatedOffset = FRotator(
-            0.0f, ViewT * LookingGlassViewConeHalfAngle, 0.0f).RotateVector(BaseOffset);
-        const FVector ViewLocation = LookingGlassFocus + RotatedOffset;
+        const FVector Forward = OriginalCameraRotation.Vector();
+        const FVector Right = FRotationMatrix(OriginalCameraRotation).GetUnitAxis(EAxis::Y);
+        const float FocusDistance = FVector::DotProduct(
+            LookingGlassFocus - OriginalCameraLocation, Forward);
+        if (FocusDistance <= KINDA_SMALL_NUMBER) return false;
+        const float ViewAngle = FMath::DegreesToRadians(
+            ViewT * LookingGlassViewConeDegrees * 0.5f);
+        const float LateralOffset = FocusDistance * FMath::Tan(ViewAngle);
+        const FVector ViewLocation = OriginalCameraLocation + Right * LateralOffset;
         LookingGlassCamera->SetActorLocation(ViewLocation);
-        LookingGlassCamera->SetActorRotation((LookingGlassFocus - ViewLocation).Rotation());
+        LookingGlassCamera->SetActorRotation(OriginalCameraRotation);
+        UCineCameraComponent* CameraComponent = Cast<UCineCameraComponent>(
+            LookingGlassCamera->GetCameraComponent());
+        if (!CameraComponent) return false;
+        const float HalfFov = FMath::DegreesToRadians(CameraComponent->FieldOfView * 0.5f);
+        const float FocusHalfWidth = FocusDistance * FMath::Tan(HalfFov);
+        if (FocusHalfWidth <= KINDA_SMALL_NUMBER) return false;
+        CameraComponent->Filmback.SensorHorizontalOffset = OriginalSensorHorizontalOffset;
+        const float BaseProjectionOffset = CameraComponent->GetHorizontalProjectionOffset();
+        CameraComponent->Filmback.SensorHorizontalOffset = OriginalSensorHorizontalOffset + 1.0f;
+        const float ProjectionOffsetPerMillimeter =
+            CameraComponent->GetHorizontalProjectionOffset() - BaseProjectionOffset;
+        if (FMath::IsNearlyZero(ProjectionOffsetPerMillimeter)) return false;
+        const float DesiredProjectionOffset = OriginalProjectionOffset
+            - LateralOffset / FocusHalfWidth;
+        CameraComponent->Filmback.SensorHorizontalOffset = OriginalSensorHorizontalOffset
+            + (DesiredProjectionOffset - BaseProjectionOffset) / ProjectionOffsetPerMillimeter;
         return true;
     }
 
@@ -342,7 +392,11 @@ private:
     TWeakObjectPtr<ACameraActor> LookingGlassCamera;
     FVector OriginalCameraLocation = FVector::ZeroVector;
     FRotator OriginalCameraRotation = FRotator::ZeroRotator;
+    float OriginalProjectionOffset = 0.0f;
+    float OriginalSensorHorizontalOffset = 0.0f;
     FVector LookingGlassFocus = FVector::ZeroVector;
+    uint32 LookingGlassViewCount = 66;
+    float LookingGlassViewConeDegrees = 54.0f;
     uint64 LastControlSequence = 0;
     uint32 CurrentViewIndex = 0;
     uint32 PendingViewIndex = 0;
