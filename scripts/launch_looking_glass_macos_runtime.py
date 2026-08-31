@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import ctypes
 import os
 from pathlib import Path
 import signal
@@ -16,6 +17,49 @@ NATIVE = ROOT / "native/macos/GahyeonLookingGlassBridge"
 BUILD = ROOT / ".build/macos-looking-glass"
 ENCODER = BUILD / "GahyeonLookingGlassFrameEncoder"
 BRIDGE_APP = Path("/Applications/Looking Glass Bridge 2.6.3.app/Contents")
+BRIDGE_LIBRARY = BRIDGE_APP / "MacOS/libbridge_inproc.dylib"
+
+
+def read_display_profile() -> tuple[float, int]:
+    bridge = ctypes.CDLL(str(BRIDGE_LIBRARY))
+    bridge.initialize_bridge.argtypes = [ctypes.c_char_p]
+    bridge.initialize_bridge.restype = ctypes.c_bool
+    bridge.get_displays.argtypes = [ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_ulong)]
+    bridge.get_displays.restype = ctypes.c_bool
+    bridge.get_viewcone_for_display.argtypes = [ctypes.c_ulong, ctypes.POINTER(ctypes.c_float)]
+    bridge.get_viewcone_for_display.restype = ctypes.c_bool
+    bridge.get_default_quilt_settings_for_display.argtypes = [
+        ctypes.c_ulong, ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_int),
+        ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int),
+    ]
+    bridge.get_default_quilt_settings_for_display.restype = ctypes.c_bool
+    bridge.uninitialize_bridge.restype = ctypes.c_bool
+    if not bridge.initialize_bridge(b"Gahyeon Looking Glass Calibration"):
+        raise RuntimeError("Looking Glass Bridge calibration initialization failed")
+    try:
+        count = ctypes.c_int()
+        if not bridge.get_displays(ctypes.byref(count), None) or count.value < 1:
+            raise RuntimeError("no calibrated Looking Glass display found")
+        display_ids = (ctypes.c_ulong * count.value)()
+        if not bridge.get_displays(ctypes.byref(count), display_ids):
+            raise RuntimeError("Looking Glass display enumeration failed")
+        viewcone, aspect = ctypes.c_float(), ctypes.c_float()
+        quilt_width, quilt_height = ctypes.c_int(), ctypes.c_int()
+        columns, rows = ctypes.c_int(), ctypes.c_int()
+        display_id = display_ids[0]
+        if not bridge.get_viewcone_for_display(display_id, ctypes.byref(viewcone)):
+            raise RuntimeError("Looking Glass view cone calibration unavailable")
+        if not bridge.get_default_quilt_settings_for_display(
+            display_id, ctypes.byref(aspect), ctypes.byref(quilt_width),
+            ctypes.byref(quilt_height), ctypes.byref(columns), ctypes.byref(rows)
+        ):
+            raise RuntimeError("Looking Glass quilt calibration unavailable")
+        view_count = columns.value * rows.value
+        if not 1.0 <= viewcone.value <= 180.0 or not 2 <= view_count <= 256:
+            raise RuntimeError("Looking Glass calibration values are invalid")
+        return viewcone.value, view_count
+    finally:
+        bridge.uninitialize_bridge()
 
 
 def build_encoder() -> None:
@@ -51,10 +95,13 @@ def main() -> int:
     subprocess.run([sys.executable, str(ROOT / "scripts/setup_looking_glass_macos.py"),
                     "--no-open-download"], cwd=ROOT, check=True)
     build_encoder()
+    viewcone, view_count = read_display_profile()
 
     runtime_environment = os.environ.copy()
     runtime_environment["GAHYEON_LOOKING_GLASS_QUILT"] = "1"
     runtime_environment["GAHYEON_LOOKING_GLASS_NO_OVERLAY"] = "1"
+    runtime_environment["GAHYEON_LOOKING_GLASS_VIEW_CONE"] = f"{viewcone:.6f}"
+    runtime_environment["GAHYEON_LOOKING_GLASS_VIEW_COUNT"] = str(view_count)
     runtime = subprocess.Popen(
         [sys.executable, str(ROOT / "scripts/launch_canonical_macos_runtime.py")],
         cwd=ROOT,
