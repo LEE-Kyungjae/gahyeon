@@ -95,6 +95,11 @@ int main() {
         uninitialize_bridge(); return 6;
     }
     id<MTLTexture> output = (__bridge id<MTLTexture>)outputRaw;
+    void* blendedRaw = nullptr;
+    if (!create_metal_texture_with_iosurface(window, (__bridge void*)outputDescriptor, &blendedRaw)) {
+        release_metal_texture(window, outputRaw); uninitialize_bridge(); return 6;
+    }
+    id<MTLTexture> blended = (__bridge id<MTLTexture>)blendedRaw;
     id<MTLCommandQueue> queue = [device newCommandQueue];
     NSString* shader = @"#include <metal_stdlib>\nusing namespace metal;\n"
         "struct P { uint viewIndex, copiesPerView, cropMinX, cropMinY, cropMaxX, cropMaxY; };\n"
@@ -106,14 +111,24 @@ int main() {
         " float2 q=float2(g.xy)-float2((372.0-fw)*0.5,(682.0-fh)*0.5);\n"
         " if(q.x<0||q.y<0||q.x>=fw||q.y>=fh){dst.write(float4(0,0,0,1),out);return;}\n"
         " uint2 s=uint2(float2(p.cropMinX,p.cropMinY)+q/scale); float4 c=src.read(s);\n"
-        " dst.write(float4(c.rgb,1),out);\n} ";
+        " dst.write(float4(c.rgb,1),out);\n}\n"
+        "kernel void blendViews(texture2d<float, access::read> src [[texture(0)]], texture2d<float, access::write> dst [[texture(1)]], uint2 p [[thread_position_in_grid]]) {\n"
+        " if(p.x>=src.get_width()||p.y>=src.get_height()) return;\n"
+        " uint tx=p.x%372, ty=p.y%682, slot=(p.y/682)*11+p.x/372;\n"
+        " float4 c=src.read(p); float4 sum=c*0.88; float weight=0.88;\n"
+        " if(slot>0){uint s=slot-1; sum+=src.read(uint2((s%11)*372+tx,(s/11)*682+ty))*0.06; weight+=0.06;}\n"
+        " if(slot<65){uint s=slot+1; sum+=src.read(uint2((s%11)*372+tx,(s/11)*682+ty))*0.06; weight+=0.06;}\n"
+        " dst.write(sum/weight,p);\n} ";
     NSError* error = nil;
     id<MTLLibrary> library = [device newLibraryWithSource:shader options:nil error:&error];
     id<MTLComputePipelineState> pipeline = library
         ? [device newComputePipelineStateWithFunction:[library newFunctionWithName:@"compose"] error:&error] : nil;
-    if (!queue || !pipeline) {
+    id<MTLComputePipelineState> blendPipeline = library
+        ? [device newComputePipelineStateWithFunction:[library newFunctionWithName:@"blendViews"] error:&error] : nil;
+    if (!queue || !pipeline || !blendPipeline) {
         std::fprintf(stderr, "GAHYEON_LKG_GPU_SHADER_FAILED %s\n", error.localizedDescription.UTF8String ?: "unknown");
-        release_metal_texture(window, outputRaw); uninitialize_bridge(); return 7;
+        release_metal_texture(window, blendedRaw); release_metal_texture(window, outputRaw);
+        uninitialize_bridge(); return 7;
     }
 
     int fd = -1;
@@ -135,7 +150,7 @@ int main() {
     while (Running.load()) @autoreleasepool {
         PumpAppEvents();
         if (staticCaptured) {
-            if (!draw_interop_quilt_texture_metal(window, outputRaw, QuiltColumns, QuiltRows, 0.5625f, 1.0f)) break;
+            if (!draw_interop_quilt_texture_metal(window, blendedRaw, QuiltColumns, QuiltRows, 0.5625f, 1.0f)) break;
             std::this_thread::sleep_for(std::chrono::milliseconds(8)); continue;
         }
         if (flatCaptured) {
@@ -182,7 +197,19 @@ int main() {
             threadsPerThreadgroup:MTLSizeMake(16, 16, 1)];
         [encoder endEncoding]; [command commit]; [command waitUntilCompleted];
         if (flatMode || viewIndex + 1 == viewCount) {
-            if (!draw_interop_quilt_texture_metal(window, outputRaw, QuiltColumns, QuiltRows, 0.5625f, 1.0f)) break;
+            void* presentedTexture = outputRaw;
+            if (!flatMode) {
+                id<MTLCommandBuffer> blendCommand = [queue commandBuffer];
+                id<MTLComputeCommandEncoder> blendEncoder = [blendCommand computeCommandEncoder];
+                [blendEncoder setComputePipelineState:blendPipeline];
+                [blendEncoder setTexture:output atIndex:0]; [blendEncoder setTexture:blended atIndex:1];
+                [blendEncoder dispatchThreads:MTLSizeMake(OutputWidth, OutputHeight, 1)
+                    threadsPerThreadgroup:MTLSizeMake(16, 16, 1)];
+                [blendEncoder endEncoding]; [blendCommand commit]; [blendCommand waitUntilCompleted];
+                presentedTexture = blendedRaw;
+                std::fprintf(stderr, "GAHYEON_LKG_VIEW_BLEND center=0.88 adjacent=0.06\n");
+            }
+            if (!draw_interop_quilt_texture_metal(window, presentedTexture, QuiltColumns, QuiltRows, 0.5625f, 1.0f)) break;
             if (!shown) shown = show_window(window, true);
             const auto now = std::chrono::steady_clock::now();
             const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastPresented).count();
@@ -201,6 +228,7 @@ int main() {
     show_window(window, false);
     if (surface) CFRelease(surface);
     munmap(header, 64); close(fd);
+    release_metal_texture(window, blendedRaw);
     release_metal_texture(window, outputRaw); uninitialize_bridge();
     return 0;
 }
