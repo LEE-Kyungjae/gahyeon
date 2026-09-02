@@ -74,6 +74,8 @@ public:
         const bool bEnableCPUFallback = FParse::Param(FCommandLine::Get(), TEXT("GahyeonCPUAlphaFallback"));
         bEnableLookingGlassQuilt = FParse::Param(
             FCommandLine::Get(), TEXT("GahyeonLookingGlassQuilt"));
+        bEnableLookingGlassAnimatedQA = FPlatformMisc::GetEnvironmentVariable(
+            TEXT("GAHYEON_LOOKING_GLASS_ANIMATED_QA")) == TEXT("1");
         if (bEnableLookingGlassQuilt)
         {
             const FString ViewCountValue = FPlatformMisc::GetEnvironmentVariable(
@@ -198,6 +200,27 @@ private:
                 }
                 else
                 {
+                    if (bEnableLookingGlassAnimatedQA
+                        && CurrentViewIndex + 1 == LookingGlassViewCount)
+                    {
+                        LookingGlassAnimationFrameIndex =
+                            (LookingGlassAnimationFrameIndex + 1) % LookingGlassAnimationFrameCount;
+                        const float PoseSeconds =
+                            float(LookingGlassAnimationFrameIndex) / LookingGlassAnimationFPS;
+                        for (const TPair<TWeakObjectPtr<USkeletalMeshComponent>, bool>& Entry
+                             : LookingGlassPausedMeshes)
+                        {
+                            if (Entry.Key.IsValid())
+                            {
+                                Entry.Key->SetPosition(PoseSeconds, false);
+                                Entry.Key->TickAnimation(0.0f, false);
+                                Entry.Key->RefreshBoneTransforms();
+                            }
+                        }
+                        UE_LOG(LogTemp, Display,
+                            TEXT("Gahyeon Looking Glass idle pose frame=%u time=%.3f"),
+                            LookingGlassAnimationFrameIndex, PoseSeconds);
+                    }
                     CurrentViewIndex = (CurrentViewIndex + 1) % LookingGlassViewCount;
                     if (PrepareLookingGlassView())
                     {
@@ -443,6 +466,8 @@ private:
     float OriginalSensorHorizontalOffset = 0.0f;
     FVector LookingGlassFocus = FVector::ZeroVector;
     uint32 LookingGlassViewCount = 66;
+    static constexpr uint32 LookingGlassAnimationFrameCount = 12;
+    static constexpr float LookingGlassAnimationFPS = 12.0f;
     float LookingGlassViewConeDegrees = 54.0f;
     float LookingGlassDepthScale = 0.45f;
     uint64 LastControlSequence = 0;
@@ -450,8 +475,10 @@ private:
     uint32 PendingViewIndex = 0;
     bool bCapturePending = false;
     bool bEnableLookingGlassQuilt = false;
+    bool bEnableLookingGlassAnimatedQA = false;
     bool bGPUViewPrepared = false;
     bool bGPUWarmupPending = false;
+    uint32 LookingGlassAnimationFrameIndex = 0;
     uint64 LastGPUSequence = 0;
     double CaptureAccumulator = 0.0;
 };

@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <thread>
 #include <unistd.h>
+#include <vector>
 
 namespace {
 constexpr uint32_t SurfaceMagic = 0x4748494f;
@@ -23,6 +24,8 @@ constexpr size_t QuiltColumns = 11, QuiltRows = 6;
 constexpr size_t TileWidth = 372, TileHeight = 682;
 constexpr size_t OutputWidth = QuiltColumns * TileWidth;
 constexpr size_t OutputHeight = QuiltRows * TileHeight;
+constexpr size_t AnimatedFrameCount = 12;
+constexpr double AnimatedFPS = 12.0;
 std::atomic<bool> Running{true};
 
 struct SurfaceHeader {
@@ -76,6 +79,7 @@ int main() {
     [glContext update];
     const bool flatMode = std::getenv("GAHYEON_LOOKING_GLASS_FLAT") != nullptr;
     const bool staticMode = std::getenv("GAHYEON_LOOKING_GLASS_STATIC_QA") != nullptr;
+    const bool animatedMode = std::getenv("GAHYEON_LOOKING_GLASS_ANIMATED_QA") != nullptr;
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     if (!device || !initialize_bridge("Gahyeon Looking Glass GPU")) return 4;
     WINDOW_HANDLE window = 0;
@@ -146,9 +150,22 @@ int main() {
     bool shown = false;
     bool flatCaptured = false;
     bool staticCaptured = false;
+    bool animatedCaptured = false;
+    std::vector<void*> animatedFrames;
+    auto playbackStarted = std::chrono::steady_clock::now();
     auto lastPresented = std::chrono::steady_clock::now();
     while (Running.load()) @autoreleasepool {
         PumpAppEvents();
+        if (animatedCaptured) {
+            const double seconds = std::chrono::duration<double>(
+                std::chrono::steady_clock::now() - playbackStarted).count();
+            const size_t phase = size_t(seconds * AnimatedFPS) % (AnimatedFrameCount * 2 - 2);
+            const size_t frame = phase < AnimatedFrameCount
+                ? phase : AnimatedFrameCount * 2 - 2 - phase;
+            if (!draw_interop_quilt_texture_metal(window, animatedFrames[frame],
+                    QuiltColumns, QuiltRows, 0.5625f, 1.0f)) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(8)); continue;
+        }
         if (staticCaptured) {
             if (!draw_interop_quilt_texture_metal(window, blendedRaw, QuiltColumns, QuiltRows, 0.5625f, 1.0f)) break;
             std::this_thread::sleep_for(std::chrono::milliseconds(8)); continue;
@@ -179,7 +196,7 @@ int main() {
             || (QuiltColumns * QuiltRows) % viewCount != 0 || viewIndex >= viewCount) {
             lastSequence = header->sequence; continue;
         }
-        if ((flatMode || staticMode) && viewCount <= 1) {
+        if ((flatMode || staticMode || animatedMode) && viewCount <= 1) {
             lastSequence = header->sequence; continue;
         }
         if (flatMode && viewIndex != viewCount / 2) {
@@ -209,6 +226,31 @@ int main() {
                 presentedTexture = blendedRaw;
                 std::fprintf(stderr, "GAHYEON_LKG_VIEW_BLEND center=0.88 adjacent=0.06\n");
             }
+            if (animatedMode && !flatMode) {
+                void* frameRaw = nullptr;
+                if (!create_metal_texture_with_iosurface(
+                        window, (__bridge void*)outputDescriptor, &frameRaw)) break;
+                id<MTLTexture> frameTexture = (__bridge id<MTLTexture>)frameRaw;
+                id<MTLCommandBuffer> copyCommand = [queue commandBuffer];
+                id<MTLBlitCommandEncoder> copyEncoder = [copyCommand blitCommandEncoder];
+                [copyEncoder copyFromTexture:blended sourceSlice:0 sourceLevel:0
+                    sourceOrigin:MTLOriginMake(0, 0, 0)
+                    sourceSize:MTLSizeMake(OutputWidth, OutputHeight, 1)
+                    toTexture:frameTexture destinationSlice:0 destinationLevel:0
+                    destinationOrigin:MTLOriginMake(0, 0, 0)];
+                [copyEncoder endEncoding]; [copyCommand commit]; [copyCommand waitUntilCompleted];
+                animatedFrames.push_back(frameRaw);
+                presentedTexture = frameRaw;
+                std::fprintf(stderr, "GAHYEON_LKG_IDLE_FRAME_READY frame=%zu/%zu\n",
+                    animatedFrames.size(), AnimatedFrameCount);
+                if (animatedFrames.size() == AnimatedFrameCount) {
+                    animatedCaptured = true;
+                    playbackStarted = std::chrono::steady_clock::now();
+                    std::fprintf(stderr,
+                        "GAHYEON_LKG_IDLE_LOOP_READY frames=%zu fps=%.1f mode=pingpong\n",
+                        animatedFrames.size(), AnimatedFPS);
+                }
+            }
             if (!draw_interop_quilt_texture_metal(window, presentedTexture, QuiltColumns, QuiltRows, 0.5625f, 1.0f)) break;
             if (!shown) shown = show_window(window, true);
             const auto now = std::chrono::steady_clock::now();
@@ -228,6 +270,7 @@ int main() {
     show_window(window, false);
     if (surface) CFRelease(surface);
     munmap(header, 64); close(fd);
+    for (void* frameRaw : animatedFrames) release_metal_texture(window, frameRaw);
     release_metal_texture(window, blendedRaw);
     release_metal_texture(window, outputRaw); uninitialize_bridge();
     return 0;
