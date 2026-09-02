@@ -29,6 +29,8 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn("GetHorizontalProjectionOffset", runtime)
         self.assertIn("SensorHorizontalOffset", runtime)
         self.assertIn("PrepareLookingGlassView", runtime)
+        self.assertIn("ConfigureGahyeonMacIOSurfaceQuilt(CurrentViewIndex, 1)", runtime)
+        self.assertIn("bGPUWarmupPending", runtime)
         self.assertIn("header->viewIndex", encoder)
         self.assertIn("viewIndex + 1 == viewCount", encoder)
 
