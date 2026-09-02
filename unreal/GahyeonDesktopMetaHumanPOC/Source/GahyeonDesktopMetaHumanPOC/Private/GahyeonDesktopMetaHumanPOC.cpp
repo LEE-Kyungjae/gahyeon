@@ -9,7 +9,6 @@
 #include "EngineUtils.h"
 #include "FrameGrabber.h"
 #include "HAL/PlatformMemory.h"
-#include "Kismet/GameplayStatics.h"
 #include "Modules/ModuleManager.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Slate/SceneViewport.h"
@@ -137,10 +136,14 @@ public:
                 CineCamera->Filmback.SensorHorizontalOffset = OriginalSensorHorizontalOffset;
             }
         }
-        if (bPausedWorldForLookingGlass && LookingGlassWorld.IsValid())
+        for (const TPair<TWeakObjectPtr<USkeletalMeshComponent>, bool>& Entry : LookingGlassPausedMeshes)
         {
-            UGameplayStatics::SetGamePaused(LookingGlassWorld.Get(), false);
+            if (Entry.Key.IsValid())
+            {
+                Entry.Key->bPauseAnims = Entry.Value;
+            }
         }
+        LookingGlassPausedMeshes.Reset();
         StopGahyeonMacIOSurfaceBridge();
         if (TickHandle.IsValid())
         {
@@ -279,10 +282,14 @@ private:
             {
                 LookingGlassFocus.Z += Extent.Z * 0.6f;
             }
-            LookingGlassWorld = World;
-            if (!UGameplayStatics::IsGamePaused(World))
+            for (TObjectIterator<USkeletalMeshComponent> It; It; ++It)
             {
-                bPausedWorldForLookingGlass = UGameplayStatics::SetGamePaused(World, true);
+                USkeletalMeshComponent* Mesh = *It;
+                if (Mesh->GetWorld() == World && Mesh->IsRegistered())
+                {
+                    LookingGlassPausedMeshes.Add(Mesh, Mesh->bPauseAnims);
+                    Mesh->bPauseAnims = true;
+                }
             }
             UE_LOG(LogTemp, Display,
                 TEXT("Gahyeon Looking Glass %u-view frozen capture: cone=%.1f degrees depth=%.2f"),
@@ -412,7 +419,7 @@ private:
     FPlatformMemory::FSharedMemoryRegion* ControlRegion = nullptr;
     TMap<TWeakObjectPtr<ASkeletalMeshActor>, float> InitialCharacterYaw;
     TWeakObjectPtr<ACameraActor> LookingGlassCamera;
-    TWeakObjectPtr<UWorld> LookingGlassWorld;
+    TMap<TWeakObjectPtr<USkeletalMeshComponent>, bool> LookingGlassPausedMeshes;
     FVector OriginalCameraLocation = FVector::ZeroVector;
     FRotator OriginalCameraRotation = FRotator::ZeroRotator;
     float OriginalProjectionOffset = 0.0f;
@@ -427,7 +434,6 @@ private:
     bool bCapturePending = false;
     bool bEnableLookingGlassQuilt = false;
     bool bGPUViewPrepared = false;
-    bool bPausedWorldForLookingGlass = false;
     uint64 LastGPUSequence = 0;
     double CaptureAccumulator = 0.0;
 };
