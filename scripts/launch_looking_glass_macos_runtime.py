@@ -105,6 +105,7 @@ def main() -> int:
     runtime_environment["GAHYEON_LOOKING_GLASS_RUNTIME_MAP"] = (
         "/Game/Gahyeon/Character2/Diana/v450/Runtime/L_DianaLookingGlassContactFloor_v450"
     )
+    runtime_environment["GAHYEON_LOOKING_GLASS_ANIMATED_QA"] = "1"
     runtime = subprocess.Popen(
         [sys.executable, str(ROOT / "scripts/launch_canonical_macos_runtime.py")],
         cwd=ROOT,
@@ -114,7 +115,7 @@ def main() -> int:
     # Do not let the encoder attach to the previous segment during that short window.
     time.sleep(2.0)
     stream_environment = os.environ.copy()
-    stream_environment["GAHYEON_LOOKING_GLASS_STATIC_QA"] = "1"
+    stream_environment["GAHYEON_LOOKING_GLASS_ANIMATED_QA"] = "1"
     stream = subprocess.Popen([str(ENCODER)], cwd=ROOT, env=stream_environment)
     stopping = False
 
