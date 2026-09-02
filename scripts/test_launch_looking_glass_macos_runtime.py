@@ -35,6 +35,9 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn("bGPUWarmupPending", runtime)
         self.assertIn("LookingGlassAnimationFrameCount = 12", runtime)
         self.assertIn("SetPosition(PoseSeconds, false)", runtime)
+        self.assertIn("SingleNode->GetLength()", runtime)
+        self.assertIn("MarkRenderDynamicDataDirty()", runtime)
+        self.assertIn("duration=%.3f head=%s", runtime)
         self.assertIn("header->viewIndex", encoder)
         self.assertIn("viewIndex + 1 == viewCount", encoder)
 
