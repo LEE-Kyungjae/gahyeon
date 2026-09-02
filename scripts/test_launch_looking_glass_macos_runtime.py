@@ -67,6 +67,8 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn("GAHYEON_LKG_VIEW_BLEND center=0.88 adjacent=0.06", source)
         self.assertIn("GAHYEON_LKG_IDLE_FRAME_READY", source)
         self.assertIn("GAHYEON_LKG_IDLE_LOOP_READY", source)
+        self.assertIn("GAHYEON_LKG_IDLE_PLAYBACK", source)
+        self.assertIn("draw_interop_quilt_texture_metal(window, blendedRaw", source)
         self.assertIn("AnimatedFrameCount = 12", source)
         self.assertIn("GAHYEON_LKG_FLAT_IMAGE_READY", source)
         self.assertIn("GAHYEON_LKG_GPU_QUILT", source)
