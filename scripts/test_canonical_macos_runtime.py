@@ -16,7 +16,11 @@ class CanonicalMacosRuntimeTest(unittest.TestCase):
         sys.path.insert(0, str(ROOT / "scripts"))
         from launch_canonical_macos_runtime import build_command, load_manifest
 
-        with patch.dict("os.environ", {"GAHYEON_LOOKING_GLASS_QUILT": "1"}, clear=True):
+        with patch.dict("os.environ", {
+            "GAHYEON_LOOKING_GLASS_QUILT": "1",
+            "GAHYEON_LOOKING_GLASS_RUNTIME_MAP":
+                "/Game/Gahyeon/Character2/Diana/v449/Runtime/L_DianaLookingGlassFloor_v449",
+        }, clear=True):
             command = build_command(load_manifest())
         commands = next(item for item in command if item.startswith("-ExecCmds="))
         self.assertIn("r.TextureStreaming 1", commands)
@@ -25,6 +29,10 @@ class CanonicalMacosRuntimeTest(unittest.TestCase):
         self.assertIn("r.MaxAnisotropy 16", commands)
         self.assertIn("r.MipMapLODBias -1", commands)
         self.assertIn("r.Tonemapper.Sharpen 0.8", commands)
+        self.assertIn(
+            "/Game/Gahyeon/Character2/Diana/v449/Runtime/L_DianaLookingGlassFloor_v449",
+            command,
+        )
         self.assertIn("r.SkeletalMeshLODBias 0", commands)
         self.assertNotIn("r.TextureStreaming 0", commands)
 

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v449-diana-looking-glass-floor",
+  "status": "candidate",
+  "sourceMap": "/Game/Gahyeon/Character2/Diana/v398/Runtime/L_DianaMacRuntimeOriginalMaterialSafeFrame_v398",
+  "map": "/Game/Gahyeon/Character2/Diana/v449/Runtime/L_DianaLookingGlassFloor_v449",
+  "hypothesis": "a matte physical floor supplies contact, shadow, and parallax cues without competing with the character",
+  "action": "add a 12m cool-neutral rough floor at the measured character foot plane",
+  "expectedResult": "stronger grounding and depth readability in the Looking Glass while preserving Diana framing and materials",
+  "actualResult": "structurally authored; physical-display review pending",
+  "decision": "candidate; v398 remains the canonical desktop fallback",
+  "floor": {
+    "z": -2.097036600112915,
+    "scaleMeters": 12.0,
+    "baseColorLinear": [
+      0.105,
+      0.125,
+      0.155
+    ],
+    "roughness": 0.82,
+    "specular": 0.22
+  }
+}

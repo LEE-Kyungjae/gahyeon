@@ -44,6 +44,9 @@ def build_command(value: dict) -> list[str]:
     if missing:
         raise RuntimeError(f"canonical Unreal prerequisites missing: {missing}")
     looking_glass_mode = os.environ.get("GAHYEON_LOOKING_GLASS_QUILT") == "1"
+    runtime_map = macos["runtimeMap"]
+    if looking_glass_mode:
+        runtime_map = os.environ.get("GAHYEON_LOOKING_GLASS_RUNTIME_MAP", runtime_map)
     quality_commands = ",".join((
         "r.MotionBlurQuality 0",
         "r.DefaultFeature.MotionBlur 0",
@@ -64,7 +67,7 @@ def build_command(value: dict) -> list[str]:
         f"sg.PostProcessQuality {2 if looking_glass_mode else 4}",
     ))
     command = [
-        str(editor), str(project), macos["runtimeMap"],
+        str(editor), str(project), runtime_map,
         "-game", "-windowed", "-ForceRes", "-ResX=1600", "-ResY=1258", "-NoSplash",
         "-nosourcecontrol", "-nop4",
         "-GahyeonAutoStartMicrophone", f"-ExecCmds={quality_commands}",
