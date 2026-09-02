@@ -153,6 +153,7 @@ int main() {
     bool animatedCaptured = false;
     std::vector<void*> animatedFrames;
     auto playbackStarted = std::chrono::steady_clock::now();
+    size_t lastPlaybackFrame = AnimatedFrameCount;
     auto lastPresented = std::chrono::steady_clock::now();
     while (Running.load()) @autoreleasepool {
         PumpAppEvents();
@@ -162,8 +163,23 @@ int main() {
             const size_t phase = size_t(seconds * AnimatedFPS) % (AnimatedFrameCount * 2 - 2);
             const size_t frame = phase < AnimatedFrameCount
                 ? phase : AnimatedFrameCount * 2 - 2 - phase;
-            if (!draw_interop_quilt_texture_metal(window, animatedFrames[frame],
+            id<MTLTexture> sourceFrame = (__bridge id<MTLTexture>)animatedFrames[frame];
+            id<MTLCommandBuffer> playbackCommand = [queue commandBuffer];
+            id<MTLBlitCommandEncoder> playbackEncoder = [playbackCommand blitCommandEncoder];
+            [playbackEncoder copyFromTexture:sourceFrame sourceSlice:0 sourceLevel:0
+                sourceOrigin:MTLOriginMake(0, 0, 0)
+                sourceSize:MTLSizeMake(OutputWidth, OutputHeight, 1)
+                toTexture:blended destinationSlice:0 destinationLevel:0
+                destinationOrigin:MTLOriginMake(0, 0, 0)];
+            [playbackEncoder endEncoding];
+            [playbackCommand commit];
+            [playbackCommand waitUntilCompleted];
+            if (!draw_interop_quilt_texture_metal(window, blendedRaw,
                     QuiltColumns, QuiltRows, 0.5625f, 1.0f)) break;
+            if (frame != lastPlaybackFrame) {
+                std::fprintf(stderr, "GAHYEON_LKG_IDLE_PLAYBACK frame=%zu\n", frame);
+                lastPlaybackFrame = frame;
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(8)); continue;
         }
         if (staticCaptured) {
