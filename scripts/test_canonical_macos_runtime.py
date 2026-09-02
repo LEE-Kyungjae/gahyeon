@@ -21,7 +21,7 @@ class CanonicalMacosRuntimeTest(unittest.TestCase):
         commands = next(item for item in command if item.startswith("-ExecCmds="))
         self.assertIn("r.TextureStreaming 1", commands)
         self.assertIn("r.Streaming.PoolSize 512", commands)
-        self.assertIn("r.ScreenPercentage 70", commands)
+        self.assertIn("r.ScreenPercentage 100", commands)
         self.assertIn("r.SkeletalMeshLODBias 0", commands)
         self.assertNotIn("r.TextureStreaming 0", commands)
 

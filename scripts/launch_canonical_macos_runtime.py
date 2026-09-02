@@ -47,7 +47,7 @@ def build_command(value: dict) -> list[str]:
     quality_commands = ",".join((
         "r.MotionBlurQuality 0",
         "r.DefaultFeature.MotionBlur 0",
-        f"r.ScreenPercentage {70 if looking_glass_mode else 100}",
+        "r.ScreenPercentage 100",
         f"r.MaxAnisotropy {8 if looking_glass_mode else 16}",
         f"r.SkeletalMeshLODBias {0 if looking_glass_mode else -1}",
         f"r.MipMapLODBias {0 if looking_glass_mode else -1}",
