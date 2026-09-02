@@ -102,6 +102,9 @@ def main() -> int:
     runtime_environment["GAHYEON_LOOKING_GLASS_NO_OVERLAY"] = "1"
     runtime_environment["GAHYEON_LOOKING_GLASS_VIEW_CONE"] = f"{viewcone:.6f}"
     runtime_environment["GAHYEON_LOOKING_GLASS_VIEW_COUNT"] = str(view_count)
+    runtime_environment["GAHYEON_LOOKING_GLASS_RUNTIME_MAP"] = (
+        "/Game/Gahyeon/Character2/Diana/v449/Runtime/L_DianaLookingGlassFloor_v449"
+    )
     runtime = subprocess.Popen(
         [sys.executable, str(ROOT / "scripts/launch_canonical_macos_runtime.py")],
         cwd=ROOT,

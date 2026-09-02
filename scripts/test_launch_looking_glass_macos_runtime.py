@@ -18,6 +18,7 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn("read_display_profile()", launcher)
         self.assertIn('runtime_environment["GAHYEON_LOOKING_GLASS_VIEW_CONE"]', launcher)
         self.assertIn('runtime_environment["GAHYEON_LOOKING_GLASS_VIEW_COUNT"]', launcher)
+        self.assertIn('runtime_environment["GAHYEON_LOOKING_GLASS_RUNTIME_MAP"]', launcher)
         self.assertIn('stream_environment["GAHYEON_LOOKING_GLASS_STATIC_QA"] = "1"', launcher)
         self.assertIn("time.sleep(2.0)", launcher)
         self.assertIn("LookingGlassViewCount = 66", runtime)
