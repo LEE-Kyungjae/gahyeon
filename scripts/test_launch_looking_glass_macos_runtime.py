@@ -56,6 +56,8 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn("gl_bootstrap=1", source)
         self.assertIn("IOSurfaceLookup", source)
         self.assertIn("GAHYEON_LKG_GPU_QUILT", source)
+        self.assertIn("blendViews", source)
+        self.assertIn("GAHYEON_LKG_VIEW_BLEND center=0.88 adjacent=0.06", source)
         self.assertIn("GAHYEON_LKG_FLAT_IMAGE_READY", source)
         self.assertIn("GAHYEON_LKG_GPU_QUILT", source)
         self.assertIn("FIRST_LOOKING_GLASS_DEVICE", source)
