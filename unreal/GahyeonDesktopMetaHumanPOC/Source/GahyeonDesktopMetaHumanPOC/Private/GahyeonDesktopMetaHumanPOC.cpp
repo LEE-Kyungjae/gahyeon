@@ -5,6 +5,7 @@
 #include "Camera/CameraComponent.h"
 #include "CineCameraComponent.h"
 #include "Animation/SkeletalMeshActor.h"
+#include "Animation/AnimSingleNodeInstance.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "FrameGrabber.h"
@@ -205,21 +206,38 @@ private:
                     {
                         LookingGlassAnimationFrameIndex =
                             (LookingGlassAnimationFrameIndex + 1) % LookingGlassAnimationFrameCount;
-                        const float PoseSeconds =
-                            float(LookingGlassAnimationFrameIndex) / LookingGlassAnimationFPS;
+                        float PoseSeconds = 0.0f;
+                        float PoseDuration = 0.0f;
+                        FVector HeadLocation = FVector::ZeroVector;
                         for (const TPair<TWeakObjectPtr<USkeletalMeshComponent>, bool>& Entry
                              : LookingGlassPausedMeshes)
                         {
                             if (Entry.Key.IsValid())
                             {
+                                if (UAnimSingleNodeInstance* SingleNode =
+                                        Entry.Key->GetSingleNodeInstance())
+                                {
+                                    PoseDuration = FMath::Max(PoseDuration, SingleNode->GetLength());
+                                    PoseSeconds = PoseDuration
+                                        * float(LookingGlassAnimationFrameIndex)
+                                        / float(LookingGlassAnimationFrameCount);
+                                }
                                 Entry.Key->SetPosition(PoseSeconds, false);
                                 Entry.Key->TickAnimation(0.0f, false);
                                 Entry.Key->RefreshBoneTransforms();
+                                Entry.Key->MarkRenderDynamicDataDirty();
+                                if (Entry.Key->DoesSocketExist(TEXT("head")))
+                                {
+                                    HeadLocation = Entry.Key->GetSocketLocation(TEXT("head"));
+                                }
                             }
                         }
                         UE_LOG(LogTemp, Display,
-                            TEXT("Gahyeon Looking Glass idle pose frame=%u time=%.3f"),
-                            LookingGlassAnimationFrameIndex, PoseSeconds);
+                            TEXT("Gahyeon Looking Glass idle pose frame=%u time=%.3f duration=%.3f head=%s"),
+                            LookingGlassAnimationFrameIndex,
+                            PoseSeconds,
+                            PoseDuration,
+                            *HeadLocation.ToCompactString());
                     }
                     CurrentViewIndex = (CurrentViewIndex + 1) % LookingGlassViewCount;
                     if (PrepareLookingGlassView())
