@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v450-diana-looking-glass-contact-floor",
+  "status": "candidate",
+  "sourceMap": "/Game/Gahyeon/Character2/Diana/v449/Runtime/L_DianaLookingGlassFloor_v449",
+  "map": "/Game/Gahyeon/Character2/Diana/v450/Runtime/L_DianaLookingGlassContactFloor_v450",
+  "hypothesis": "the floating impression comes from missing sole intersection and tight contact shadows",
+  "action": "raise the floor 1.8cm and enable skeletal/contact shadows on the character and rect lights",
+  "expectedResult": "visible foot-floor contact without obvious shoe clipping",
+  "actualResult": "structurally authored; physical-display review pending",
+  "decision": "candidate; v449 and v398 retained as fallbacks",
+  "floorRaiseCm": 1.8,
+  "shadowComponents": [
+    "SkeletalMeshComponent0"
+  ],
+  "contactLights": [
+    "KEY_Diana_PBR_v379",
+    "FILL_Diana_PBR_v379",
+    "RIM_Diana_PBR_v379"
+  ]
+}

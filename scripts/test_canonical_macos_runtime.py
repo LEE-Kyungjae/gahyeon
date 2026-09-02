@@ -19,7 +19,7 @@ class CanonicalMacosRuntimeTest(unittest.TestCase):
         with patch.dict("os.environ", {
             "GAHYEON_LOOKING_GLASS_QUILT": "1",
             "GAHYEON_LOOKING_GLASS_RUNTIME_MAP":
-                "/Game/Gahyeon/Character2/Diana/v449/Runtime/L_DianaLookingGlassFloor_v449",
+                "/Game/Gahyeon/Character2/Diana/v450/Runtime/L_DianaLookingGlassContactFloor_v450",
         }, clear=True):
             command = build_command(load_manifest())
         commands = next(item for item in command if item.startswith("-ExecCmds="))
@@ -30,7 +30,7 @@ class CanonicalMacosRuntimeTest(unittest.TestCase):
         self.assertIn("r.MipMapLODBias -1", commands)
         self.assertIn("r.Tonemapper.Sharpen 0.8", commands)
         self.assertIn(
-            "/Game/Gahyeon/Character2/Diana/v449/Runtime/L_DianaLookingGlassFloor_v449",
+            "/Game/Gahyeon/Character2/Diana/v450/Runtime/L_DianaLookingGlassContactFloor_v450",
             command,
         )
         self.assertIn("r.SkeletalMeshLODBias 0", commands)
