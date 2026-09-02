@@ -176,17 +176,34 @@ private:
         if (bEnableLookingGlassQuilt && !FrameGrabber)
         {
             const uint64 GPUSequence = GetGahyeonMacIOSurfaceSequence();
-            if (!bGPUViewPrepared || GPUSequence != LastGPUSequence)
+            if (!bGPUViewPrepared)
             {
-                if (bGPUViewPrepared)
-                {
-                    CurrentViewIndex = (CurrentViewIndex + 1) % LookingGlassViewCount;
-                }
                 if (PrepareLookingGlassView())
+                {
+                    // The first back buffer predates the multiview camera. Mark it as
+                    // a non-quilt warm-up frame so it cannot contaminate view zero.
+                    ConfigureGahyeonMacIOSurfaceQuilt(CurrentViewIndex, 1);
+                    LastGPUSequence = GPUSequence;
+                    bGPUViewPrepared = true;
+                    bGPUWarmupPending = true;
+                }
+            }
+            else if (GPUSequence != LastGPUSequence)
+            {
+                if (bGPUWarmupPending)
                 {
                     ConfigureGahyeonMacIOSurfaceQuilt(CurrentViewIndex, LookingGlassViewCount);
                     LastGPUSequence = GPUSequence;
-                    bGPUViewPrepared = true;
+                    bGPUWarmupPending = false;
+                }
+                else
+                {
+                    CurrentViewIndex = (CurrentViewIndex + 1) % LookingGlassViewCount;
+                    if (PrepareLookingGlassView())
+                    {
+                        ConfigureGahyeonMacIOSurfaceQuilt(CurrentViewIndex, LookingGlassViewCount);
+                        LastGPUSequence = GPUSequence;
+                    }
                 }
             }
             return true;
@@ -434,6 +451,7 @@ private:
     bool bCapturePending = false;
     bool bEnableLookingGlassQuilt = false;
     bool bGPUViewPrepared = false;
+    bool bGPUWarmupPending = false;
     uint64 LastGPUSequence = 0;
     double CaptureAccumulator = 0.0;
 };
