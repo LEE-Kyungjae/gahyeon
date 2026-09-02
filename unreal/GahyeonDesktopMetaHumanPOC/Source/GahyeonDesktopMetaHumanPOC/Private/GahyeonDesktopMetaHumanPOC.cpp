@@ -9,6 +9,7 @@
 #include "EngineUtils.h"
 #include "FrameGrabber.h"
 #include "HAL/PlatformMemory.h"
+#include "Kismet/GameplayStatics.h"
 #include "Modules/ModuleManager.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Slate/SceneViewport.h"
@@ -135,6 +136,10 @@ public:
             {
                 CineCamera->Filmback.SensorHorizontalOffset = OriginalSensorHorizontalOffset;
             }
+        }
+        if (bPausedWorldForLookingGlass && LookingGlassWorld.IsValid())
+        {
+            UGameplayStatics::SetGamePaused(LookingGlassWorld.Get(), false);
         }
         StopGahyeonMacIOSurfaceBridge();
         if (TickHandle.IsValid())
@@ -265,10 +270,25 @@ private:
             if (!LookingGlassCamera.IsValid() || !Character) return false;
             FVector Extent;
             Character->GetActorBounds(false, LookingGlassFocus, Extent, true);
+            if (USkeletalMeshComponent* CharacterMesh = Character->GetSkeletalMeshComponent();
+                CharacterMesh && CharacterMesh->DoesSocketExist(TEXT("head")))
+            {
+                LookingGlassFocus = CharacterMesh->GetSocketLocation(TEXT("head"));
+            }
+            else
+            {
+                LookingGlassFocus.Z += Extent.Z * 0.6f;
+            }
+            LookingGlassWorld = World;
+            if (!UGameplayStatics::IsGamePaused(World))
+            {
+                bPausedWorldForLookingGlass = UGameplayStatics::SetGamePaused(World, true);
+            }
             UE_LOG(LogTemp, Display,
-                TEXT("Gahyeon Looking Glass %u-view GPU capture active: cone=%.1f degrees"),
+                TEXT("Gahyeon Looking Glass %u-view frozen capture: cone=%.1f degrees depth=%.2f"),
                 LookingGlassViewCount,
-                LookingGlassViewConeDegrees);
+                LookingGlassViewConeDegrees,
+                LookingGlassDepthScale);
         }
         // Looking Glass quilt slots advance from the observer's right-hand view to left-hand view.
         const float ViewT = 1.0f
@@ -279,7 +299,7 @@ private:
             LookingGlassFocus - OriginalCameraLocation, Forward);
         if (FocusDistance <= KINDA_SMALL_NUMBER) return false;
         const float ViewAngle = FMath::DegreesToRadians(
-            ViewT * LookingGlassViewConeDegrees * 0.5f);
+            ViewT * LookingGlassViewConeDegrees * 0.5f * LookingGlassDepthScale);
         const float LateralOffset = FocusDistance * FMath::Tan(ViewAngle);
         const FVector ViewLocation = OriginalCameraLocation + Right * LateralOffset;
         LookingGlassCamera->SetActorLocation(ViewLocation);
@@ -392,6 +412,7 @@ private:
     FPlatformMemory::FSharedMemoryRegion* ControlRegion = nullptr;
     TMap<TWeakObjectPtr<ASkeletalMeshActor>, float> InitialCharacterYaw;
     TWeakObjectPtr<ACameraActor> LookingGlassCamera;
+    TWeakObjectPtr<UWorld> LookingGlassWorld;
     FVector OriginalCameraLocation = FVector::ZeroVector;
     FRotator OriginalCameraRotation = FRotator::ZeroRotator;
     float OriginalProjectionOffset = 0.0f;
@@ -399,12 +420,14 @@ private:
     FVector LookingGlassFocus = FVector::ZeroVector;
     uint32 LookingGlassViewCount = 66;
     float LookingGlassViewConeDegrees = 54.0f;
+    float LookingGlassDepthScale = 0.45f;
     uint64 LastControlSequence = 0;
     uint32 CurrentViewIndex = 0;
     uint32 PendingViewIndex = 0;
     bool bCapturePending = false;
     bool bEnableLookingGlassQuilt = false;
     bool bGPUViewPrepared = false;
+    bool bPausedWorldForLookingGlass = false;
     uint64 LastGPUSequence = 0;
     double CaptureAccumulator = 0.0;
 };
