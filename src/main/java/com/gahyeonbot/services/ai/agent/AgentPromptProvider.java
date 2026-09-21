@@ -25,6 +25,12 @@ public class AgentPromptProvider {
     private CharacterRelationshipStore relationships;
     private CharacterAutonomyWorkspaceService workspace;
     private KnowledgeBaseService knowledge;
+    private com.gahyeonbot.application.life.CharacterMemoryReranker memoryReranker;
+
+    @Autowired(required = false)
+    void configureMemoryReranker(com.gahyeonbot.application.life.CharacterMemoryReranker memoryReranker) {
+        this.memoryReranker = memoryReranker;
+    }
 
     @Autowired
     void configureCharacters(CharacterDefinitionRegistry characters, CharacterMemoryStore characterMemories) {
@@ -81,7 +87,9 @@ public class AgentPromptProvider {
         String retrievedKnowledge = retrieveKnowledge(context.get().subjectId(), currentQuery);
         var recalled = new CharacterMemoryRecallPolicy().rank(
                 characterMemories.recent(context.get().characterId(), context.get().worldId(),
-                        context.get().subjectId(), 48), java.time.Instant.now(), 16);
+                        context.get().subjectId(), 48), java.time.Instant.now(), memoryReranker == null ? 16 : 24);
+        if (memoryReranker != null) recalled = memoryReranker.rerank(currentQuery, recalled);
+        recalled = recalled.stream().limit(16).toList();
         String memory = recalled.stream()
                 .map(item -> "- [" + item.kind().name().toLowerCase() + "] " + item.content())
                 .reduce((left, right) -> left + "\n" + right)

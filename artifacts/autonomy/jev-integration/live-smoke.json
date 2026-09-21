@@ -1,0 +1,67 @@
+{
+  "traffic" : "synthetic-only",
+  "results" : [ {
+    "latencyMs" : 690,
+    "baselineStyle" : "bright",
+    "usedFallback" : false,
+    "acceptable" : true,
+    "style" : "gentle",
+    "id" : "masked-distress"
+  }, {
+    "latencyMs" : 215,
+    "baselineStyle" : "bright",
+    "usedFallback" : false,
+    "acceptable" : true,
+    "style" : "gentle",
+    "id" : "bereavement"
+  }, {
+    "latencyMs" : 288,
+    "baselineStyle" : "natural",
+    "usedFallback" : false,
+    "acceptable" : true,
+    "style" : "bright",
+    "id" : "celebration"
+  }, {
+    "latencyMs" : 219,
+    "baselineStyle" : "bright",
+    "usedFallback" : false,
+    "acceptable" : true,
+    "style" : "warm",
+    "id" : "thanks"
+  }, {
+    "latencyMs" : 234,
+    "baselineStyle" : "natural",
+    "usedFallback" : true,
+    "acceptable" : true,
+    "style" : "natural",
+    "id" : "information"
+  }, {
+    "latencyMs" : 209,
+    "baselineStyle" : "natural",
+    "usedFallback" : false,
+    "acceptable" : true,
+    "style" : "gentle",
+    "id" : "anxiety"
+  }, {
+    "latencyMs" : 226,
+    "baselineStyle" : "suppressed_laugh",
+    "usedFallback" : false,
+    "acceptable" : true,
+    "style" : "suppressed_laugh",
+    "id" : "explicit-laughter"
+  }, {
+    "latencyMs" : 236,
+    "baselineStyle" : "annoyed",
+    "usedFallback" : false,
+    "acceptable" : true,
+    "style" : "serious",
+    "id" : "stop-teasing"
+  }, {
+    "id" : "memory-relevance",
+    "latencyMs" : 220,
+    "acceptable" : true
+  } ],
+  "observedAt" : "2026-09-21T00:17:39.032193Z",
+  "model" : "jev-1.13.0",
+  "diagnosticTimeoutMillis" : 1500
+}

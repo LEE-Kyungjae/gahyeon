@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "contractId": "eea097ed82e60b99",
+  "policyId": "gahyeon-autonomy-v1",
+  "objective": "Integrate Jev for bounded Gahyeon semantic decisions with private credential storage and deterministic fallback",
+  "domain": "agent",
+  "constraints": [
+    "Never log or commit API credentials or real user conversations",
+    "No production deployment or runtime launch; validate locally and with synthetic API probes",
+    "Preserve existing permission checks, subject isolation, and expression tension overrides"
+  ],
+  "requiredGates": [
+    {
+      "name": "impact-analysis",
+      "status": "passed",
+      "evidence": "GitNexus upstream LOW: AgentPromptProvider.systemPrompt#3 direct=2, total=6, runLoop affected; expression bean direct=0. DI integration covered by tests."
+    },
+    {
+      "name": "regression-test",
+      "status": "passed",
+      "evidence": {
+        "focusedTests": {
+          "tests": 32,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "liveSyntheticDecisions": 9,
+        "liveReport": "artifacts/autonomy/jev-integration/live-smoke.json"
+      }
+    },
+    {
+      "name": "ai-quality-gate",
+      "status": "passed",
+      "evidence": "bash scripts/run_ai_quality_gate.sh: exit 0, Gahyeon AI quality gate passed"
+    }
+  ],
+  "humanGates": [
+    {
+      "name": "production-deploy",
+      "status": "pending",
+      "approvedBy": null,
+      "evidence": null
+    }
+  ],
+  "deployment": {
+    "authorized": false,
+    "identity": {
+      "sourceCommit": null,
+      "artifactDigest": null,
+      "deploymentRevision": null,
+      "configurationIdentity": null
+    },
+    "canary": {
+      "minimumObservationSeconds": 1800,
+      "minimumQualifyingRequests": 30,
+      "requiredIdentity": [
+        "sourceCommit",
+        "artifactDigest",
+        "deploymentRevision",
+        "configurationIdentity"
+      ],
+      "rollbackThresholds": [
+        {
+          "metric": "errorRate",
+          "operator": ">",
+          "value": 0.01
+        },
+        {
+          "metric": "p95LatencyRegressionMs",
+          "operator": ">",
+          "value": 300
+        },
+        {
+          "metric": "unexpectedTranscriptCount",
+          "operator": ">",
+          "value": 0
+        },
+        {
+          "metric": "emptyAudioCount",
+          "operator": ">",
+          "value": 0
+        }
+      ]
+    }
+  },
+  "status": "active",
+  "evidenceWindow": {
+    "type": "local-integration",
+    "productionIncident": false
+  },
+  "expectedInvariant": "Only bounded semantic decisions; existing authority, subject filtering, expression tension rules and deterministic fallback preserved",
+  "productionSignal": "Aggregate Jev purpose/outcome counters and latency timer, no content or identities",
+  "rollbackTrigger": "Disable Jev on quality regression, cross-subject exposure, or p95 latency regression >300ms",
+  "sourceCommit": "fbde957b89e05752e84d7ce4f1f44f341d1d2452",
+  "worktreeChanges": true,
+  "productionQualifyingRequests": 0,
+  "productionValidation": "inconclusive-no-traffic; not deployed",
+  "localWorkComplete": true,
+  "localConfiguration": {
+    "enabled": true,
+    "credentialOutsideRepository": true,
+    "permissions": "0600",
+    "loadingTest": "passed",
+    "restartPerformed": false
+  },
+  "nextAction": {
+    "action": "request-human-gate",
+    "gate": "production-deploy",
+    "scope": "Only if a production release is requested"
+  },
+  "changeReview": {
+    "targetedImpact": "LOW",
+    "wholeDirtyWorktreeRisk": "CRITICAL",
+    "wholeDirtyWorktreeFiles": 139,
+    "wholeDirtyWorktreeChangedSymbols": 483,
+    "note": "Contains extensive pre-existing unrelated changes. No commit or deployment performed; new adapter files are not in the existing GitNexus index."
+  }
+}

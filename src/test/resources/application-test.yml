@@ -1,3 +1,7 @@
+gahyeon:
+  jev:
+    enabled: false
+
 spring:
   application:
     name: gahyeonbot-test
