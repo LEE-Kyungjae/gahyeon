@@ -1,0 +1,12 @@
+{
+  "outcome": "local-integration-validated",
+  "focusedTests": 32,
+  "localConfigurationTests": 1,
+  "qualityGate": "passed",
+  "liveReport": "live-smoke.json",
+  "liveTraffic": "synthetic-only",
+  "productionQualifyingRequests": 0,
+  "productionDeployment": false,
+  "expressionRuntimeDeadlineMs": 450,
+  "memoryRuntimeDeadlineMs": 800
+}

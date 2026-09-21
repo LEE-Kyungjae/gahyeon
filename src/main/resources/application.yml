@@ -18,6 +18,8 @@ weather:
     enabled: ${WEATHER_PREFETCH_ENABLED:${BOT_ENABLED:true}}
 
 spring:
+  config:
+    import: optional:file:${user.home}/.config/gahyeonbot/jev.properties
   ai:
     model:
       chat: ${GAHYEON_AGENT_PROVIDER:none}
@@ -52,6 +54,14 @@ server:
   shutdown: graceful
 
 gahyeon:
+  jev:
+    enabled: ${GAHYEON_JEV_ENABLED:false}
+    api-key: ${TYPESAFE_API_KEY:}
+    model: jev-1.13.0
+    expression-enabled: ${GAHYEON_JEV_EXPRESSION_ENABLED:true}
+    memory-enabled: ${GAHYEON_JEV_MEMORY_ENABLED:true}
+    expression-timeout-millis: 450
+    memory-timeout-millis: 800
   admin:
     enabled: ${GAHYEON_ADMIN_ENABLED:false}
     token: ${GAHYEON_ADMIN_TOKEN:}

@@ -6,11 +6,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
 @Configuration
 @EnableConfigurationProperties(SmallConversationExpressionModelProperties.class)
 public class SmallConversationExpressionModelConfiguration {
     @Bean
+    @ConditionalOnExpression("!(${gahyeon.jev.enabled:false} && ${gahyeon.jev.expression-enabled:true})")
     @ConditionalOnProperty(
             name = "gahyeon.speech.expression-planner.small-model.enabled",
             havingValue = "true")
