@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P18-kr-compatible-second-reconstruction-backend",
+  "state": "completed-selection-execution-blocked",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "Removing Hunyuan without replacing its independent geometry estimate would weaken the required multi-model comparison.",
+    "action": "Evaluate legally usable open reconstruction backends and migrate the second slot to InstantMesh while retaining Hunyuan as a non-executable historical rejection.",
+    "expectedResult": "TRELLIS.2 and a methodologically different sparse-view LRM can produce equally measured temporary candidates under the same Go render contract."
+  },
+  "evaluation": {
+    "selected": {
+      "model": "instantmesh",
+      "codeLicense": "Apache-2.0",
+      "codeRevision": "08822c52fdc399b93ea00e4fa9e596344ed52ccc",
+      "weightRepository": "TencentARC/InstantMesh",
+      "weightRevision": "b785b4ecfb6636ef34a08c748f96f6a5686244d0",
+      "method": "single-image to generated sparse views to LRM mesh",
+      "reason": "independent failure mode, published code and weights, no South-Korea territory exclusion"
+    },
+    "notSelected": [
+      {"model": "stable-fast-3d", "reason": "revenue-threshold commercial licensing and single-view bias"},
+      {"model": "triposr", "reason": "useful lightweight fallback but weaker multi-view identity constraint"},
+      {"model": "hunyuan3d-2.x", "reason": "official community license excludes South Korea"}
+    ]
+  },
+  "actualResult": {
+    "benchmarkModels": ["trellis", "instantmesh"],
+    "candidateCountPerModel": 3,
+    "completedCandidates": 0,
+    "instantMeshReady": false,
+    "blockers": ["weights-checksum-missing", "unsupported-operating-system", "nvidia-cuda-unavailable", "insufficient-vram"],
+    "productionMeshAllowed": false
+  },
+  "decision": "Keep InstantMesh as the legal second reconstruction estimator. Do not execute until its exact weight snapshot is downloaded, checksummed and run on a capable CUDA worker."
+}

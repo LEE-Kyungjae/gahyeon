@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "canonicalIndex": 16,
+  "scope": "body-silhouette-only",
+  "exclusions": ["finger-gap-fidelity", "shoelace-geometry", "garment-topology", "skin-texture", "final-topology"],
+  "purpose": "temporary-shape-estimate-for-metahuman-conform",
+  "productionMeshAllowed": false,
+  "approved": false,
+  "automatic": false,
+  "reviewer": null,
+  "approvedAt": null,
+  "expiresAt": null,
+  "derivative": {
+    "path": "/Users/ze/work/gahyeonbot/character_pipeline/reference/canonical/derived/canonical-16-rgba-draft.png",
+    "sha256": "0a80f8dd65951a5d6345bf0b457d1305a33a809c6c297beda866a4b31c0a73d2"
+  },
+  "matteManifest": {
+    "path": "/Users/ze/work/gahyeonbot/character_pipeline/reference/canonical/derived/canonical-16-rgba-draft.json",
+    "sha256": "0ba9c6b8f801bb24133fac54938bcbc3a105b639fcb5366f566784a8e7c9fc08"
+  },
+  "reviewBoard": "canonical-16-matte-review-board.png",
+  "knownDefects": ["finger gaps are simplified", "thin shoelace loops are incomplete"],
+  "question": "Accept only the large neutral body silhouette as a temporary reconstruction input?"
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P20-portable-cuda-worker-bootstrap",
+  "state": "completed-package-network-not-executed",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A partial model download or implicit dependency can make a CUDA worker appear reproducible while changing geometry or violating production license constraints.",
+    "action": "Pin code and minimal shape-only snapshots, require pre-masked RGBA inputs and DINOv3 approval evidence, forbid RMBG/Hunyuan, and keep every download behind explicit network opt-in.",
+    "expectedResult": "A fresh worker can be bootstrapped deterministically without pulling unrelated texture models or prohibited dependencies."
+  },
+  "actualResult": {
+    "repositories": 2,
+    "repositoryRevisionsPinned": true,
+    "snapshotFiles": 7,
+    "trellisSnapshot": "af44b45f2e35a493886929c6d786e563ec68364d",
+    "trellisSparseDecoderSnapshot": "25e0d31ffbebe4b5a97464dd851910efc3002d96",
+    "instantMeshSnapshot": "b785b4ecfb6636ef34a08c748f96f6a5686244d0",
+    "networkDefault": false,
+    "networkExecuted": false,
+    "workerReachable": false,
+    "candidateCount": 0
+  },
+  "safety": {
+    "inputRequirement": "pre-masked-rgba-png",
+    "gatedApprovalRequired": "facebook-dinov3-license",
+    "forbiddenModels": ["briaai/RMBG-2.0", "Tencent-Hunyuan/Hunyuan3D-2"],
+    "requireAbsoluteRoots": true,
+    "requireEmptyInstallRoot": true,
+    "productionMeshAllowed": false
+  },
+  "decision": "Keep the offline package. Execute downloads only on a verified Linux/CUDA worker after a named reviewer records DINOv3 license acceptance."
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "target": "metahuman-post-conform",
+  "displayProfile": "looking-glass-go",
+  "resolution": [1440, 2560],
+  "requiredSlots": ["innerTop", "outerJacket", "bottom", "footwear"],
+  "requiredAssets": ["skeletalMesh", "materials", "physicsAsset", "clothConfig", "clothDataflow"],
+  "requiredPbrChannels": ["baseColor", "normal", "roughness", "metallicOrSpecular", "ambientOcclusion"],
+  "modularity": {
+    "bodyMeshSeparate": true,
+    "outfitSwapWithoutBodyReimport": true,
+    "slotManifestRequired": true,
+    "bodyHiddenByRuntimePolicyNotDeletion": true
+  },
+  "runtimeChecks": [
+    "neutral-penetration", "shoulder-raise-penetration", "arm-cross-penetration",
+    "hip-flex-penetration", "walk-penetration", "sit-penetration", "extreme-pose-penetration",
+    "cloth-settle", "cloth-body-collision", "cloth-chair-collision", "closure-stability",
+    "footwear-grounding", "outfit-swap", "lod-transition-pop"
+  ],
+  "captures": [
+    "outfit-front", "outfit-side", "outfit-rear", "outfit-shoulder-raise",
+    "outfit-arm-cross", "outfit-hip-flex", "outfit-walk", "outfit-seated",
+    "outfit-extreme-pose", "outfit-cloth-settle", "outfit-chair-collision",
+    "outfit-closure", "outfit-footwear", "outfit-swap-before", "outfit-swap-after",
+    "outfit-lod-transition"
+  ],
+  "approvalPolicy": {
+    "automaticApproval": false,
+    "requireEditorEvidence": true,
+    "requireHumanReview": true,
+    "failOnAnyObservedBodyPenetration": true,
+    "failOnMissingChaosClothEvidence": true,
+    "neverOverwritePriorEvidence": true
+  }
+}

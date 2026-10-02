@@ -77,6 +77,10 @@ public:
             FCommandLine::Get(), TEXT("GahyeonLookingGlassQuilt"));
         bEnableLookingGlassAnimatedQA = FPlatformMisc::GetEnvironmentVariable(
             TEXT("GAHYEON_LOOKING_GLASS_ANIMATED_QA")) == TEXT("1");
+        if (FPlatformMisc::GetEnvironmentVariable(TEXT("GAHYEON_LOOKING_GLASS_SMOOTH_QA")) == TEXT("1"))
+        {
+            LookingGlassAnimationFrameCount = 120;
+        }
         if (bEnableLookingGlassQuilt)
         {
             const FString ViewCountValue = FPlatformMisc::GetEnvironmentVariable(
@@ -221,6 +225,11 @@ private:
                                     PoseSeconds = PoseDuration
                                         * float(LookingGlassAnimationFrameIndex)
                                         / float(LookingGlassAnimationFrameCount);
+                                }
+                                if (!FPlatformMisc::GetEnvironmentVariable(
+                                    TEXT("GAHYEON_LOOKING_GLASS_PROBE_DIR")).IsEmpty())
+                                {
+                                    PoseSeconds = 0.0f;
                                 }
                                 Entry.Key->SetPosition(PoseSeconds, false);
                                 Entry.Key->TickAnimation(0.0f, false);
@@ -484,7 +493,7 @@ private:
     float OriginalSensorHorizontalOffset = 0.0f;
     FVector LookingGlassFocus = FVector::ZeroVector;
     uint32 LookingGlassViewCount = 66;
-    static constexpr uint32 LookingGlassAnimationFrameCount = 12;
+    uint32 LookingGlassAnimationFrameCount = 12;
     static constexpr float LookingGlassAnimationFPS = 12.0f;
     float LookingGlassViewConeDegrees = 54.0f;
     float LookingGlassDepthScale = 0.45f;

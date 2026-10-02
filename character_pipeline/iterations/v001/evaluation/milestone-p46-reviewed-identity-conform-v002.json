@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P46-reviewed-identity-conform-v002",
+  "state": "completed-tooling-awaiting-accepted-solve",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A conform job must be impossible to create from an unreviewed or rejected Identity Solve, and successful head conform must not imply finished rig, materials, Groom, body or display quality.",
+    "action": "Create an isolated v002 builder/verifier and Unreal executor that recompute the P45 decision, preserve eye/teeth/metric scale, require import_from_identity SUCCESS and emit a narrow head-conformed receipt.",
+    "expectedResult": "Only a human-kept Identity reaches official MetaHuman topology, while every downstream AAA subsystem remains independently gated."
+  },
+  "actualResult": {
+    "builder": "../../../tools/build_metahuman_conform_v002.py",
+    "unrealExecutor": "../../../../unreal/GahyeonStage/Content/Python/gahyeon_conform_metahuman_v002.py",
+    "operation": "MetaHumanCharacterEditorSubsystem.import_from_identity",
+    "requiredResult": "SUCCESS",
+    "params": {"useEyeMeshes": true, "useTeethMesh": true, "useMetricScale": true},
+    "currentJobCreated": false,
+    "currentReason": "P45 template is awaiting guided Identity and has no keep-for-conform decision",
+    "productionReady": false,
+    "qualityClaim": null
+  },
+  "validation": {
+    "tests": "5 passed",
+    "acceptedSolveFixture": "job build and verify passed",
+    "rejectedSolveFixture": "job build rejected",
+    "evidenceDrift": "rejected",
+    "identityPreservationParamDrift": "rejected",
+    "downstreamQualityOverclaim": "rejected",
+    "currentTemplateCli": "rejected with no output job",
+    "realUnrealExecution": "pending"
+  },
+  "qualityBoundary": "A SUCCESS receipt proves only production-topology head conform. It does not prove an attractive face, DNA quality, expression quality, skin, eyes, Groom, body, clothing, runtime performance or Looking Glass Go acceptance.",
+  "decision": "Execute only after P45 is keep-for-conform; then immediately render and review the five fixed Go views before investing in downstream surfaces."
+}

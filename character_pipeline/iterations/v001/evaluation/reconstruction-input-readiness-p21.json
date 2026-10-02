@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-08-13",
+  "state": "blocked",
+  "required": {
+    "format": "PNG",
+    "mode": "RGBA",
+    "transparentBackground": true,
+    "minimumResolution": [512, 512],
+    "authority": "user-provided-original-derived-mask"
+  },
+  "inspected": [
+    {"canonicalIndex": 3, "dimensions": [1254, 1254], "mode": "RGB", "ready": false},
+    {"canonicalIndex": 16, "dimensions": [1023, 1537], "mode": "RGB", "ready": false}
+  ],
+  "readyInputs": 0,
+  "reason": "Canonical masters preserve identity but do not contain an alpha matte. No automatic RMBG substitution is permitted."
+}

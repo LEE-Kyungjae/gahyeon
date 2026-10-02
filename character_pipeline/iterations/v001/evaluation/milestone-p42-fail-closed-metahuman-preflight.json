@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P42-fail-closed-metahuman-preflight",
+  "state": "input-ready-toolchain-blocked",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A shape package alone is insufficient evidence that a MetaHuman solve can run, and accepting an older engine or stale handoff would create a false-ready state.",
+    "action": "Bind preflight to the verified v4 input and immutable v002 handoff, require a parseable Unreal Engine 5.6 or newer, and keep plugin, Core Data, memory and disk checks fail-closed.",
+    "expectedResult": "The workstation reports ready only when every local prerequisite and the exact Looking Glass Go handoff can be independently verified."
+  },
+  "actualResult": {
+    "report": "../../../../artifacts/gahyeon-ch/metahuman-toolchain-preflight-v3.json",
+    "reportSha256": "0a74d8fb60b263258349c70a1c3dce246117c30e7ff4aa70b75b02e842bf7e70",
+    "readyToLaunchIdentitySolve": false,
+    "identityInputVerifiedShape": true,
+    "immutableHandoffVerified": true,
+    "engineInstalled": false,
+    "engineVersionSupported": false,
+    "metaHumanCoreDataPresent": false,
+    "allRequiredPluginsPresent": false,
+    "freeDiskGiB": 42.76,
+    "requiredHeadroomGiB": 80,
+    "shortfallGiB": 37.24
+  },
+  "safety": {
+    "filesDeleted": false,
+    "dockerPruned": false,
+    "engineInstallStarted": false,
+    "existingMpfbModelsModified": false
+  },
+  "remainingBlockers": [
+    "recover at least 37.24 GiB without deleting user assets",
+    "install Unreal Engine 5.6 or newer",
+    "install MetaHuman Creator Core Data and required plugins",
+    "run the first real MetaHuman Identity solve and render five fixed 1440x2560 views"
+  ],
+  "qualityBoundary": "This milestone proves only toolchain readiness logic and input lineage. It does not improve or approve the unattractive MPFB face and does not claim a MetaHuman exists.",
+  "decision": "Preserve v4 only as temporary solve input. Do not spend further polish iterations on its visible face; proceed to Identity conform after installation prerequisites are genuinely met."
+}

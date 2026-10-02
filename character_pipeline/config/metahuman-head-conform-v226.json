@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v226",
+  "engineVersion": "5.8",
+  "targetMesh": "/Game/Gahyeon/CharacterPipeline/v220/Input/SM_Gahyeon_KeenTools_CleanNormals_Cm_v220",
+  "targetCharacter": "/Game/Gahyeon/CharacterPipeline/v226/Character/MHC_Gahyeon_ExternalClay_v226",
+  "portrait": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/iterations/v178-keentools-cloud-equal-shape/postprocess/clay-renders-attempt-003/face-front.png",
+  "portraitSha256": "4495086c70e740dd4b918914e3cce8d70eebac769e9ac020175bcfbe2ab0243a",
+  "outputDirectory": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/iterations/v226-external-clay-metahuman-conform",
+  "targetYawRotationDegrees": 180.0,
+  "camera": {
+    "projection": "orthographic",
+    "locationCm": [0.0, 320.0, 20.0],
+    "rotationDegrees": [0.0, -90.0, 0.0],
+    "orthoWidthCm": 36.74080467224121,
+    "imageSize": [1440, 2560]
+  },
+  "claims": {
+    "identityApproved": false,
+    "automaticApproval": false,
+    "productionReady": false
+  }
+}

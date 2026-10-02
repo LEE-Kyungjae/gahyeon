@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "profile": "diana-v375-user-approved",
+  "mesh": "/Game/Gahyeon/Character2/Diana/v024/Source/SK_Diana_CM_v024",
+  "outputRoot": "/Game/Gahyeon/Character2/Diana/v375/Animation",
+  "report": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/iterations/v375-diana-component-copy-bake/report.json",
+  "driverMap": {
+    "Neck_1": "Neck_1_001",
+    "Head": "Head_002",
+    "Head_001": "Head_002"
+  },
+  "animations": [
+    {
+      "source": "/Game/Gahyeon/Character2/Diana/v372/Animation/AS_Diana_Idle_v244_NeckHead_v372",
+      "outputName": "AS_Diana_Idle_v244_ComponentCopy_v375"
+    },
+    {
+      "source": "/Game/Gahyeon/Character2/Diana/v372/Animation/AS_Diana_WalkForward_v244_NeckHead_v372",
+      "outputName": "AS_Diana_WalkForward_v244_ComponentCopy_v375"
+    },
+    {
+      "source": "/Game/Gahyeon/Character2/Diana/v372/Animation/AS_Diana_RunForward_v244_NeckHead_v372",
+      "outputName": "AS_Diana_RunForward_v244_ComponentCopy_v375"
+    }
+  ]
+}

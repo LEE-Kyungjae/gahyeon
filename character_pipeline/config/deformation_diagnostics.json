@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "sourceCases": "deformation_qa.json",
+  "displayProfile": "looking-glass-go",
+  "resolution": [1440, 2560],
+  "samplePolicy": {
+    "exactlyEveryDeclaredFrame": true,
+    "finiteValuesOnly": true,
+    "unitsMustMatch": true,
+    "automaticApproval": false
+  },
+  "diagnostics": {
+    "lipPenetrationMm": {"unit": "mm", "maximum": 0.2},
+    "lipSealGapMm": {"unit": "mm", "maximum": 0.5},
+    "eyelidEyeballGapMm": {"unit": "mm", "maximum": 0.35},
+    "eyelidPenetrationMm": {"unit": "mm", "maximum": 0.15},
+    "mouthCornerAreaLossPercent": {"unit": "percent", "maximum": 12.0},
+    "cheekVolumeLossPercent": {"unit": "percent", "maximum": 10.0},
+    "neckStretchRatio": {"unit": "ratio", "maximum": 1.12},
+    "shoulderVolumeLossPercent": {"unit": "percent", "maximum": 12.0},
+    "eyeAimErrorDegrees": {"unit": "degrees", "maximum": 2.0},
+    "meshClippingPairs": {"unit": "count", "maximum": 0},
+    "temporalVertexJumpMm": {"unit": "mm", "maximum": 1.5}
+  },
+  "report": "../metahuman/validation/v001/deformation-diagnostics.json"
+}

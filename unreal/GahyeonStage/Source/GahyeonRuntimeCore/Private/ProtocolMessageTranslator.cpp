@@ -1,8 +1,44 @@
 #include "Gahyeon/ProtocolMessageTranslator.h"
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace Gahyeon {
+
+namespace {
+std::optional<std::string> VoiceStyleEmotion(const std::string& style) {
+    if (style.empty() || style == "natural") return std::nullopt;
+    if (style == "bright" || style == "playful" || style == "fake_cute"
+        || style == "excited" || style == "suppressed_laugh") return "happy";
+    if (style == "annoyed") return "angry";
+    if (style == "sad" || style == "concerned") return "sad";
+    if (style == "surprised") return "surprised";
+    if (style == "warm" || style == "gentle" || style == "sleepy"
+        || style == "whisper") return "relaxed";
+    return std::nullopt;
+}
+
+bool ValidVoiceStyle(const std::string& style) {
+    return style.empty() || style == "natural" || style == "warm" || style == "gentle"
+        || style == "bright" || style == "surprised" || style == "concerned"
+        || style == "serious" || style == "playful" || style == "fake_cute"
+        || style == "sarcastic" || style == "sleepy" || style == "whisper"
+        || style == "excited" || style == "annoyed" || style == "sad"
+        || style == "suppressed_laugh";
+}
+
+Millis SpeechExpressionHold(const std::vector<VisemeCue>& visemes) {
+    Millis duration = 600;
+    for (const VisemeCue& cue : visemes) {
+        const Millis boundedEnd = cue.AtMs > std::numeric_limits<Millis>::max() - cue.DurationMs
+            ? std::numeric_limits<Millis>::max()
+            : cue.AtMs + cue.DurationMs;
+        duration = std::max(duration, boundedEnd);
+    }
+    return std::min<Millis>(duration, 600'000);
+}
+}
 
 TranslationResult ProtocolMessageTranslator::Translate(
     const ProtocolMessage& message,
@@ -36,6 +72,21 @@ TranslationResult ProtocolMessageTranslator::Translate(
             || !ValidVisemes(message.Visemes)) {
             return {TranslationStatus::Invalid, {}, std::nullopt, std::nullopt, std::nullopt};
         }
+        std::optional<EmotionTarget> speechEmotion;
+        if (const auto semantic = VoiceStyleEmotion(message.Semantic); semantic.has_value()) {
+            EmotionTarget candidate{
+                .Dimensions = {{semantic.value(), message.Intensity}},
+                .BlendMs = 180,
+                .HoldMs = SpeechExpressionHold(message.Visemes),
+            };
+            EmotionRuntime validator;
+            if (validator.ApplyTarget(candidate, nowMs) != EmotionApplyResult::Applied) {
+                return {TranslationStatus::Invalid, {}, std::nullopt, std::nullopt, std::nullopt};
+            }
+            speechEmotion = std::move(candidate);
+        } else if (!ValidVoiceStyle(message.Semantic)) {
+            return {TranslationStatus::Invalid, {}, std::nullopt, std::nullopt, std::nullopt};
+        }
         return {
             TranslationStatus::Translated,
             {},
@@ -48,6 +99,7 @@ TranslationResult ProtocolMessageTranslator::Translate(
                 .AudioUrl = message.AudioUrl,
                 .MimeType = message.MimeType,
                 .Visemes = message.Visemes,
+                .Expression = std::move(speechEmotion),
             },
             std::nullopt,
             std::nullopt,

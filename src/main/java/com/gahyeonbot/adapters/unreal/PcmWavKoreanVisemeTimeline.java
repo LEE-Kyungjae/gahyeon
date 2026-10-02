@@ -6,49 +6,71 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Deterministic fallback for PCM WAV providers that expose no phoneme timing.
- * This is deliberately labelled heuristic: audio duration is authoritative,
- * while Korean vowel classes are distributed over speakable code points.
+ * Deterministic waveform-guided fallback for PCM WAV providers that expose no phoneme timing.
+ * This is deliberately labelled heuristic: PCM energy supplies speech/silence timing and weight,
+ * while Korean vowel classes supply mouth shape. It is not exact forced alignment.
  */
 public final class PcmWavKoreanVisemeTimeline implements UnrealVisemeTimelinePort {
     private static final int MAX_CUES = 256;
+    private static final int WINDOW_MILLIS = 20;
 
     @Override
     public List<UnrealVisemeCue> align(String text, AudioOutput audio) {
-        long durationMs = pcmWavDurationMs(audio);
-        if (durationMs <= 0 || text == null || text.isBlank()) return List.of();
+        PcmInfo pcm = pcmInfo(audio);
+        if (pcm == null || text == null || text.isBlank()) return List.of();
         List<Integer> speakable = text.codePoints()
                 .filter(PcmWavKoreanVisemeTimeline::speakable)
                 .boxed()
                 .toList();
         if (speakable.isEmpty()) return List.of();
 
-        int count = (int) Math.min(Math.min(MAX_CUES, speakable.size()), durationMs);
-        long leadMs = Math.min(35, durationMs / 20);
-        long usableMs = Math.max(count, durationMs - leadMs * 2);
+        List<EnergyWindow> active = activeWindows(audio.data(), pcm);
+        if (active.isEmpty()) return List.of();
+        int count = Math.min(Math.min(MAX_CUES, speakable.size()), active.size());
         var cues = new ArrayList<UnrealVisemeCue>(count);
         for (int index = 0; index < count; index++) {
             int sourceIndex = (int) ((long) index * speakable.size() / count);
-            long atMs = leadMs + (long) index * usableMs / count;
-            long nextMs = leadMs + (long) (index + 1) * usableMs / count;
-            long cueMs = Math.max(1, Math.min(160, Math.max(45, nextMs - atMs)));
-            cueMs = Math.min(cueMs, Math.max(1, durationMs - atMs));
+            int windowIndex = (int) ((long) index * active.size() / count);
+            EnergyWindow window = active.get(windowIndex);
+            long atMs = window.atMs();
+            long voicedRunEndMs = atMs + window.durationMs();
+            for (int scan = windowIndex + 1; scan < active.size(); scan++) {
+                EnergyWindow following = active.get(scan);
+                if (following.atMs() > voicedRunEndMs) break;
+                voicedRunEndMs = Math.max(
+                        voicedRunEndMs, following.atMs() + following.durationMs());
+            }
+            long nextCueAtMs = pcm.durationMs();
+            if (index + 1 < count) {
+                int nextWindowIndex = (int) ((long) (index + 1) * active.size() / count);
+                nextCueAtMs = active.get(nextWindowIndex).atMs();
+            }
+            // Hold a semantic mouth shape across its audible syllable instead of
+            // flashing it for one 20 ms analysis window. Never bridge a real pause.
+            long cueMs = Math.min(180, Math.max(
+                    WINDOW_MILLIS, Math.min(nextCueAtMs, voicedRunEndMs) - atMs));
+            cueMs = Math.min(cueMs, Math.max(1, pcm.durationMs() - atMs));
             cues.add(new UnrealVisemeCue(
-                    semantic(speakable.get(sourceIndex)), atMs, cueMs, 0.9));
+                    semantic(speakable.get(sourceIndex)), atMs, cueMs, window.weight()));
         }
         return List.copyOf(cues);
     }
 
     @Override
     public String source() {
-        return "heuristic";
+        return "waveform-guided";
     }
 
     static long pcmWavDurationMs(AudioOutput audio) {
+        PcmInfo info = pcmInfo(audio);
+        return info == null ? -1 : info.durationMs();
+    }
+
+    private static PcmInfo pcmInfo(AudioOutput audio) {
         if (audio == null || !("audio/wav".equals(audio.mediaType())
-                || "audio/x-wav".equals(audio.mediaType()))) return -1;
+                || "audio/x-wav".equals(audio.mediaType()))) return null;
         byte[] bytes = audio.data();
-        if (bytes.length < 44 || !fourCc(bytes, 0, "RIFF") || !fourCc(bytes, 8, "WAVE")) return -1;
+        if (bytes.length < 44 || !fourCc(bytes, 0, "RIFF") || !fourCc(bytes, 8, "WAVE")) return null;
         int offset = 12;
         int format = -1;
         int channels = 0;
@@ -56,10 +78,11 @@ public final class PcmWavKoreanVisemeTimeline implements UnrealVisemeTimelinePor
         int blockAlign = 0;
         int bitsPerSample = 0;
         long dataBytes = -1;
+        int dataOffset = -1;
         while (offset <= bytes.length - 8) {
             long chunkBytes = u32(bytes, offset + 4);
             long dataStart = (long) offset + 8;
-            if (chunkBytes > Integer.MAX_VALUE || dataStart + chunkBytes > bytes.length) return -1;
+            if (chunkBytes > Integer.MAX_VALUE || dataStart + chunkBytes > bytes.length) return null;
             if (fourCc(bytes, offset, "fmt ") && chunkBytes >= 16) {
                 format = u16(bytes, offset + 8);
                 channels = u16(bytes, offset + 10);
@@ -68,18 +91,74 @@ public final class PcmWavKoreanVisemeTimeline implements UnrealVisemeTimelinePor
                 bitsPerSample = u16(bytes, offset + 22);
             } else if (fourCc(bytes, offset, "data")) {
                 dataBytes = chunkBytes;
+                dataOffset = (int) dataStart;
             }
             long next = dataStart + chunkBytes + (chunkBytes & 1L);
-            if (next > Integer.MAX_VALUE || next <= offset) return -1;
+            if (next > Integer.MAX_VALUE || next <= offset) return null;
             offset = (int) next;
         }
         if (format != 1 || (channels != 1 && channels != 2) || bitsPerSample != 16
                 || sampleRate < 8_000 || sampleRate > 192_000
                 || blockAlign != channels * 2 || dataBytes <= 0
-                || dataBytes % blockAlign != 0) return -1;
+                || dataBytes % blockAlign != 0 || dataOffset < 0) return null;
         long frames = dataBytes / blockAlign;
-        return Math.max(1, frames * 1_000 / sampleRate);
+        return new PcmInfo(sampleRate, channels, blockAlign, dataOffset, (int) dataBytes,
+                Math.max(1, frames * 1_000 / sampleRate));
     }
+
+    private static List<EnergyWindow> activeWindows(byte[] bytes, PcmInfo pcm) {
+        int framesPerWindow = Math.max(1, (int) (pcm.sampleRate() * WINDOW_MILLIS / 1_000));
+        int totalFrames = pcm.dataBytes() / pcm.blockAlign();
+        var levels = new ArrayList<Double>((totalFrames + framesPerWindow - 1) / framesPerWindow);
+        double peak = 0;
+        for (int firstFrame = 0; firstFrame < totalFrames; firstFrame += framesPerWindow) {
+            int lastFrame = Math.min(totalFrames, firstFrame + framesPerWindow);
+            double squareSum = 0;
+            int sampleCount = 0;
+            for (int frame = firstFrame; frame < lastFrame; frame++) {
+                int frameOffset = pcm.dataOffset() + frame * pcm.blockAlign();
+                for (int channel = 0; channel < pcm.channels(); channel++) {
+                    int sampleOffset = frameOffset + channel * 2;
+                    int sample = (short) (Byte.toUnsignedInt(bytes[sampleOffset])
+                            | Byte.toUnsignedInt(bytes[sampleOffset + 1]) << 8);
+                    squareSum += (double) sample * sample;
+                    sampleCount++;
+                }
+            }
+            double rms = sampleCount == 0 ? 0 : Math.sqrt(squareSum / sampleCount);
+            levels.add(rms);
+            peak = Math.max(peak, rms);
+        }
+        if (peak < 180) return List.of();
+        var sorted = new ArrayList<>(levels);
+        sorted.sort(Double::compareTo);
+        double noiseFloor = sorted.get(Math.min(sorted.size() - 1, sorted.size() / 5));
+        double adaptive = Math.max(noiseFloor * 2.5, peak * 0.08);
+        // A continuously voiced clip has no low-energy percentile; never let the
+        // estimated floor raise the gate above the signal that defined the peak.
+        double threshold = Math.max(180, Math.min(peak * 0.60, adaptive));
+        boolean[] voiced = new boolean[levels.size()];
+        for (int index = 0; index < levels.size(); index++) voiced[index] = levels.get(index) >= threshold;
+        // A 20 ms dilation keeps unvoiced consonants attached while preserving real pauses.
+        boolean[] expanded = voiced.clone();
+        for (int index = 0; index < voiced.length; index++) if (voiced[index]) {
+            if (index > 0) expanded[index - 1] = true;
+            if (index + 1 < expanded.length) expanded[index + 1] = true;
+        }
+        var result = new ArrayList<EnergyWindow>();
+        for (int index = 0; index < expanded.length; index++) if (expanded[index]) {
+            long atMs = (long) index * WINDOW_MILLIS;
+            long durationMs = Math.min(WINDOW_MILLIS, pcm.durationMs() - atMs);
+            double normalized = Math.min(1, levels.get(index) / Math.max(threshold, peak * 0.65));
+            double weight = Math.max(0.35, 0.35 + normalized * 0.65);
+            result.add(new EnergyWindow(atMs, Math.max(1, durationMs), weight));
+        }
+        return List.copyOf(result);
+    }
+
+    private record PcmInfo(long sampleRate, int channels, int blockAlign, int dataOffset,
+                           int dataBytes, long durationMs) {}
+    private record EnergyWindow(long atMs, long durationMs, double weight) {}
 
     private static boolean speakable(int codePoint) {
         return Character.isLetterOrDigit(codePoint) || codePoint >= 0xAC00 && codePoint <= 0xD7A3;

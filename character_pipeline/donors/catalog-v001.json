@@ -1,0 +1,349 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "living-character-donors-v001",
+  "observedAt": "2026-08-18T14:32:33.242698+00:00",
+  "policy": {
+    "sourceAssetsAreImmutable": true,
+    "allowRedistribution": false,
+    "requireLicenseEvidenceBeforeRelease": true,
+    "gahyeonUsage": "archived-reference-only"
+  },
+  "status": "draft-local-poc-only",
+  "donors": [
+    {
+      "id": "stellar-blade-lily-stargazer",
+      "kind": "character-candidate",
+      "roles": [
+        "appearance",
+        "hair",
+        "wardrobe"
+      ],
+      "productionUse": "evaluation-only",
+      "notes": "Modular head, eyes, teeth, hair, body, and wardrobe; no usable facial rig.",
+      "archive": {
+        "path": "/Users/ze/Downloads/stellar-blade-lily-stargazer-coat.zip",
+        "bytes": 318726772,
+        "sha256": "4a5a33b3a39920f6b58a280ad0e76eb7832ea8f718a5b68674d552b6b4a0cee0",
+        "memberCount": 40,
+        "sourceFiles": [
+          "source/Sketchfab_2025_08_03_23_29_11.blend"
+        ],
+        "textureCount": 39,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    },
+    {
+      "id": "ururu",
+      "kind": "character-candidate",
+      "roles": [
+        "appearance",
+        "wardrobe-reference"
+      ],
+      "productionUse": "evaluation-only",
+      "notes": "ValveBiped body rig; no facial deformation system.",
+      "archive": {
+        "path": "/Users/ze/Downloads/ururu.zip",
+        "bytes": 27271882,
+        "sha256": "31ec4b995821be6b299dbd19528cfcbf79165d4058228f86a6c3f89086f24e41",
+        "memberCount": 11,
+        "sourceFiles": [
+          "source/Ururu.fbx"
+        ],
+        "textureCount": 10,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    },
+    {
+      "id": "hayley",
+      "kind": "character-candidate",
+      "roles": [
+        "appearance",
+        "body-rig",
+        "facial-bone-reference"
+      ],
+      "productionUse": "primary-poc-candidate",
+      "notes": "Modular character with 286-bone rig and 57 face-like bones.",
+      "archive": {
+        "path": "/Users/ze/Downloads/hayley.zip",
+        "bytes": 110365318,
+        "sha256": "1132f5002229dc098170228e8eaa50c5998328ed3500eb2e378e6da0ab439879",
+        "memberCount": 20,
+        "sourceFiles": [
+          "source/Hayley2.rar"
+        ],
+        "textureCount": 19,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    },
+    {
+      "id": "cutegirl-g1",
+      "kind": "character-and-expression-donor",
+      "roles": [
+        "appearance",
+        "facial-shape-dictionary",
+        "viseme-reference",
+        "eye-reference"
+      ],
+      "productionUse": "primary-facial-reference",
+      "notes": "Character Creator topology with 153 body/head shape keys and synchronized facial auxiliaries.",
+      "archive": {
+        "path": "/Users/ze/Downloads/cutegirl-g1.zip",
+        "bytes": 69476305,
+        "sha256": "cbf1c8f4678215be81def69e2d287192908e25519d3cd6038ed7e248576a3a37",
+        "memberCount": 26,
+        "sourceFiles": [
+          "source/CuteGirl G1.fbx"
+        ],
+        "textureCount": 25,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    },
+    {
+      "id": "cyber-girl-idle",
+      "kind": "motion-donor",
+      "roles": [
+        "standing-idle",
+        "weight-shift-reference"
+      ],
+      "productionUse": "motion-reference",
+      "notes": "244 frames at 24 fps.",
+      "archive": {
+        "path": "/Users/ze/Downloads/cyber-girl.zip",
+        "bytes": 30379599,
+        "sha256": "ceb334b77e04ecfc532e3820936400377bff44bcddd197966234d7bb0ce96f76",
+        "memberCount": 15,
+        "sourceFiles": [
+          "source/Idle.fbx"
+        ],
+        "textureCount": 14,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    },
+    {
+      "id": "luoli-run",
+      "kind": "motion-donor",
+      "roles": [
+        "run-lower-body-reference"
+      ],
+      "excludedRoles": [
+        "run-upper-body"
+      ],
+      "productionUse": "motion-reference",
+      "notes": "24 frames at 30 fps; exaggerated arm motion must not be copied.",
+      "archive": {
+        "path": "/Users/ze/Downloads/luoli-run.zip",
+        "bytes": 4943068,
+        "sha256": "6e11d9ed580a9b2382ea4df8aad2426a8ebc05ef0e762c84d232b9ce9874e544",
+        "memberCount": 8,
+        "sourceFiles": [
+          "source/luoli_run_triangle.fbx"
+        ],
+        "textureCount": 7,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    },
+    {
+      "id": "warrior-girl-secondary-motion",
+      "kind": "cache-reference",
+      "roles": [
+        "hair-secondary-motion",
+        "clothing-secondary-motion"
+      ],
+      "productionUse": "parameter-reference-only",
+      "notes": "Alembic cache, 0-64 at 24 fps; do not treat as a retargetable skeletal clip.",
+      "archive": {
+        "path": "/Users/ze/Downloads/warrior-girl.zip",
+        "bytes": 17891365,
+        "sha256": "68f348d2a0581ff2b4c8287a66501921ef44b54a9a7f9904b9c0baff5ba77457",
+        "memberCount": 8,
+        "sourceFiles": [
+          "source/girl.abc"
+        ],
+        "textureCount": 7,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    },
+    {
+      "id": "gynoid-1000-walk",
+      "kind": "motion-donor",
+      "roles": [
+        "walk-cycle-reference"
+      ],
+      "productionUse": "motion-reference",
+      "notes": "Mixamo-style 75-frame walk at 60 fps; character appearance excluded.",
+      "archive": {
+        "path": "/Users/ze/Downloads/gynoid-1000-series.zip",
+        "bytes": 1873390,
+        "sha256": "53bbc1a30a314d5723664907d1c8414515cfe450f664010da14aeef197a0013f",
+        "memberCount": 1,
+        "sourceFiles": [
+          "source/FemBot 1000.fbx"
+        ],
+        "textureCount": 0,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    },
+    {
+      "id": "lacrimosa-sleepy-expression",
+      "kind": "character-and-expression-donor",
+      "roles": [
+        "sleepy-expression",
+        "emotion-performance",
+        "gaze-reference"
+      ],
+      "productionUse": "primary-expression-performance-reference",
+      "notes": "795 frames at 60 fps with 149 shape keys.",
+      "archive": {
+        "path": "/Users/ze/Downloads/lacrimosa-animated-neverness-to-everness.zip",
+        "bytes": 28127553,
+        "sha256": "75d3f2bc286449527440db34f518cf456516f5c2b8afd4af9fcdb30face3c7ff",
+        "memberCount": 8,
+        "sourceFiles": [
+          "source/lacrimosa final.fbx"
+        ],
+        "textureCount": 7,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    },
+    {
+      "id": "standing-sitting",
+      "kind": "motion-donor",
+      "roles": [
+        "stand-to-sit",
+        "sit-to-stand"
+      ],
+      "productionUse": "motion-reference",
+      "notes": "94-frame transition at 24 fps; contact requires Unreal IK validation.",
+      "archive": {
+        "path": "/Users/ze/Downloads/standing-sitting-animation.zip",
+        "bytes": 5144082,
+        "sha256": "b5751b8294de2bf2fdf404d91dbe5157efe7840dafe388a2b06fe693e120682d",
+        "memberCount": 1,
+        "sourceFiles": [
+          "source/standup_sitdown.fbx"
+        ],
+        "textureCount": 0,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    },
+    {
+      "id": "narration-gesture",
+      "kind": "motion-and-expression-donor",
+      "roles": [
+        "talking-gesture",
+        "head-motion",
+        "viseme-reference"
+      ],
+      "productionUse": "primary-conversation-reference",
+      "notes": "Approximately 29.8 seconds at 24 fps with 64 ARKit-like and viseme shapes.",
+      "archive": {
+        "path": "/Users/ze/Downloads/talking-character-joe-rogan-for-narration.zip",
+        "bytes": 5098393,
+        "sha256": "148b1e8d81321ab006fb9e3ebaf9437fb41d4b4cdedb15a4e522debfcc88ad00",
+        "memberCount": 3,
+        "sourceFiles": [
+          "source/Joe Rogan.fbx"
+        ],
+        "textureCount": 2,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    },
+    {
+      "id": "hands-forward-gesture",
+      "kind": "motion-donor",
+      "roles": [
+        "present",
+        "explain",
+        "offer"
+      ],
+      "productionUse": "motion-reference",
+      "notes": "94 frames at 30 fps; facial performance supplied separately.",
+      "archive": {
+        "path": "/Users/ze/Downloads/hands-forward-gesture.zip",
+        "bytes": 47631925,
+        "sha256": "c7260b1128ef272cacbbd0ef3b3163ff59772c7e80a0652fa5efd90db75c05a8",
+        "memberCount": 18,
+        "sourceFiles": [
+          "source/Hands Forward Gesture.fbx"
+        ],
+        "textureCount": 17,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    },
+    {
+      "id": "but-wait-gesture-performance",
+      "kind": "motion-donor",
+      "roles": [
+        "attention-getter",
+        "transition",
+        "two-hand-emphasis",
+        "presenting"
+      ],
+      "productionUse": "segment-before-use",
+      "notes": "1628 frames at 30 fps; must be segmented and intensity-normalized.",
+      "archive": {
+        "path": "/Users/ze/Downloads/but-wait-theres-more-animation.zip",
+        "bytes": 3710802,
+        "sha256": "f20c21f024f8977d01d10a72cc00ad99dd08bb9c49bc868d33fd0569125d1b0f",
+        "memberCount": 1,
+        "sourceFiles": [
+          "source/market_salesman_market_salesman_market_salesman_2_bot.fbx"
+        ],
+        "textureCount": 0,
+        "licenseEvidence": []
+      },
+      "releaseEligible": false,
+      "blockingFindings": [
+        "Original listing URL and redistribution/commercial license are not recorded."
+      ]
+    }
+  ]
+}

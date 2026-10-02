@@ -1,0 +1,2561 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v386",
+  "status": "draft-semantic-expression-channel-manifest",
+  "canonicalChannels": [
+    "browDownLeft",
+    "browDownRight",
+    "browInnerUp",
+    "browOuterUpLeft",
+    "browOuterUpRight",
+    "cheekPuff",
+    "cheekSquintLeft",
+    "cheekSquintRight",
+    "eyeBlinkLeft",
+    "eyeBlinkRight",
+    "eyeLookDownLeft",
+    "eyeLookDownRight",
+    "eyeLookUpLeft",
+    "eyeLookUpRight",
+    "eyeSquintLeft",
+    "eyeSquintRight",
+    "eyeWideLeft",
+    "eyeWideRight",
+    "jawForward",
+    "jawLeft",
+    "jawOpen",
+    "jawRight",
+    "mouthClose",
+    "mouthDimpleLeft",
+    "mouthDimpleRight",
+    "mouthFrownLeft",
+    "mouthFrownRight",
+    "mouthFunnel",
+    "mouthLeft",
+    "mouthLowerDownLeft",
+    "mouthLowerDownRight",
+    "mouthPressLeft",
+    "mouthPressRight",
+    "mouthPucker",
+    "mouthRight",
+    "mouthRollLower",
+    "mouthRollUpper",
+    "mouthShrugLower",
+    "mouthShrugUpper",
+    "mouthSmileLeft",
+    "mouthSmileRight",
+    "mouthStretchLeft",
+    "mouthStretchRight",
+    "mouthUpperUpLeft",
+    "mouthUpperUpRight",
+    "noseSneerLeft",
+    "noseSneerRight",
+    "preset.ebangry01",
+    "preset.ebdespise01",
+    "preset.ebdoubt01",
+    "preset.ebenmity01",
+    "preset.ebhappy01",
+    "preset.ebsad01",
+    "preset.ebserious01",
+    "preset.ebsmile01",
+    "preset.ebspeechless01",
+    "preset.ebsurprised01",
+    "preset.ebthinking01",
+    "preset.ebudl",
+    "preset.ebudr",
+    "preset.elangry01clo",
+    "preset.elangry01op",
+    "preset.eldespise01clo",
+    "preset.eldespise01op",
+    "preset.eldoubt01clo",
+    "preset.eldoubt01op",
+    "preset.eldown",
+    "preset.elenmity01clo",
+    "preset.elenmity01op",
+    "preset.elhappylclo",
+    "preset.elhappyrclo",
+    "preset.ellightl",
+    "preset.ellightup",
+    "preset.elsad01clo",
+    "preset.elsad01op",
+    "preset.elserious01clo",
+    "preset.elserious01op",
+    "preset.elsmile01clo",
+    "preset.elspeechless01clo",
+    "preset.elspeechless01op",
+    "preset.elsurprised01op",
+    "preset.elthinking01clo",
+    "preset.elthinking01op",
+    "preset.elup",
+    "preset.jawopenangry01clo",
+    "preset.jawopenangry01op",
+    "preset.jawopenhappy01clo",
+    "preset.jawopenhappy01op",
+    "preset.jawopensad01clo",
+    "preset.jawopensad01op",
+    "preset.jawopensmile01clo",
+    "preset.jawopensmile01op",
+    "preset.jawopenthinking01clo",
+    "preset.jawopenthinking01op",
+    "preset.jawopentired01clo",
+    "preset.jawopentired01op",
+    "preset.mouthsmilesharpl",
+    "preset.mouthsmilesharpr",
+    "preset.tdamazed",
+    "preset.tdbeanieeye",
+    "preset.tdeggeyes",
+    "preset.tdexclamation",
+    "preset.tdeyesclo",
+    "preset.tdhate",
+    "preset.tdimagination",
+    "preset.tdsangry01",
+    "preset.tdsangry02",
+    "preset.tdsangry03",
+    "preset.tdsangry04",
+    "preset.tdsangry05",
+    "preset.tdscale",
+    "preset.tdsdoubt",
+    "preset.tdsenmity",
+    "preset.tdsflower",
+    "preset.tdsgandonglei01",
+    "preset.tdshaixiu",
+    "preset.tdsheixian",
+    "preset.tdsleizhu01",
+    "preset.tdsleizhu02",
+    "preset.tdsleizhu03",
+    "preset.tdsleizhu04",
+    "preset.tdsleizhu05",
+    "preset.tdslianhong",
+    "preset.tdsliuhan",
+    "preset.tdsliuhan2",
+    "preset.tdsliulei01",
+    "preset.tdsliulei02",
+    "preset.tdsliulei03",
+    "preset.tdsliulei04",
+    "preset.tdspeechless",
+    "preset.tdsscale",
+    "preset.tdsscale02",
+    "preset.tdsscale03",
+    "preset.tdsscale04",
+    "preset.tdsscale05",
+    "preset.tdsscale06",
+    "preset.tdsscale07",
+    "preset.tdsshengluehao01",
+    "preset.tdsshengluehao02",
+    "preset.tdsshengluehao03",
+    "preset.tdsshengluehao04",
+    "preset.tdsstareyes",
+    "preset.tdstanqi01",
+    "preset.tdstanqi02",
+    "preset.tdstanqi03",
+    "preset.tdstanqi04",
+    "preset.tdsthorny",
+    "preset.tdsweaty",
+    "preset.tdsxianquan01",
+    "preset.tdsyankuanglei01",
+    "preset.tdsymboleye",
+    "preset.tdsyunxuan01",
+    "preset.tdtired",
+    "preset.tdveins",
+    "viseme.aa",
+    "viseme.affricate",
+    "viseme.ch",
+    "viseme.dd",
+    "viseme.dentallip",
+    "viseme.e",
+    "viseme.explosive",
+    "viseme.ff",
+    "viseme.i",
+    "viseme.kk",
+    "viseme.lipopen",
+    "viseme.nn",
+    "viseme.o",
+    "viseme.open",
+    "viseme.pp",
+    "viseme.rr",
+    "viseme.sil",
+    "viseme.ss",
+    "viseme.th",
+    "viseme.tight",
+    "viseme.tighto",
+    "viseme.u",
+    "viseme.wide"
+  ],
+  "donors": {
+    "narration-clean": {
+      "source": "/Users/ze/work/gahyeonbot/artifacts/living-character-poc-v371/processed-v001/narration/Narration_Clean_v001.fbx",
+      "mesh": "Narration_Donor_Body",
+      "sourceChannelCount": 63,
+      "mappedChannelCount": 63,
+      "coverage": 1.0,
+      "mappings": [
+        {
+          "source": "mouthOpen - POSITION",
+          "channels": [
+            "jawOpen"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "mouthSmile - POSITION",
+          "channels": [
+            "mouthSmileLeft",
+            "mouthSmileRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "eyesClosed - POSITION",
+          "channels": [
+            "eyeBlinkLeft",
+            "eyeBlinkRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "eyesLookUp - POSITION",
+          "channels": [
+            "eyeLookUpLeft",
+            "eyeLookUpRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "eyesLookDown - POSITION",
+          "channels": [
+            "eyeLookDownLeft",
+            "eyeLookDownRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "eyeBlinkLeft - POSITION",
+          "channels": [
+            "eyeBlinkLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "eyeSquintLeft - POSITION",
+          "channels": [
+            "eyeSquintLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "eyeWideLeft - POSITION",
+          "channels": [
+            "eyeWideLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "eyeBlinkRight - POSITION",
+          "channels": [
+            "eyeBlinkRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "eyeSquintRight - POSITION",
+          "channels": [
+            "eyeSquintRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "eyeWideRight - POSITION",
+          "channels": [
+            "eyeWideRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "jawForward - POSITION",
+          "channels": [
+            "jawForward"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "jawLeft - POSITION",
+          "channels": [
+            "jawLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "jawRight - POSITION",
+          "channels": [
+            "jawRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "jawOpen - POSITION",
+          "channels": [
+            "jawOpen"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthClose - POSITION",
+          "channels": [
+            "mouthClose"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthFunnel - POSITION",
+          "channels": [
+            "mouthFunnel"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthPucker - POSITION",
+          "channels": [
+            "mouthPucker"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthLeft - POSITION",
+          "channels": [
+            "mouthLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthRight - POSITION",
+          "channels": [
+            "mouthRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthSmileLeft - POSITION",
+          "channels": [
+            "mouthSmileLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthSmileRight - POSITION",
+          "channels": [
+            "mouthSmileRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthFrownLeft - POSITION",
+          "channels": [
+            "mouthFrownLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthFrownRight - POSITION",
+          "channels": [
+            "mouthFrownRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthDimpleLeft - POSITION",
+          "channels": [
+            "mouthDimpleLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthDimpleRight - POSITION",
+          "channels": [
+            "mouthDimpleRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthStretchLeft - POSITION",
+          "channels": [
+            "mouthStretchLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthStretchRight - POSITION",
+          "channels": [
+            "mouthStretchRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthRollLower - POSITION",
+          "channels": [
+            "mouthRollLower"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthRollUpper - POSITION",
+          "channels": [
+            "mouthRollUpper"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthShrugLower - POSITION",
+          "channels": [
+            "mouthShrugLower"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthShrugUpper - POSITION",
+          "channels": [
+            "mouthShrugUpper"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthPressLeft - POSITION",
+          "channels": [
+            "mouthPressLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthPressRight - POSITION",
+          "channels": [
+            "mouthPressRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthLowerDownLeft - POSITION",
+          "channels": [
+            "mouthLowerDownLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthLowerDownRight - POSITION",
+          "channels": [
+            "mouthLowerDownRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthUpperUpLeft - POSITION",
+          "channels": [
+            "mouthUpperUpLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthUpperUpRight - POSITION",
+          "channels": [
+            "mouthUpperUpRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "browDownLeft - POSITION",
+          "channels": [
+            "browDownLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "browDownRight - POSITION",
+          "channels": [
+            "browDownRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "browInnerUp - POSITION",
+          "channels": [
+            "browInnerUp"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "browOuterUpLeft - POSITION",
+          "channels": [
+            "browOuterUpLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "browOuterUpRight - POSITION",
+          "channels": [
+            "browOuterUpRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "cheekPuff - POSITION",
+          "channels": [
+            "cheekPuff"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "cheekSquintLeft - POSITION",
+          "channels": [
+            "cheekSquintLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "cheekSquintRight - POSITION",
+          "channels": [
+            "cheekSquintRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "noseSneerLeft - POSITION",
+          "channels": [
+            "noseSneerLeft"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "noseSneerRight - POSITION",
+          "channels": [
+            "noseSneerRight"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "viseme_sil - POSITION",
+          "channels": [
+            "viseme.sil"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_PP - POSITION",
+          "channels": [
+            "viseme.pp"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_FF - POSITION",
+          "channels": [
+            "viseme.ff"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_TH - POSITION",
+          "channels": [
+            "viseme.th"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_DD - POSITION",
+          "channels": [
+            "viseme.dd"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_kk - POSITION",
+          "channels": [
+            "viseme.kk"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_CH - POSITION",
+          "channels": [
+            "viseme.ch"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_SS - POSITION",
+          "channels": [
+            "viseme.ss"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_nn - POSITION",
+          "channels": [
+            "viseme.nn"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_RR - POSITION",
+          "channels": [
+            "viseme.rr"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_aa - POSITION",
+          "channels": [
+            "viseme.aa"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_E - POSITION",
+          "channels": [
+            "viseme.e"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_I - POSITION",
+          "channels": [
+            "viseme.i"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_O - POSITION",
+          "channels": [
+            "viseme.o"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "viseme_U - POSITION",
+          "channels": [
+            "viseme.u"
+          ],
+          "method": "viseme"
+        }
+      ]
+    },
+    "cutegirl-g1": {
+      "source": "/Users/ze/work/gahyeonbot/artifacts/living-character-poc-v385-expression-sources/cutegirl/CuteGirl G1.fbx",
+      "mesh": "CC_Base_Body",
+      "sourceChannelCount": 152,
+      "mappedChannelCount": 42,
+      "coverage": 0.2763,
+      "mappings": [
+        {
+          "source": "V_Open",
+          "channels": [
+            "viseme.open"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "V_Explosive",
+          "channels": [
+            "viseme.explosive"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "V_Dental_Lip",
+          "channels": [
+            "viseme.dentallip"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "V_Tight_O",
+          "channels": [
+            "viseme.tighto"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "V_Tight",
+          "channels": [
+            "viseme.tight"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "V_Wide",
+          "channels": [
+            "viseme.wide"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "V_Affricate",
+          "channels": [
+            "viseme.affricate"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "V_Lip_Open",
+          "channels": [
+            "viseme.lipopen"
+          ],
+          "method": "viseme"
+        },
+        {
+          "source": "Brow_Raise_Inner_L",
+          "channels": [
+            "browInnerUp"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Brow_Raise_Inner_R",
+          "channels": [
+            "browInnerUp"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Brow_Raise_Outer_L",
+          "channels": [
+            "browOuterUpLeft"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Brow_Raise_Outer_R",
+          "channels": [
+            "browOuterUpRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Brow_Drop_L",
+          "channels": [
+            "browDownLeft"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Brow_Drop_R",
+          "channels": [
+            "browDownRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Brow_Compress_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Brow_Compress_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eye_Blink_L",
+          "channels": [
+            "eyeBlinkLeft"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Eye_Blink_R",
+          "channels": [
+            "eyeBlinkRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Eye_Squint_L",
+          "channels": [
+            "eyeSquintLeft"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Eye_Squint_R",
+          "channels": [
+            "eyeSquintRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Eye_Wide_L",
+          "channels": [
+            "eyeWideLeft"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Eye_Wide_R",
+          "channels": [
+            "eyeWideRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Eye_L_Look_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eye_R_Look_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eye_L_Look_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eye_R_Look_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eye_L_Look_Up",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eye_R_Look_Up",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eye_L_Look_Down",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eye_R_Look_Down",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eyelash_Upper_Up_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eyelash_Upper_Down_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eyelash_Upper_Up_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eyelash_Upper_Down_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eyelash_Lower_Up_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eyelash_Lower_Down_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eyelash_Lower_Up_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eyelash_Lower_Down_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Ear_Up_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Ear_Up_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Ear_Down_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Ear_Down_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Ear_Out_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Ear_Out_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Sneer_L",
+          "channels": [
+            "noseSneerLeft"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Nose_Sneer_R",
+          "channels": [
+            "noseSneerRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Nose_Nostril_Raise_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Nostril_Raise_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Nostril_Dilate_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Nostril_Dilate_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Crease_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Crease_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Nostril_Down_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Nostril_Down_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Nostril_In_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Nostril_In_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Tip_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Tip_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Tip_Up",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Nose_Tip_Down",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Cheek_Raise_L",
+          "channels": [
+            "cheekSquintLeft"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Cheek_Raise_R",
+          "channels": [
+            "cheekSquintRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Cheek_Suck_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Cheek_Suck_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Cheek_Puff_L",
+          "channels": [
+            "cheekPuff"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Cheek_Puff_R",
+          "channels": [
+            "cheekPuff"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Mouth_Smile_L",
+          "channels": [
+            "mouthSmileLeft"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Mouth_Smile_R",
+          "channels": [
+            "mouthSmileRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Mouth_Smile_Sharp_L",
+          "channels": [
+            "preset.mouthsmilesharpl"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "Mouth_Smile_Sharp_R",
+          "channels": [
+            "preset.mouthsmilesharpr"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "Mouth_Frown_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Frown_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Stretch_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Stretch_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Dimple_L",
+          "channels": [
+            "mouthDimpleLeft"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Mouth_Dimple_R",
+          "channels": [
+            "mouthDimpleRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Mouth_Press_L",
+          "channels": [
+            "mouthPressLeft"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Mouth_Press_R",
+          "channels": [
+            "mouthPressRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Mouth_Tighten_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Tighten_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Blow_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Blow_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Pucker_Up_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Pucker_Up_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Pucker_Down_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Pucker_Down_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Funnel_Up_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Funnel_Up_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Funnel_Down_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Funnel_Down_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Roll_In_Upper_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Roll_In_Upper_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Roll_In_Lower_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Roll_In_Lower_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Roll_Out_Upper_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Roll_Out_Upper_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Roll_Out_Lower_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Roll_Out_Lower_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Push_Upper_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Push_Upper_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Push_Lower_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Push_Lower_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Pull_Upper_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Pull_Upper_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Pull_Lower_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Pull_Lower_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Up",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Down",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_L",
+          "channels": [
+            "mouthLeft"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Mouth_R",
+          "channels": [
+            "mouthRight"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Mouth_Upper_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Upper_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Lower_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Lower_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Shrug_Upper",
+          "channels": [
+            "mouthShrugUpper"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "Mouth_Shrug_Lower",
+          "channels": [
+            "mouthShrugLower"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "Mouth_Drop_Upper",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Drop_Lower",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Up_Upper_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Up_Upper_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Down_Lower_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Down_Lower_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Chin_Up",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Mouth_Close",
+          "channels": [
+            "mouthClose"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "Mouth_Contract",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Tongue_Bulge_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Tongue_Bulge_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Jaw_Open",
+          "channels": [
+            "jawOpen"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "Jaw_Forward",
+          "channels": [
+            "jawForward"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "Jaw_Backward",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Jaw_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Jaw_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Jaw_Up",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Jaw_Down",
+          "channels": [
+            "jawOpen"
+          ],
+          "method": "semantic-alias"
+        },
+        {
+          "source": "Neck_Swallow_Up",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Neck_Swallow_Down",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Neck_Tighten_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Neck_Tighten_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Head_Turn_Up",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Head_Turn_Down",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Head_Turn_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Head_Turn_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Head_Tilt_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Head_Tilt_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Head_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Head_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Head_Forward",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Head_Backward",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eyelid_Outer_Down_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eyelid_Outer_Down_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eyelid_Inner_Down_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "Eyelid_Inner_Down_R",
+          "channels": [],
+          "method": "unmapped"
+        }
+      ]
+    },
+    "lacrimosa": {
+      "source": "/Users/ze/work/gahyeonbot/artifacts/living-character-poc-v385-expression-sources/lacrimosa/lacrimosa final.fbx",
+      "mesh": "player_004_lacrimosa_skin_LOD1",
+      "sourceChannelCount": 148,
+      "mappedChannelCount": 110,
+      "coverage": 0.7432,
+      "mappings": [
+        {
+          "source": "look_U",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "look_RU",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "look_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "look_RD",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "look_D",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "look_LD",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "look_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "look_LU",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "EL_Happy_l_CLO",
+          "channels": [
+            "preset.elhappylclo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Happy_r_CLO",
+          "channels": [
+            "preset.elhappyrclo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "eye_SF",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "EL_Surprised_01_OP",
+          "channels": [
+            "preset.elsurprised01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Angry_01_OP",
+          "channels": [
+            "preset.elangry01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Angry_01_CLO",
+          "channels": [
+            "preset.elangry01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Smile_01_CLO",
+          "channels": [
+            "preset.elsmile01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Sad_01_OP",
+          "channels": [
+            "preset.elsad01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Sad_01_CLO",
+          "channels": [
+            "preset.elsad01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Despise_01_OP",
+          "channels": [
+            "preset.eldespise01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Despise_01_CLO",
+          "channels": [
+            "preset.eldespise01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Thinking_01_OP",
+          "channels": [
+            "preset.elthinking01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Thinking_01_CLO",
+          "channels": [
+            "preset.elthinking01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Enmity_01_OP",
+          "channels": [
+            "preset.elenmity01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Enmity_01_CLO",
+          "channels": [
+            "preset.elenmity01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Speechless_01_OP",
+          "channels": [
+            "preset.elspeechless01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Speechless_01_CLO",
+          "channels": [
+            "preset.elspeechless01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Serious_01_OP",
+          "channels": [
+            "preset.elserious01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Serious_01_CLO",
+          "channels": [
+            "preset.elserious01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_Happy_01",
+          "channels": [
+            "preset.ebhappy01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_Surprised_01",
+          "channels": [
+            "preset.ebsurprised01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_Angry_01",
+          "channels": [
+            "preset.ebangry01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_Smile_01",
+          "channels": [
+            "preset.ebsmile01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_Sad_01",
+          "channels": [
+            "preset.ebsad01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_Despise_01",
+          "channels": [
+            "preset.ebdespise01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_Thinking_01",
+          "channels": [
+            "preset.ebthinking01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_Enmity_01",
+          "channels": [
+            "preset.ebenmity01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_Speechless_01",
+          "channels": [
+            "preset.ebspeechless01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_Serious_01",
+          "channels": [
+            "preset.ebserious01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_UD_L",
+          "channels": [
+            "preset.ebudl"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_UD_R",
+          "channels": [
+            "preset.ebudr"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen",
+          "channels": [
+            "jawOpen"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "jawOpen_Happy_01_OP",
+          "channels": [
+            "preset.jawopenhappy01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_Happy_01_CLO",
+          "channels": [
+            "preset.jawopenhappy01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_Surprised_01_OP",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Surprised_01_CLO",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Angry_01_OP",
+          "channels": [
+            "preset.jawopenangry01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_Angry_01_CLO",
+          "channels": [
+            "preset.jawopenangry01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_Smile_01_OP",
+          "channels": [
+            "preset.jawopensmile01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_Smile_01_CLO",
+          "channels": [
+            "preset.jawopensmile01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_Sad_01_OP",
+          "channels": [
+            "preset.jawopensad01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_Sad_01_CLO",
+          "channels": [
+            "preset.jawopensad01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_Despise_01_OP",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Despise_01_CLO",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Thinking_01_OP",
+          "channels": [
+            "preset.jawopenthinking01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_Thinking_01_CLO",
+          "channels": [
+            "preset.jawopenthinking01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_Enmity_01_OP",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Enmity_01_CLO",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Speechless_01_OP",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Speechless_01_CLO",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Serious_01_OP",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Serious_01_CLO",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Like_01_OP",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Like_01_CLO",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Ignorant_01_OP",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Ignorant_01_CLO",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Tired_01_OP",
+          "channels": [
+            "preset.jawopentired01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_Tired_01_CLO",
+          "channels": [
+            "preset.jawopentired01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "mouthPucker",
+          "channels": [
+            "mouthPucker"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthFunnel",
+          "channels": [
+            "mouthFunnel"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthRollUpper",
+          "channels": [
+            "mouthRollUpper"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthRollLower",
+          "channels": [
+            "mouthRollLower"
+          ],
+          "method": "direct-standard"
+        },
+        {
+          "source": "mouthSmell",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "TD_EyesClo",
+          "channels": [
+            "preset.tdeyesclo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "mouthImagination",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "TD_Imagination",
+          "channels": [
+            "preset.tdimagination"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "biyan_R",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "biyan_L",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "biyan",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "biyan1",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Chew_01_OP",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Chew_01_CLO",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "EL_Doubt_01_OP",
+          "channels": [
+            "preset.eldoubt01op"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Doubt_01_CLO",
+          "channels": [
+            "preset.eldoubt01clo"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EB_Doubt_01",
+          "channels": [
+            "preset.ebdoubt01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_Doubt_01_OP",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_Doubt_01_CLO",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "EL_Up",
+          "channels": [
+            "preset.elup"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Down",
+          "channels": [
+            "preset.eldown"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "jawOpen_a",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_yi",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_wu",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_ei",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "jawOpen_o",
+          "channels": [],
+          "method": "unmapped"
+        },
+        {
+          "source": "EL_Light_Up",
+          "channels": [
+            "preset.ellightup"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "EL_Light_L",
+          "channels": [
+            "preset.ellightl"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Scale",
+          "channels": [
+            "preset.tdsscale"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Scale_02",
+          "channels": [
+            "preset.tdsscale02"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Scale_03",
+          "channels": [
+            "preset.tdsscale03"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Scale_04",
+          "channels": [
+            "preset.tdsscale04"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Scale_05",
+          "channels": [
+            "preset.tdsscale05"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Scale_06",
+          "channels": [
+            "preset.tdsscale06"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Scale_07",
+          "channels": [
+            "preset.tdsscale07"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_yunxuan_01",
+          "channels": [
+            "preset.tdsyunxuan01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_xianquan_01",
+          "channels": [
+            "preset.tdsxianquan01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_StarEyes",
+          "channels": [
+            "preset.tdsstareyes"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_liuhan",
+          "channels": [
+            "preset.tdsliuhan"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_liuhan2",
+          "channels": [
+            "preset.tdsliuhan2"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_heixian",
+          "channels": [
+            "preset.tdsheixian"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Doubt",
+          "channels": [
+            "preset.tdsdoubt"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_lianhong",
+          "channels": [
+            "preset.tdslianhong"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_haixiu",
+          "channels": [
+            "preset.tdshaixiu"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Flower",
+          "channels": [
+            "preset.tdsflower"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Thorny",
+          "channels": [
+            "preset.tdsthorny"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Enmity",
+          "channels": [
+            "preset.tdsenmity"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Angry_01",
+          "channels": [
+            "preset.tdsangry01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Angry_02",
+          "channels": [
+            "preset.tdsangry02"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Angry_03",
+          "channels": [
+            "preset.tdsangry03"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Angry_04",
+          "channels": [
+            "preset.tdsangry04"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_Angry_05",
+          "channels": [
+            "preset.tdsangry05"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_tanqi_01",
+          "channels": [
+            "preset.tdstanqi01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_tanqi_02",
+          "channels": [
+            "preset.tdstanqi02"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_tanqi_03",
+          "channels": [
+            "preset.tdstanqi03"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_tanqi_04",
+          "channels": [
+            "preset.tdstanqi04"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_shengluehao_01",
+          "channels": [
+            "preset.tdsshengluehao01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_shengluehao_02",
+          "channels": [
+            "preset.tdsshengluehao02"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_shengluehao_03",
+          "channels": [
+            "preset.tdsshengluehao03"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_shengluehao_04",
+          "channels": [
+            "preset.tdsshengluehao04"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_yankuanglei_01",
+          "channels": [
+            "preset.tdsyankuanglei01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_gandonglei_01",
+          "channels": [
+            "preset.tdsgandonglei01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_liulei_01",
+          "channels": [
+            "preset.tdsliulei01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_liulei_02",
+          "channels": [
+            "preset.tdsliulei02"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_liulei_03",
+          "channels": [
+            "preset.tdsliulei03"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_liulei_04",
+          "channels": [
+            "preset.tdsliulei04"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_leizhu_01",
+          "channels": [
+            "preset.tdsleizhu01"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_leizhu_02",
+          "channels": [
+            "preset.tdsleizhu02"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_leizhu_03",
+          "channels": [
+            "preset.tdsleizhu03"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_leizhu_04",
+          "channels": [
+            "preset.tdsleizhu04"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TDS_leizhu_05",
+          "channels": [
+            "preset.tdsleizhu05"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TD_Scale",
+          "channels": [
+            "preset.tdscale"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TD_Veins",
+          "channels": [
+            "preset.tdveins"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TD_Exclamation",
+          "channels": [
+            "preset.tdexclamation"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TD_Amazed",
+          "channels": [
+            "preset.tdamazed"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TD_Sweaty",
+          "channels": [
+            "preset.tdsweaty"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TD_Hate",
+          "channels": [
+            "preset.tdhate"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TD_BeanieEye",
+          "channels": [
+            "preset.tdbeanieeye"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TD_SymbolEye",
+          "channels": [
+            "preset.tdsymboleye"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TD_EggEyes",
+          "channels": [
+            "preset.tdeggeyes"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TD_Speechless",
+          "channels": [
+            "preset.tdspeechless"
+          ],
+          "method": "expression-preset"
+        },
+        {
+          "source": "TD_Tired",
+          "channels": [
+            "preset.tdtired"
+          ],
+          "method": "expression-preset"
+        }
+      ]
+    }
+  },
+  "target": {
+    "id": "hayley",
+    "mechanism": "facial-bone-drivers",
+    "channelTargets": {
+      "jawOpen": {
+        "bones": [
+          "cJaw"
+        ],
+        "driver": "rotation",
+        "calibrationRequired": true
+      },
+      "eyeBlinkLeft": {
+        "bones": [
+          "lEyelidUpperA",
+          "lEyelidUpperB",
+          "lEyelidLowerA",
+          "lEyelidLowerB"
+        ],
+        "driver": "paired-rotation",
+        "calibrationRequired": true
+      },
+      "eyeBlinkRight": {
+        "bones": [
+          "rEyelidUpperA",
+          "rEyelidUpperB",
+          "rEyelidLowerA",
+          "rEyelidLowerB"
+        ],
+        "driver": "paired-rotation",
+        "calibrationRequired": true
+      },
+      "eyeLook": {
+        "bones": [
+          "lEye",
+          "rEye"
+        ],
+        "driver": "rotation",
+        "calibrationRequired": true
+      },
+      "mouthSmileLeft": {
+        "bones": [
+          "lLipCorner",
+          "lCheekInner"
+        ],
+        "driver": "translation",
+        "calibrationRequired": true
+      },
+      "mouthSmileRight": {
+        "bones": [
+          "rLipCorner",
+          "rCheekInner"
+        ],
+        "driver": "translation",
+        "calibrationRequired": true
+      },
+      "mouthPucker": {
+        "bones": [
+          "lLipCorner",
+          "rLipCorner",
+          "cLipUpper",
+          "cLipLower"
+        ],
+        "driver": "translation",
+        "calibrationRequired": true
+      },
+      "browInnerUp": {
+        "bones": [
+          "lForeheadIn",
+          "rForeheadIn",
+          "cForehead"
+        ],
+        "driver": "translation",
+        "calibrationRequired": true
+      },
+      "browDownLeft": {
+        "bones": [
+          "lForeheadIn",
+          "lForeheadMid"
+        ],
+        "driver": "translation",
+        "calibrationRequired": true
+      },
+      "browDownRight": {
+        "bones": [
+          "rForeheadIn",
+          "rForeheadMid"
+        ],
+        "driver": "translation",
+        "calibrationRequired": true
+      }
+    },
+    "calibrationStatus": "required-before-animation-transfer"
+  },
+  "policy": {
+    "copyShapeKeysAcrossTopology": false,
+    "preserveSourceCurves": true,
+    "automaticApproval": false,
+    "releaseEligible": false
+  }
+}

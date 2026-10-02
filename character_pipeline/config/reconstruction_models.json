@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "models": {
+    "trellis": {
+      "displayName": "Microsoft TRELLIS.2",
+      "role": "temporary-geometry-reconstruction",
+      "runner": null,
+      "repository": null,
+      "revision": null,
+      "weightsSha256": null,
+      "licenseReviewed": false
+    },
+    "instantmesh": {
+      "displayName": "TencentARC InstantMesh",
+      "role": "temporary-geometry-reconstruction",
+      "runner": null,
+      "repository": "https://github.com/TencentARC/InstantMesh.git",
+      "revision": "08822c52fdc399b93ea00e4fa9e596344ed52ccc",
+      "weightsSha256": null,
+      "licenseReviewed": true
+    }
+  },
+  "productionMeshAllowed": false,
+  "historicalRejectedBackend": {
+    "model": "hunyuan",
+    "reason": "official-license-excludes-south-korea"
+  }
+}

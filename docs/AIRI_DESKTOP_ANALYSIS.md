@@ -18,7 +18,7 @@ individual component.
 | Vue/web presentation | Adopted independently | Gahyeon Desktop uses Vue, Electron and Three.js. |
 | VRM control and animation | Adopted through official Pixiv packages | Avoids coupling to AIRI's stage lifecycle and stores no AIRI runtime state. |
 | Browser microphone/WebAudio | Reimplemented | Audio crosses Gahyeon's STT/TTS ports; AIRI providers are not imported. |
-| Stage web/native split | Adopted as a boundary | Desktop and optional Looking Glass render the same semantic `StageState`. |
+| Stage web/native split | Adopted as a boundary | Primary Looking Glass output and the monitor development/recovery fallback render the same semantic `StageState`. |
 | AIRI LLM, memory and provider stack | Rejected | Gahyeon Core already owns conversation, memory, tools and provider adapters. |
 | AIRI embedded database | Rejected | Persistent identity, events, memory and World State remain server-side. |
 | AIRI source copying | Rejected | Current Desktop code is purpose-built and dependency-minimal. |

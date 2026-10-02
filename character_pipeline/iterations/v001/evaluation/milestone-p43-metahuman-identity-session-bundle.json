@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P43-metahuman-identity-session-bundle",
+  "state": "completed-bundle-blocked-before-launch",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "The first MetaHuman Editor session can silently consume a stale shape, skip human marker correction, or be reported as solved before conform and fixed-view identity review.",
+    "action": "Build one immutable v002-only session bundle that binds the verified source, preflight, Unreal asset destinations, seven ordered guided stages and Looking Glass Go capture contract.",
+    "expectedResult": "Installation completion changes only readiness; it cannot bypass source lineage, manual Identity correction, conform evidence or five-view identity rejection."
+  },
+  "actualResult": {
+    "session": "../../../metahuman/identity/v002/session.json",
+    "sessionSha256": "77ea6258838d5dd488ff3cda9254a469b4beedb3beddf483c7ec54124888ed85",
+    "state": "blocked-before-launch",
+    "guidedStages": 7,
+    "fixedIdentityViews": 5,
+    "resolution": [1440, 2560],
+    "quiltViews": 66,
+    "qualityClaim": null,
+    "replaceExisting": false
+  },
+  "validation": {
+    "sessionUnitTests": "4 passed",
+    "sessionVerifier": "passed",
+    "v002HandoffVerifier": "passed",
+    "currentBlockedChecks": 7
+  },
+  "qualityBoundary": "The bundle orchestrates the first real MetaHuman session but contains no solved Identity, DNA, production face, or AAA-quality evidence.",
+  "decision": "Use this bundle after preflight becomes ready. Reject the first conform if canonical 03/06/07/08 comparisons retain the unattractive MPFB proportions."
+}

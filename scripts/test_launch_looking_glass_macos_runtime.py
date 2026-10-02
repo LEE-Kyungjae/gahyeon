@@ -12,6 +12,8 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         launcher = (ROOT / "scripts/launch_looking_glass_macos_runtime.py").read_text()
         runtime = (ROOT / "unreal/GahyeonDesktopMetaHumanPOC/Source/"
                    "GahyeonDesktopMetaHumanPOC/Private/GahyeonDesktopMetaHumanPOC.cpp").read_text()
+        iosurface_bridge = (ROOT / "unreal/GahyeonDesktopMetaHumanPOC/Source/"
+                            "GahyeonDesktopMetaHumanPOC/Private/MacIOSurfaceBridge.mm").read_text()
         encoder = (ROOT / "native/macos/GahyeonLookingGlassBridge/frame_encoder.mm").read_text()
         self.assertIn('runtime_environment["GAHYEON_LOOKING_GLASS_QUILT"] = "1"', launcher)
         self.assertIn('runtime_environment["GAHYEON_LOOKING_GLASS_NO_OVERLAY"] = "1"', launcher)
@@ -38,8 +40,17 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn("SingleNode->GetLength()", runtime)
         self.assertIn("MarkRenderDynamicDataDirty()", runtime)
         self.assertIn("duration=%.3f head=%s", runtime)
+        self.assertIn("Header->Sequence != Header->ConsumerSequence", iosurface_bridge)
+        self.assertIn("ViewGeneration == PublishedViewGeneration.Load()", iosurface_bridge)
+        self.assertIn("++RequestedViewGeneration", iosurface_bridge)
         self.assertIn("header->viewIndex", encoder)
         self.assertIn("viewIndex + 1 == viewCount", encoder)
+        self.assertIn("consumerSequence", encoder)
+        self.assertIn("O_RDWR", encoder)
+        self.assertIn("PROT_READ | PROT_WRITE", encoder)
+        self.assertIn("GAHYEON_LKG_QUILT_REJECTED", encoder)
+        self.assertIn("GAHYEON_LKG_ACK_WAIT", encoder)
+        self.assertIn("quiltCoverage", encoder)
 
     def test_one_stop_launcher_uses_canonical_unreal_and_native_bridge(self):
         source = (ROOT / "scripts/launch_looking_glass_macos_runtime.py").read_text()

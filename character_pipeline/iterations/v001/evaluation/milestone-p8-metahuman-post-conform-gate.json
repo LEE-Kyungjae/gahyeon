@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P8-metahuman-post-conform-gate",
+  "state": "automation-complete-runtime-pending",
+  "hypothesis": {
+    "statement": "A production MetaHuman stage can be made auditable before Unreal is available by separating pending asset bindings, read-only Editor evidence, immutable renders and offline validation.",
+    "action": "Add a null-by-default candidate binding, UE 5.6 Asset Registry collector and a verifier that requires DNA/RigLogic evidence plus five checksummed Looking Glass Go renders.",
+    "expectedResult": "Fixture evidence passes, while the actual workspace fails closed until a real MetaHuman Identity solve and Editor verification exist."
+  },
+  "actualResult": {
+    "fixtureTestsPassed": 3,
+    "currentWorkspacePassed": false,
+    "currentFailure": "post-conform contract is not a candidate",
+    "bindingState": "awaiting-identity-solve",
+    "editorRuntimeVerified": false,
+    "metahumanCreated": false,
+    "qualityClaim": null
+  },
+  "displayProfile": {
+    "id": "looking-glass-go",
+    "resolution": [1440, 2560],
+    "views": 5,
+    "quiltRequiresConnectedCalibration": true
+  },
+  "requiredRuntimeEvidence": [
+    "MetaHuman Identity asset",
+    "separate face and body skeletal meshes",
+    "face and body Control Rigs",
+    "at least one Groom",
+    "Hero Blueprint inheriting GahyeonCharacterPawn",
+    "verified DNA or RigLogic binding",
+    "five immutable 1440x2560 Go renders"
+  ],
+  "decision": "Keep the gate. Do not change the binding to candidate or emit MetaHuman/AAA claims until all runtime evidence exists.",
+  "nextEvidence": "run the collector in UE 5.6 after Identity Solve, verify DNA/RigLogic manually or through authoritative Editor API, render five Go views, then run the offline candidate verifier"
+}

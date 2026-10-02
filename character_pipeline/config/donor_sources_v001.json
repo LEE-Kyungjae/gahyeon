@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "living-character-donors-v001",
+  "policy": {
+    "sourceAssetsAreImmutable": true,
+    "allowRedistribution": false,
+    "requireLicenseEvidenceBeforeRelease": true,
+    "gahyeonUsage": "archived-reference-only"
+  },
+  "sources": [
+    {
+      "id": "stellar-blade-lily-stargazer",
+      "archive": "/Users/ze/Downloads/stellar-blade-lily-stargazer-coat.zip",
+      "kind": "character-candidate",
+      "roles": ["appearance", "hair", "wardrobe"],
+      "productionUse": "evaluation-only",
+      "notes": "Modular head, eyes, teeth, hair, body, and wardrobe; no usable facial rig."
+    },
+    {
+      "id": "ururu",
+      "archive": "/Users/ze/Downloads/ururu.zip",
+      "kind": "character-candidate",
+      "roles": ["appearance", "wardrobe-reference"],
+      "productionUse": "evaluation-only",
+      "notes": "ValveBiped body rig; no facial deformation system."
+    },
+    {
+      "id": "hayley",
+      "archive": "/Users/ze/Downloads/hayley.zip",
+      "kind": "character-candidate",
+      "roles": ["appearance", "body-rig", "facial-bone-reference"],
+      "productionUse": "primary-poc-candidate",
+      "notes": "Modular character with 286-bone rig and 57 face-like bones."
+    },
+    {
+      "id": "cutegirl-g1",
+      "archive": "/Users/ze/Downloads/cutegirl-g1.zip",
+      "kind": "character-and-expression-donor",
+      "roles": ["appearance", "facial-shape-dictionary", "viseme-reference", "eye-reference"],
+      "productionUse": "primary-facial-reference",
+      "notes": "Character Creator topology with 153 body/head shape keys and synchronized facial auxiliaries."
+    },
+    {
+      "id": "cyber-girl-idle",
+      "archive": "/Users/ze/Downloads/cyber-girl.zip",
+      "kind": "motion-donor",
+      "roles": ["standing-idle", "weight-shift-reference"],
+      "productionUse": "motion-reference",
+      "notes": "244 frames at 24 fps."
+    },
+    {
+      "id": "luoli-run",
+      "archive": "/Users/ze/Downloads/luoli-run.zip",
+      "kind": "motion-donor",
+      "roles": ["run-lower-body-reference"],
+      "excludedRoles": ["run-upper-body"],
+      "productionUse": "motion-reference",
+      "notes": "24 frames at 30 fps; exaggerated arm motion must not be copied."
+    },
+    {
+      "id": "warrior-girl-secondary-motion",
+      "archive": "/Users/ze/Downloads/warrior-girl.zip",
+      "kind": "cache-reference",
+      "roles": ["hair-secondary-motion", "clothing-secondary-motion"],
+      "productionUse": "parameter-reference-only",
+      "notes": "Alembic cache, 0-64 at 24 fps; do not treat as a retargetable skeletal clip."
+    },
+    {
+      "id": "gynoid-1000-walk",
+      "archive": "/Users/ze/Downloads/gynoid-1000-series.zip",
+      "kind": "motion-donor",
+      "roles": ["walk-cycle-reference"],
+      "productionUse": "motion-reference",
+      "notes": "Mixamo-style 75-frame walk at 60 fps; character appearance excluded."
+    },
+    {
+      "id": "lacrimosa-sleepy-expression",
+      "archive": "/Users/ze/Downloads/lacrimosa-animated-neverness-to-everness.zip",
+      "kind": "character-and-expression-donor",
+      "roles": ["sleepy-expression", "emotion-performance", "gaze-reference"],
+      "productionUse": "primary-expression-performance-reference",
+      "notes": "795 frames at 60 fps with 149 shape keys."
+    },
+    {
+      "id": "standing-sitting",
+      "archive": "/Users/ze/Downloads/standing-sitting-animation.zip",
+      "kind": "motion-donor",
+      "roles": ["stand-to-sit", "sit-to-stand"],
+      "productionUse": "motion-reference",
+      "notes": "94-frame transition at 24 fps; contact requires Unreal IK validation."
+    },
+    {
+      "id": "narration-gesture",
+      "archive": "/Users/ze/Downloads/talking-character-joe-rogan-for-narration.zip",
+      "kind": "motion-and-expression-donor",
+      "roles": ["talking-gesture", "head-motion", "viseme-reference"],
+      "productionUse": "primary-conversation-reference",
+      "notes": "Approximately 29.8 seconds at 24 fps with 64 ARKit-like and viseme shapes."
+    },
+    {
+      "id": "hands-forward-gesture",
+      "archive": "/Users/ze/Downloads/hands-forward-gesture.zip",
+      "kind": "motion-donor",
+      "roles": ["present", "explain", "offer"],
+      "productionUse": "motion-reference",
+      "notes": "94 frames at 30 fps; facial performance supplied separately."
+    },
+    {
+      "id": "but-wait-gesture-performance",
+      "archive": "/Users/ze/Downloads/but-wait-theres-more-animation.zip",
+      "kind": "motion-donor",
+      "roles": ["attention-getter", "transition", "two-hand-emphasis", "presenting"],
+      "productionUse": "segment-before-use",
+      "notes": "1628 frames at 30 fps; must be segmented and intensity-normalized."
+    }
+  ]
+}

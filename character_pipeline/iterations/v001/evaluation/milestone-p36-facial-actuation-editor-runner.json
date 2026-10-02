@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P36-facial-actuation-editor-runner",
+  "state": "completed-runner-awaiting-p34-profile-ue56-level-and-mrq-preset",
+  "displayProfile": "looking-glass-go",
+  "displayContract": {"resolution": [1440, 2560], "viewCount": 66, "camera": "face-close-up"},
+  "hypothesis": {
+    "statement": "P35 could not be executed truthfully because the production resolver exposed only bilateral blink and no immutable Editor state machine applied, observed and captured each semantic sample.",
+    "action": "Add a shared explicit-semantic resolver with asymmetric blink support, expose it to UE Python, apply resolved direct morphs to the real face component, read them back, and capture all 57 samples through a tick-driven fail-closed runner.",
+    "expectedResult": "A real UE 5.6 session can generate lineage-bound curve traces and Looking Glass Go captures without bypassing production mapping logic."
+  },
+  "implementation": {
+    "semanticResolver": "UGahyeonCharacterPresentationProfile::ResolveFacialSemanticWeights",
+    "directCases": ["blink-left", "blink-right", "jaw-open"],
+    "boundGroups": ["viseme", "emotion"],
+    "samples": 57,
+    "execution": "interactive UE 5.6 Slate post-tick state machine",
+    "outputPolicy": "new output root only; per-sample PNG and trace SHA-256; failure receipt on abort"
+  },
+  "actualResult": {"currentEditorRun": null, "asymmetricBlinkResolverImplemented": true, "runnerScaffoldVerified": true, "mappingActuationVerified": false, "deformationVerified": false, "productionReady": false},
+  "scopeBoundary": [
+    "Control Rig curve execution fails closed until a concrete animation-bridge executor exists",
+    "high-resolution screenshot capture is a fixed Go evidence path, not quilt calibration proof",
+    "P12 geometry diagnostics and human expression review remain mandatory"
+  ],
+  "failureHandling": [
+    "reject ambiguous actor, face component or camera lookup",
+    "reject P34 or P35 checksum drift and existing output directory",
+    "reject unimplemented Control Rig curve execution",
+    "reject applied versus observed morph mismatch and 120-second capture timeout",
+    "write failure.json and never emit candidate evidence after an incomplete run"
+  ],
+  "validation": {"runnerAndEvidenceTests": "11 passed", "CxxAsymmetricBlinkAutomation": "implemented-awaiting-UE56", "realEditorRun": "pending"},
+  "decision": "Use P36 to create P35 evidence only after the real MetaHuman, profile, fixed Go camera and MRQ preset exist."
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P28-selected-metahuman-identity-handoff",
+  "state": "completed-gate-awaiting-p27-selection-and-ue56",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A reviewed reconstruction selection can still lose identity lineage or be mistaken for production topology when it is manually prepared for MetaHuman Identity.",
+    "action": "Convert the P27 receipt into an immutable UE 5.6 work order that seals source mesh, postprocess state, shortlist, identity authority and Go profile checksums, while forcing a separate neutral head-neck-eyes export and MetaHuman topology after conform.",
+    "expectedResult": "Unreal Editor evidence can only be collected from a MetaHuman candidate whose input handoff traces back to the reviewed temporary shape estimate."
+  },
+  "actualResult": {
+    "sourceFormats": ["obj", "fbx", "glb", "gltf", "ply"],
+    "targetUnits": "centimeter",
+    "targetAxes": {"up": "+Z", "forward": "+X", "handedness": "left"},
+    "identityViews": 5,
+    "singleViewResolution": [1440, 2560],
+    "quiltViews": 66,
+    "currentSelection": null,
+    "currentMetaHumanCandidate": null,
+    "productionMeshAllowed": false
+  },
+  "requiredPreparation": [
+    "isolate neutral head, neck and eyes",
+    "remove hair, clothing, accessories and hidden helpers",
+    "preserve selected shape without beautification",
+    "normalize to cm, +Z up and +X forward",
+    "apply transforms and validate nonzero bounds",
+    "export an immutable OBJ or FBX working copy"
+  ],
+  "unrealIntegration": {
+    "collectorRequiresInputHandoffForCandidate": true,
+    "collectorVerifiesHandoffSha256": true,
+    "pendingBindingRemainsSupported": true,
+    "engine": "5.6"
+  },
+  "validation": {
+    "handoffTests": "5 passed",
+    "combinedP25ThroughP28Tests": "20 passed",
+    "metahumanScaffold": "passed"
+  },
+  "decision": "Preserve the v79 head-only handoff as fallback evidence, but require a P28 selection-derived handoff for any future candidate binding and Editor evidence."
+}

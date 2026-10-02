@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P27-human-reviewed-reconstruction-selection",
+  "state": "completed-gate-awaiting-shortlist-and-review",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A measurement-ranked reconstruction must not enter MetaHuman conform merely because it ranks first; front, three-quarter, profile and body identity evidence needs explicit named human review tied to immutable candidate lineage.",
+    "action": "Require an authorized character owner or art director to review nine Go views and nine identity criteria, reject any blocking finding, and seal shortlist, candidate state and raw mesh checksums into a shape-reference-only selection receipt.",
+    "expectedResult": "Only a traceable human-reviewed reconstruction can become MetaHuman conform input, while automatic and production-mesh promotion remain impossible."
+  },
+  "actualResult": {
+    "requiredViews": 9,
+    "requiredIdentityCriteria": 9,
+    "authorizedRoles": ["character-owner", "character-art-director"],
+    "currentShortlist": null,
+    "currentSelection": null,
+    "automaticSelection": false,
+    "productionMeshAllowed": false
+  },
+  "sealedLineage": [
+    "P26 shortlist path and SHA-256",
+    "selected candidate path, model, seed and measurement rank",
+    "P25 postprocess-state SHA-256",
+    "raw reconstruction mesh path and SHA-256",
+    "named reviewer, role and timezone-aware timestamp"
+  ],
+  "failureHandling": [
+    "reject shortlist checksum drift",
+    "reject candidate-state drift after ranking",
+    "reject ineligible or unlisted candidates",
+    "reject missing, reordered or unnoted view and criterion reviews",
+    "reject any blocking view or identity criterion",
+    "reject automatic, anonymous, unauthorized or future-dated review",
+    "reject production topology claims"
+  ],
+  "validation": {"selectionTests": "5 passed", "combinedP25P26P27Tests": "15 passed"},
+  "decision": "Keep the selection empty until six real candidates complete P25, P26 produces a shortlist, and an authorized reviewer accepts every required view and criterion."
+}

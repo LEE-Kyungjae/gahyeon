@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P22-canonical-alpha-matte-authoring",
+  "state": "completed-drafts-human-review-pending",
+  "displayProfile": "looking-glass-go",
+  "imageTool": "built-in-imagegen-chroma-key-plus-local-alpha-extraction",
+  "hypothesis": {
+    "statement": "Reconstruction needs isolated subjects, but using AI-edited RGB would silently alter the established identity and body evidence.",
+    "action": "Use generated chroma edits only as alpha proposals, discard their RGB, combine alpha with bit-exact canonical RGB and expose source/checker/alpha boards for human review.",
+    "expectedResult": "Draft RGBA inputs preserve every original RGB pixel while making matte defects visible and preventing automatic approval."
+  },
+  "actualResult": {
+    "canonical03": {
+      "dimensions": [1254, 1254],
+      "rgbBitExact": true,
+      "transparentFraction": 0.3314637180162237,
+      "partialFraction": 0.029833718703021147,
+      "approved": false,
+      "visualFinding": "major silhouette retained; some flyaway-hair boundaries are thickened"
+    },
+    "canonical16": {
+      "dimensions": [1023, 1537],
+      "rgbBitExact": true,
+      "transparentFraction": 0.7967654804811394,
+      "partialFraction": 0.0050421311780893706,
+      "approved": false,
+      "visualFinding": "body silhouette retained; shoelace and finger-gap boundaries are simplified"
+    },
+    "approvedRunnerInputs": 0,
+    "candidateCount": 0
+  },
+  "decision": "Keep both non-destructive drafts and review boards. Do not feed them to TRELLIS or InstantMesh until a named reviewer accepts or manually corrects the alpha boundaries."
+}

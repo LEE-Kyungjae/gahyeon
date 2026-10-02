@@ -1,7 +1,7 @@
 #include "Animation/GahyeonCharacterAnimInstance.h"
 
 #include "GameFramework/Actor.h"
-#include "Misc/MD5.h"
+#include "Misc/SecureHash.h"
 #include "Presentation/GahyeonCharacterPresentationComponent.h"
 
 namespace

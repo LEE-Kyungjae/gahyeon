@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v560",
+  "status": "draft-textured-animated-character-registry",
+  "extends": "character_pipeline/config/living-character-runtime-v550.json",
+  "characters": {
+    "stella-lily": {
+      "skeletalMesh": "/Game/LivingCharacterPOC/v558/Characters/StellaLilyTextured/StellaLily_PreviewReady_v556",
+      "skeleton": "/Game/LivingCharacterPOC/v520/Characters/StellaLilyPreview/StellaLily_Modular_v518_Skeleton",
+      "motions": {
+        "engagedReaction": "/Game/LivingCharacterPOC/v535/Animation/StellaLily_UpperIdle_v533"
+      },
+      "source": {
+        "productionBlend": "artifacts/living-character-poc-v556-stella-lily-preview-ready/StellaLily_PreviewReady_v556.blend",
+        "previewFbx": "artifacts/living-character-poc-v556-stella-lily-preview-ready/StellaLily_PreviewReady_v556.fbx",
+        "modularMeshCount": 13,
+        "previewMeshCount": 9,
+        "boneCount": 219
+      },
+      "materialImport": {
+        "materialCount": 9,
+        "textureCount": 14,
+        "report": "artifacts/living-character-poc-v558-stella-lily-textured-import/report.json"
+      },
+      "evidence": {
+        "blenderTexturedFull": "artifacts/living-character-poc-v557-stella-lily-preview-ready-evidence/full-front.png",
+        "blenderTexturedFace": "artifacts/living-character-poc-v557-stella-lily-preview-ready-evidence/face-front.png",
+        "unrealAnimated": "artifacts/living-character-poc-v559-stella-lily-textured-reaction/hayley-explain-and-stand-sit-phases.png"
+      },
+      "runtimeReady": true,
+      "quality": "animated-textured-poc",
+      "restrictions": [
+        "Four source-specific eye-shell meshes are preserved in BLEND but excluded from the preview FBX until their special shaders are rebuilt.",
+        "The current motion is an engaged reaction rather than a neutral idle.",
+        "Full-body locomotion requires UE IK Retargeter and foot IK.",
+        "License evidence is required before release or redistribution."
+      ]
+    },
+    "ururu": {
+      "skeletalMesh": "/Game/LivingCharacterPOC/v547/Characters/UruruTextured/Ururu_Textured_v545",
+      "skeleton": "/Game/LivingCharacterPOC/v525/Characters/UruruPreview/Ururu_Normalized_v523_Skeleton",
+      "motions": {
+        "celebrationEmphasis": "/Game/LivingCharacterPOC/v541/Animation/Ururu_RelaxedUpperIdle_v539"
+      },
+      "evidence": {
+        "blenderTexturedFull": "artifacts/living-character-poc-v546-ururu-textured-evidence/full-front.png",
+        "blenderTexturedFace": "artifacts/living-character-poc-v546-ururu-textured-evidence/face-front.png",
+        "unrealAnimated": "artifacts/living-character-poc-v549-ururu-textured-emphasis-balanced/hayley-explain-and-stand-sit-phases.png"
+      },
+      "runtimeReady": true,
+      "quality": "animated-textured-poc"
+    }
+  },
+  "nextGates": [
+    "neutral-idle-per-character",
+    "ue-ik-retargeted-walk-run-stand-sit",
+    "hair-and-clothing-secondary-motion",
+    "desktop-character-and-intent-selection"
+  ],
+  "humanApproved": false,
+  "releaseEligible": false
+}

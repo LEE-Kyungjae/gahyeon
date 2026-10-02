@@ -2,6 +2,7 @@
 
 #include "Misc/AutomationTest.h"
 #include "Runtime/GahyeonRuntimeSubsystem.h"
+#include "Engine/GameInstance.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FGahyeonIngressAdmissionTest,
@@ -11,7 +12,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FGahyeonIngressAdmissionTest::RunTest(const FString& Parameters)
 {
     (void)Parameters;
-    UGahyeonRuntimeSubsystem* Runtime = NewObject<UGahyeonRuntimeSubsystem>();
+    UGameInstance* GameInstance = NewObject<UGameInstance>();
+    UGahyeonRuntimeSubsystem* Runtime = NewObject<UGahyeonRuntimeSubsystem>(GameInstance);
     TestNotNull(TEXT("runtime"), Runtime);
     if (Runtime == nullptr) return false;
 

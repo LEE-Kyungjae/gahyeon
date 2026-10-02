@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "state": "shape-imported-awaiting-guided-identity",
+  "session": {
+    "path": "/Users/ze/work/gahyeonbot/character_pipeline/metahuman/identity/v002/session-ue58.json",
+    "sha256": "bf4fe7ddc848543fb501a495b5680d61404cbd939fc6ec4ab9eed9bf1192aa37"
+  },
+  "source": {
+    "path": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/metahuman-identity-input-v79-v4/gahyeon-metahuman-identity-v79.obj",
+    "sha256": "de78fd95e706d4b95e158d6258200dff61527cc014685d927b0cbb2e8e5af5f6",
+    "claim": "neutral-static-mesh-input-not-metahuman-not-dna"
+  },
+  "asset": {
+    "path": "/Game/Gahyeon/CharacterPipeline/v002/IdentityInput/SM_Gahyeon_IdentityInput_v002",
+    "class": "StaticMesh"
+  },
+  "identityAsset": null,
+  "identitySolved": false,
+  "characterConformed": false,
+  "automaticApproval": false,
+  "qualityClaim": null,
+  "nextRequiredStage": "components-from-mesh"
+}

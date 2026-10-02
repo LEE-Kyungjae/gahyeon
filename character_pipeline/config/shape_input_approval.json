@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "allowedScopes": ["face-shape-only", "body-silhouette-only"],
+  "canonicalScope": {"3": "face-shape-only", "16": "body-silhouette-only"},
+  "requiredExclusions": {
+    "face-shape-only": ["hair-strand-fidelity", "earring-geometry", "skin-texture", "final-topology"],
+    "body-silhouette-only": ["finger-gap-fidelity", "shoelace-geometry", "garment-topology", "skin-texture", "final-topology"]
+  },
+  "allowedPurpose": "temporary-shape-estimate-for-metahuman-conform",
+  "approvalValidityDays": 30,
+  "automaticApproval": false,
+  "productionMeshAllowed": false
+}

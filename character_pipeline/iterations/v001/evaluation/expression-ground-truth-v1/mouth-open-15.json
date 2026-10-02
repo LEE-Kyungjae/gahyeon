@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "image": {
+    "uri": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/ChatGPT Image 2026년 8월 10일 오후 11_25_50.png",
+    "sha256": "251f6d5e4af82f446273ff79dd64da08fb81cc98e9936abc89b037e0eb80f825",
+    "dimensions": [
+      1086,
+      1448
+    ]
+  },
+  "detector": {
+    "name": "MediaPipe Face Mesh",
+    "version": "0.10.21",
+    "landmarkCount": 478,
+    "singleFaceDetected": true
+  },
+  "measurements": {
+    "mouthOpeningOverFaceHeight": 0.062257,
+    "mouthWidthOverFaceWidth": 0.416015,
+    "mouthCornerLiftLeftOverFaceHeight": 0.032159,
+    "mouthCornerLiftRightOverFaceHeight": 0.063437,
+    "leftEyeOpeningOverEyeWidth": 0.369851,
+    "rightEyeOpeningOverEyeWidth": 0.378261
+  },
+  "interpretation": {
+    "expressionLabel": null,
+    "qualityScore": null,
+    "warning": "Metrics support human-reviewed labels; they do not establish emotion or viseme authority."
+  }
+}

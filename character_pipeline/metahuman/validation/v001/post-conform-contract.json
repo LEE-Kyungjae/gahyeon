@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v001",
+  "state": "awaiting-editor-evidence",
+  "binding": "../../conform/v001/candidate-binding.json",
+  "inputHandoff": "../../identity/v001/handoff.json",
+  "editorEvidence": "editor-asset-evidence.json",
+  "renderEvidence": {
+    "profile": "looking-glass-go",
+    "resolution": [1440, 2560],
+    "directory": "renders",
+    "views": [
+      "face-front",
+      "face-left-45",
+      "face-right-45",
+      "face-left-profile",
+      "face-right-profile"
+    ],
+    "manifest": "renders/render-manifest.json",
+    "quiltRequiresConnectedCalibration": true
+  },
+  "comparison": {
+    "canonicalIndices": [3, 6, 7, 8],
+    "preConformIteration": "../../../iterations/v001/blender/metahuman-identity-head-v79/looking-glass-go-renders-v3",
+    "identityScoreMayBeEmitted": false,
+    "automaticApproval": false
+  },
+  "forbiddenClaimsUntilValid": [
+    "metahuman-created",
+    "dna-created",
+    "facial-rig-validated",
+    "identity-approved",
+    "aaa-quality"
+  ]
+}

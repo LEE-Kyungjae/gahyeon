@@ -1,0 +1,27 @@
+[Unit]
+Description=Gahyeon Core private tunnel to land Qwen expressive TTS
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=zeze
+Group=zeze
+ExecStart=/usr/bin/ssh -NT -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o ConnectTimeout=5 -o IdentitiesOnly=yes -o IdentityFile=/home/zeze/.ssh/id_ed25519 -o UserKnownHostsFile=/home/zeze/.ssh/known_hosts -L 10.42.0.1:18773:127.0.0.1:18773 land
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET
+
+[Install]
+WantedBy=multi-user.target

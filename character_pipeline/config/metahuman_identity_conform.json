@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "engine": "5.6",
+  "identityAssetClass": "MetaHumanIdentity",
+  "characterAssetClass": "MetaHumanCharacter",
+  "useEyeMeshes": true,
+  "useTeethMesh": true,
+  "useMetricScale": true,
+  "requireNamedIdentityReviewer": true,
+  "authorizedReviewerRoles": ["character-owner", "character-art-director", "character-technical-artist"],
+  "replaceExisting": false,
+  "automaticApproval": false,
+  "productionReady": false
+}

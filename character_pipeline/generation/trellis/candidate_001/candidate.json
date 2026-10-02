@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "candidateId": "candidate_001",
+  "iteration": "v001",
+  "model": "trellis",
+  "claim": "temporary-shape-estimate-not-production-mesh",
+  "status": "planned",
+  "createdAt": "2026-08-12T22:47:43.391132+00:00",
+  "seed": 20260813,
+  "inputManifest": "/Users/ze/work/gahyeonbot/character_pipeline/iterations/v001/inputs/source-bindings.json",
+  "provenance": {
+    "repository": null,
+    "revision": null,
+    "weightsSha256": null,
+    "runner": null
+  },
+  "parameters": {},
+  "outputs": [],
+  "validation": {
+    "status": "not-run",
+    "defects": []
+  },
+  "failure": null
+}

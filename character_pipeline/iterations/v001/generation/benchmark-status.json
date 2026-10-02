@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v001",
+  "state": "toolchain-unavailable",
+  "models": {
+    "trellis": {"runner": null, "repository": null, "revision": null, "weightsSha256": null, "licenseReviewed": false, "candidates": []},
+    "instantmesh": {"runner": null, "repository": "https://github.com/TencentARC/InstantMesh.git", "revision": "08822c52fdc399b93ea00e4fa9e596344ed52ccc", "weightsSha256": null, "licenseReviewed": true, "candidates": []}
+  },
+  "selection": null,
+  "claim": "no-reconstruction-candidate-generated"
+}

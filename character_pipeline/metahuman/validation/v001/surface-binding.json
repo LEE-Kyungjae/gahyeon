@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v001",
+  "state": "awaiting-metahuman-candidate",
+  "skinMaterialInstance": null,
+  "eyeMaterialInstances": [],
+  "textures": {},
+  "zoneMasks": {},
+  "eyeParts": {},
+  "editorEvidence": null,
+  "captureManifest": null,
+  "claim": "no-production-surface-assets-yet",
+  "legacyEvidence": {
+    "skinAlbedo": "../../../../artifacts/gahyeon-ch/metahuman-identity-head-v79/gahyeon-v79-skin-albedo.png",
+    "skinAlbedoResolution": [2048, 2048],
+    "eyeAlbedo": "../../../../artifacts/gahyeon-ch/metahuman-identity-head-v79/gahyeon-v79-eye-albedo.png",
+    "eyeAlbedoResolution": [1024, 1024],
+    "acceptedAsProduction": false,
+    "reason": "diffuse-only G1 reconstruction textures lack production skin channels and physical eye validation"
+  }
+}

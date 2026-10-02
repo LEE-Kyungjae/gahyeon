@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "state": "awaiting-editor-facial-mapping-evidence",
+  "engine": "5.6",
+  "presentationProfile": null,
+  "cloudAssetEvidence": "character_pipeline/metahuman/conform/v001/cloud-asset-evidence.json",
+  "displayProfile": "looking-glass-go",
+  "resolution": [1440, 2560],
+  "viewCount": 66,
+  "controlRigCurveAcknowledgements": [],
+  "warning": "Populate a real presentation profile and explicit Control Rig acknowledgements in UE 5.6; this request does not prove facial deformation or production readiness."
+}

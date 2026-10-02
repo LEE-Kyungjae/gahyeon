@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v073",
+  "state": "draft-recovery-work-order",
+  "objective": "recover canonical identity on production MetaHuman topology before any surface or body assembly",
+  "preserve": [
+    "/Game/Fab/MetaHuman/Skotukeda",
+    "v071 successful Identity/DNA solve as failure-analysis evidence only",
+    "canonical source indices 03, 06, 07, 08"
+  ],
+  "forbiddenInputs": [
+    "v072 assembled character as a new geometry source",
+    "MPFB topology as the final production face",
+    "single-view automatic approval",
+    "unreviewed global face-axis scaling"
+  ],
+  "requiredViews": [
+    "face-front",
+    "face-left-45",
+    "face-right-45",
+    "face-left-profile",
+    "face-right-profile"
+  ],
+  "method": [
+    "start from a normal MetaHuman-compatible neutral head/template",
+    "fit canonical landmarks and silhouette across all five views",
+    "solve Identity and render the head-only checkpoint under fixed cameras",
+    "obtain an explicit character-owner keep or reject decision",
+    "issue a checksum-bound assembly authorization only after keep"
+  ],
+  "acceptance": {
+    "identityAssetBoundToSolveReceipt": true,
+    "fiveViewCaptureRequired": true,
+    "humanReviewRequired": true,
+    "blockingFindingsAllowed": false,
+    "automaticApproval": false
+  },
+  "productionReady": false,
+  "qualityClaim": null
+}

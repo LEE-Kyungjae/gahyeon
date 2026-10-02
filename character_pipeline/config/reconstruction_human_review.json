@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "displayProfile": "looking-glass-go",
+  "panelResolution": [1440, 2560],
+  "authorizedReviewerRoles": ["character-owner", "character-art-director"],
+  "requiredViews": [
+    "face-front", "face-left-45", "face-right-45", "face-left-profile",
+    "face-right-profile", "body-front", "body-left", "body-right", "body-rear"
+  ],
+  "requiredCriteria": [
+    "identity-likeness", "facial-width", "jaw-chin", "cheekbone-projection",
+    "eye-spacing-shape", "nose-width-projection", "lip-shape", "skull-silhouette",
+    "body-proportions"
+  ],
+  "allowedVerdicts": ["acceptable-for-conform", "blocking"],
+  "selectedRole": "temporary-shape-estimate-for-metahuman-conform",
+  "automaticSelection": false,
+  "productionMeshAllowed": false
+}

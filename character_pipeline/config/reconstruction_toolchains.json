@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 2,
+  "observedAt": "2026-08-13",
+  "executionRegion": "KR",
+  "models": {
+    "trellis": {
+      "repository": "https://github.com/microsoft/TRELLIS.2.git",
+      "revision": "75fbf0183001ed9876c8dbb35de6b68552ee08bd",
+      "runner": "character_pipeline/tools/runners/run_trellis2_candidate.py",
+      "weights": "microsoft/TRELLIS.2-4B",
+      "weightsSha256": null,
+      "license": "MIT-code-dependencies-and-model-card-require-separate-review",
+      "licenseReviewed": false,
+      "requirements": {
+        "os": "linux",
+        "accelerator": "nvidia-cuda",
+        "minimumVramGiB": 24,
+        "recommendedCuda": "12.4",
+        "recursiveCheckout": true
+      }
+    },
+    "instantmesh": {
+      "repository": "https://github.com/TencentARC/InstantMesh.git",
+      "revision": "08822c52fdc399b93ea00e4fa9e596344ed52ccc",
+      "runner": "character_pipeline/tools/runners/run_instantmesh_candidate.py",
+      "weights": "TencentARC/InstantMesh@b785b4ecfb6636ef34a08c748f96f6a5686244d0",
+      "weightsSha256": null,
+      "license": "Apache-2.0-code-and-weights",
+      "licenseReviewed": true,
+      "requirements": {
+        "os": "linux",
+        "accelerator": "nvidia-cuda",
+        "minimumVramGiB": 16,
+        "recommendedCuda": "12.1"
+      }
+    }
+  },
+  "historicalRejectedBackend": {
+    "model": "hunyuan",
+    "repository": "https://github.com/Tencent-Hunyuan/Hunyuan3D-2.git",
+    "revision": "f8db63096c8282cb27354314d896feba5ba6ff8a",
+    "reason": "official-license-excludes-south-korea",
+    "mayExecuteInKR": false
+  },
+  "policy": {
+    "shell": false,
+    "networkExecution": false,
+    "requirePinnedRevision": true,
+    "requireWeightsChecksum": true,
+    "requireLicenseReview": true,
+    "productionMeshAllowed": false
+  }
+}

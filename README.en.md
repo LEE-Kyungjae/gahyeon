@@ -44,7 +44,7 @@ and rendering.
 | Desktop Client | Electron/Vue/Three.js text, microphone, audio, VRM, and World flows implemented |
 | Unreal integration | WebSocket v1, reconnect, event replay, snapshots, and streaming speech implemented |
 | Real-time RuntimeCore | Engine-neutral C++20 Reflex/Behavior/Cognition, VAD, speech, viseme, and World tests implemented |
-| Unreal Stage | UE 5.6 source project and diagnostic pawn/camera implemented; MetaHuman and packaged-build verification remain pending |
+| Unreal Stage | UE 5.8 source project and diagnostic pawn/camera implemented; MetaHuman and packaged-build verification remain pending |
 | Looking Glass | Desktop WebXR and Unreal adapter implemented; validation on a physical Go display remains pending |
 | Voice production | A low-duplication 5,000-sentence corpus is being generated, followed by QC, Piper training, and listening review |
 | Character production | SDXL LoRA comparison and the source-based identity standard are complete; the final hero mesh is in production |
@@ -70,7 +70,7 @@ RT-01 through RT-13 results and the checks that still require physical hardware.
 - Node.js 20 or later and npm
 - Production: PostgreSQL 16
 - Local tests: in-memory H2 in PostgreSQL compatibility mode
-- Unreal development: Unreal Engine 5.6 and a compatible MetaHuman plugin
+- Unreal development: Unreal Engine 5.8 (currently validated against 5.8.1) and a compatible MetaHuman plugin
 
 ## Quick start
 
@@ -169,18 +169,18 @@ application process alive but makes `/api/health` and the Actuator Discord healt
 ## Unreal Stage
 
 The Backend WebSocket adapter and C++20 RuntimeCore are ready but disabled by default.
-They must not be enabled in production before UE 5.6 Editor and packaged-build validation.
+They must not be enabled in production before UE 5.8 Editor and packaged-build validation.
 
-Authoritative gate on a development machine with UE 5.6 installed:
+Authoritative gate on a development machine with UE 5.8 installed:
 
 ```bash
-GAHYEON_UE_ROOT="/path/to/UE_5.6" ./scripts/run_unreal_engine_gate.sh
+GAHYEON_UE_ROOT="/path/to/UE_5.8" ./scripts/run_unreal_engine_gate.sh
 ```
 
 On the GTX 1660 Ti Windows authoring machine, validate the canonical Stage first:
 
 ```powershell
-.\scripts\run_unreal_engine_gate.ps1 -UnrealRoot "C:\Program Files\Epic Games\UE_5.6"
+.\scripts\run_unreal_engine_gate.ps1 -UnrealRoot "C:\Program Files\Epic Games\UE_5.8"
 ```
 
 After the Editor gate, add `-Package` to build and seal the packaged Development output.
@@ -236,7 +236,7 @@ src/main/java/com/gahyeonbot/
 
 desktop/           Electron/Vue/Three.js compatibility presentation client
 unreal/RuntimeCore/ engine-neutral C++20 real-time reference runtime
-unreal/GahyeonStage/ UE 5.6 source-only Stage project and native module
+unreal/GahyeonStage/ UE 5.8 source-only Stage project and native module
 docs/unreal/        Unreal architecture, protocol, acceptance, and integration contracts
 scripts/            Voice/Piper, SDXL asset pipeline, and operational tools
 ```

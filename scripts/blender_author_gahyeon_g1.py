@@ -134,20 +134,21 @@ MICRO_TARGETS = {
     "hands/r-hand-fingers-diameter-decr.target.gz": 0.10,
 }
 IDENTITY_SCULPT = {
-    "lowerFaceWidthScale": 0.95,
-    "lowerFaceHeightScale": 0.78,
+    "lowerFaceWidthScale": 0.98,
+    "lowerFaceHeightScale": 1.00,
+    "lowerFaceLiftCm": 1.10,
     "midFaceWidthScale": 1.00,
     "foreheadWidthScale": 1.03,
-    "eyeWidthScale": 0.96,
-    "eyeHeightScale": 1.10,
-    "eyeCenterInwardCm": 0.18,
+    "eyeWidthScale": 0.88,
+    "eyeHeightScale": 1.28,
+    "eyeCenterInwardCm": 0.75,
     "eyeSurfaceForwardCm": 0.04,
     "outerEyeCornerLiftCm": 0.06,
     "browRidgeBackwardCm": 0.10,
-    "mouthWidthScale": 0.90,
-    "mouthHeightScale": 0.86,
+    "mouthWidthScale": 0.69,
+    "mouthHeightScale": 0.60,
     "mouthSurfaceBackwardCm": 0.03,
-    "noseWidthScale": 0.90,
+    "noseWidthScale": 0.70,
     "noseSurfaceBackwardCm": 0.32,
     "cheekSurfaceForwardCm": 0.14,
 }
@@ -171,7 +172,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--provenance-output", type=Path, required=True)
     parser.add_argument("--target-height-cm", type=float, default=172.0)
-    parser.add_argument("--revision", default="g1-mpfb-v10")
+    parser.add_argument("--revision", default="g1-mpfb-v79")
     return parser.parse_args(values)
 
 
@@ -311,14 +312,214 @@ def tune_skin_materials(human) -> dict:
 
 
 def tune_eye_material(eyes) -> dict:
-    """Give the fitted CC0 eyes a readable wet corneal response."""
+    """Separate the fitted CC0 eyeballs from their transparent corneal shells."""
     set_principled(
         eyes,
-        roughness=0.22,
-        coat_weight=0.38,
-        coat_roughness=0.08,
+        roughness=0.34,
+        coat_weight=0.16,
+        coat_roughness=0.18,
     )
-    return {"roughness": 0.22, "coatWeight": 0.38, "coatRoughness": 0.08}
+    mesh = eyes.data
+    uv_layer = mesh.uv_layers.active
+    if uv_layer is None:
+        raise SystemExit("G1 fitted eyes are missing their active UV map")
+    adjacency = {vertex.index: set() for vertex in mesh.vertices}
+    for edge in mesh.edges:
+        first, second = edge.vertices
+        adjacency[first].add(second)
+        adjacency[second].add(first)
+    remaining = set(adjacency)
+    components = []
+    while remaining:
+        seed = remaining.pop()
+        stack = [seed]
+        component = {seed}
+        while stack:
+            current = stack.pop()
+            for neighbor in adjacency[current]:
+                if neighbor in remaining:
+                    remaining.remove(neighbor)
+                    component.add(neighbor)
+                    stack.append(neighbor)
+        components.append(component)
+    ordered_components = sorted(components, key=len, reverse=True)
+    surface_components = ordered_components[:2]
+    cornea_components = ordered_components[2:]
+    if [len(component) for component in surface_components] != [276, 276]:
+        raise SystemExit("G1 fitted eye surface topology changed unexpectedly")
+    if [len(component) for component in cornea_components] != [256, 256]:
+        raise SystemExit("G1 fitted cornea topology changed unexpectedly")
+    eye_asset_inward_cm = 0.33
+    for vertex in mesh.vertices:
+        side = 1.0 if vertex.co.x > 0.0 else -1.0
+        vertex.co.x -= side * eye_asset_inward_cm
+    iris_uv_scale = 1.08
+    uv_records = []
+    for component in surface_components:
+        loops = [loop.index for loop in mesh.loops
+                 if loop.vertex_index in component]
+        coordinates = [uv_layer.data[index].uv.copy() for index in loops]
+        minimum = Vector((min(value.x for value in coordinates),
+                          min(value.y for value in coordinates)))
+        maximum = Vector((max(value.x for value in coordinates),
+                          max(value.y for value in coordinates)))
+        center = (minimum + maximum) * 0.5
+        for index in loops:
+            source = uv_layer.data[index].uv.copy()
+            transformed = center + (source - center) * iris_uv_scale
+            uv_layer.data[index].uv = (
+                max(0.001, min(0.999, transformed.x)),
+                max(0.001, min(0.999, transformed.y)),
+            )
+        uv_records.append({
+            "vertices": len(component),
+            "center": [round(center.x, 6), round(center.y, 6)],
+        })
+
+    cornea_material = bpy.data.materials.new("Gahyeon_G1_Cornea_Clear")
+    cornea_material.use_nodes = True
+    cornea_material.surface_render_method = "DITHERED"
+    cornea_material.use_transparency_overlap = False
+    nodes = cornea_material.node_tree.nodes
+    links = cornea_material.node_tree.links
+    nodes.clear()
+    output = nodes.new("ShaderNodeOutputMaterial")
+    transparent = nodes.new("ShaderNodeBsdfTransparent")
+    glossy = nodes.new("ShaderNodeBsdfAnisotropic")
+    mix = nodes.new("ShaderNodeMixShader")
+    glossy.inputs["Color"].default_value = (0.92, 0.97, 1.0, 1.0)
+    glossy.inputs["Roughness"].default_value = 0.028
+    glossy_weight = 0.04
+    mix.inputs[0].default_value = glossy_weight
+    links.new(transparent.outputs["BSDF"], mix.inputs[1])
+    links.new(glossy.outputs["BSDF"], mix.inputs[2])
+    links.new(mix.outputs["Shader"], output.inputs["Surface"])
+    eyes.data.materials.append(cornea_material)
+    cornea_slot = len(eyes.data.materials) - 1
+    cornea_vertices = set().union(*cornea_components)
+    cornea_polygons = 0
+    for polygon in mesh.polygons:
+        if all(vertex in cornea_vertices for vertex in polygon.vertices):
+            polygon.material_index = cornea_slot
+            cornea_polygons += 1
+    if cornea_polygons != 490:
+        raise SystemExit(
+            f"Expected 490 G1 cornea polygons, assigned {cornea_polygons}"
+        )
+    mesh.update()
+    iris_materials = [
+        add_material("Gahyeon_G1_Iris_Deep", (0.12, 0.043, 0.014, 1.0), roughness=0.32),
+        add_material("Gahyeon_G1_Iris_Warm", (0.25, 0.092, 0.020, 1.0), roughness=0.29),
+        add_material("Gahyeon_G1_Iris_Amber", (0.38, 0.16, 0.038, 1.0), roughness=0.27),
+        add_material("Gahyeon_G1_Iris_Hazel", (0.21, 0.12, 0.043, 1.0), roughness=0.30),
+        add_material("Gahyeon_G1_Iris_Shadow", (0.085, 0.031, 0.012, 1.0), roughness=0.33),
+    ]
+    pupil_material = add_material(
+        "Gahyeon_G1_Pupil", (0.004, 0.003, 0.004, 1.0), roughness=0.18)
+    semantic_objects = []
+    for label, center_x in (("L", 2.5747), ("R", -2.5747)):
+        segments = 96
+        radial_profile = (
+            (0.00, -12.840),
+            (0.17, -12.855),
+            (0.25, -12.875),
+            (0.34, -12.910),
+            (0.43, -12.950),
+            (0.54, -12.990),
+        )
+        vertices = [(center_x, radial_profile[0][1], 149.6314)]
+        for ring_index, (radius, y) in enumerate(radial_profile[1:], start=1):
+            for index in range(segments):
+                angle = math.tau * index / segments
+                irregularity = (
+                    0.010 * math.sin(angle * 7.0 + ring_index * 0.71)
+                    + 0.006 * math.sin(angle * 19.0 + ring_index * 1.37)
+                )
+                if ring_index == len(radial_profile) - 1:
+                    irregularity *= 0.55
+                authored_radius = radius + irregularity
+                vertices.append((
+                    center_x + authored_radius * math.cos(angle),
+                    y + 0.004 * math.sin(angle * 11.0 + ring_index),
+                    149.6314 + authored_radius * math.sin(angle),
+                ))
+        faces = []
+        material_indices = []
+        first_ring = 1
+        for index in range(segments):
+            faces.append((0, first_ring + index,
+                          first_ring + (index + 1) % segments))
+            material_indices.append(0)
+        iris_ring_count = len(radial_profile) - 2
+        for ring_index in range(iris_ring_count):
+            inner_start = 1 + ring_index * segments
+            outer_start = inner_start + segments
+            for index in range(segments):
+                next_index = (index + 1) % segments
+                faces.append((inner_start + index, outer_start + index,
+                              outer_start + next_index,
+                              inner_start + next_index))
+                fiber = (index * 17 + ring_index * 31) % 29
+                if ring_index == iris_ring_count - 1 and fiber % 5 != 0:
+                    iris_slot = 4
+                elif fiber in {0, 1, 8, 13, 21}:
+                    iris_slot = 3
+                elif fiber in {3, 11, 18, 25}:
+                    iris_slot = 2
+                elif fiber % 3 == 0:
+                    iris_slot = 1
+                else:
+                    iris_slot = 0
+                material_indices.append(1 + iris_slot)
+        semantic_mesh = bpy.data.meshes.new(
+            f"Gahyeon_G1_SemanticIris_{label}_Mesh")
+        semantic_mesh.from_pydata(vertices, [], faces)
+        semantic_mesh.materials.append(pupil_material)
+        for iris_material in iris_materials:
+            semantic_mesh.materials.append(iris_material)
+        for polygon, material_index in zip(
+                semantic_mesh.polygons, material_indices):
+            polygon.material_index = material_index
+            polygon.use_smooth = True
+        semantic_mesh.update()
+        semantic = bpy.data.objects.new(
+            f"Gahyeon_G1_SemanticIris_{label}", semantic_mesh)
+        eyes.users_collection[0].objects.link(semantic)
+        group = semantic.vertex_groups.new(name="head")
+        group.add(range(len(vertices)), 1.0, "REPLACE")
+        modifier = semantic.modifiers.new(
+            f"Gahyeon_G1_SemanticIris_{label}_Armature", "ARMATURE")
+        modifier.object = eyes.parent
+        semantic.parent = eyes.parent
+        semantic.matrix_parent_inverse = eyes.matrix_parent_inverse.copy()
+        semantic.matrix_basis = eyes.matrix_basis.copy()
+        semantic["gahyeon_eye_semantic_role"] = "integrated-curved-iris"
+        semantic_objects.append(semantic)
+
+
+    return {
+        "eyeballRoughness": 0.34,
+        "eyeballCoatWeight": 0.16,
+        "eyeballCoatRoughness": 0.18,
+        "irisUvScale": iris_uv_scale,
+        "semanticIrisRadiusCm": 0.54,
+        "semanticPupilRadiusCm": 0.17,
+        "semanticRadialProfile": [list(value) for value in radial_profile],
+        "semanticTopology": "single-continuous-recessed-irregular-radial-mesh-per-eye",
+        "semanticSegments": segments,
+        "semanticIrisMaterialVariants": len(iris_materials),
+        "semanticObjects": [obj.name for obj in semantic_objects],
+        "eyeAssetInwardCm": eye_asset_inward_cm,
+        "surfaceUvIslands": uv_records,
+        "cornea": {
+            "material": cornea_material.name,
+            "components": [len(component) for component in cornea_components],
+            "polygons": cornea_polygons,
+            "shader": "transparent-anisotropic-mix",
+            "glossyWeight": glossy_weight,
+            "roughness": 0.028,
+        },
+    }
 
 
 def ensure_hair_rest_position(human) -> dict:
@@ -475,22 +676,101 @@ def append_geometry_nodes_hair(template_path: Path, human,
     interpolation = scale_hair_interpolation_radius(hair, scale)
     material_record = tune_hair_material(hair)
 
+    style_record = {
+        "baseLengthScale": 1.60,
+        "lengthVariation": 0.20,
+        "waveAmplitudeCm": 2.65,
+        "depthWaveAmplitudeCm": 1.10,
+        "tipFanCm": 1.15,
+        "frontLayerShorteningCm": 6.0,
+        "rearJacketUnderlayInsetCm": 2.40,
+        "frontCenterClearanceCm": 3.00,
+        "waveCycles": 1.34,
+        "tipSecondaryWaveAmplitudeCm": 1.15,
+        "tipSecondaryDepthAmplitudeCm": 0.55,
+        "tipLayerStepCm": 2.20,
+        "tipSecondaryStart": 0.62,
+        "rootPreservation": "cubic-smoothstep",
+        "lengthMethod": "vertical-guide-component",
+    }
     for curve_index, curve in enumerate(hair.data.curves):
         start = curve.first_point_index
         count = curve.points_length
         root_point = hair.data.points[start].position.copy()
         side = -1.0 if root_point.x < 0.0 else 1.0
-        phase = root_point.x * 0.17 + root_point.y * 0.11
-        length_scale = 1.62 + 0.08 * math.sin(phase)
+        phase = root_point.x * 0.13 + root_point.y * 0.09 + curve_index * 0.037
+        layer = 0.60 * math.sin(phase) + 0.40 * math.sin(phase * 1.91 + 0.7)
+        length_scale = (
+            style_record["baseLengthScale"]
+            + style_record["lengthVariation"] * layer
+        )
         for offset in range(count):
             point = hair.data.points[start + offset]
             t = offset / max(count - 1, 1)
-            coordinate = point.position
+            coordinate = point.position.copy()
             envelope = t * t * (3.0 - 2.0 * t)
             coordinate.z = root_point.z + (coordinate.z - root_point.z) * length_scale
-            coordinate.x += math.sin(t * 5.2 + phase) * 1.8 * envelope
-            coordinate.x += side * 0.8 * t * t
-            coordinate.y += math.cos(t * 4.1 + phase) * 0.8 * envelope
+            front_layer = (
+                max(0.0, min(1.0, (-root_point.y - 5.0) / 6.0))
+                * max(0.0, min(1.0, (abs(root_point.x) - 2.5) / 5.0))
+            )
+            coordinate.z += (
+                style_record["frontLayerShorteningCm"]
+                * front_layer * envelope * (0.72 + 0.28 * abs(layer))
+            )
+            wave_angle = t * math.tau * style_record["waveCycles"] + phase
+            coordinate.x += (
+                math.sin(wave_angle)
+                * style_record["waveAmplitudeCm"]
+                * envelope
+            )
+            coordinate.y += (
+                math.cos(wave_angle * 0.83 + phase * 0.37)
+                * style_record["depthWaveAmplitudeCm"]
+                * envelope
+            )
+            tip_t = max(0.0, min(1.0, (
+                t - style_record["tipSecondaryStart"]
+            ) / (1.0 - style_record["tipSecondaryStart"])))
+            tip_envelope = tip_t * tip_t * (3.0 - 2.0 * tip_t)
+            secondary_angle = (
+                tip_t * math.tau * 0.72 + phase * 1.43 + side * 0.45
+            )
+            coordinate.x += (
+                math.sin(secondary_angle)
+                * style_record["tipSecondaryWaveAmplitudeCm"]
+                * tip_envelope
+            )
+            coordinate.y += (
+                math.sin(secondary_angle * 1.17 + 0.8)
+                * style_record["tipSecondaryDepthAmplitudeCm"]
+                * tip_envelope
+            )
+            coordinate.z += (
+                style_record["tipLayerStepCm"]
+                * (0.5 + 0.5 * math.sin(phase * 2.31 + side * 0.7))
+                * tip_envelope
+            )
+            rear_root = max(0.0, min(1.0, (root_point.y + 0.5) / 4.0))
+            rear_center = max(0.0, min(1.0, (9.0 - abs(root_point.x)) / 5.0))
+            lower_length = max(0.0, min(1.0, (t - 0.38) / 0.62))
+            coordinate.y -= (
+                style_record["rearJacketUnderlayInsetCm"]
+                * rear_root * rear_center * lower_length * lower_length
+            )
+            coordinate.x += (
+                side * style_record["tipFanCm"] * t * t
+                * (0.72 + 0.28 * math.sin(phase * 1.7))
+            )
+            front_center = (
+                max(0.0, min(1.0, (-root_point.y - 9.0) / 3.5))
+                * max(0.0, min(1.0, (4.0 - abs(root_point.x)) / 4.0))
+            )
+            coordinate.x += (
+                side * style_record["frontCenterClearanceCm"]
+                * front_center * envelope
+            )
+            point.position = coordinate
 
     active_uv = human.data.uv_layers.active
     if active_uv is None:
@@ -500,6 +780,7 @@ def append_geometry_nodes_hair(template_path: Path, human,
     hair.parent = human
     hair.matrix_parent_inverse = Matrix.Identity(4)
     hair.matrix_basis = Matrix.Identity(4)
+
     for dependency in {source_parent, source_surface} - {None, human}:
         if dependency is hair.data.surface or dependency is hair.parent:
             raise SystemExit("Hair Editor template dependency was not fully retargeted")
@@ -534,7 +815,7 @@ def append_geometry_nodes_hair(template_path: Path, human,
         "templateObject": HAIR_EDITOR_OBJECT,
         "guideCurves": len(hair.data.curves),
         "guidePoints": len(hair.data.points),
-        "lengthScale": {"base": 1.62, "variation": 0.08},
+        "style": style_record,
         "coordinateScale": scale,
         "surfaceObject": human.name,
         "surfaceUvMap": active_uv.name,
@@ -608,6 +889,79 @@ def make_tapered_limb(name: str, collection_name: str, start, end,
     return obj
 
 
+def make_continuous_sleeve(name: str, collection_name: str, ring_specs,
+                           materials, rig, upper_bone: str, lower_bone: str):
+    """Bridge shoulder-to-cuff rings into one weighted, gap-free sleeve mesh."""
+    segments = 24
+    vertices = []
+    centers = [Vector(spec[0]) for spec in ring_specs]
+    for ring_index, (point, radius_y, radius_z, _upper_weight) in enumerate(ring_specs):
+        center = Vector(point)
+        if ring_index == 0:
+            tangent = (centers[1] - center).normalized()
+        elif ring_index == len(centers) - 1:
+            tangent = (center - centers[ring_index - 1]).normalized()
+        else:
+            tangent = (centers[ring_index + 1] - centers[ring_index - 1]).normalized()
+        reference = Vector((0.0, 0.0, 1.0))
+        if abs(tangent.dot(reference)) > 0.96:
+            reference = Vector((0.0, 1.0, 0.0))
+        lateral = tangent.cross(reference).normalized()
+        vertical = lateral.cross(tangent).normalized()
+        for segment in range(segments):
+            angle = math.tau * segment / segments
+            coordinate = (
+                center
+                + lateral * math.cos(angle) * radius_y
+                + vertical * math.sin(angle) * radius_z
+            )
+            vertices.append(tuple(coordinate))
+    faces = []
+    for ring in range(len(ring_specs) - 1):
+        offset = ring * segments
+        following = offset + segments
+        for segment in range(segments):
+            next_segment = (segment + 1) % segments
+            faces.append((
+                offset + segment,
+                offset + next_segment,
+                following + next_segment,
+                following + segment,
+            ))
+    faces.extend((
+        tuple(reversed(range(segments))),
+        tuple((len(ring_specs) - 1) * segments + index
+              for index in range(segments)),
+    ))
+    mesh = bpy.data.meshes.new(f"{name}_Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    for material in materials:
+        mesh.materials.append(material)
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.data.collections[collection_name].objects.link(obj)
+    upper_group = obj.vertex_groups.new(name=upper_bone)
+    lower_group = obj.vertex_groups.new(name=lower_bone)
+    for ring, (_point, _radius_y, _radius_z, upper_weight) in enumerate(ring_specs):
+        indices = range(ring * segments, (ring + 1) * segments)
+        upper_group.add(indices, upper_weight, "REPLACE")
+        lower_group.add(indices, 1.0 - upper_weight, "REPLACE")
+    modifier = obj.modifiers.new(f"{name}_G1_ArmatureBind", "ARMATURE")
+    modifier.object = rig
+    obj["gahyeon_rig_status"] = (
+        f"weighted:{upper_bone}+{lower_bone}"
+    )
+    cuff_start_ring = len(ring_specs) - 2
+    for polygon in obj.data.polygons:
+        polygon.use_smooth = True
+        if (polygon.index >= cuff_start_ring * segments
+                and polygon.index < (len(ring_specs) - 1) * segments):
+            polygon.material_index = 1
+    bevel = obj.modifiers.new(f"{name}_EdgeSoftness", "BEVEL")
+    bevel.width = 0.35
+    bevel.segments = 2
+    return obj
+
+
 def make_tapered_panel(name: str, collection_name: str, levels, material,
                        *, front_y: float, back_y: float):
     """Build one closed garment panel from (z, inner-x, outer-x) cross-sections."""
@@ -639,6 +993,95 @@ def make_tapered_panel(name: str, collection_name: str, levels, material,
     return obj
 
 
+def make_body_following_panel(name: str, collection_name: str, human, levels,
+                              side: float, material, rig):
+    """Build one open-front half jacket around measured torso cross-sections."""
+    group = human.vertex_groups.get("body")
+    if group is None:
+        raise SystemExit("G1 body group is missing for garment envelope sampling")
+    group_index = group.index
+
+    def is_body(vertex) -> bool:
+        return any(item.group == group_index and item.weight >= 0.5
+                   for item in vertex.groups)
+
+    body_points = [vertex.co.copy() for vertex in human.data.vertices
+                   if is_body(vertex)]
+    ring_segments = 18
+    front_gap = 2.6
+    vertices = []
+    envelopes = []
+    for z, spine_weights in levels:
+        samples = [point for point in body_points
+                   if abs(point.z - z) < 1.35 and abs(point.x) < 18.0]
+        if len(samples) < 20:
+            raise SystemExit(
+                f"Insufficient G1 torso samples at z={z:.3f}: {len(samples)}"
+            )
+        radius_x = max(abs(point.x) for point in samples) + 1.8
+        front_y = min(point.y for point in samples) - 1.65
+        back_y = max(point.y for point in samples) + 2.25
+        center_y = (front_y + back_y) * 0.5
+        radius_y = (back_y - front_y) * 0.5
+        start_angle = math.asin(min(0.82, front_gap / max(radius_x, 0.1)))
+        for segment in range(ring_segments):
+            fraction = segment / (ring_segments - 1)
+            angle = start_angle + (math.pi - start_angle) * fraction
+            sine = math.sin(angle)
+            cosine = math.cos(angle)
+            # An eighth-order superellipse encloses the chest/back corners that
+            # an ordinary ellipse cuts through while retaining a garment-like
+            # curved silhouette instead of the v22 rectangular panels.
+            vertices.append((
+                side * radius_x * math.copysign(abs(sine) ** 0.25, sine),
+                center_y - radius_y * math.copysign(abs(cosine) ** 0.25, cosine),
+                z,
+            ))
+        envelopes.append({
+            "z": round(z, 4),
+            "radiusX": round(radius_x, 4),
+            "frontY": round(front_y, 4),
+            "backY": round(back_y, 4),
+            "spineWeights": spine_weights,
+        })
+    faces = []
+    for ring in range(len(levels) - 1):
+        offset = ring * ring_segments
+        following = offset + ring_segments
+        for segment in range(ring_segments - 1):
+            faces.append((
+                offset + segment,
+                offset + segment + 1,
+                following + segment + 1,
+                following + segment,
+            ))
+    mesh = bpy.data.meshes.new(f"{name}_Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.materials.append(material)
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.data.collections[collection_name].objects.link(obj)
+    bone_names = ("spine_01", "spine_02", "spine_03")
+    groups = {bone: obj.vertex_groups.new(name=bone) for bone in bone_names}
+    for ring, (_z, weights) in enumerate(levels):
+        indices = range(ring * ring_segments, (ring + 1) * ring_segments)
+        for bone, weight in zip(bone_names, weights):
+            if weight > 0.0:
+                groups[bone].add(indices, weight, "REPLACE")
+    armature = obj.modifiers.new(f"{name}_G1_ArmatureBind", "ARMATURE")
+    armature.object = rig
+    solidify = obj.modifiers.new(f"{name}_GarmentThickness", "SOLIDIFY")
+    solidify.thickness = 0.34
+    solidify.offset = 0.0
+    bevel = obj.modifiers.new(f"{name}_EdgeSoftness", "BEVEL")
+    bevel.width = 0.22
+    bevel.segments = 2
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    obj["gahyeon_rig_status"] = "weighted:spine_01+spine_02+spine_03"
+    obj["gahyeon_torso_envelopes"] = json.dumps(envelopes, sort_keys=True)
+    return obj
+
+
 def bone_point(rig, bone_name: str, *, tail: bool = False) -> Vector:
     bone = rig.data.bones.get(bone_name)
     if bone is None:
@@ -665,6 +1108,55 @@ def make_curve_tube(name: str, collection_name: str, points, material,
     return obj
 
 
+def make_folded_hood_shell(name: str, collection_name: str, collar_z: float,
+                           material, rig):
+    """Build a shallow, folded hood surface around the rear neckline."""
+    segments = 24
+    rings = (
+        (14.6, 2.3, collar_z - 3.1),
+        (14.1, 5.4, collar_z - 0.3),
+        (13.6, 7.2, collar_z + 2.0),
+        (13.0, 7.9, collar_z + 3.0),
+    )
+    vertices = []
+    for radius_x, center_y, z in rings:
+        for segment in range(segments):
+            fraction = segment / (segments - 1)
+            angle = math.pi * fraction
+            vertices.append((
+                radius_x * math.cos(angle),
+                center_y + 1.25 * math.sin(angle),
+                z + 0.65 * math.sin(angle),
+            ))
+    faces = []
+    for ring in range(len(rings) - 1):
+        offset = ring * segments
+        following = offset + segments
+        for segment in range(segments - 1):
+            faces.append((offset + segment, offset + segment + 1,
+                          following + segment + 1, following + segment))
+    mesh = bpy.data.meshes.new(f"{name}_Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.materials.append(material)
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.data.collections[collection_name].objects.link(obj)
+    group = obj.vertex_groups.new(name="spine_03")
+    group.add(range(len(vertices)), 1.0, "REPLACE")
+    armature = obj.modifiers.new(f"{name}_G1_ArmatureBind", "ARMATURE")
+    armature.object = rig
+    solidify = obj.modifiers.new(f"{name}_GarmentThickness", "SOLIDIFY")
+    solidify.thickness = 0.48
+    solidify.offset = 0.0
+    bevel = obj.modifiers.new(f"{name}_EdgeSoftness", "BEVEL")
+    bevel.width = 0.28
+    bevel.segments = 2
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    obj["gahyeon_rig_status"] = "rigid-weighted:spine_03"
+    obj["gahyeon_hood_role"] = "folded-garment-shell"
+    return obj
+
+
 def make_jacket_shell(human, rig, collection_name: str):
     """Create a clean, closed-panel, open-front varsity-jacket G1 blockout."""
     white = add_material("G1_Jacket_White", (0.82, 0.88, 0.90, 1.0), roughness=0.42)
@@ -682,18 +1174,42 @@ def make_jacket_shell(human, rig, collection_name: str):
                       and abs((human.matrix_world @ vertex.co).x) < 18.0)
     panel_front_y = torso_front - 1.8
     panel_back_y = 5.8
+    key_levels = (
+        (hem_z, (0.90, 0.10, 0.00)),
+        (pelvis_top.z + 6.5, (0.70, 0.30, 0.00)),
+        (chest.z - 8.0, (0.20, 0.70, 0.10)),
+        (chest.z, (0.00, 0.72, 0.28)),
+        ((chest.z + collar_z) * 0.5, (0.00, 0.32, 0.68)),
+        (collar_z, (0.00, 0.05, 0.95)),
+    )
+    torso_levels = []
+    for index, (lower_z, lower_weights) in enumerate(key_levels[:-1]):
+        upper_z, upper_weights = key_levels[index + 1]
+        for step in range(3):
+            fraction = step / 3.0
+            torso_levels.append((
+                lower_z + (upper_z - lower_z) * fraction,
+                tuple(lower + (upper - lower) * fraction
+                      for lower, upper in zip(lower_weights, upper_weights)),
+            ))
+    torso_levels.append(key_levels[-1])
+    torso_levels = tuple(torso_levels)
     for side, sign in (("L", -1.0), ("R", 1.0)):
-        levels = [
-            (hem_z, sign * 2.3, sign * 17.0),
-            ((hem_z + chest.z) * 0.5, sign * 2.7, sign * 17.5),
-            (chest.z, sign * 3.4, sign * 17.0),
-            (collar_z, sign * 6.0, sign * outer_top),
-        ]
-        levels = [(z, min(inner, outer), max(inner, outer)) for z, inner, outer in levels]
-        panel = make_tapered_panel(
-            f"Gahyeon_G1_Jacket_Body_{side}", collection_name, levels, white,
-            front_y=panel_front_y, back_y=panel_back_y)
-        bind_mesh_to_bone(panel, rig, "spine_02")
+        panel = make_body_following_panel(
+            f"Gahyeon_G1_Jacket_CurvedBody_{side}",
+            collection_name, human, torso_levels, sign, white, rig)
+        panel.data.materials.append(turquoise)
+        ring_segments = 18
+        for ring, (ring_z, _weights) in enumerate(torso_levels):
+            collar_open = max(0.0, min(1.0, (ring_z - (chest.z - 7.0)) / 18.0))
+            for segment, edge_falloff in ((0, 1.0), (1, 0.52), (2, 0.16)):
+                vertex = panel.data.vertices[ring * ring_segments + segment]
+                vertex.co.x += sign * collar_open * 4.2 * edge_falloff
+        for polygon in panel.data.polygons:
+            segment = polygon.index % (ring_segments - 1)
+            if segment == 0:
+                polygon.material_index = 1
+        panel["gahyeon_front_opening"] = "panel-integrated-v-neck"
         pieces.append(panel)
 
         suffix = "r" if sign < 0 else "l"
@@ -702,40 +1218,44 @@ def make_jacket_shell(human, rig, collection_name: str):
         wrist = bone_point(rig, f"lowerarm_{suffix}", tail=True)
         cuff_start = elbow.lerp(wrist, 0.82)
         cuff_end = elbow.lerp(wrist, 1.04)
-        upper = make_tapered_limb(
-            f"Gahyeon_G1_Jacket_UpperSleeve_{side}", collection_name,
-            shoulder, elbow, 6.3, 5.5, white)
-        lower = make_tapered_limb(
-            f"Gahyeon_G1_Jacket_LowerSleeve_{side}", collection_name,
-            elbow, cuff_start, 5.5, 4.8, white)
-        cuff = make_tapered_limb(
-            f"Gahyeon_G1_Jacket_Cuff_{side}", collection_name,
-            cuff_start, cuff_end, 5.1, 4.7, turquoise)
-        bind_mesh_to_bone(upper, rig, f"upperarm_{suffix}")
-        bind_mesh_to_bone(lower, rig, f"lowerarm_{suffix}")
-        bind_mesh_to_bone(cuff, rig, f"lowerarm_{suffix}")
-        pieces.extend((upper, lower, cuff))
+        sleeve = make_continuous_sleeve(
+            f"Gahyeon_G1_Jacket_ContinuousSleeve_{side}",
+            collection_name,
+            (
+                (shoulder, 6.2, 6.0, 1.0),
+                (shoulder.lerp(elbow, 0.52), 5.8, 5.6, 0.88),
+                (elbow, 5.35, 5.15, 0.50),
+                (cuff_start, 4.85, 4.65, 0.05),
+                (cuff_end, 4.65, 4.45, 0.0),
+            ),
+            (white, turquoise),
+            rig,
+            f"upperarm_{suffix}",
+            f"lowerarm_{suffix}",
+        )
+        pieces.append(sleeve)
 
-    hem = make_box_mesh("Gahyeon_G1_Jacket_Hem", collection_name,
-                        (-18.0, panel_front_y - 0.3, hem_z - 1.0),
-                        (18.0, panel_back_y + 0.3, hem_z + 3.5),
-                        turquoise, bevel=0.8)
-    hood = make_curve_tube(
+    waistband_levels = (
+        (hem_z - 1.0, (1.00, 0.00, 0.00)),
+        (hem_z + 1.25, (0.96, 0.04, 0.00)),
+        (hem_z + 3.5, (0.90, 0.10, 0.00)),
+    )
+    waistbands = []
+    for side, sign in (("L", -1.0), ("R", 1.0)):
+        waistband = make_body_following_panel(
+            f"Gahyeon_G1_Jacket_RibbedWaistband_{side}",
+            collection_name, human, waistband_levels, sign, turquoise, rig)
+        waistband["gahyeon_waistband_role"] = "body-following-ribbed-hem"
+        waistbands.append(waistband)
+    hood = make_folded_hood_shell(
         "Gahyeon_G1_Jacket_FoldedHood", collection_name,
-        ((-14.0, 3.0, collar_z - 3.0), (-9.0, 6.0, collar_z + 1.0),
-         (0.0, 7.5, collar_z + 3.0), (9.0, 6.0, collar_z + 1.0),
-         (14.0, 3.0, collar_z - 3.0)),
-        turquoise, radius=2.2)
-    zipper_left = make_box_mesh("Gahyeon_G1_Jacket_Zipper_L", collection_name,
-                                (-3.3, panel_front_y - 0.6, hem_z + 3.0),
-                                (-2.7, panel_front_y - 0.1, collar_z - 1.0), dark)
-    zipper_right = make_box_mesh("Gahyeon_G1_Jacket_Zipper_R", collection_name,
-                                 (2.7, panel_front_y - 0.6, hem_z + 3.0),
-                                 (3.3, panel_front_y - 0.1, collar_z - 1.0), dark)
-    for piece in (hem, zipper_left, zipper_right):
-        bind_mesh_to_bone(piece, rig, "spine_02")
-    parent_to_bone_keep_world(hood, rig, "spine_03")
-    pieces.extend((hem, hood, zipper_left, zipper_right))
+        collar_z, turquoise, rig)
+    zipper_pull = make_box_mesh(
+        "Gahyeon_G1_Jacket_ZipperPull", collection_name,
+        (-0.32, panel_front_y - 0.72, chest.z - 8.0),
+        (0.32, panel_front_y - 0.22, chest.z - 6.8), dark, bevel=0.12)
+    bind_mesh_to_bone(zipper_pull, rig, "spine_02")
+    pieces.extend((*waistbands, hood, zipper_pull))
     for piece in pieces:
         piece["gahyeon_design_authority"] = "artist-authored-completion"
         piece["gahyeon_blockout_role"] = "primary-varsity-jacket"
@@ -795,18 +1315,32 @@ def make_g1_sneakers(human, collection_name: str, root, rig):
     turquoise = add_material("G1_Sneaker_Accent", (0.01, 0.58, 0.64, 1.0), roughness=0.42)
     pieces = []
 
-    def outline(center_x, half_width, front_y, back_y, heights):
-        length = back_y - front_y
-        return (
-            (center_x - half_width * 0.70, back_y, heights[0]),
-            (center_x + half_width * 0.70, back_y, heights[1]),
-            (center_x + half_width, back_y - length * 0.28, heights[2]),
-            (center_x + half_width * 0.90, front_y + length * 0.16, heights[3]),
-            (center_x + half_width * 0.34, front_y, heights[4]),
-            (center_x - half_width * 0.34, front_y, heights[5]),
-            (center_x - half_width * 0.90, front_y + length * 0.16, heights[6]),
-            (center_x - half_width, back_y - length * 0.28, heights[7]),
-        )
+    def outline(center_x, half_width, front_y, back_y, height,
+                width_scale=1.0, inset=0.0, crown=0.0):
+        """Sample a rounded heel/mid-foot/toe footprint with a curved instep."""
+        front = front_y + inset
+        back = back_y - inset
+        center_y = (front + back) * 0.5
+        half_length = (back - front) * 0.5
+        points = []
+        segments = 24
+        for index in range(segments):
+            angle = math.tau * index / segments
+            longitudinal = math.cos(angle)
+            lateral = math.sin(angle)
+            # +1 is heel, -1 is toe. The heel and toe taper while the ball stays broad.
+            progress = (1.0 - longitudinal) * 0.5
+            if progress < 0.42:
+                shape = 0.72 + progress / 0.42 * 0.28
+            else:
+                shape = 1.0 - (progress - 0.42) / 0.58 * 0.05
+            x = center_x + lateral * half_width * width_scale * shape
+            y = center_y + longitudinal * half_length
+            transverse = max(0.0, 1.0 - abs(lateral) ** 1.65)
+            forefoot = max(0.0, min(1.0, (progress - 0.10) / 0.72))
+            z = height + crown * transverse * (0.48 + 0.52 * forefoot)
+            points.append((x, y, z))
+        return tuple(points)
 
     def mesh_from_rings(name, rings, material, bevel):
         count = len(rings[0])
@@ -847,23 +1381,23 @@ def make_g1_sneakers(human, collection_name: str, root, rig):
             half_width = (max_x - min_x) * 0.5
             upper = mesh_from_rings(
                 f"Gahyeon_G1_Sneaker_Upper_{side}",
-                (outline(center_x, half_width, min_y, max_y, (1.5,) * 8),
-                 outline(center_x, half_width * 0.82, min_y + 0.7, max_y - 0.5,
-                         (7.0, 7.0, 6.4, 4.4, 3.5, 3.5, 4.4, 6.4))),
-                white, 0.65)
+                (outline(center_x, half_width + 0.45, min_y - 0.80,
+                         max_y + 0.35, 1.55),
+                 outline(center_x, half_width + 0.45, min_y - 0.80,
+                         max_y + 0.35, 4.25, width_scale=0.98,
+                         inset=0.18, crown=0.85),
+                 outline(center_x, half_width + 0.45, min_y - 0.80,
+                         max_y + 0.35, 7.25, width_scale=0.90,
+                         inset=0.35, crown=2.85)),
+                white, 0.32)
             sole = mesh_from_rings(
                 f"Gahyeon_G1_Sneaker_Sole_{side}",
-                (outline(center_x, half_width + 0.7, min_y - 0.8, max_y + 0.5,
-                         (0.0,) * 8),
-                 outline(center_x, half_width + 0.7, min_y - 0.8, max_y + 0.5,
-                         (1.8,) * 8)),
-                sole_material, 0.45)
-            accent = make_box_mesh(
-                f"Gahyeon_G1_Sneaker_Accent_{side}", collection_name,
-                (center_x - half_width * 0.55, max_y - 1.0, 2.1),
-                (center_x + half_width * 0.55, max_y + 0.45, 5.2),
-                turquoise, bevel=0.45)
-            for piece in (upper, sole, accent):
+                (outline(center_x, half_width + 0.62, min_y - 0.65,
+                         max_y + 0.45, 0.0),
+                 outline(center_x, half_width + 0.62, min_y - 0.65,
+                         max_y + 0.45, 1.65, width_scale=0.98, inset=0.08)),
+                sole_material, 0.28)
+            for piece in (upper, sole):
                 parent_keep_world(piece, root)
                 bind_mesh_to_bone(piece, rig, "foot_l" if side == "L" else "foot_r")
                 piece["gahyeon_design_authority"] = "canonical-observed"
@@ -1054,10 +1588,7 @@ def apply_identity_sculpt(human) -> dict:
             (lower_top - coordinate.z) / max(lower_top - lower_floor, 0.1))
         front = compact((-coordinate.y - 8.0) / 4.5)
         weight = vertical * front
-        distance = lower_top - coordinate.z
-        coordinate.z += distance * (
-            1.0 - IDENTITY_SCULPT["lowerFaceHeightScale"]
-        ) * weight
+        coordinate.z += IDENTITY_SCULPT["lowerFaceLiftCm"] * weight
         if abs(coordinate.x) > 2.4:
             coordinate.x *= 1.0 - (
                 1.0 - IDENTITY_SCULPT["lowerFaceWidthScale"]

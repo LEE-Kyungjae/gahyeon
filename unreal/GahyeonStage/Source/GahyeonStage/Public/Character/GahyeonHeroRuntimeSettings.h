@@ -15,7 +15,19 @@ public:
     UPROPERTY(Config, EditAnywhere, Category="Hero")
     FSoftClassPath HeroPawnClass;
 
+    /** Optional assembled visual Actor hosted by the source runtime pawn. */
+    UPROPERTY(Config, EditAnywhere, Category="Hero")
+    FSoftClassPath VisualActorClass;
+
+    /** Character-local MetaHuman face Control Rig used by the live semantic facial driver. */
+    UPROPERTY(Config, EditAnywhere, Category="Hero|Face")
+    FSoftClassPath FacialControlRigClass;
+
     /** Production builds may fail at startup instead of silently rendering the source shell. */
     UPROPERTY(Config, EditAnywhere, Category="Hero")
     bool bRequireHeroAsset = false;
+
+    /** Fail startup when the configured visual Actor cannot be found or spawned. */
+    UPROPERTY(Config, EditAnywhere, Category="Hero")
+    bool bRequireVisualActor = false;
 };

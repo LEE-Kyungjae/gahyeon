@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 2,
+  "iteration": "v604",
+  "status": "draft-normalized-retargeted-character-registry",
+  "extends": "character_pipeline/config/living-character-runtime-v560.json",
+  "selectionPolicy": {
+    "defaultCharacter": "stella-lily",
+    "fallbackIntent": "narration",
+    "rejectUnlistedMotions": true,
+    "requireVisualEvidence": true
+  },
+  "characters": {
+    "stella-lily": {
+      "skeletalMesh": "/Game/LivingCharacterPOC/v572/Characters/StellaCentimeterNormalized/StellaLily_CentimeterNormalized_v571",
+      "retargeter": "/Game/LivingCharacterPOC/v577/Retarget/RTG_Hayley_StellaLily_v577",
+      "motionRoot": "/Game/LivingCharacterPOC/v588/Animation/Stella",
+      "motions": {
+        "walk": "/Game/LivingCharacterPOC/v588/Animation/Stella/AS_Stella_Walk_v459_v588",
+        "run": "/Game/LivingCharacterPOC/v588/Animation/Stella/AS_Stella_RunLower_v462_v588",
+        "standSit": "/Game/LivingCharacterPOC/v588/Animation/Stella/AS_Stella_StandSit_v452_v588",
+        "explain": "/Game/LivingCharacterPOC/v588/Animation/Stella/AS_Stella_HandsForward_v451_v588",
+        "narration": "/Game/LivingCharacterPOC/v588/Animation/Stella/AS_Stella_Narration_v472_v588",
+        "subtleReaction": "/Game/LivingCharacterPOC/v588/Animation/Stella/AS_Stella_ButWait_subtle_v484_v588",
+        "present": "/Game/LivingCharacterPOC/v588/Animation/Stella/AS_Stella_ButWait_present_v484_v588"
+      },
+      "blockedMotions": {
+        "activeIdle": "Source Cyber Idle contains excessive head and torso inclination.",
+        "emphasis": "Source emphasis is too large for the default conversational layer."
+      },
+      "evidence": {
+        "locomotion": "artifacts/living-character-poc-v589-stella-locomotion-library-evidence/hayley-explain-and-stand-sit-phases.png",
+        "conversation": "artifacts/living-character-poc-v591-stella-conversation-library-evidence/hayley-explain-and-stand-sit-phases.png",
+        "social": "artifacts/living-character-poc-v592-stella-social-library-evidence/hayley-explain-and-stand-sit-phases.png"
+      },
+      "runtimeCandidate": true,
+      "humanApproved": false
+    },
+    "ururu": {
+      "skeletalMesh": "/Game/LivingCharacterPOC/v585/Characters/UruruCentimeterNormalized/Ururu_CentimeterNormalized_v584",
+      "retargeter": "/Game/LivingCharacterPOC/v599/Retarget/RTG_Ururu_Head_roll_neg20_v599",
+      "motionRoot": "/Game/LivingCharacterPOC/v601/Animation/Ururu",
+      "motions": {
+        "walk": "/Game/LivingCharacterPOC/v601/Animation/Ururu/AS_Ururu_Corrected_Walk_v459_v601",
+        "run": "/Game/LivingCharacterPOC/v601/Animation/Ururu/AS_Ururu_Corrected_RunLower_v462_v601",
+        "standSit": "/Game/LivingCharacterPOC/v601/Animation/Ururu/AS_Ururu_Corrected_StandSit_v452_v601",
+        "explain": "/Game/LivingCharacterPOC/v601/Animation/Ururu/AS_Ururu_Corrected_HandsForward_v451_v601",
+        "narration": "/Game/LivingCharacterPOC/v601/Animation/Ururu/AS_Ururu_Corrected_Narration_v472_v601",
+        "subtleReaction": "/Game/LivingCharacterPOC/v601/Animation/Ururu/AS_Ururu_Corrected_ButWait_subtle_v484_v601",
+        "present": "/Game/LivingCharacterPOC/v601/Animation/Ururu/AS_Ururu_Corrected_ButWait_present_v484_v601"
+      },
+      "blockedMotions": {
+        "activeIdle": "Source Cyber Idle retains excessive full-body inclination after head correction.",
+        "emphasis": "Deep bow is unsuitable as an ambient conversational gesture."
+      },
+      "evidence": {
+        "conversationBefore": "artifacts/living-character-poc-v593-ururu-conversation-library-evidence/hayley-explain-and-stand-sit-phases.png",
+        "headAxisSweep": "artifacts/living-character-poc-v600-ururu-head-axis-midpose-evidence/hayley-explain-and-stand-sit-phases.png",
+        "conversationCorrected": "artifacts/living-character-poc-v602-ururu-corrected-conversation-evidence/hayley-explain-and-stand-sit-phases.png",
+        "socialCorrected": "artifacts/living-character-poc-v603-ururu-corrected-social-evidence/hayley-explain-and-stand-sit-phases.png"
+      },
+      "runtimeCandidate": true,
+      "humanApproved": false
+    }
+  },
+  "archivedCharacters": {
+    "gahyeon": "Preserved only; excluded from runtime selection by user decision.",
+    "diana": "Private-only character; excluded from shared release and redistribution."
+  },
+  "nextGates": [
+    "neutral-active-idle-without-full-body-lean",
+    "continuous-foot-contact-and-root-motion-validation",
+    "hair-and-clothing-secondary-motion",
+    "desktop-character-and-intent-selection"
+  ],
+  "humanApproved": false,
+  "releaseEligible": false
+}

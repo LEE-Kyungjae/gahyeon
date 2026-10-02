@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "detector": {
+    "name": "MediaPipe Face Mesh",
+    "version": "0.10.21"
+  },
+  "records": {
+    "canonical_left": {
+      "uri": "artifacts/gahyeon-ch/ChatGPT Image 2026년 8월 10일 오후 11_01_23.png",
+      "sha256": "cf2a0755d0a3d179ce99a5e1124ca1e1de3b1f673eda7c8536eb1f31bb4269ac",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "detectedFaces": 1,
+      "landmarkCount": 478
+    },
+    "candidate_left": {
+      "uri": "character_pipeline/iterations/v001/blender/metahuman-identity-head-v79/looking-glass-go-renders-v3/face-right-profile.png",
+      "sha256": "893e9ca56124f18bf3a44cbb4b2d1979c859ac275d0101f7af7d86b3b79995b8",
+      "dimensions": [
+        1440,
+        2560
+      ],
+      "detectedFaces": 0,
+      "landmarkCount": 0
+    },
+    "canonical_right": {
+      "uri": "artifacts/gahyeon-ch/ChatGPT Image 2026년 8월 10일 오후 11_02_27.png",
+      "sha256": "9080943d8611a6efd6c8dcabcf6cb23775892c8c215030c61565882f6e9e3a2e",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "detectedFaces": 1,
+      "landmarkCount": 478
+    },
+    "candidate_right": {
+      "uri": "character_pipeline/iterations/v001/blender/metahuman-identity-head-v79/looking-glass-go-renders-v3/face-left-profile.png",
+      "sha256": "fb190c6c89049bcc43533c54c33393a54e10b2f962152a953f087be460ade973",
+      "dimensions": [
+        1440,
+        2560
+      ],
+      "detectedFaces": 0,
+      "landmarkCount": 0
+    }
+  },
+  "canonicalProfilesDetectable": true,
+  "candidateProfilesDetectable": false,
+  "automatedProfileComparisonAllowed": false,
+  "identitySimilarityScore": null,
+  "decision": "manual-profile-review-required"
+}

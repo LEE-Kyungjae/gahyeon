@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P9-skin-eye-surface-gate",
+  "state": "automation-complete-assets-pending",
+  "hypothesis": {
+    "statement": "The diffuse-only G1 textures and prototype eyes cannot be allowed to satisfy a production MetaHuman surface gate merely because they render.",
+    "action": "Require 4K skin channels, independent facial-zone masks, physical eye parts, Unreal Editor material evidence and seven immutable Looking Glass Go close-ups.",
+    "expectedResult": "Complete fixture evidence passes while the current v79 surface binding remains explicitly pending and non-production."
+  },
+  "actualResult": {
+    "requiredSkinChannels": 8,
+    "requiredSkinZones": 8,
+    "requiredEyeParts": 6,
+    "requiredEyeChecks": 10,
+    "requiredGoCaptures": 7,
+    "legacySkinResolution": [2048, 2048],
+    "legacyEyeResolution": [1024, 1024],
+    "currentProductionSurfaceCandidate": false,
+    "qualityClaim": null
+  },
+  "knownMissing": [
+    "4K base color",
+    "normal",
+    "micro normal",
+    "roughness",
+    "specular",
+    "subsurface",
+    "cavity",
+    "ambient occlusion",
+    "facial zone masks",
+    "physical tear line and wetness",
+    "MetaHuman eyelid contact evidence",
+    "Unreal material binding evidence"
+  ],
+  "decision": "Preserve v79 diffuse maps only as reconstruction history. Do not register them as production skin or eye assets.",
+  "nextEvidence": "real MetaHuman surface material instances, checksummed 4K channel set, physical eye assembly bindings and seven Go close-up captures"
+}

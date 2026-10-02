@@ -1,0 +1,29 @@
+[Unit]
+Description=Gahyeon Qwen C runtime attestation bridge
+After=network.target gahyeon-qwen-1.7b-cuda.service
+Requires=gahyeon-qwen-1.7b-cuda.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/zaeze-ai/gahyeon-qwen-c-bridge
+EnvironmentFile=/etc/gahyeon/qwen-c-bridge.env
+ExecStart=/opt/zaeze-ai/gahyeon-qwen-c-bridge/venv/bin/python -m uvicorn c_runtime_bridge:app --host 127.0.0.1 --port 18773 --workers 1
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET
+ReadOnlyPaths=/opt/zaeze-ai/gahyeon-qwen-c-bridge /etc/gahyeon/qwen-c-bridge.env
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

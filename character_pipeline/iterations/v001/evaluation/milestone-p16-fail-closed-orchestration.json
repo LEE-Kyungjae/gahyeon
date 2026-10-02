@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P16-fail-closed-orchestration",
+  "state": "completed-runner-blocked-by-missing-toolchains",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "Independent green validators do not prove an ordered rebuild, because a failed or blocked stage can be silently skipped.",
+    "action": "Execute immutable stages in order, capture stdout/stderr and exit codes, stop on failure or blocked state and reject non-Go display profiles.",
+    "expectedResult": "Every pipeline attempt leaves machine-verifiable evidence of the exact gate that stopped progress."
+  },
+  "actualResult": {
+    "pipelineState": "blocked",
+    "executedStages": 3,
+    "configuredStages": 3,
+    "passed": ["display-profile", "iteration-integrity"],
+    "blocked": "reconstruction-benchmark",
+    "reason": "TRELLIS.2 and Hunyuan3D pinned runners and reviewed weights are unavailable",
+    "laterStagesExecuted": false,
+    "display": {"panel": [1440, 2560], "orientation": "portrait", "views": 66}
+  },
+  "failureHandling": [
+    "nonzero exit fails immediately",
+    "malformed JSON state fails immediately",
+    "unknown stage state fails immediately",
+    "blocked reconstruction stops before selection or conform",
+    "existing run reports are never overwritten"
+  ],
+  "decision": "Keep the orchestrator. Resume at reconstruction only after both model toolchains are pinned; do not bypass the block."
+}

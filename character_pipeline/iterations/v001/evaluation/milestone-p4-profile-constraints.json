@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P4-canonical-profile-constraints",
+  "status": "manual-review-required",
+  "authority": {
+    "leftProfile": 7,
+    "rightProfile": 8,
+    "identityAuthority": "canonical user-provided originals"
+  },
+  "detectorAudit": {
+    "detector": "MediaPipe Face Mesh 0.10.21",
+    "canonicalLeftLandmarks": 478,
+    "canonicalRightLandmarks": 478,
+    "candidateLeftLandmarks": 0,
+    "candidateRightLandmarks": 0,
+    "automatedProfileComparisonAllowed": false,
+    "decision": "fail closed; do not invent profile measurements or an identity score"
+  },
+  "visualFindings": [
+    {
+      "area": "cranial-volume",
+      "severity": "blocking",
+      "finding": "candidate posterior skull volume and cranial height are substantially larger and more angular than canonical profiles",
+      "confidence": "high",
+      "action": "reduce posterior/superior cranial volume during MetaHuman conform; verify with both 07 and 08"
+    },
+    {
+      "area": "jaw-chin",
+      "severity": "blocking",
+      "finding": "candidate jaw and chin read longer, harder and more angular than the shorter softer canonical lower-face silhouette",
+      "confidence": "high",
+      "action": "shorten and soften the lower-face profile without widening the already over-wide front face"
+    },
+    {
+      "area": "nose-lips",
+      "severity": "blocking",
+      "finding": "candidate nose/lip projection relationship lacks the subtle canonical curvature and lip volume",
+      "confidence": "medium",
+      "action": "tune nose bridge/tip and lip projection only after MetaHuman topology; preserve profile while widening front mouth"
+    },
+    {
+      "area": "bilateral-consistency",
+      "severity": "informational",
+      "finding": "candidate left and right are internally symmetric, but the same identity mismatch is present on both sides",
+      "confidence": "high",
+      "action": "do not treat symmetry as identity correctness"
+    }
+  ],
+  "conformConstraints": [
+    "front mouth widening must not push lip projection beyond canonical 07/08",
+    "front face narrowing must not further narrow the already narrow nose base",
+    "cranial reduction must preserve ear placement and neck attachment",
+    "jaw shortening must be tested under mouth-open and jaw rotation deformation",
+    "no profile change is accepted until both left and right fixed views improve"
+  ],
+  "nextGate": "repeat profile detector after MetaHuman conform; if still undetectable, retain manual review and add calibrated silhouette landmarks rather than weakening the detector gate"
+}

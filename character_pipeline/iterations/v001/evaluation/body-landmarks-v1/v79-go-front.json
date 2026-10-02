@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "image": {
+    "uri": "/Users/ze/work/gahyeonbot/character_pipeline/iterations/v001/blender/looking-glass-go-single-view/body-front.png",
+    "sha256": "72d723ca4c88b71a746036c7c5459b6f6446428182b5434b9e835de7bae1ebba",
+    "dimensions": [
+      1440,
+      2560
+    ]
+  },
+  "detector": {
+    "name": "MediaPipe Pose Heavy",
+    "version": "0.10.21",
+    "landmarkCount": 33
+  },
+  "segmentationBoundsPixels": [
+    123,
+    291,
+    1317,
+    2325
+  ],
+  "measurements": {
+    "shoulderWidthOverSilhouetteHeight": 0.16889,
+    "hipWidthOverSilhouetteHeight": 0.102274,
+    "torsoLengthOverSilhouetteHeight": 0.283494,
+    "legLengthOverSilhouetteHeight": 0.454721,
+    "armLengthOverSilhouetteHeight": 0.248446,
+    "shoulderToHipWidthRatio": 1.651353,
+    "legToTorsoRatio": 1.603991,
+    "upperToLowerLegRatio": 1.080612
+  },
+  "landmarksPixels": {
+    "nose": [
+      730.908,
+      500.813
+    ],
+    "leftShoulder": [
+      896.299,
+      701.357
+    ],
+    "rightShoulder": [
+      552.608,
+      701.295
+    ],
+    "leftElbow": [
+      1079.97,
+      911.612
+    ],
+    "rightElbow": [
+      360.678,
+      919.261
+    ],
+    "leftWrist": [
+      1241.158,
+      1083.659
+    ],
+    "rightWrist": [
+      220.956,
+      1070.374
+    ],
+    "leftHip": [
+      822.078,
+      1278.595
+    ],
+    "rightHip": [
+      613.953,
+      1277.804
+    ],
+    "leftKnee": [
+      886.88,
+      1757.421
+    ],
+    "rightKnee": [
+      560.962,
+      1752.876
+    ],
+    "leftAnkle": [
+      928.598,
+      2198.957
+    ],
+    "rightAnkle": [
+      516.517,
+      2196.66
+    ]
+  },
+  "visibility": {
+    "nose": 0.999993,
+    "leftShoulder": 0.999988,
+    "rightShoulder": 0.999981,
+    "leftElbow": 0.996829,
+    "rightElbow": 0.994413,
+    "leftWrist": 0.997175,
+    "rightWrist": 0.998183,
+    "leftHip": 0.999942,
+    "rightHip": 0.999938,
+    "leftKnee": 0.986562,
+    "rightKnee": 0.97888,
+    "leftAnkle": 0.974346,
+    "rightAnkle": 0.966431
+  },
+  "qualityClaim": null
+}

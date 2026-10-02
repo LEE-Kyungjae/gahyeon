@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-09-28",
+  "canonicalRuntimeManifest": "config/canonical-character-runtime.json",
+  "automaticHistoricalAssetDeletion": false,
+  "entries": [
+    {
+      "path": "unreal/GahyeonDesktopMetaHumanPOC",
+      "role": "canonical_runtime_project",
+      "retention": "keep",
+      "reason": "현재 canonical manifest가 지정한 프로젝트. Content와 Source는 삭제하지 않는다."
+    },
+    {
+      "path": "unreal/GahyeonStage",
+      "role": "shared_source_and_historical_assets",
+      "retention": "keep_dependency_review_required",
+      "reason": "현재 프로젝트의 GahyeonVoiceRuntime/Source/GahyeonStage 및 GahyeonRuntimeCore 심볼릭 링크가 이 프로젝트 Source를 가리킨다. 프로젝트 전체를 과거 실험으로 분류해 삭제하면 안 된다. Content의 Unreal 참조 그래프는 미검증."
+    },
+    {
+      "path": "artifacts/gahyeon-ch",
+      "role": "authoring_models_donors_iterations",
+      "retention": "preserve_until_verified_archive",
+      "reason": "모델 원본·외부 소재·제작 버전. 아카이브 사본과 체크섬 및 현재 파이프라인 참조 확인 전 삭제 금지."
+    },
+    {
+      "path": "artifacts/voicebox-teacher-diverse1000-2026-08-09",
+      "role": "training_and_voice_evidence",
+      "retention": "preserve",
+      "reason": "재생성 가능 캐시가 아닌 학습·검수 자료."
+    },
+    {
+      "path": "desktop",
+      "role": "retired_electron_compatibility_source",
+      "retention": "source_keep_packaged_outputs_review",
+      "reason": "현행 런타임이 아니지만 소스와 릴리스 이력을 통째로 삭제하지 않는다."
+    },
+    {
+      "path": "unreal/GahyeonDesktopMetaHumanPOC/Plugins/GahyeonVoiceRuntime/Intermediate",
+      "role": "rebuildable_output",
+      "retention": "removed_2026-09-28",
+      "allocatedBytesBefore": 1309028352,
+      "preconditions": ["Git ignored", "No tracked files", "No active Unreal/compiler build", "Source and Binaries retained"],
+      "regeneration": "다음 Unreal 프로젝트 빌드에서 재생성. 이번 정리는 빌드·런타임 검증을 수행한 것이 아니다."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v228",
+  "engineVersion": "5.8",
+  "faceConstraintMode": "none",
+  "targetMesh": "/Game/Gahyeon/CharacterPipeline/v220/Input/SM_Gahyeon_KeenTools_CleanNormals_Cm_v220",
+  "targetCharacter": "/Game/Gahyeon/CharacterPipeline/v228/Character/MHC_Gahyeon_3DOnlyControl_v228",
+  "outputDirectory": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/iterations/v228-metahuman-3d-only-control",
+  "targetYawRotationDegrees": 180.0,
+  "hypothesis": "Removing the incompatible orthographic 2D tracking term will preserve a coherent MetaHuman head while the reconstruction supplies only 3D shape.",
+  "claims": {
+    "identityApproved": false,
+    "automaticApproval": false,
+    "productionReady": false
+  }
+}

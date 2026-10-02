@@ -47,6 +47,14 @@ bool UGahyeonTransportSubsystem::IsExpectedHeartbeatPong(
         && PendingCorrelationId == ReceivedCorrelationId;
 }
 
+EGahyeonConnectionBootstrap UGahyeonTransportSubsystem::SelectConnectionBootstrap(
+    bool bPersistentStateRestored)
+{
+    return bPersistentStateRestored
+        ? EGahyeonConnectionBootstrap::ReuseLiveRuntime
+        : EGahyeonConnectionBootstrap::RestorePersistentState;
+}
+
 void UGahyeonTransportSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Collection.InitializeDependency<UGahyeonRuntimeSubsystem>();
@@ -106,6 +114,25 @@ void UGahyeonTransportSubsystem::Configure(
     BearerToken = InBearerToken;
 }
 
+bool UGahyeonTransportSubsystem::SetCharacterId(const FString& InCharacterId)
+{
+    const FString Candidate = InCharacterId.TrimStartAndEnd().ToLower();
+    if (Candidate.IsEmpty() || Candidate.Len() > 64
+        || (!FChar::IsAlpha(Candidate[0]) && !FChar::IsDigit(Candidate[0])))
+    {
+        return false;
+    }
+    for (const TCHAR Character : Candidate)
+    {
+        if (!FChar::IsLower(Character) && !FChar::IsDigit(Character) && Character != TEXT('-'))
+        {
+            return false;
+        }
+    }
+    CharacterId = Candidate;
+    return true;
+}
+
 bool UGahyeonTransportSubsystem::Connect()
 {
     check(IsInGameThread());
@@ -140,11 +167,20 @@ bool UGahyeonTransportSubsystem::Connect()
                 Self->ScheduleReconnect();
                 return;
             }
-            if (Self->Runtime == nullptr
-                || !Self->Runtime->RestorePersistentState(*State))
+            if (Self->Runtime == nullptr)
             {
                 Self->ScheduleReconnect();
                 return;
+            }
+            if (SelectConnectionBootstrap(Self->bPersistentStateRestored)
+                == EGahyeonConnectionBootstrap::RestorePersistentState)
+            {
+                if (!Self->Runtime->RestorePersistentState(*State))
+                {
+                    Self->ScheduleReconnect();
+                    return;
+                }
+                Self->bPersistentStateRestored = true;
             }
             Self->Runtime->BeginBackendConnection();
             Self->OpenSocket(
@@ -608,6 +644,8 @@ FString UGahyeonTransportSubsystem::BuildHello(int64 LastSequence) const
     Payload->SetStringField(TEXT("installationId"), InstallationId);
     Payload->SetStringField(TEXT("displayName"),
         DisplayName.IsEmpty() ? TEXT("Gahyeon user") : DisplayName);
+    Payload->SetStringField(TEXT("characterId"),
+        CharacterId.IsEmpty() ? TEXT("gahyeon") : CharacterId);
     Payload->SetNumberField(TEXT("lastSequence"), static_cast<double>(LastSequence));
 
     TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();

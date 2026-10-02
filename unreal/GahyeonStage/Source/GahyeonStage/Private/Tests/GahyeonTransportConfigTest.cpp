@@ -2,6 +2,7 @@
 
 #include "Misc/AutomationTest.h"
 #include "Network/GahyeonTransportSubsystem.h"
+#include "Engine/GameInstance.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FGahyeonTransportConfigTest,
@@ -23,10 +24,16 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     "Gahyeon.Network.AcceptsOnlyCorrelatedHeartbeatPong",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FGahyeonTransportReconnectBootstrapTest,
+    "Gahyeon.Network.ReconnectReusesLiveRuntimeWithoutRestoringPersistence",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
 bool FGahyeonTransportConfigTest::RunTest(const FString& Parameters)
 {
     (void)Parameters;
-    UGahyeonTransportSubsystem* Secure = NewObject<UGahyeonTransportSubsystem>();
+    UGameInstance* GameInstance = NewObject<UGameInstance>();
+    UGahyeonTransportSubsystem* Secure = NewObject<UGahyeonTransportSubsystem>(GameInstance);
     Secure->Configure(
         TEXT("wss://gahyeon.example:8443/api/gahyeon/unreal/v1"),
         TEXT("session"), TEXT("world"), TEXT("install"), TEXT("user"), TEXT("token"));
@@ -34,15 +41,17 @@ bool FGahyeonTransportConfigTest::RunTest(const FString& Parameters)
         FString(TEXT("https://gahyeon.example:8443")));
     TestEqual(TEXT("audio request reuses transport credential"), Secure->GetBearerToken(),
         FString(TEXT("token")));
+    TestTrue(TEXT("safe persona id is accepted"), Secure->SetCharacterId(TEXT("diana")));
+    TestFalse(TEXT("unsafe persona id is rejected"), Secure->SetCharacterId(TEXT("../../gahyeon")));
 
-    UGahyeonTransportSubsystem* Local = NewObject<UGahyeonTransportSubsystem>();
+    UGahyeonTransportSubsystem* Local = NewObject<UGahyeonTransportSubsystem>(GameInstance);
     Local->Configure(
         TEXT("ws://127.0.0.1:8080/socket"),
         TEXT("session"), TEXT("world"), TEXT("install"), TEXT("user"), TEXT(""));
     TestEqual(TEXT("ws maps to same-origin http"), Local->GetHttpOrigin(),
         FString(TEXT("http://127.0.0.1:8080")));
 
-    UGahyeonTransportSubsystem* Invalid = NewObject<UGahyeonTransportSubsystem>();
+    UGahyeonTransportSubsystem* Invalid = NewObject<UGahyeonTransportSubsystem>(GameInstance);
     Invalid->Configure(
         TEXT("file:///tmp/audio"),
         TEXT("session"), TEXT("world"), TEXT("install"), TEXT("user"), TEXT(""));
@@ -99,6 +108,18 @@ bool FGahyeonTransportHeartbeatPongTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("unsolicited pong is ignored"),
         UGahyeonTransportSubsystem::IsExpectedHeartbeatPong(
             FString{}, TEXT("heartbeat:old")));
+    return true;
+}
+
+bool FGahyeonTransportReconnectBootstrapTest::RunTest(const FString& Parameters)
+{
+    (void)Parameters;
+    TestTrue(TEXT("first connection restores persisted RuntimeCore state"),
+        UGahyeonTransportSubsystem::SelectConnectionBootstrap(false)
+            == EGahyeonConnectionBootstrap::RestorePersistentState);
+    TestTrue(TEXT("socket reconnect keeps the live RuntimeCore and its active speech"),
+        UGahyeonTransportSubsystem::SelectConnectionBootstrap(true)
+            == EGahyeonConnectionBootstrap::ReuseLiveRuntime);
     return true;
 }
 

@@ -1,0 +1,16 @@
+{
+  "gahyeon.assistant": {
+    "backendUrl": "http://127.0.0.1:18771/v1/tts",
+    "language": "Korean",
+    "seed": 20260819,
+    "minimumEmotionStrength": 0.15,
+    "maximumEmotionStrength": 0.35,
+    "styles": {
+      "natural": null,
+      "bright": "joy",
+      "surprised": "surprise",
+      "annoyed": "anger",
+      "sad": "sad"
+    }
+  }
+}

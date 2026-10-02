@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "displayProfile": "looking-glass-go",
+  "resolution": [1440, 2560],
+  "heroBlueprint": "/Game/GahyeonGenerated/Characters/Gahyeon.Gahyeon_C",
+  "requiredParentClass": "/Script/GahyeonStage.GahyeonCharacterPawn",
+  "requiredCases": [
+    {"id": "neutral", "channel": "baseline", "frames": [0, 7, 15]},
+    {"id": "blink-left", "channel": "eyelid", "frames": [20, 25, 30]},
+    {"id": "blink-right", "channel": "eyelid", "frames": [35, 40, 45]},
+    {"id": "blink-bilateral", "channel": "eyelid", "frames": [50, 55, 60]},
+    {"id": "jaw-open", "channel": "jaw", "frames": [65, 75, 85]},
+    {"id": "smile", "channel": "expression", "frames": [90, 105, 120]},
+    {"id": "frown", "channel": "expression", "frames": [125, 140, 155]},
+    {"id": "eye-squint", "channel": "expression", "frames": [160, 175, 190]},
+    {"id": "viseme-aa", "channel": "viseme", "frames": [195, 205, 215]},
+    {"id": "viseme-ee", "channel": "viseme", "frames": [220, 230, 240]},
+    {"id": "viseme-oo", "channel": "viseme", "frames": [245, 255, 265]},
+    {"id": "head-yaw", "channel": "head", "frames": [270, 285, 300]},
+    {"id": "head-pitch", "channel": "head", "frames": [305, 320, 335]},
+    {"id": "breathing", "channel": "body", "frames": [340, 370, 400]},
+    {"id": "shoulder-raise", "channel": "body", "frames": [405, 420, 435]}
+  ],
+  "requiredChecks": [
+    "lip-penetration",
+    "lip-seal-gap",
+    "eyelid-eyeball-contact",
+    "eyelid-penetration",
+    "mouth-corner-collapse",
+    "cheek-volume-collapse",
+    "neck-stretch",
+    "shoulder-collapse",
+    "eye-aim-consistency",
+    "mesh-clipping",
+    "temporal-popping"
+  ],
+  "approvalPolicy": {
+    "automaticApproval": false,
+    "requireHumanReview": true,
+    "failOnMissingCase": true,
+    "failOnMissingHero": true,
+    "failOnDiagnosticShell": true,
+    "neverOverwritePriorIteration": true
+  }
+}

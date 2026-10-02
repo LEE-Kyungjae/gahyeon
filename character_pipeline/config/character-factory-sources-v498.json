@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v498",
+  "status": "draft-source-registry",
+  "rules": {
+    "preserveArchives": true,
+    "neverOverwriteIterations": true,
+    "archiveGahyeon": true,
+    "dianaPrivateOnly": true,
+    "requireLicenseReviewBeforeRelease": true,
+    "requireVisualQaBeforePromotion": true
+  },
+  "sources": [
+    {"id":"hayley","archive":"hayley.zip","role":"primary-character","route":"retain-existing-poc"},
+    {"id":"stellar-lily","archive":"stellar-blade-lily-stargazer-coat.zip","role":"character-candidate","route":"inspect-only-before-import"},
+    {"id":"ururu","archive":"ururu.zip","role":"character-candidate","route":"inspect-only-before-import"},
+    {"id":"cutegirl-g1","archive":"cutegirl-g1.zip","role":"character-and-face-motion-donor","route":"separate-identity-from-animation"},
+    {"id":"cyber-girl","archive":"cyber-girl.zip","role":"character-and-idle-donor","route":"retain-idle-reference"},
+    {"id":"gynoid-walk","archive":"gynoid-1000-series.zip","role":"body-animation-donor","route":"retarget-only"},
+    {"id":"luri-run","archive":"luoli-run.zip","role":"body-animation-donor","route":"retarget-lower-body"},
+    {"id":"stand-sit","archive":"standing-sitting-animation.zip","role":"body-animation-donor","route":"retarget-posture"},
+    {"id":"hands-forward","archive":"hands-forward-gesture.zip","role":"gesture-donor","route":"retarget-upper-body"},
+    {"id":"but-wait","archive":"but-wait-theres-more-animation.zip","role":"gesture-donor","route":"retain-selected-segments"},
+    {"id":"narration","archive":"talking-character-joe-rogan-for-narration.zip","role":"gesture-donor","route":"retain-selected-segments"},
+    {"id":"lacrimosa","archive":"lacrimosa-animated-neverness-to-everness.zip","role":"expression-performance-reference","route":"timing-and-intent-only"},
+    {"id":"diana","archive":"pragmata-diana-textured-and-rigged.zip","role":"private-character","route":"private-runtime-only"}
+  ]
+}

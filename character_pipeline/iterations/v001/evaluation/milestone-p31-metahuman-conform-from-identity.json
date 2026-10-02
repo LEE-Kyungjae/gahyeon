@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P31-metahuman-conform-from-identity",
+  "state": "completed-tooling-awaiting-solved-identity-and-ue56",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "Importing a Static Mesh or creating an Identity asset does not prove that marker tracking, Identity Solve or MetaHuman Character conform succeeded.",
+    "action": "Require a named human-reviewed solved-Identity receipt linked to P30, then invoke the official UE 5.6 MetaHumanCharacterEditorSubsystem.import_from_identity API with eye, teeth and metric-scale preservation and accept only ImportErrorCode.SUCCESS.",
+    "expectedResult": "Head conform is deterministic and traceable without allowing an unresolved Identity or failed return code to advance the pipeline."
+  },
+  "officialApi": {
+    "subsystem": "MetaHumanCharacterEditorSubsystem",
+    "operation": "import_from_identity",
+    "params": {"useEyeMeshes": true, "useTeethMesh": true, "useMetricScale": true},
+    "requiredResult": "ImportErrorCode.SUCCESS",
+    "unresolvedIdentityResult": "ImportErrorCode.IDENTITY_NOT_CONFORMED"
+  },
+  "actualResult": {
+    "currentSolvedIdentityReceipt": null,
+    "currentMetaHumanCharacter": null,
+    "headConformed": false,
+    "faceRigGenerated": false,
+    "highResolutionTexturesDownloaded": false,
+    "bodyConformed": false,
+    "groomBound": false,
+    "clothingBound": false,
+    "deformationValidated": false,
+    "lookingGlassGoValidated": false,
+    "productionReady": false
+  },
+  "failureHandling": [
+    "reject P30 lineage drift",
+    "reject anonymous, unauthorized or future-dated solve review",
+    "require tracked neutral frame, corrected markers, completed solve and reviewed template overlay",
+    "reject missing or wrong-class Identity and Character assets",
+    "reject busy/unavailable Character edit state",
+    "reject every import error code other than SUCCESS",
+    "commit and save only after successful conform",
+    "stop before claiming rig, surfaces, body, groom, clothing, deformation or Go quality"
+  ],
+  "validation": {"conformJobTests": "5 passed", "P30P31CombinedTests": "10 passed", "unrealScaffoldConformerCheck": "passed", "realEditorExecution": "pending"},
+  "decision": "Keep actual conform pending until an authorized reviewer produces solved Identity evidence in UE 5.6."
+}

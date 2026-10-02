@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "engine": "5.6",
+  "mappingConfig": "facial_semantic_coverage.json",
+  "displayProfile": "looking-glass-go",
+  "resolution": [1440, 2560],
+  "viewCount": 66,
+  "camera": "face-close-up",
+  "sampleWeights": [0.0, 0.5, 1.0],
+  "requiredCases": [
+    {"id": "neutral", "group": "baseline", "semantic": "neutral"},
+    {"id": "blink-left", "group": "direct", "semantic": "blink-left"},
+    {"id": "blink-right", "group": "direct", "semantic": "blink-right"},
+    {"id": "jaw-open", "group": "direct", "semantic": "jaw-open"},
+    {"id": "viseme-sil", "group": "viseme", "semantic": "sil"},
+    {"id": "viseme-aa", "group": "viseme", "semantic": "aa"},
+    {"id": "viseme-ih", "group": "viseme", "semantic": "ih"},
+    {"id": "viseme-ou", "group": "viseme", "semantic": "ou"},
+    {"id": "viseme-ee", "group": "viseme", "semantic": "ee"},
+    {"id": "viseme-oh", "group": "viseme", "semantic": "oh"},
+    {"id": "viseme-fv", "group": "viseme", "semantic": "fv"},
+    {"id": "viseme-l", "group": "viseme", "semantic": "l"},
+    {"id": "viseme-mbp", "group": "viseme", "semantic": "mbp"},
+    {"id": "viseme-wq", "group": "viseme", "semantic": "wq"},
+    {"id": "emotion-happy", "group": "emotion", "semantic": "happy"},
+    {"id": "emotion-sad", "group": "emotion", "semantic": "sad"},
+    {"id": "emotion-angry", "group": "emotion", "semantic": "angry"},
+    {"id": "emotion-frown", "group": "emotion", "semantic": "frown"},
+    {"id": "emotion-eye-squint", "group": "emotion", "semantic": "eye-squint"}
+  ],
+  "thresholds": {
+    "maximumNeutralAbsoluteWeight": 0.05,
+    "minimumHalfResponse": 0.35,
+    "minimumPeakResponse": 0.75,
+    "maximumUnmappedPeakWeight": 0.2,
+    "maximumOppositeBlinkWeight": 0.15
+  },
+  "approvalPolicy": {"automaticApproval": false, "requireHumanReview": true, "neverOverwritePriorIteration": true}
+}

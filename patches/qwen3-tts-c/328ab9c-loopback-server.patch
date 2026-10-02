@@ -1,0 +1,16 @@
+diff --git a/qwen_tts_server.c b/qwen_tts_server.c
+index a3534c2..70eae61 100644
+--- a/qwen_tts_server.c
++++ b/qwen_tts_server.c
+@@ -742,6 +742,6 @@ static int setup_listen_socket(int port) {
+     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+     struct sockaddr_in addr = {
+         .sin_family = AF_INET,
+-        .sin_addr.s_addr = INADDR_ANY,
++        .sin_addr.s_addr = htonl(INADDR_LOOPBACK),
+         .sin_port = htons(port)
+     };
+@@ -1141,2 +1141,2 @@ int qwen_tts_serve_batched(qwen_tts_context_t *ctx, int port, int max_batch) {
+-    fprintf(stderr, "Server listening on http://0.0.0.0:%d (continuous request-batching: max_batch=%d, %d readers%s)\n",
++    fprintf(stderr, "Server listening on http://127.0.0.1:%d (continuous request-batching: max_batch=%d, %d readers%s)\n",
+             port, max_batch, n_readers, single_ctx ? ", +1 single-job clone" : "");

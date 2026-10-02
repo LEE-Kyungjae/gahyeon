@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v001",
+  "engine": "Unreal Engine 5.6",
+  "stage": "metahuman-identity-conform-input",
+  "displayProfile": "looking-glass-go",
+  "singleViewResolution": [1440, 2560],
+  "quiltViewCount": 66,
+  "targetCoordinateSystem": {
+    "unit": "centimeter",
+    "upAxis": "+Z",
+    "forwardAxis": "+X",
+    "handedness": "left"
+  },
+  "requiredIdentityViews": [
+    "face-front", "face-left-45", "face-right-45",
+    "face-left-profile", "face-right-profile"
+  ],
+  "requiredPreImportOperations": [
+    "isolate-neutral-head-neck-and-eyes",
+    "remove-hair-clothing-accessories-and-hidden-helpers",
+    "preserve-selected-shape-without-beautification",
+    "normalize-to-centimeters-z-up-x-forward",
+    "apply-transforms-and-verify-nonzero-bounds",
+    "export-static-obj-or-fbx-for-metahuman-identity"
+  ],
+  "forbiddenClaims": [
+    "production-topology", "metahuman-created", "dna-created",
+    "facial-rig-validated", "identity-approved", "aaa-quality"
+  ]
+}

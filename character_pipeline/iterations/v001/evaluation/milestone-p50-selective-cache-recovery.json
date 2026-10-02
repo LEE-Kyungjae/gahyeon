@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P50-selective-cache-recovery",
+  "state": "completed-partial-headroom-not-met",
+  "hypothesis": {
+    "statement": "Official cache cleanup and stateless Docker pruning may recover installation space without disrupting active containers, volumes, Voicebox or character artifacts.",
+    "action": "Prune Docker build cache and unused images, then run official pip, Homebrew, pnpm, uv and CocoaPods cache cleanup commands; compare protected workload identities before and after.",
+    "expectedResult": "Recover meaningful host space while preserving every active and stateful workload, then reassess rather than guessing that 80 GiB was reached."
+  },
+  "actualResult": {
+    "receipt": "../../../../artifacts/gahyeon-ch/metahuman-disk-recovery-p50-receipt.json",
+    "receiptSha256": "8d28ebd4c74dc90390a61562d3afdab7569da21d3ba599b9de8f2ef6fcc2fdb8",
+    "beforeFreeGiB": 45.92,
+    "afterFreeGiBAtReceipt": 54.09,
+    "recoveredGiBAtReceipt": 8.17,
+    "targetGiB": 80,
+    "targetMet": false,
+    "remainingGiBAtReceipt": 25.91
+  },
+  "protectedEvidence": {
+    "runningDockerContainers": 13,
+    "dockerVolumes": 73,
+    "containerSetUnchanged": true,
+    "volumeSetUnchanged": true,
+    "voiceboxGenerationActive": true,
+    "huggingFaceCacheDeleted": false,
+    "projectArtifactsDeleted": false
+  },
+  "removedMaterial": [
+    "Docker build cache",
+    "Docker images unused by running containers",
+    "pip cache",
+    "Homebrew downloads/cache",
+    "unreferenced pnpm store packages",
+    "uv cache",
+    "CocoaPods cache"
+  ],
+  "recovery": "Removed material is not in Trash; it is recoverable only by pulling, rebuilding or redownloading.",
+  "qualityBoundary": "Disk cleanup does not improve the character and does not prove Unreal/MetaHuman readiness.",
+  "decision": "Do not delete Xcode simulator/device data, Android SDK/NDK, Google/Raspberry Pi caches or the entire Gradle cache without a more specific user decision."
+}

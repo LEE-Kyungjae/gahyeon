@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P5-metahuman-deformation-qa-contract",
+  "status": "static-validated-editor-runtime-pending",
+  "architecture": {
+    "runtimeProjectPreserved": "unreal/GahyeonStage/GahyeonStage.uproject",
+    "qaProject": "unreal/GahyeonStage/GahyeonStageCharacterQA.uproject",
+    "engine": "5.6",
+    "execution": "Unreal Editor Python only",
+    "heroBoundary": "/Game/GahyeonGenerated/Characters/Gahyeon.Gahyeon_C must inherit GahyeonCharacterPawn"
+  },
+  "coverage": {
+    "deformationCases": 15,
+    "sampleFramesPerCase": 3,
+    "defectChecks": 11,
+    "captureResolution": [1440, 2560],
+    "displayProfile": "looking-glass-go"
+  },
+  "requiredPlugins": [
+    "PythonScriptPlugin",
+    "EditorScriptingUtilities",
+    "SequencerScripting",
+    "MovieRenderPipeline",
+    "ControlRig",
+    "MetaHumanCreator",
+    "MetaHumanAnimator",
+    "MetaHumanAnimatorDepthProcessing",
+    "RigLogic",
+    "HairStrands"
+  ],
+  "officialBasis": [
+    "UE 5.6 integrates MetaHuman Creator in the Editor and requires Creator Core Data",
+    "MetaHuman Identity/Mesh-to-MetaHuman requires MetaHuman Animator and Depth Processing",
+    "Unreal Python is Editor-only and Control Rig/Sequencer workflows expose Python automation",
+    "MetaHuman/RigLogic remains the final facial deformation architecture"
+  ],
+  "validation": {
+    "contract": "passed",
+    "existingUnrealStageScaffold": "passed",
+    "existingProtocolFixtures": 25,
+    "editorRuntimeVerified": false,
+    "qualityClaim": null
+  },
+  "failClosedConditions": [
+    "missing plugin",
+    "missing assembled Hero Blueprint",
+    "Hero Blueprint does not inherit GahyeonCharacterPawn",
+    "missing deformation case or defect check",
+    "capture is not Looking Glass Go 1440x2560",
+    "attempt to automatically approve visual quality"
+  ],
+  "futureEditorCommand": "GAHYEON_WORKSPACE=/Users/ze/work/gahyeonbot UnrealEditor-Cmd GahyeonStageCharacterQA.uproject -ExecutePythonScript=Content/Python/gahyeon_character_qa_preflight.py -unattended -nop4",
+  "nextEvidence": "real Editor preflight JSON, immutable LevelSequence, MRQ renders for all 45 sample frames, geometry/penetration reports and human review"
+}

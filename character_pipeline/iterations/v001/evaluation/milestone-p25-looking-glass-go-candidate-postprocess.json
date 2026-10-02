@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P25-looking-glass-go-candidate-postprocess",
+  "state": "completed-gate-awaiting-generated-candidates",
+  "displayProfile": "looking-glass-go",
+  "panelResolution": [1440, 2560],
+  "quiltViewCount": 66,
+  "hypothesis": {
+    "statement": "Generated reconstruction candidates cannot be compared safely when cleanup, cameras, render dimensions and measurements are operated manually or under landscape defaults.",
+    "action": "Create a fail-closed resumable postprocess DAG that verifies the generation receipt, normalizes the mesh, builds nine sealed Go cameras, renders 1440x2560 captures, validates every capture, measures face and body, and compares them with canonical references.",
+    "expectedResult": "Every TRELLIS or InstantMesh candidate produces the same checksummed evidence set without becoming a production mesh."
+  },
+  "actualResult": {
+    "dagStages": 16,
+    "fixedViews": 9,
+    "singleViewResolution": [1440, 2560],
+    "statePersistence": "atomic-after-every-stage",
+    "resumePolicy": "verify-completed-prefix-sha256",
+    "overwrite": false,
+    "productionMeshAllowed": false,
+    "generatedCandidatesProcessed": 0
+  },
+  "fixedViews": [
+    "face-front", "face-left-45", "face-right-45", "face-left-profile",
+    "face-right-profile", "body-front", "body-left", "body-right", "body-rear"
+  ],
+  "validation": {
+    "unitTests": "5 passed",
+    "characterPipelineRegression": "passed",
+    "blenderVersion": "5.2.0 LTS",
+    "realBlendReopen": {
+      "resolution": [1440, 2560],
+      "percentage": 100,
+      "pixelAspect": [1.0, 1.0],
+      "sealedCameras": 9,
+      "quiltViewMetadata": 66
+    }
+  },
+  "failureHandling": [
+    "reject generation receipt or raw-mesh checksum drift",
+    "reject non-Go resolution or camera view contracts",
+    "stop immediately when a stage command or required output fails",
+    "verify every completed output checksum before resuming",
+    "refuse output overwrite and preserve prior iterations"
+  ],
+  "decision": "Keep the DAG. Do not claim render quality or reconstruction progress until an approved generated candidate passes all sixteen stages."
+}

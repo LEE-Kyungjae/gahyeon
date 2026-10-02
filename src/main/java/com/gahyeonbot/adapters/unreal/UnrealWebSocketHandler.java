@@ -217,6 +217,12 @@ public final class UnrealWebSocketHandler extends TextWebSocketHandler {
                 MAXIMUM_INSTALLATION_ID_CHARACTERS, correlation(root));
         String displayName = optionalBoundedText(payload, "displayName", "Gahyeon user",
                 ConversationRequest.MAXIMUM_DISPLAY_NAME_CHARACTERS, correlation(root));
+        String characterId = optionalBoundedText(payload, "characterId", "gahyeon", 64, correlation(root));
+        try {
+            characterId = new com.gahyeonbot.core.life.CharacterId(characterId).value();
+        } catch (IllegalArgumentException invalid) {
+            throw new ProtocolException("invalid_field", invalid.getMessage(), correlation(root));
+        }
         long lastSequence = nonNegativeLong(payload, "lastSequence", correlation(root));
         var state = new ConnectionState(
                 new UnrealEventReplayService.UnrealSubscription(sessionId, worldId),
@@ -227,7 +233,7 @@ public final class UnrealWebSocketHandler extends TextWebSocketHandler {
                 session,
                 System.nanoTime());
         var binding = new UnrealClientSessionRegistry.Binding(
-                sessionId, worldId, installationId, displayName);
+                sessionId, worldId, installationId, displayName, characterId);
         var bindingAdmission = clientSessions.bind(session.getId(), binding);
         if (bindingAdmission == UnrealClientSessionRegistry.BindingAdmission.CONNECTION_ALREADY_BOUND) {
             throw new ProtocolException(

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P32-metahuman-cloud-rig-textures",
+  "state": "completed-tooling-awaiting-p31-character-ue56-and-epic-auth",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A conformed MetaHuman head is not suitable for an interactive AI assistant until it has a facial rig with blendshapes and high-resolution texture sources, and a returned cloud request alone does not prove those assets exist.",
+    "action": "Bind blocking UE 5.6 MetaHuman Cloud auto-rig and texture requests to the P31 receipt, request JOINTS_AND_BLENDSHAPES, preserve an immutable receipt, and leave all asset-verification flags false for a separate evidence stage.",
+    "expectedResult": "Cloud work is repeatable and lineage-safe without turning authentication, HTTP return or partial output into a false production claim."
+  },
+  "officialApi": {
+    "subsystem": "MetaHumanCharacterEditorSubsystem",
+    "rigRequest": "request_auto_rigging",
+    "rigType": "JOINTS_AND_BLENDSHAPES",
+    "textureRequest": "request_texture_sources",
+    "blocking": true,
+    "reportProgress": false,
+    "authentication": "Epic account with MetaHuman Cloud access"
+  },
+  "actualResult": {
+    "currentCloudReceipt": null,
+    "faceRigVerified": false,
+    "blendshapesVerified": false,
+    "textureSourcesVerified": false,
+    "productionReady": false
+  },
+  "failureHandling": [
+    "reject P31 job or receipt checksum drift",
+    "reject unconformed or overclaimed P31 state",
+    "require an existing MetaHumanCharacter asset",
+    "require exclusive subsystem edit registration",
+    "run both cloud requests synchronously",
+    "save only after both calls return",
+    "treat returned calls as awaiting verification, not proof of assets",
+    "never mark rig, blendshapes or texture sources verified in the request receipt"
+  ],
+  "validation": {"cloudJobTests": "5 passed", "P31P32CombinedTests": "10 passed", "unrealScaffoldCloudCheck": "passed", "realCloudExecution": "pending"},
+  "decision": "Proceed to separate asset verification in P33; do not assemble or advertise a character based only on cloud request return."
+}

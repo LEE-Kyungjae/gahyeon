@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P34-facial-semantic-coverage",
+  "state": "completed-verifier-awaiting-p33-assets-profile-and-ue56",
+  "displayProfile": "looking-glass-go",
+  "displayContract": {"resolution": [1440, 2560], "viewCount": 66},
+  "hypothesis": {
+    "statement": "A non-empty morph inventory does not prove that the assistant can blink asymmetrically, open its jaw, articulate required visemes, or drive facial expressions.",
+    "action": "Collect the actual presentation DataAsset in UE 5.6, classify every binding as a direct morph or explicitly acknowledged Control Rig curve, and verify required semantics against the P33 morph inventory.",
+    "expectedResult": "Missing or ambiguous facial actuation fails closed before deformation QA while Looking Glass Go presentation lineage remains fixed."
+  },
+  "requiredCoverage": {
+    "direct": ["blink-left", "blink-right", "jaw-open"],
+    "visemes": ["sil", "aa", "ih", "ou", "ee", "oh", "fv", "l", "mbp", "wq"],
+    "emotions": ["happy", "sad", "angry", "frown", "eye-squint"]
+  },
+  "actualResult": {"currentEditorEvidence": null, "mappingCoverageVerified": false, "deformationVerified": false, "productionReady": false},
+  "scopeBoundary": [
+    "Control Rig curves are not falsely required to appear as SkeletalMesh morph target names",
+    "coverage does not prove deformation quality, lip sync, identity, skin, eyes, hair or runtime performance",
+    "P12 frame-level deformation evidence and real Looking Glass Go captures remain mandatory"
+  ],
+  "failureHandling": [
+    "reject cloud-evidence checksum drift",
+    "reject missing required semantic or invalid scale",
+    "reject duplicate mappings or shared left/right blink curve",
+    "reject direct morph absent from P33 inventory",
+    "reject Control Rig curve without explicit animation-bridge acknowledgement",
+    "reject any production, deformation or automatic-approval overclaim"
+  ],
+  "validation": {"coverageTests": "8 passed", "unrealCollectorStaticCheck": "pending combined scaffold", "realEditorEvidence": "pending"},
+  "decision": "Use a verified mapping only as the input to expression and deformation capture; never treat semantic coverage as AAA approval."
+}

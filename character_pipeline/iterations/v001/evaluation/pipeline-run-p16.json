@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-08-13T00:38:07.133759+00:00",
+  "displayProfile": "looking-glass-go",
+  "state": "blocked",
+  "stages": [
+    {
+      "id": "display-profile",
+      "state": "passed",
+      "exitCode": 0,
+      "command": [
+        "python3",
+        "character_pipeline/tools/verify_display_profile.py",
+        "character_pipeline/unreal/render_pipeline/looking-glass-go.json"
+      ],
+      "stdout": "{\"valid\": true, \"panel\": [1440, 2560], \"views\": 66, \"quiltCalibrationRequired\": true}\n",
+      "stderr": ""
+    },
+    {
+      "id": "iteration-integrity",
+      "state": "passed",
+      "exitCode": 0,
+      "command": [
+        "python3",
+        "character_pipeline/tools/verify_iteration.py",
+        "character_pipeline/iterations/v001",
+        "--verify-files"
+      ],
+      "stdout": "{\"valid\": true, \"version\": \"v001\", \"state\": \"running\", \"artifactCount\": 62}\n",
+      "stderr": ""
+    },
+    {
+      "id": "reconstruction-benchmark",
+      "state": "blocked",
+      "exitCode": 0,
+      "command": [
+        "python3",
+        "character_pipeline/evaluation/validate_reconstruction_benchmark.py"
+      ],
+      "stdout": "{\"valid\": true, \"state\": \"toolchain-unavailable\", \"models\": 2, \"completedCandidates\": 0, \"expectedCandidates\": 6, \"selection\": false, \"productionMeshAllowed\": false}\n",
+      "stderr": "",
+      "result": {
+        "valid": true,
+        "state": "toolchain-unavailable",
+        "models": 2,
+        "completedCandidates": 0,
+        "expectedCandidates": 6,
+        "selection": false,
+        "productionMeshAllowed": false
+      }
+    }
+  ]
+}

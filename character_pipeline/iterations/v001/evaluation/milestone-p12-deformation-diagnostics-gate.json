@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P12-deformation-diagnostics-gate",
+  "state": "automation-complete-editor-capture-pending",
+  "hypothesis": {
+    "statement": "Render and evidence counts cannot detect subtle lip, eyelid, cheek, neck or temporal deformation failures without exact frame-level geometry diagnostics.",
+    "action": "Require eleven unit-bound diagnostics at all forty-five declared frames, validate finite values and thresholds, and reject missing, duplicate or self-inconsistent reports.",
+    "expectedResult": "A complete zero-defect fixture passes while the current workspace remains pending until Unreal Editor emits real geometry samples."
+  },
+  "actualResult": {
+    "requiredCases": 15,
+    "requiredFrames": 45,
+    "diagnosticsPerFrame": 11,
+    "requiredMetricValues": 495,
+    "editorRuntimeVerified": false,
+    "currentSampleCount": 0,
+    "qualityClaim": null
+  },
+  "thresholds": {
+    "lipPenetrationMm": 0.2,
+    "lipSealGapMm": 0.5,
+    "eyelidEyeballGapMm": 0.35,
+    "eyelidPenetrationMm": 0.15,
+    "mouthCornerAreaLossPercent": 12.0,
+    "cheekVolumeLossPercent": 10.0,
+    "neckStretchRatio": 1.12,
+    "shoulderVolumeLossPercent": 12.0,
+    "eyeAimErrorDegrees": 2.0,
+    "meshClippingPairs": 0,
+    "temporalVertexJumpMm": 1.5
+  },
+  "decision": "Keep the evaluator as a mandatory pre-G4 gate. Do not infer geometry success from videos or evidence counts alone.",
+  "nextEvidence": "UE 5.6 frame sampler output containing all 495 finite unit-bound values plus matching 45-frame Go renders"
+}

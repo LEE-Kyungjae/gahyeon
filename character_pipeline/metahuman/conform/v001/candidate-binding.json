@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v001",
+  "state": "awaiting-identity-solve",
+  "assets": {
+    "metahumanIdentity": null,
+    "heroBlueprint": null,
+    "faceSkeletalMesh": null,
+    "bodySkeletalMesh": null,
+    "faceControlRig": null,
+    "bodyControlRig": null,
+    "grooms": []
+  },
+  "requirements": {
+    "identitySolved": true,
+    "dnaOrRigLogicBound": true,
+    "separateFaceAndBodyMeshes": true,
+    "facialRigPresent": true,
+    "bodyRigPresent": true,
+    "groomPresent": true,
+    "heroInheritsGahyeonCharacterPawn": true
+  },
+  "claim": "no-metahuman-candidate-yet"
+}

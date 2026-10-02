@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P0-contracts-and-baseline",
+  "status": "validated-with-open-input-gaps",
+  "build": {
+    "iterationContractTests": 2,
+    "referenceCoverageTests": 1,
+    "reconstructionContractTests": 2,
+    "renderComparisonTests": 1
+  },
+  "render": {
+    "officialDisplayProfile": "looking-glass-go-single-view",
+    "resolution": [1440, 2560],
+    "views": ["face-front", "body-front"],
+    "quiltViews": 66,
+    "quiltGeometryStatus": "requires-connected-device-calibration"
+  },
+  "validation": {
+    "iteration": "valid",
+    "trellisCandidate": "planned-no-runner",
+    "hunyuanCandidate": "planned-no-runner",
+    "referenceCoverage": {
+      "face": "5/11",
+      "body": "2/6",
+      "expressions": "0/16"
+    }
+  },
+  "comparison": {
+    "protocol": "decoded-pixel-comparison",
+    "faceFront": {
+      "identical": true,
+      "meanAbsoluteError255": 0.0,
+      "maxAbsoluteError255": 0,
+      "pixelsAbove2": 0
+    },
+    "bodyFront": {
+      "identical": false,
+      "meanAbsoluteError255": 0.000002,
+      "maxAbsoluteError255": 1,
+      "pixelsAbove2": 0
+    },
+    "priorV79Preview": "not directly comparable because the previous protocol was 1024x512 and the new Looking Glass Go protocol is 1440x2560"
+  },
+  "observedDefects": [
+    {
+      "area": "hair",
+      "severity": "blocking",
+      "summary": "Sparse linear hairline and strand-bundle appearance",
+      "likelyCause": "prototype generic groom and insufficient identity-specific root/parting authoring",
+      "recommendation": "replace with production groom after MetaHuman conform",
+      "confidence": 0.98,
+      "owner": "manual-review-plus-groom-automation"
+    },
+    {
+      "area": "face-skin-eyes",
+      "severity": "blocking",
+      "summary": "Dark flat face response, artificial eyes, and insufficient close-up identity fidelity",
+      "likelyCause": "MPFB blockout topology, 2K diffuse source, prototype eye assembly and non-production lookdev",
+      "recommendation": "MetaHuman Identity conform followed by dedicated eye and layered skin pipeline",
+      "confidence": 0.97,
+      "owner": "metahuman-conform-and-human-review"
+    },
+    {
+      "area": "clothing",
+      "severity": "blocking",
+      "summary": "Jacket reads as translucent rigid panels rather than a production garment",
+      "likelyCause": "procedural G1 blockout topology/material",
+      "recommendation": "replace with modular patterned garment and Chaos Cloth policy",
+      "confidence": 0.99,
+      "owner": "manual-garment-authoring-plus-automated-deformation-qa"
+    }
+  ],
+  "scores": null,
+  "scoreReason": "No calibrated identity/material/deformation evaluator or complete ground truth exists; numeric scores would be fabricated.",
+  "decision": "keep P0 contracts and Looking Glass Go baseline; do not promote character quality"
+}
+

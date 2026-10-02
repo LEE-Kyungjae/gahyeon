@@ -44,7 +44,7 @@ Coreは、何を話して記憶するか、どの感情や行動を選ぶかを�
 | Desktop Client | Electron/Vue/Three.jsによるテキスト、マイク、音声、VRM、Worldの流れを実装 |
 | Unreal連携 | WebSocket v1、再接続、イベント再生、snapshot、streaming speechを実装 |
 | リアルタイムRuntimeCore | エンジン非依存のC++20 Reflex/Behavior/Cognition、VAD、音声、viseme、Worldテストを実装 |
-| Unreal Stage | UE 5.6ソースプロジェクトと診断用Pawn・カメラを実装。MetaHumanとパッケージ検証は未完了 |
+| Unreal Stage | UE 5.8ソースプロジェクトと診断用Pawn・カメラを実装。MetaHumanとパッケージ検証は未完了 |
 | Looking Glass | Desktop WebXRとUnreal Adapterを実装。実機Goでの検証は未完了 |
 | 音声制作 | 重複を抑えた5,000文を生成中。完了後にQC、Piper学習、試聴評価へ移行 |
 | キャラクター制作 | SDXL LoRA比較と原本に基づくidentity基準を策定済み。最終hero meshは制作中 |
@@ -70,7 +70,7 @@ RT-13までの自動検証結果と、実機で確認すべき項目は
 - Node.js 20以降とnpm
 - 本番環境: PostgreSQL 16
 - ローカルテスト: PostgreSQL互換モードのインメモリH2
-- Unreal開発: Unreal Engine 5.6と互換性のあるMetaHumanプラグイン
+- Unreal開発: Unreal Engine 5.8（現在の検証基準は5.8.1）と互換性のあるMetaHumanプラグイン
 
 ## クイックスタート
 
@@ -169,18 +169,18 @@ fail closedします。Blue/Green followerがPostgreSQL advisory lockを正常�
 ## Unreal Stage
 
 Backend WebSocket AdapterとC++20 RuntimeCoreは準備済みですが、標準では無効です。
-UE 5.6 Editorとpackaged buildの検証前に本番で有効化しないでください。
+UE 5.8 Editorとpackaged buildの検証前に本番で有効化しないでください。
 
-UE 5.6をインストールした開発機での正式gate:
+UE 5.8をインストールした開発機での正式gate:
 
 ```bash
-GAHYEON_UE_ROOT="/path/to/UE_5.6" ./scripts/run_unreal_engine_gate.sh
+GAHYEON_UE_ROOT="/path/to/UE_5.8" ./scripts/run_unreal_engine_gate.sh
 ```
 
 GTX 1660 Ti の Windows 制作マシンでは、まず canonical Stage を検証します。
 
 ```powershell
-.\scripts\run_unreal_engine_gate.ps1 -UnrealRoot "C:\Program Files\Epic Games\UE_5.6"
+.\scripts\run_unreal_engine_gate.ps1 -UnrealRoot "C:\Program Files\Epic Games\UE_5.8"
 ```
 
 Editor 検証後に packaged Development まで生成・封印する場合は `-Package` を追加します。
@@ -236,7 +236,7 @@ src/main/java/com/gahyeonbot/
 
 desktop/           Electron/Vue/Three.js互換Presentation Client
 unreal/RuntimeCore/ エンジン非依存C++20リアルタイムreference runtime
-unreal/GahyeonStage/ UE 5.6 source-only Stage projectとnative module
+unreal/GahyeonStage/ UE 5.8 source-only Stage projectとnative module
 docs/unreal/        Unreal architecture、protocol、acceptance、integration契約
 scripts/            Voice/Piper、SDXL asset pipeline、運用補助ツール
 ```

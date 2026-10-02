@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v001",
+  "state": "awaiting-production-clothing",
+  "slots": {},
+  "assets": {},
+  "pbrChannels": {},
+  "modularity": {},
+  "lods": [],
+  "editorEvidence": null,
+  "captureManifest": null,
+  "claim": "no-production-clothing-yet",
+  "legacyEvidence": {
+    "sourceRevision": "g1-mpfb-v79",
+    "bodyAndClothingSeparateObjects": true,
+    "proceduralJacketPanels": true,
+    "g1RigidOrBlendedArmatureBinding": true,
+    "chaosCloth": false,
+    "clothDataflow": false,
+    "outfitSwapVerified": false,
+    "seatedPoseVerified": false,
+    "extremePoseVerified": false,
+    "acceptedAsProduction": false,
+    "reason": "procedural blockout has no authored pattern, production PBR set, Chaos Cloth or runtime swap/deformation evidence"
+  }
+}

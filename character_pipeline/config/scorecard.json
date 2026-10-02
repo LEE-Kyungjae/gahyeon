@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "components": [
+    "identitySimilarity", "faceGeometry", "bodyGeometry", "skin", "eyes",
+    "hair", "materials", "rig", "facialDeformation", "bodyDeformation",
+    "lightingRobustness", "closeUpQuality", "runtimePerformance"
+  ],
+  "weights": {
+    "identitySimilarity": 0.14,
+    "faceGeometry": 0.12,
+    "bodyGeometry": 0.06,
+    "skin": 0.08,
+    "eyes": 0.08,
+    "hair": 0.07,
+    "materials": 0.06,
+    "rig": 0.09,
+    "facialDeformation": 0.10,
+    "bodyDeformation": 0.07,
+    "lightingRobustness": 0.04,
+    "closeUpQuality": 0.05,
+    "runtimePerformance": 0.04
+  },
+  "statuses": ["unverified", "measured-not-scored", "scored"],
+  "confidenceLevels": ["none", "low", "medium", "high"],
+  "overallPolicy": {
+    "requireEveryComponentScored": true,
+    "requireNoBlockingDefects": true,
+    "automaticApproval": false
+  }
+}

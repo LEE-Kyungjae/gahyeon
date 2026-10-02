@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P40-metahuman-solve-input-v4",
+  "state": "completed-input-awaiting-ue56-toolchain",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "The prior clean package was stale, lacked required scope metadata, differed from the measured cleanup mesh and contained render-only semantic iris components.",
+    "action": "Re-export from the pinned v79 Blender source, exclude semantic iris helpers, classify every open boundary, and seal source, exporter, audit and package checksums without overwriting prior versions.",
+    "expectedResult": "MetaHuman Identity receives a smaller, lineage-complete head-neck-and-base-eyes temporary shape input."
+  },
+  "actualResult": {
+    "package": "artifacts/gahyeon-ch/metahuman-identity-input-v79-v4",
+    "vertices": 5558,
+    "polygons": 5492,
+    "connectedComponents": 5,
+    "boundaryEdges": 122,
+    "boundaryLoops": 5,
+    "identityInputVerifiedShape": true,
+    "readyToLaunchIdentitySolve": false
+  },
+  "comparison": {"v2Components": 7, "v4Components": 5, "v2BoundaryEdges": 314, "v4BoundaryEdges": 122, "removed": "two 481-vertex semantic iris render-helper components"},
+  "openBoundaryPolicy": "one reviewed head-neck cut plus four reviewed base-eyeball shell loops; semantic iris render helpers excluded",
+  "remainingBlockers": ["Unreal Engine 5.6 absent", "MetaHuman Core Data and plugins absent", "44.93 GiB free versus 80 GiB installation headroom policy", "16 GiB RAM meets minimum but not 32 GiB recommendation"],
+  "qualityBoundary": "This is temporary shape input. It does not approve the unattractive MPFB face, prove identity, or create MetaHuman topology/DNA.",
+  "decision": "Use v4 instead of stale v1/v2/v3 for the first Identity solve, then judge the conformed result only against canonical references."
+}

@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gahyeon.local/schemas/gahyeon-g5-review.schema.json",
+  "title": "Gahyeon G5 Runtime Acceptance Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "characterId", "gate", "status", "g4Review", "artifacts", "evidence", "runtimeAudit", "findings", "approvals"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "characterId": {"const": "gahyeon"},
+    "gate": {"const": "G5"},
+    "status": {"enum": ["draft", "candidate", "approved", "rejected"]},
+    "g4Review": {"$ref": "#/$defs/fileIdentity"},
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "format", "uri", "sha256", "bytes"],
+        "properties": {
+          "role": {"enum": ["packaged-build", "telemetry-bundle", "fixed-scene-captures"]},
+          "format": {"enum": ["unreal-build-zip", "jsonl-zip", "media-zip"]},
+          "uri": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "bytes": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["view", "captureType", "uri", "sha256"],
+        "properties": {
+          "view": {"enum": [
+            "desktop-face-closeup", "desktop-waist-conversation", "desktop-fullbody-movement",
+            "desktop-side-light", "desktop-backlight", "desktop-expression-lipsync",
+            "desktop-groom-motion", "desktop-cloth-collision", "latency-microphone-reflex",
+            "latency-stt-first-partial", "latency-behavior-transition", "latency-tts-first-audio",
+            "latency-barge-in-cancel", "resilience-backend-off-idle",
+            "resilience-reflex-during-cognition", "resilience-desktop-without-looking-glass",
+            "resilience-looking-glass-disconnect", "persistence-world-state-restore",
+            "performance-frame-trace", "performance-vram-trace", "performance-load-trace",
+            "looking-glass-light-field", "looking-glass-shared-world-state"
+          ]},
+          "captureType": {"enum": ["render-video", "timing-trace", "fault-injection", "state-snapshot", "performance-trace"]},
+          "uri": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "notes": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "runtimeAudit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["testMachine", "frameTimeP95Ms", "frameTimeP99Ms", "peakVramMiB", "loadTimeSeconds", "microphoneReflexP95Ms", "sttFirstPartialP95Ms", "behaviorTransitionP95Ms", "ttsFirstAudioP95Ms", "bargeInCancelP95Ms", "desktopWorksWithoutLookingGlass", "lookingGlassDisconnectPreservesWorld", "idleContinuesWithoutBackend", "reflexContinuesDuringCognition", "worldStateRestoredAfterRestart"],
+      "properties": {
+        "testMachine": {
+          "type": "object", "additionalProperties": false,
+          "required": ["gpu", "vramMiB", "resolution", "engineVersion", "buildConfiguration"],
+          "properties": {
+            "gpu": {"type": "string", "minLength": 1},
+            "vramMiB": {"type": "integer", "minimum": 1},
+            "resolution": {"type": "string", "pattern": "^[0-9]+x[0-9]+$"},
+            "engineVersion": {"const": "5.6"},
+            "buildConfiguration": {"enum": ["Development", "Shipping"]}
+          }
+        },
+        "frameTimeP95Ms": {"type": "number", "minimum": 0},
+        "frameTimeP99Ms": {"type": "number", "minimum": 0},
+        "peakVramMiB": {"type": "integer", "minimum": 0},
+        "loadTimeSeconds": {"type": "number", "minimum": 0},
+        "microphoneReflexP95Ms": {"type": "number", "minimum": 0},
+        "sttFirstPartialP95Ms": {"type": "number", "minimum": 0},
+        "behaviorTransitionP95Ms": {"type": "number", "minimum": 0},
+        "ttsFirstAudioP95Ms": {"type": "number", "minimum": 0},
+        "bargeInCancelP95Ms": {"type": "number", "minimum": 0},
+        "desktopWorksWithoutLookingGlass": {"type": "boolean"},
+        "lookingGlassDisconnectPreservesWorld": {"type": "boolean"},
+        "idleContinuesWithoutBackend": {"type": "boolean"},
+        "reflexContinuesDuringCognition": {"type": "boolean"},
+        "worldStateRestoredAfterRestart": {"type": "boolean"}
+      }
+    },
+    "findings": {"$ref": "#/$defs/findings"},
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "reviewer", "approvedAt"],
+        "properties": {
+          "role": {"enum": ["character-quality-reviewer", "runtime-reviewer", "performance-reviewer", "operator"]},
+          "reviewer": {"type": "string", "minLength": 1},
+          "approvedAt": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "fileIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["uri", "sha256"],
+      "properties": {
+        "uri": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "severity", "summary", "status"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^G5-[0-9]{3}$"},
+          "severity": {"enum": ["blocking", "major", "minor", "note"]},
+          "summary": {"type": "string", "minLength": 1},
+          "status": {"enum": ["open", "resolved", "accepted-risk"]}
+        }
+      }
+    }
+  },
+  "allOf": [{
+    "if": {"properties": {"status": {"enum": ["candidate", "approved"]}}, "required": ["status"]},
+    "then": {
+      "properties": {
+        "artifacts": {"minItems": 3},
+        "evidence": {"minItems": 21},
+        "runtimeAudit": {
+          "properties": {
+            "frameTimeP95Ms": {"maximum": 33.34},
+            "frameTimeP99Ms": {"maximum": 50},
+            "peakVramMiB": {"maximum": 6144},
+            "loadTimeSeconds": {"maximum": 30},
+            "microphoneReflexP95Ms": {"maximum": 100},
+            "sttFirstPartialP95Ms": {"maximum": 600},
+            "behaviorTransitionP95Ms": {"maximum": 500},
+            "ttsFirstAudioP95Ms": {"maximum": 2000},
+            "bargeInCancelP95Ms": {"maximum": 250},
+            "desktopWorksWithoutLookingGlass": {"const": true},
+            "lookingGlassDisconnectPreservesWorld": {"const": true},
+            "idleContinuesWithoutBackend": {"const": true},
+            "reflexContinuesDuringCognition": {"const": true},
+            "worldStateRestoredAfterRestart": {"const": true}
+          }
+        }
+      }
+    }
+  }, {
+    "if": {"properties": {"status": {"const": "approved"}}, "required": ["status"]},
+    "then": {"properties": {"approvals": {"minItems": 4}}}
+  }]
+}

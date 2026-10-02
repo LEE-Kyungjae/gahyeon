@@ -2,6 +2,7 @@
 #include "Animation/GahyeonCharacterAnimInstance.h"
 #include "Presentation/GahyeonCharacterPresentationProfile.h"
 #include "Presentation/GahyeonCharacterPresentationComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -87,7 +88,9 @@ bool FGahyeonFacialCurveBindingTest::RunTest(const FString& Parameters)
     Profile->JawOpenCurve = TEXT("CTRL_expressions_jawOpenFallback");
     TestTrue(TEXT("separate morph fallback remains valid"), Profile->Validate(ValidationError));
 
-    UGahyeonCharacterAnimInstance* FaceBridge = NewObject<UGahyeonCharacterAnimInstance>();
+    USkeletalMeshComponent* FaceMesh = NewObject<USkeletalMeshComponent>();
+    UGahyeonCharacterAnimInstance* FaceBridge =
+        NewObject<UGahyeonCharacterAnimInstance>(FaceMesh);
     TMap<FName, float> RigCurves;
     RigCurves.Add(TEXT("CTRL_expressions_jawOpen"), 0.75f);
     TestTrue(TEXT("native face AnimInstance accepts bounded Control Rig values"),

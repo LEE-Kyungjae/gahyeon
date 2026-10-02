@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v543",
+  "status": "draft-multi-character-runtime-registry",
+  "defaultCharacter": "hayley",
+  "characters": {
+    "hayley": {
+      "usage": "primary-shared-poc",
+      "skeletalMesh": "/Game/LivingCharacterPOC/v448/Characters/HayleyBindClean/Hayley_BindPoseClean_v447",
+      "skeleton": "/Game/LivingCharacterPOC/v448/Characters/HayleyBindClean/Hayley_BindPoseClean_v447_Skeleton",
+      "motions": {
+        "engagedIdle": "/Game/LivingCharacterPOC/v511/Animation/Hayley_LivingIdle_v509"
+      },
+      "motionManifest": "character_pipeline/config/hayley-living-character-v488.json",
+      "evidence": "artifacts/living-character-poc-v513-hayley-living-idle-readable/hayley-explain-and-stand-sit-phases.png",
+      "runtimeReady": true,
+      "quality": "animated-poc"
+    },
+    "stella-lily": {
+      "usage": "independent-character-candidate",
+      "skeletalMesh": "/Game/LivingCharacterPOC/v520/Characters/StellaLilyPreview/StellaLily_Modular_v518",
+      "skeleton": "/Game/LivingCharacterPOC/v520/Characters/StellaLilyPreview/StellaLily_Modular_v518_Skeleton",
+      "sourceModularFbx": "artifacts/living-character-poc-v518-stella-lily-unreal-export/StellaLily_Modular_v518.fbx",
+      "sourceModularMeshCount": 13,
+      "boneCount": 219,
+      "motions": {
+        "engagedReaction": "/Game/LivingCharacterPOC/v535/Animation/StellaLily_UpperIdle_v533"
+      },
+      "evidence": {
+        "static": "artifacts/living-character-poc-v522-stella-lily-ue-evidence/front-left45-profile.png",
+        "animated": "artifacts/living-character-poc-v536-stella-lily-upper-idle-ue-evidence/hayley-explain-and-stand-sit-phases.png"
+      },
+      "runtimeReady": true,
+      "quality": "animated-untextured-poc",
+      "restrictions": [
+        "engagedReaction is not a neutral idle",
+        "full-body locomotion requires UE IK Retargeter and foot IK"
+      ]
+    },
+    "ururu": {
+      "usage": "independent-character-candidate",
+      "skeletalMesh": "/Game/LivingCharacterPOC/v525/Characters/UruruPreview/Ururu_Normalized_v523",
+      "skeleton": "/Game/LivingCharacterPOC/v525/Characters/UruruPreview/Ururu_Normalized_v523_Skeleton",
+      "sourceNormalizedFbx": "artifacts/living-character-poc-v523-ururu-normalized/Ururu_Normalized_v523.fbx",
+      "sourceModularMeshCount": 5,
+      "boneCount": 179,
+      "motions": {
+        "celebrationEmphasis": "/Game/LivingCharacterPOC/v541/Animation/Ururu_RelaxedUpperIdle_v539"
+      },
+      "evidence": {
+        "static": "artifacts/living-character-poc-v526-ururu-ue-evidence/front-left45-profile.png",
+        "animated": "artifacts/living-character-poc-v542-ururu-emphasis-ue-evidence/hayley-explain-and-stand-sit-phases.png"
+      },
+      "runtimeReady": true,
+      "quality": "animated-untextured-poc",
+      "restrictions": [
+        "celebrationEmphasis is not a neutral idle",
+        "UE evidence lighting is overexposed and must be recaptured before visual promotion",
+        "full-body locomotion requires UE IK Retargeter and foot IK"
+      ]
+    },
+    "diana": {
+      "usage": "private-only",
+      "runtimeReady": false,
+      "distributionAllowed": false
+    },
+    "gahyeon": {
+      "usage": "archive-only",
+      "runtimeReady": false
+    }
+  },
+  "sharedMotionIntents": [
+    "neutralIdle",
+    "engagedIdle",
+    "walk",
+    "run",
+    "standSit",
+    "explain",
+    "narration",
+    "subtleReaction",
+    "present",
+    "emphasis",
+    "celebration"
+  ],
+  "runtimeStateContract": {
+    "listening": ["neutralIdle", "subtleReaction"],
+    "thinking": ["neutralIdle", "engagedIdle"],
+    "speaking": ["narration", "explain"],
+    "presenting": ["present"],
+    "emphasizing": ["emphasis", "celebration"],
+    "locomotion": ["walk", "run"],
+    "postureTransition": ["standSit"]
+  },
+  "knownGaps": [
+    "Stella/Lily and Ururu still need neutral idles and UE IK-retargeted full-body locomotion",
+    "materials and source textures are not yet rebuilt for the UE previews",
+    "true TTS visemes are not yet connected",
+    "hair and clothing secondary motion are not yet active",
+    "desktop runtime does not yet select characters and motion states from this registry",
+    "license evidence is required before any release or redistribution"
+  ],
+  "humanApproved": false,
+  "releaseEligible": false
+}

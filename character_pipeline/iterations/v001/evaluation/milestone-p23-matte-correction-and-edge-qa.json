@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P23-matte-correction-and-edge-qa",
+  "state": "completed-format-no-corrections-approved",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "Small disconnected foreground regions and thin accessories cannot be safely classified by component size, and indiscriminate cleanup can erase identity-relevant silhouette detail.",
+    "action": "Measure connected components, define fixed complex-edge ROIs, render source/checker/alpha zoom boards and support checksummed add/remove/replace layers constrained to declared ROIs.",
+    "expectedResult": "Every matte edit becomes attributable and reversible, while uncertain hair, finger, earring and shoelace decisions remain blocked for human review."
+  },
+  "actualResult": {
+    "canonical03": {
+      "foregroundComponents": 92,
+      "smallComponentsBelow100Pixels": 91,
+      "reviewRois": ["hair-top", "hair-left", "hair-right-earring"],
+      "finding": "hair body is usable as a draft shape silhouette; some flyaways are thickened and the star earring is mostly omitted"
+    },
+    "canonical16": {
+      "foregroundComponents": 11,
+      "smallComponentsBelow100Pixels": 10,
+      "reviewRois": ["left-hand", "right-hand", "left-shoe", "right-shoe"],
+      "finding": "body silhouette is usable as a draft; finger gaps and thin shoelace loops are simplified or disconnected"
+    },
+    "correctionLayersApplied": 0,
+    "approvedRunnerInputs": 0,
+    "candidateCount": 0
+  },
+  "policy": {
+    "componentSizeAutoDeletion": false,
+    "operations": ["add", "remove", "replace"],
+    "roiEscapeForbidden": true,
+    "layerChecksumRequired": true,
+    "rgbInvariantRequired": true,
+    "humanReviewRequired": true
+  },
+  "decision": "Keep the drafts and correction format. For temporary body/face shape reconstruction, exclude accessory geometry by policy; reserve earring and shoelace fidelity for modular final assets rather than hallucinating it into the base mesh."
+}

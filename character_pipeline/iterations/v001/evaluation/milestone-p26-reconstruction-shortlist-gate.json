@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P26-reconstruction-shortlist-gate",
+  "state": "completed-gate-awaiting-six-candidates",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A complete six-candidate benchmark still cannot support a defensible conform choice unless measurement evidence is normalized, capture failures are rejected, and automated ranking is separated from human identity review.",
+    "action": "Aggregate the six P25 evidence sets, reject incomplete or non-Go captures, rank canonical-relative face/body measurement error with identity-facing geometry prioritized, and leave selection null until fixed-view human review.",
+    "expectedResult": "Reviewers receive a deterministic shortlist without mistaking a 2D measurement rank for identity similarity, AAA quality or production readiness."
+  },
+  "actualResult": {
+    "requiredCandidates": 6,
+    "currentCandidates": 0,
+    "models": ["trellis", "instantmesh"],
+    "seedsPerModel": 3,
+    "faceGeometryWeight": 0.7,
+    "bodyGeometryWeight": 0.3,
+    "automaticSelection": false,
+    "productionMeshAllowed": false,
+    "selection": null
+  },
+  "gates": [
+    "require both backends and all three unique seeds",
+    "require completed P25 checksum-sealed state",
+    "require nine valid 1440x2560 Looking Glass Go captures",
+    "reject fabricated identity or body similarity scores",
+    "exclude candidates above the measurement-error threshold",
+    "require human review of front, 45-degree, profile and body views before selection"
+  ],
+  "limitations": [
+    "2D landmark error is not an identity score",
+    "the rank does not measure topology, skin, eyes, hair, rigging, deformation or AAA quality",
+    "any reviewed winner remains a temporary shape estimate for MetaHuman conform"
+  ],
+  "validation": {"unitTests": "5 shortlist tests and 5 postprocess tests passed"},
+  "decision": "Keep selection null until six real reconstruction candidates pass P25 and a named reviewer completes fixed-view identity review."
+}

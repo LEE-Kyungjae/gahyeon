@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **Gahyeon** (21178 symbols, 38708 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **Gahyeon** (35548 symbols, 58851 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
 
@@ -43,7 +43,25 @@ This project is indexed by GitNexus as **Gahyeon** (21178 symbols, 38708 relatio
 
 <!-- gitnexus:end -->
 
+# ZezeStudio Identity Integration Invariants
+
+- ZezeStudio is the source of truth for shared account email and phone
+  verification; Gahyeon consumes the verified result and must not create a
+  competing verification authority.
+- ZezeStudio's Resend mail transport is implemented and has worked successfully,
+  but is currently inactive. SMTP is the active production provider.
+- Never report Resend as missing, broken, unfinished, or removed. Never activate
+  it, require `RESEND_API_KEY`, or change the active provider without explicit
+  user approval.
+
 # Gahyeon AI Quality Loop
+
+## Canonical Desktop Runtime
+
+- The actual macOS/Windows character service is Unreal. Electron under `desktop/` is retired compatibility source and must never be launched, packaged, or presented as the service.
+- Before launching a desktop service, read `config/canonical-character-runtime.json` and use `scripts/launch_canonical_macos_runtime.py` on macOS.
+- The canonical launcher must fail closed while the manifest status is not `ready`; do not substitute a legacy runtime, diagnostic renderer, editor preview, or Electron window.
+- A successful character animation preview does not imply service integration. Require the manifest's Unreal project, runtime map, character asset, and animation profile to be explicit before launch.
 
 For changes involving conversational AI, STT, TTS, voice delivery, weather tools, or their deployment:
 

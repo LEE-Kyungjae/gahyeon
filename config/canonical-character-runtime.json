@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "runtime": "unreal",
+  "status": "ready",
+  "retiredRuntimes": [
+    "electron"
+  ],
+  "macos": {
+    "engineRoot": "/Users/Shared/Epic Games/UE_5.8",
+    "project": "unreal/GahyeonDesktopMetaHumanPOC/GahyeonDesktopMetaHumanPOC.uproject",
+    "runtimeMap": "/Game/Gahyeon/Character2/Diana/v398/Runtime/L_DianaMacRuntimeOriginalMaterialSafeFrame_v398",
+    "launchMode": "unreal-macos-direct-alpha-shared-memory",
+    "packagedApp": false,
+    "renderQuality": "v398-original-v002-materials-lod0-1600x1258-cpu-direct-alpha-stable",
+    "characterAsset": "/Game/Gahyeon/Character2/Diana/v024/Source/SK_Diana_CM_v024",
+    "animationProfile": "character_pipeline/config/diana-component-space-animation-v375.json"
+  },
+  "blockers": []
+}

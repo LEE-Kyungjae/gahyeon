@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "engine": "5.6",
+  "requiredRigType": "JOINTS_AND_BLENDSHAPES",
+  "minimumMorphTargets": 1,
+  "minimumTextureSources": 1,
+  "minimumTextureDimension": 4096,
+  "requiredClasses": {
+    "character": "MetaHumanCharacter",
+    "faceSkeletalMesh": "SkeletalMesh",
+    "textureSource": "Texture2D"
+  },
+  "automaticApproval": false,
+  "productionReady": false
+}

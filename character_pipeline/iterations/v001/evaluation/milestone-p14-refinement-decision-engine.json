@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P14-refinement-decision-engine",
+  "state": "completed-baseline-registered",
+  "hypothesis": {
+    "statement": "Without evidence-bound keep/reject rules, repeated character edits can become random tweaking and silently regress deformation or runtime guardrails.",
+    "action": "Separate target and guardrail metrics, verify deltas, force unscored comparisons to inconclusive and allow keep only for meaningful target gains without regressions or blockers.",
+    "expectedResult": "v001 becomes an explicit baseline and future iterations receive deterministic keep, reject or inconclusive decisions."
+  },
+  "actualResult": {
+    "v001Decision": "baseline",
+    "parent": null,
+    "comparableMetrics": 0,
+    "futureDecisions": ["keep", "reject", "inconclusive"],
+    "minimumMeaningfulDelta": 0.1,
+    "automaticApproval": false
+  },
+  "decisionRules": [
+    "keep requires every target metric to improve by at least the meaningful delta",
+    "any target or guardrail regression rejects the iteration",
+    "any blocking defect rejects the iteration",
+    "any unscored comparison is inconclusive",
+    "declared deltas must exactly match before and after values"
+  ],
+  "decision": "Keep the decision engine and use v001 only as baseline; do not label it an accepted AAA iteration.",
+  "nextEvidence": "v002 with a single stated MetaHuman conform hypothesis, scored target and guardrail evidence, actual deltas and deterministic keep/reject/inconclusive result"
+}

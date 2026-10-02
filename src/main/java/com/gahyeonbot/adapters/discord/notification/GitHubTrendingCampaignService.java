@@ -231,17 +231,17 @@ public class GitHubTrendingCampaignService {
                 .build();
     }
 
-    private String resolveDescriptionForDigest(GitHubTrendingEvent event) {
+    String resolveDescriptionForDigest(GitHubTrendingEvent event) {
         String repoFullName = event.getRepoFullName();
         if (repoFullName == null || repoFullName.isBlank()) {
-            return event.getDescription();
+            return koreanDescriptionOrNull("저장소", event.getDescription());
         }
 
         try {
             RepoReadmeCache latest = repoReadmeCacheRepository.findTopByRepoFullNameOrderByReadmeFetchedAtDescIdDesc(repoFullName)
                     .orElse(null);
             if (latest == null) {
-                return event.getDescription();
+                return koreanDescriptionOrNull(repoFullName, event.getDescription());
             }
 
             String latestSummary = normalized(latest.getSummaryKo());
@@ -266,7 +266,7 @@ public class GitHubTrendingCampaignService {
             return latest.getSummaryKo();
         } catch (Exception ex) {
             log.warn("README summary resolve 실패 - repo: {}, reason: {}", repoFullName, ex.getMessage());
-            return event.getDescription();
+            return koreanDescriptionOrNull(repoFullName, event.getDescription());
         }
     }
 
@@ -275,7 +275,21 @@ public class GitHubTrendingCampaignService {
                 .findTopByRepoFullNameAndSummaryKoIsNotNullOrderBySummaryKoUpdatedAtDescIdDesc(repoFullName)
                 .map(RepoReadmeCache::getSummaryKo)
                 .map(this::normalized)
-                .orElse(fallback);
+                .orElseGet(() -> koreanDescriptionOrNull(repoFullName, fallback));
+    }
+
+    private String koreanDescriptionOrNull(String repoFullName, String description) {
+        String normalized = normalized(description);
+        if (normalized == null || containsHangul(normalized)) return normalized;
+        GlmService.KoreanNewsTranslation translation =
+                glmService.translateNewsToKorean(repoFullName + " 저장소", normalized);
+        return translation == null ? null : normalized(translation.summary());
+    }
+
+    private static boolean containsHangul(String text) {
+        return text != null && text.codePoints().anyMatch(codePoint ->
+                (codePoint >= 0xAC00 && codePoint <= 0xD7A3)
+                        || (codePoint >= 0x3131 && codePoint <= 0x318E));
     }
 
     private String normalized(String text) {

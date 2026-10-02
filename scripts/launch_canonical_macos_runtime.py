@@ -44,13 +44,18 @@ def build_command(value: dict) -> list[str]:
     if missing:
         raise RuntimeError(f"canonical Unreal prerequisites missing: {missing}")
     looking_glass_mode = os.environ.get("GAHYEON_LOOKING_GLASS_QUILT") == "1"
+    render_profile = os.environ.get("GAHYEON_LOOKING_GLASS_RENDER_PROFILE", "baseline")
+    if looking_glass_mode and render_profile not in ("baseline", "tile-v001"):
+        raise RuntimeError(f"unknown Looking Glass render profile: {render_profile}")
+    tile_resolution = looking_glass_mode and render_profile == "tile-v001"
+    width, height = (800, 629) if tile_resolution else (1600, 1258)
     runtime_map = macos["runtimeMap"]
     if looking_glass_mode:
         runtime_map = os.environ.get("GAHYEON_LOOKING_GLASS_RUNTIME_MAP", runtime_map)
     quality_commands = ",".join((
         "r.MotionBlurQuality 0",
         "r.DefaultFeature.MotionBlur 0",
-        f"r.ScreenPercentage {125 if looking_glass_mode else 100}",
+        f"r.ScreenPercentage {125 if looking_glass_mode and not tile_resolution else 100}",
         "r.MaxAnisotropy 16",
         f"r.SkeletalMeshLODBias {0 if looking_glass_mode else -1}",
         "r.MipMapLODBias -1",
@@ -66,9 +71,15 @@ def build_command(value: dict) -> list[str]:
         f"sg.EffectsQuality {2 if looking_glass_mode else 4}",
         f"sg.PostProcessQuality {2 if looking_glass_mode else 4}",
     ))
+    if tile_resolution:
+        # Fixed-size debug text otherwise overlaps the character at the smaller viewport.
+        # Diagnostic warnings remain available in the Unreal log.
+        quality_commands += ",DisableAllScreenMessages"
+    if looking_glass_mode and os.environ.get("GAHYEON_LOOKING_GLASS_STABLE_CAPTURE") == "1":
+        quality_commands += ",r.OneFrameThreadLag 0"
     command = [
         str(editor), str(project), runtime_map,
-        "-game", "-windowed", "-ForceRes", "-ResX=1600", "-ResY=1258", "-NoSplash",
+        "-game", "-windowed", "-ForceRes", f"-ResX={width}", f"-ResY={height}", "-NoSplash",
         "-nosourcecontrol", "-nop4",
         "-GahyeonAutoStartMicrophone", f"-ExecCmds={quality_commands}",
     ]
@@ -170,6 +181,10 @@ def main() -> int:
         [str(overlay_binary)], cwd=ROOT
     )
     try:
+        ready_file = os.environ.get("GAHYEON_RUNTIME_READY_FILE")
+        if ready_file:
+            # The consumer may attach only after stale shared memory was unlinked.
+            Path(ready_file).write_text(str(unreal.pid), encoding="utf-8")
         time.sleep(5)
         reactivate_application(prior_application)
         while unreal.poll() is None and (overlay is None or overlay.poll() is None):

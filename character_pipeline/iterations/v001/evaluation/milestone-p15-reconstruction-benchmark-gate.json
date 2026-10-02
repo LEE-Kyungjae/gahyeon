@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P15-reconstruction-benchmark-gate",
+  "state": "completed-contract-toolchains-unavailable",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A single unpinned AI reconstruction can bias identity decisions and be mistaken for production topology.",
+    "action": "Require equal TRELLIS.2 and Hunyuan3D runs over three fixed seeds, identical canonical inputs, cleanup, measurements and fixed Looking Glass Go renders before human selection.",
+    "expectedResult": "Six independently attributable temporary shape estimates can be compared without allowing any AI mesh to become the production character."
+  },
+  "actualResult": {
+    "models": ["trellis", "hunyuan"],
+    "candidateCountPerModel": 3,
+    "expectedCandidates": 6,
+    "completedCandidates": 0,
+    "viewsPerCandidate": 9,
+    "measurementsPerCandidate": 17,
+    "selection": null,
+    "productionMeshAllowed": false,
+    "blocker": "Neither pinned local model runner nor reviewed weights are available in the current workspace."
+  },
+  "qualityGate": [
+    "both reconstruction models use the same canonical source manifest and seed set",
+    "runner, repository, revision, weights checksum and license review are mandatory",
+    "every candidate emits raw mesh, normalized Blender file, cleanup report, nine fixed-view renders, face/body measurements and evaluation",
+    "selection is forbidden before all six candidates validate",
+    "selection requires measurements and human review and remains shape-reference-only",
+    "all presentation renders use the Looking Glass Go 1440x2560 portrait profile"
+  ],
+  "decision": "Keep the fail-closed benchmark contract; do not fabricate candidates or select a reconstruction until both toolchains are installed and pinned."
+}

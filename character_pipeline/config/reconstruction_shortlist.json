@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "candidateCount": 6,
+  "models": ["trellis", "instantmesh"],
+  "seeds": [20260813, 20260814, 20260815],
+  "displayProfile": "looking-glass-go",
+  "panelResolution": [1440, 2560],
+  "requiredViews": [
+    "face-front", "face-left-45", "face-right-45", "face-left-profile",
+    "face-right-profile", "body-front", "body-left", "body-right", "body-rear"
+  ],
+  "weights": {"faceGeometry": 0.7, "bodyGeometry": 0.3},
+  "maximumMeanAbsoluteRelativeErrorPercent": 35.0,
+  "selectionPolicy": {
+    "automaticSelection": false,
+    "productionMeshAllowed": false,
+    "humanReviewRequired": true,
+    "requiredHumanViews": [
+      "face-front", "face-left-45", "face-right-45", "face-left-profile",
+      "face-right-profile", "body-front", "body-left", "body-right", "body-rear"
+    ],
+    "role": "temporary-shape-estimate-for-metahuman-conform"
+  }
+}

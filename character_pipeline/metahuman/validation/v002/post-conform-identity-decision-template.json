@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "state": "awaiting-post-conform-capture",
+  "captureManifest": {"uri": "renders/render-manifest.json", "sha256": null},
+  "reviewer": {"name": null, "role": null},
+  "comparison": {
+    "canonicalIndices": [3, 6, 7, 8],
+    "decision": null,
+    "identityScore": null,
+    "notes": null
+  },
+  "blockingFindings": ["post-conform capture missing"],
+  "automaticApproval": false,
+  "qualityClaim": null
+}

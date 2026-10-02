@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "image": {
+    "uri": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/ChatGPT Image 2026년 8월 10일 오후 10_57_38.png",
+    "sha256": "84855cabf133616975e5699217af54bc00e3804ecdfe5dfb1d22bd6887dfbc99",
+    "dimensions": [
+      1254,
+      1254
+    ]
+  },
+  "detector": {
+    "name": "MediaPipe Face Mesh",
+    "version": "0.10.21",
+    "landmarkCount": 478,
+    "singleFaceDetected": true
+  },
+  "normalization": {
+    "faceWidthIndices": [
+      234,
+      454
+    ],
+    "faceHeightIndices": [
+      10,
+      152
+    ]
+  },
+  "measurements": {
+    "faceAspectWidthOverHeight": 0.829698,
+    "eyeCenterSeparationOverFaceWidth": 0.474626,
+    "leftEyeWidthOverFaceWidth": 0.207899,
+    "rightEyeWidthOverFaceWidth": 0.215101,
+    "noseWidthOverFaceWidth": 0.279786,
+    "mouthWidthOverFaceWidth": 0.334738,
+    "lipOpeningOverFaceHeight": 8.7e-05,
+    "eyeLineToChinOverFaceHeight": 0.6545,
+    "noseTipToChinOverFaceHeight": 0.395792,
+    "mouthToChinOverFaceHeight": 0.236235
+  },
+  "landmarksPixels": {
+    "foreheadTop": [
+      614.89,
+      283.222
+    ],
+    "chin": [
+      646.748,
+      865.631
+    ],
+    "faceLeft": [
+      394.799,
+      541.805
+    ],
+    "faceRight": [
+      877.973,
+      514.501
+    ],
+    "leftEyeOuter": [
+      463.24,
+      486.169
+    ],
+    "leftEyeInner": [
+      563.302,
+      496.668
+    ],
+    "rightEyeInner": [
+      691.369,
+      486.229
+    ],
+    "rightEyeOuter": [
+      793.567,
+      466.433
+    ],
+    "noseLeft": [
+      564.247,
+      626.202
+    ],
+    "noseRight": [
+      699.437,
+      618.645
+    ],
+    "noseTip": [
+      629.234,
+      634.774
+    ],
+    "mouthLeft": [
+      556.676,
+      729.326
+    ],
+    "mouthRight": [
+      718.54,
+      722.821
+    ],
+    "upperLip": [
+      637.069,
+      727.865
+    ],
+    "lowerLip": [
+      637.077,
+      727.815
+    ]
+  },
+  "qualityClaim": null
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "profile": "diana-motion-library-v427",
+  "mesh": "/Game/Gahyeon/Character2/Diana/v024/Source/SK_Diana_CM_v024",
+  "outputRoot": "/Game/Gahyeon/Character2/Diana/v427/Animation",
+  "report": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/iterations/v427-diana-motion-library-component-space/report.json",
+  "driverMap": {
+    "Neck_1": "Neck_1_001",
+    "Head": "Head_002",
+    "Head_001": "Head_002"
+  },
+  "animations": [
+    {
+      "source": "/Game/Gahyeon/Character2/Diana/v422/Animation/AS_Diana_ActiveIdle_v422",
+      "outputName": "AS_Diana_ActiveIdle_ComponentCopy_v427"
+    },
+    {
+      "source": "/Game/Gahyeon/Character2/Diana/v423/Animation/AS_Diana_WalkAlt_v423",
+      "outputName": "AS_Diana_WalkAlt_ComponentCopy_v427"
+    },
+    {
+      "source": "/Game/Gahyeon/Character2/Diana/v424/Animation/AS_Diana_Explain_v424",
+      "outputName": "AS_Diana_Explain_ComponentCopy_v427"
+    },
+    {
+      "source": "/Game/Gahyeon/Character2/Diana/v425/Animation/AS_Diana_StandSit_v425",
+      "outputName": "AS_Diana_StandSit_ComponentCopy_v427"
+    },
+    {
+      "source": "/Game/Gahyeon/Character2/Diana/v426/Animation/AS_Diana_Narration_v426",
+      "outputName": "AS_Diana_Narration_ComponentCopy_v427"
+    }
+  ]
+}

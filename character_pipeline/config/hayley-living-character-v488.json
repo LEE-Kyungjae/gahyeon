@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v488",
+  "status": "draft-motion-library",
+  "character": {
+    "id": "hayley",
+    "productionMesh": "/Game/LivingCharacterPOC/v448/Characters/HayleyBindClean/Hayley_BindPoseClean_v447",
+    "faceQaMesh": "/Game/LivingCharacterPOC/v475/Characters/HayleyFaceQA/Hayley_FaceQA_v474",
+    "skeleton": "/Game/LivingCharacterPOC/v448/Characters/HayleyBindClean/Hayley_BindPoseClean_v447_Skeleton"
+  },
+  "motions": {
+    "activeIdle": {
+      "asset": "/Game/LivingCharacterPOC/v466/Animation/AS_HayleyClean_CyberIdle_v466",
+      "use": "thinking-or-engaged-idle",
+      "evidence": "artifacts/living-character-poc-v467-hayley-clean-idle-evidence/hayley-explain-and-stand-sit-phases.png"
+    },
+    "walk": {
+      "asset": "/Game/LivingCharacterPOC/v459/Animation/AS_HayleyClean_Walk_v459",
+      "use": "locomotion-walk",
+      "evidence": "artifacts/living-character-poc-v460-hayley-clean-walk-evidence/hayley-explain-and-stand-sit-phases.png"
+    },
+    "run": {
+      "asset": "/Game/LivingCharacterPOC/v462/Animation/AS_HayleyClean_RunLower_v462",
+      "use": "locomotion-run-lower-body",
+      "evidence": "artifacts/living-character-poc-v463-hayley-clean-run-lower-evidence/hayley-explain-and-stand-sit-phases.png"
+    },
+    "standSit": {
+      "asset": "/Game/LivingCharacterPOC/v452/Animation/AS_HayleyClean_StandSit_v452",
+      "use": "posture-transition",
+      "evidence": "artifacts/living-character-poc-v457-hayley-clean-motion-evidence/hayley-explain-and-stand-sit-phases.png"
+    },
+    "explain": {
+      "asset": "/Game/LivingCharacterPOC/v451/Animation/AS_HayleyClean_HandsForward_v451",
+      "use": "short-explanation",
+      "quality": "weak-motion-retain-as-fallback",
+      "evidence": "artifacts/living-character-poc-v457-hayley-clean-motion-evidence/hayley-explain-and-stand-sit-phases.png"
+    },
+    "narration": {
+      "asset": "/Game/LivingCharacterPOC/v472/Animation/AS_HayleyClean_Narration_v472",
+      "use": "long-form-speaking-gesture",
+      "evidence": "artifacts/living-character-poc-v473-hayley-narration-evidence/hayley-explain-and-stand-sit-phases.png"
+    },
+    "subtleReaction": {
+      "asset": "/Game/LivingCharacterPOC/v484/Animation/subtle/AS_HayleyClean_ButWait_subtle_v484",
+      "use": "brief-listening-reaction",
+      "evidence": "artifacts/living-character-poc-v485-hayley-but-wait-evidence/hayley-explain-and-stand-sit-phases.png"
+    },
+    "present": {
+      "asset": "/Game/LivingCharacterPOC/v484/Animation/present/AS_HayleyClean_ButWait_present_v484",
+      "use": "two-hand-presentation",
+      "evidence": "artifacts/living-character-poc-v485-hayley-but-wait-evidence/hayley-explain-and-stand-sit-phases.png"
+    },
+    "emphasis": {
+      "asset": "/Game/LivingCharacterPOC/v484/Animation/emphasis/AS_HayleyClean_ButWait_emphasis_v484",
+      "use": "high-arousal-emphasis-only",
+      "evidence": "artifacts/living-character-poc-v485-hayley-but-wait-evidence/hayley-explain-and-stand-sit-phases.png"
+    }
+  },
+  "face": {
+    "calibrationAsset": "/Game/LivingCharacterPOC/v469/Animation/Hayley_CleanExpressionCalibration_v468",
+    "poses": ["neutral", "blink", "smile"],
+    "quality": "channel-connected-but-subtle",
+    "evidence": "artifacts/living-character-poc-v476-hayley-face-expression-evidence/hayley-neutral-blink-smile.png"
+  },
+  "referenceOnly": {
+    "sleepyPerformance": {
+      "analysis": "artifacts/living-character-poc-v478-lacrimosa-motion-analysis/report.json",
+      "evidence": "artifacts/living-character-poc-v480-lacrimosa-candidate-renders/contact-sheet.png",
+      "rule": "transfer timing, gaze, and pose intent only; never copy donor face geometry"
+    },
+    "secondaryMotion": {
+      "donor": "warrior-girl-secondary-motion",
+      "rule": "parameter reference only; Alembic cache is not a skeletal animation"
+    }
+  },
+  "runtimeStates": {
+    "listening": ["subtleReaction", "activeIdle"],
+    "thinking": ["activeIdle"],
+    "speaking": ["narration", "explain"],
+    "presenting": ["present"],
+    "emphasizing": ["emphasis"],
+    "locomotion": ["walk", "run"],
+    "postureTransition": ["standSit"]
+  },
+  "knownGaps": [
+    "soft neutral idle is not yet authored",
+    "blink and smile require stronger final facial deformation",
+    "viseme curves are not yet mapped to Hayley facial controls",
+    "hair and clothing secondary motion are not yet active in runtime",
+    "selected motion assets lack redistribution/commercial license evidence"
+  ],
+  "humanApproved": false,
+  "releaseEligible": false
+}

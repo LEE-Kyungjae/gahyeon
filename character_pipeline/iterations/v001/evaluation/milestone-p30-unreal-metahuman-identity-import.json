@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P30-unreal-metahuman-identity-import",
+  "state": "completed-import-tooling-awaiting-p29-export-and-ue56",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A reviewed Blender head export can lose provenance, import as multiple meshes, overwrite an existing asset, or be falsely reported as a solved MetaHuman Identity.",
+    "action": "Build an immutable UE 5.6 AssetImportTask job that verifies P28/P29 lineage, imports one combined Static Mesh without replacement, writes a receipt, and deliberately stops before Components From Mesh, marker tracking and Identity Solve.",
+    "expectedResult": "Static mesh import is repeatable and attributable while subjective tracker correction and cloud/local Identity processing cannot be skipped or fabricated."
+  },
+  "officialBoundary": {
+    "automated": ["Static Mesh import via AssetImportTask", "combine meshes", "asset existence and class verification", "immutable source/job receipt"],
+    "guidedHumanReview": ["create and populate MetaHuman Identity From Mesh", "promote and lock neutral frame", "track and correct facial markers", "run Identity Solve", "inspect template A/B overlay"],
+    "postSolveAutomation": "MetaHuman Character import_from_identity is deferred to P31 after solved Identity evidence"
+  },
+  "actualResult": {
+    "engine": "5.6",
+    "destination": "/Game/Gahyeon/CharacterPipeline/v001/IdentityInput",
+    "combineMeshes": true,
+    "replaceExisting": false,
+    "currentImportReceipt": null,
+    "currentIdentityAsset": null,
+    "identitySolved": false,
+    "productionMeshAllowed": false
+  },
+  "failureHandling": [
+    "reject P28 or P29 checksum drift",
+    "reject non-OBJ/FBX or non-cm +Z/+X source",
+    "reject destination asset overwrite",
+    "reject imports that do not produce exactly the expected Static Mesh",
+    "write import state as awaiting guided Identity workflow",
+    "stop unattended orchestration after import"
+  ],
+  "validation": {"importJobTests": "5 passed", "unrealScaffoldImporterCheck": "passed", "realEditorExecution": "pending because UE 5.6 is unavailable locally"},
+  "decision": "Keep solve and conform pending. Do not infer MetaHuman Identity completion from a successful Static Mesh import."
+}
