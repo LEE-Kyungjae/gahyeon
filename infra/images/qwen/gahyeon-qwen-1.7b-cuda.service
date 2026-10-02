@@ -1,0 +1,35 @@
+[Unit]
+Description=Gahyeon Qwen3-TTS 1.7B CUDA worker
+After=network.target
+ConditionPathExists=/opt/zaeze-ai/qwen3-tts-c/328ab9cb241774572bb59917af199bdf64a17227/qwen_tts.cuda-sm75
+ConditionPathExists=/opt/zaeze-ai/qwen3-tts-models/1.7b-base-fd4b2543/model.safetensors
+ConditionPathExists=/opt/zaeze-ai/qwen3-tts-runs/v115/gahyeon-v115-1.7b.bin
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/zaeze-ai/qwen3-tts-c/328ab9cb241774572bb59917af199bdf64a17227
+Environment=QWEN_CUDA_FUSED_TALKER=1
+Environment=QWEN_CUDA_CONVDEC=1
+Environment=LD_LIBRARY_PATH=/opt/zaeze-ai/cuda-toolkit/12.8.1/lib64
+ExecStart=/opt/zaeze-ai/qwen3-tts-c/328ab9cb241774572bb59917af199bdf64a17227/qwen_tts.cuda-sm75 --model-dir /opt/zaeze-ai/qwen3-tts-models/1.7b-base-fd4b2543 --load-voice /opt/zaeze-ai/qwen3-tts-runs/v115/gahyeon-v115-1.7b.bin --backend cuda --quant-mixed --serve 18772
+Restart=on-failure
+RestartSec=3
+TimeoutStartSec=120
+TimeoutStopSec=20
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET
+MemoryMax=10G
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "authorizedReviewerRoles": ["character-owner", "character-art-director", "character-technical-artist"],
+  "requiredScope": "neutral-head-neck-and-eyes-only",
+  "requiredViews": ["face-front", "face-left-45", "face-right-45", "face-left-profile", "face-right-profile"],
+  "requiredChecks": [
+    "head-complete", "neck-transition-complete", "eyes-open-and-present",
+    "hair-removed", "clothing-removed", "accessories-removed", "hidden-helpers-removed",
+    "neutral-expression", "identity-shape-preserved", "nonzero-bounds"
+  ],
+  "allowedSourceFormats": ["obj", "fbx", "glb", "gltf", "ply", "blend"],
+  "allowedExportFormats": ["obj", "fbx"],
+  "automaticApproval": false,
+  "productionMeshAllowed": false
+}

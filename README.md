@@ -43,7 +43,7 @@ Core는 무엇을 말하고 기억할지, 어떤 감정과 행동을 선택할�
 | Desktop Client | Electron/Vue/Three.js 기반 텍스트·마이크·오디오·VRM·World 흐름 구현 |
 | Unreal 연결 | WebSocket v1, 재연결, 이벤트 재생, snapshot, streaming speech 구현 |
 | 실시간 RuntimeCore | 엔진과 분리된 C++20 Reflex/Behavior/Cognition, VAD, 음성, viseme, World 테스트 구현 |
-| Unreal Stage | UE 5.6 소스 프로젝트와 진단용 Pawn·카메라 구현. 실제 MetaHuman/패키징 검증은 남음 |
+| Unreal Stage | UE 5.8 소스 프로젝트와 진단용 Pawn·카메라 구현. 실제 MetaHuman/패키징 검증은 남음 |
 | Looking Glass | Desktop WebXR 및 Unreal 어댑터 구현. 실제 Go 장치 검증은 남음 |
 | 음성 제작 | 중복을 줄인 5,000문장 생성 중. 완료 후 QC와 Piper 학습·청취 평가로 자동 인계 |
 | 캐릭터 제작 | SDXL LoRA 비교와 원본 기반 identity 기준 수립 완료. 최종 hero mesh는 제작 중 |
@@ -69,7 +69,7 @@ Core는 무엇을 말하고 기억할지, 어떤 감정과 행동을 선택할�
 - Node.js 20 이상과 npm
 - 운영 환경: PostgreSQL 16
 - 로컬 테스트 기본값: PostgreSQL 호환 모드의 인메모리 H2
-- Unreal Stage 개발: Unreal Engine 5.6 및 호환되는 MetaHuman 플러그인
+- Unreal Stage 개발: Unreal Engine 5.8(현재 검증 기준 5.8.1) 및 호환되는 MetaHuman 플러그인
 
 ## 빠른 시작
 
@@ -119,18 +119,17 @@ DB와 World 동작만 검증합니다.
 기본 API root는 `http://127.0.0.1:8080/api`입니다. 토큰이 없으면 Client API는
 loopback 요청만 허용합니다.
 
-### 3. Desktop 개발 클라이언트 실행
+### 3. macOS 캐릭터 서비스 실행
 
-다른 터미널에서:
+실제 캐릭터 서비스의 정본은 Unreal입니다. `desktop/`의 Electron 클라이언트는 폐기되어
+실행과 패키징이 차단됩니다. 맥에서는 아래 정본 런처만 사용합니다.
 
 ```bash
-cd desktop
-npm ci
-GAHYEON_CORE_API_URL=http://127.0.0.1:8080/api npm run dev
+python3 scripts/launch_canonical_macos_runtime.py
 ```
 
-원격 Core에 연결할 때는 양쪽에 충분히 긴 동일한 `GAHYEON_CLIENT_TOKEN`을 설정하세요.
-VRM/VRMA와 환경 자산 설정은 [`desktop/.env.example`](desktop/.env.example)을 참고합니다.
+런타임 맵과 캐릭터 연결이 승인되기 전에는 이 명령이 의도적으로 실패합니다. 상태와 차단
+사유는 `config/canonical-character-runtime.json`에 기록합니다.
 
 ### 4. LLM 대화 활성화
 
@@ -170,18 +169,18 @@ Blue/Green follower가 PostgreSQL advisory lock을 정상적으로 기다리는 
 ## Unreal Stage
 
 Backend WebSocket 어댑터와 C++20 RuntimeCore는 구현되어 있지만 기본값은 꺼져 있습니다.
-UE 5.6 Editor와 패키지 빌드를 실제로 검증하기 전에는 운영에서 활성화하지 않습니다.
+UE 5.8 Editor와 패키지 빌드를 실제로 검증하기 전에는 운영에서 활성화하지 않습니다.
 
-UE 5.6이 설치된 개발 장비의 실제 gate:
+UE 5.8이 설치된 개발 장비의 실제 gate:
 
 ```bash
-GAHYEON_UE_ROOT="/path/to/UE_5.6" ./scripts/run_unreal_engine_gate.sh
+GAHYEON_UE_ROOT="/path/to/UE_5.8" ./scripts/run_unreal_engine_gate.sh
 ```
 
 GTX 1660 Ti Windows 제작 장비에서는 PowerShell로 canonical Stage를 먼저 검증합니다.
 
 ```powershell
-.\scripts\run_unreal_engine_gate.ps1 -UnrealRoot "C:\Program Files\Epic Games\UE_5.6"
+.\scripts\run_unreal_engine_gate.ps1 -UnrealRoot "C:\Program Files\Epic Games\UE_5.8"
 ```
 
 Editor 검증 후 packaged Development까지 생성·봉인하려면 `-Package`를 추가합니다.
@@ -237,7 +236,7 @@ src/main/java/com/gahyeonbot/
 
 desktop/          Electron/Vue/Three.js 호환 Presentation Client
 unreal/RuntimeCore/ 엔진 비종속 C++20 실시간 reference runtime
-unreal/GahyeonStage/ UE 5.6 source-only Stage project와 native module
+unreal/GahyeonStage/ UE 5.8 source-only Stage project와 native module
 docs/unreal/      Unreal architecture, protocol, acceptance와 integration 계약
 scripts/          Voice/Piper, SDXL asset pipeline과 운영 보조 도구
 ```

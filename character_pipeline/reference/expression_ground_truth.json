@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "status": "incomplete",
+  "authorityPolicy": {
+    "source": "user-provided-originals",
+    "classificationRequiresHumanObservation": true,
+    "landmarkMetricsAreEvidenceNotLabels": true,
+    "generatedImagesMayNotBecomeAuthorityWithoutHumanIdentityReview": true,
+    "neutralGeometryAuthorityMayNotBeReplacedByExpressionEvidence": true
+  },
+  "displayQA": {
+    "profile": "looking-glass-go",
+    "singleViewResolution": [1440, 2560],
+    "preferredFraming": "face-close-up-or-bust",
+    "quiltRequiresConnectedCalibration": true
+  },
+  "requirements": [
+    "neutral", "smile", "angry", "sad", "eyes-closed", "mouth-open",
+    "viseme-sil", "viseme-aa", "viseme-ih", "viseme-ou", "viseme-ee",
+    "viseme-oh", "viseme-fv", "viseme-l", "viseme-mbp", "viseme-wq"
+  ],
+  "observations": [
+    {
+      "label": "neutral",
+      "sourceIndex": 3,
+      "file": "ChatGPT Image 2026년 8월 10일 오후 10_57_38.png",
+      "sha256": "84855cabf133616975e5699217af54bc00e3804ecdfe5dfb1d22bd6887dfbc99",
+      "authority": "canonical",
+      "view": "front",
+      "humanObservation": "closed-mouth neutral master",
+      "allowedUses": ["expression-baseline", "neutral-face-geometry"]
+    },
+    {
+      "label": "smile",
+      "sourceIndex": 14,
+      "file": "ChatGPT Image 2026년 8월 10일 오후 11_24_03.png",
+      "sha256": "be42132c602692bf14fa6f49b7dc4c6379cac00dae965d29aa68566555ff9d8f",
+      "authority": "supporting",
+      "view": "front",
+      "humanObservation": "closed-mouth smile",
+      "allowedUses": ["expression-range", "smile-deformation-target"],
+      "excludedFrom": ["neutral-face-geometry"]
+    },
+    {
+      "label": "mouth-open",
+      "sourceIndex": 15,
+      "file": "ChatGPT Image 2026년 8월 10일 오후 11_25_50.png",
+      "sha256": "251f6d5e4af82f446273ff79dd64da08fb81cc98e9936abc89b037e0eb80f825",
+      "authority": "supporting",
+      "view": "three-quarter",
+      "humanObservation": "open smile with visible teeth",
+      "allowedUses": ["expression-range", "jaw-and-lip-opening-target"],
+      "excludedFrom": ["neutral-face-geometry", "viseme-authority"]
+    }
+  ],
+  "missing": [
+    "angry", "sad", "eyes-closed", "viseme-sil", "viseme-aa", "viseme-ih",
+    "viseme-ou", "viseme-ee", "viseme-oh", "viseme-fv", "viseme-l",
+    "viseme-mbp", "viseme-wq"
+  ]
+}

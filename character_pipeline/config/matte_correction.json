@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "operations": ["add", "remove", "replace"],
+  "layerMode": "L",
+  "layerSizeMustMatch": true,
+  "layerOutsideRoiMustBeZero": true,
+  "overwrite": false,
+  "humanReviewRequired": true,
+  "roiProfiles": {
+    "3": [
+      {"id": "hair-top", "box": [120, 0, 1135, 350]},
+      {"id": "hair-left", "box": [0, 270, 360, 1130]},
+      {"id": "hair-right-earring", "box": [850, 270, 1254, 1130]}
+    ],
+    "16": [
+      {"id": "left-hand", "box": [285, 725, 390, 900]},
+      {"id": "right-hand", "box": [620, 720, 720, 900]},
+      {"id": "left-shoe", "box": [320, 1250, 540, 1485]},
+      {"id": "right-shoe", "box": [550, 1250, 760, 1510]}
+    ]
+  }
+}

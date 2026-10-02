@@ -2,6 +2,56 @@
   "schemaVersion": 1,
   "cases": [
     {
+      "id": "discord-qwen-expressive-tts-routing",
+      "domain": "tts",
+      "incident": "Production exposed a healthy Qwen 1.7B original-voice worker and enabled expressive configuration, but Discord voice responses still called only the standard Piper synthesizer.",
+      "invariant": "When the attested expressive provider is ready, every safe Discord response segment is synthesized by Qwen 1.7B with the planned expression and original-recording voice profile; Piper is used only for natural speech when the expressive provider is unavailable.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceAssistantSpeechRouterTest.java",
+      "testMethod": "routesLaughterThroughTheAttestedExpressiveProvider",
+      "productionSignal": "Provider class, attested model/profile/quantization identity, style, intensity bucket, segment index, completion outcome, and audio byte-count bucket without transcript, response text, audio, or user identifier.",
+      "rollbackTrigger": "A ready expressive provider is bypassed, a non-natural expression is flattened through Piper, the returned worker identity differs from the approved Qwen 1.7B x-vector profile, any intended segment is missing, or empty audio is delivered."
+    },
+    {
+      "id": "tts-approved-original-voice-production-identity",
+      "domain": "tts",
+      "incident": "The production 1.7B worker used the named female Sohee voice and a 96-token cap instead of the listener-approved original-recording speaker identity, causing the wrong voice and truncated multi-sentence playback.",
+      "invariant": "Production runs on zeze with the attested 1.7B Base x-vector-only profile derived from original recordings, never the Sohee named speaker, and permits at least 192 audio tokens for complete multi-sentence playback.",
+      "testFile": "scripts/test_qwen_original_voice_contract.py",
+      "testMethod": "test_approved_original_voice_cannot_regress_to_named_female_or_short_output",
+      "productionSignal": "Attested model ID, quantization identity, voice profile, embedding digest, generated duration, EOS status, and segment count without raw voice data or conversation text.",
+      "rollbackTrigger": "The worker reports a different model/profile/embedding identity, emits the Sohee voice, truncates an intended sentence, fails to reach EOS within the bounded generation window, or runs on land in production."
+    },
+    {
+      "id": "discord-zezestudio-account-linking",
+      "domain": "agent",
+      "incident": "Discord users had no secure way to bind their Gahyeon identity to the shared ZezeStudio account, and the first ZezeStudio rollout failed startup because its multi-constructor link service did not identify the Spring runtime injection constructor.",
+      "invariant": "Discord initiates a private short-lived single-use browser link; credentials and bearer tokens remain at ZezeStudio, only an HMAC-authenticated public platform identity can complete the link, and the ZezeStudio runtime constructor is explicitly marked for Spring injection.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/identity/ZezeStudioLinkServiceTest.java",
+      "testMethod": "linksExactlyOnceUsingOnlyAHashedShortLivedCodeAndValidServerSignature",
+      "productionSignal": "Link issue, completion outcome, expiry/replay/mismatch reason class, and provider name without link code, Discord ID, platform user ID, credentials, or tokens.",
+      "rollbackTrigger": "A credential or bearer token reaches Discord/Gahyeon, a link is reusable, an invalid signature succeeds, one ZezeStudio identity binds to multiple Gahyeon principals, or the ZezeStudio backend reports a missing default constructor for the link service."
+    },
+    {
+      "id": "agent-approval-audit-redaction",
+      "domain": "agent",
+      "incident": "Approval audit rows persisted raw tool arguments, allowing credentials, bearer tokens, and local home-directory identities to enter durable storage.",
+      "invariant": "Approval matching uses the original argument digest while the durable audit copy recursively redacts sensitive fields, inline secrets, bearer tokens, and user home paths.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentApprovalAuditRedactionTest.java",
+      "testMethod": "persistsRedactedAuditArgumentsWithoutBreakingOriginalApprovalLookup",
+      "productionSignal": "Approval outcome, tool name, argument digest, and redaction reason classes without raw tool arguments, credentials, tokens, conversation text, or home paths.",
+      "rollbackTrigger": "Any credential, token, raw conversation text, or identifiable user home path is persisted in an approval audit row, or redaction prevents an approved original request from being consumed."
+    },
+    {
+      "id": "agent-tool-output-recoverable-compression",
+      "domain": "agent",
+      "incident": "Large tool responses could consume the remaining model context without a deterministic size bound or a recoverable reference to the exact original output.",
+      "invariant": "Small outputs never grow, JSON is compacted losslessly first, and lossy truncation occurs only after the exact original is archived by SHA-256 digest.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/DefaultAgentRuntimeCancellationTest.java",
+      "testMethod": "sendsBoundedRecoverableToolOutputToTheNextModelCall",
+      "productionSignal": "Tool name, original character count, compressed character count, compression decision, and output digest without raw tool output.",
+      "rollbackTrigger": "Compression increases an output, truncates without successfully archiving the exact original, changes a small output, or produces content above the configured bound."
+    },
+    {
       "id": "stt-known-short-hallucination",
       "domain": "stt",
       "incident": "Short or silent audio produced a known phrase the user did not say.",
@@ -40,6 +90,16 @@
       "testMethod": "keepsOnlyResponseFromThoughtResponseEnvelope",
       "productionSignal": "Sanitizer action and output class, without private reasoning content.",
       "rollbackTrigger": "Internal reasoning or envelope tags become user-visible."
+    },
+    {
+      "id": "agent-plaintext-reasoning-preamble",
+      "domain": "agent",
+      "incident": "An OpenRouter response beginning with an English conversational reasoning preamble was delivered verbatim to Discord instead of a Korean final answer.",
+      "invariant": "Known untagged reasoning preambles are rejected as empty final responses and enter the existing bounded corrective retry path.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentResponseSanitizerTest.java",
+      "testMethod": "rejectsConversationalEnglishReasoningPreambleWithoutTags",
+      "productionSignal": "Reasoning-preamble rejection count, correction count, provider route, and final outcome without prompt, reasoning, or response content.",
+      "rollbackTrigger": "Any model planning, instruction inspection, candidate drafting, or other private reasoning becomes visible or audible to a user."
     },
     {
       "id": "agent-empty-final-retry",
@@ -85,11 +145,11 @@
       "id": "piper-english-transliteration",
       "domain": "tts",
       "incident": "English terms were pronounced poorly while Korean text was otherwise acceptable.",
-      "invariant": "Supported English tokens are transliterated, GitHub uses listener-approved phonemes, and Korean text is preserved.",
+      "invariant": "Supported English tokens are transliterated, GitHub is passed to Piper as the listener-approved Korean spelling 깃허브 without a raw phoneme override, and Korean text is preserved.",
       "testFile": "infra/images/piper/test_server.py",
       "testMethod": "test_transliterates_english_and_preserves_korean",
       "productionSignal": "English-token normalization count and fallback count.",
-      "rollbackTrigger": "GitHub is pronounced as 깃서브, supported English tokens bypass normalization, or Korean text is altered."
+      "rollbackTrigger": "GitHub is rewritten to a raw phoneme string, pronounced as 기써브/깃서브, supported English tokens bypass normalization, or Korean text is altered."
     },
     {
       "id": "piper-sentence-boundary-silence",
@@ -122,6 +182,36 @@
       "rollbackTrigger": "Runtime synthesis falls back to flat default inference values or pronunciation becomes unstable."
     },
     {
+      "id": "desktop-character-window-microphone-control",
+      "domain": "stt",
+      "incident": "The AIRI-style character window exposed a push-to-record button instead of a persistent microphone on/off control.",
+      "invariant": "Character-window mode exposes a microphone on/off toggle; while enabled, VAD automatically captures each utterance and returns to listening after the response finishes.",
+      "testFile": "desktop/src/character-window-voice.test.ts",
+      "testMethod": "keeps continuous microphone and TTS controls in the chat window",
+      "productionSignal": "Desktop microphone control visibility, speech readiness, and transcription outcome without retaining raw audio.",
+      "rollbackTrigger": "The character window requires one click per utterance, cannot turn continuous listening off, or bypasses the guarded production STT flow."
+    },
+    {
+      "id": "desktop-character-window-speech-animation",
+      "domain": "tts",
+      "incident": "The AIRI-style character media loop was silent and moved independently of synthesized speech.",
+      "invariant": "Character media starts when TTS playback emits avatar.speech.started and returns to its idle frame after avatar.speech.stopped.",
+      "testFile": "desktop/src/character-window-voice.test.ts",
+      "testMethod": "keeps living-character media moving between speech events",
+      "productionSignal": "TTS playback start/stop events and character speaking-state transitions.",
+      "rollbackTrigger": "Audio plays without a speaking animation transition or the speaking loop continues after audio stops."
+    },
+    {
+      "id": "desktop-windows-preload-core-bridge",
+      "domain": "stt",
+      "incident": "The packaged Windows preload was emitted as ESM, so Electron rejected it and the renderer sent Core and speech requests to file:///C:/api.",
+      "invariant": "The sandboxed preload is emitted as preload.cjs, loads the native Core bridge, and never falls back to file-relative API requests in the packaged app.",
+      "testFile": "desktop/electron/ipc-security.test.ts",
+      "testMethod": "keeps every privileged IPC channel behind the trusted-renderer gate",
+      "productionSignal": "No preload load error or file:///C:/api request; Core connected; microphone control enabled.",
+      "rollbackTrigger": "Packaged Electron reports a preload syntax/load error, Core disconnected, or a disabled microphone despite speech readiness."
+    },
+    {
       "id": "agent-personalized-news-source-integrity",
       "domain": "agent",
       "incident": "A personalized news digest could present an unverified single-site report or lose its publication/source evidence.",
@@ -130,6 +220,366 @@
       "testMethod": "acceptsOfficialOrTwoIndependentDomainsAndRejectsSingleSecondarySource",
       "productionSignal": "Per digest: selected event count, official-source flag, distinct source-domain count, and publication age without article body content.",
       "rollbackTrigger": "A single unverified secondary source is delivered, a source URL/publication time is missing, or a future-dated article is accepted."
+    },
+    {
+      "id": "agent-personalized-news-korean-translation",
+      "domain": "agent",
+      "incident": "A personalized news digest displayed a foreign-language headline and summary without Korean translation.",
+      "invariant": "Foreign-language personalized news is translated into Korean before formatting, Korean originals are preserved, and failed translations never expose the foreign original.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/notification/PersonalizedNewsCampaignServiceTest.java",
+      "testMethod": "translatesForeignNewsToKoreanBeforeFormatting",
+      "productionSignal": "Per digest: translation attempts, successful translations, skipped translation failures, and delivered event count without article text.",
+      "rollbackTrigger": "A delivered personalized-news title or summary contains an untranslated foreign original, or Korean originals are unnecessarily rewritten."
+    },
+    {
+      "id": "agent-conversational-recent-news-tool",
+      "domain": "agent",
+      "incident": "The assistant claimed it had no real-time news tool when verified recent personalized-news data was already stored internally.",
+      "invariant": "The agent exposes a read-only recent-news tool that returns validated events in Korean with publication time and canonical sources.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/NewsKnowledgeToolsTest.java",
+      "testMethod": "exposesVerifiedRecentNewsAsAKoreanAgentToolWithSources",
+      "productionSignal": "Recent-news tool call count, result class, evidence window, event count, and source count without article body text.",
+      "rollbackTrigger": "A recent-news request claims no tool exists despite qualifying stored events, or returns an event without its publication/source evidence."
+    },
+    {
+      "id": "agent-tool-arguments-final-response-leak",
+      "domain": "agent",
+      "incident": "A paper request displayed raw tool arguments such as {query: latest AI research papers} instead of a Korean final answer.",
+      "invariant": "A standalone known tool-argument JSON object is rejected as an empty final response and enters the bounded corrective retry path.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/DefaultAgentRuntimeCancellationTest.java",
+      "testMethod": "retriesWhenToolArgumentsAreReturnedAsTheFinalAnswer",
+      "productionSignal": "Tool-argument-only rejection count, corrective retry count, and final outcome without argument content.",
+      "rollbackTrigger": "Tool arguments or internal JSON are displayed or spoken as the assistant's final response."
+    },
+    {
+      "id": "agent-github-trending-english-fallback",
+      "domain": "agent",
+      "incident": "GitHub trending entries without a generated README summary displayed the original English repository description.",
+      "invariant": "A missing Korean README summary triggers Korean description translation; translation failure omits the description instead of exposing English.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/notification/GitHubTrendingCampaignTranslationTest.java",
+      "testMethod": "translatesEnglishDescriptionWhenNoKoreanReadmeSummaryExists",
+      "productionSignal": "Per campaign: Korean summary hits, description translation attempts/successes/failures, and omitted-description count without README text.",
+      "rollbackTrigger": "An untranslated English repository description appears in a delivered GitHub trending digest."
+    },
+    {
+      "id": "tts-text-chat-voice-mirroring",
+      "domain": "tts",
+      "incident": "Text-channel assistant replies remained silent even while the voice assistant was connected.",
+      "invariant": "A final text-channel answer is also queued for assistant TTS exactly when that guild has an active voice session; unsafe errors and inactive sessions remain silent.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceAssistantServiceStopTest.java",
+      "testMethod": "textResponseIsSpokenOnlyWhileVoiceSessionIsActive",
+      "productionSignal": "Text assistant completion followed by assistant TTS synthesis in the same guild without a second AI request.",
+      "rollbackTrigger": "An active voice session stays silent for a safe text reply, or an inactive session/unsafe error produces audio."
+    },
+    {
+      "id": "life-multi-character-state-isolation",
+      "domain": "agent",
+      "incident": "A shared character runtime could leak one character's needs, initiative history, or intentions into another character.",
+      "invariant": "Life state is keyed by character and world; an event observed by Gahyeon does not mutate Diana's state in the same world.",
+      "testFile": "src/test/java/com/gahyeonbot/application/life/CharacterLifeServiceTest.java",
+      "testMethod": "gahyeonAndDianaPersistIndependentLivesInTheSameWorld",
+      "productionSignal": "Character ID, world ID, revision, disposition, and reason without private memory contents.",
+      "rollbackTrigger": "One character's event changes another character's revision, needs, attention, intention, or initiative timestamp."
+    },
+    {
+      "id": "life-silence-and-initiative-gate",
+      "domain": "agent",
+      "incident": "An autonomous thought loop could speak on every tick or repeat initiatives too frequently.",
+      "invariant": "Elapsed time normally produces internal change only; cognition requires threshold admission and is suppressed to nonverbal action during cooldown.",
+      "testFile": "src/test/java/com/gahyeonbot/core/life/DeterministicLifePolicyTest.java",
+      "testMethod": "initiativeCooldownTurnsSpeechIntoNonverbalAction",
+      "productionSignal": "Per decision disposition, threshold reason, and cooldown status without generated speech.",
+      "rollbackTrigger": "An idle tick produces cognition, or a character requests cognition again before its initiative cooldown expires."
+    },
+    {
+      "id": "life-prospective-memory-return",
+      "domain": "agent",
+      "incident": "A character could record a future intention but forget it before the user returned.",
+      "invariant": "A prospective intention persists across internal updates and becomes one cognition request when the triggering return event occurs.",
+      "testFile": "src/test/java/com/gahyeonbot/core/life/DeterministicLifePolicyTest.java",
+      "testMethod": "prospectiveIntentionSurvivesUntilUserReturnsThenRequestsCognition",
+      "productionSignal": "Intention presence, trigger type, consumption revision, and disposition without raw private text.",
+      "rollbackTrigger": "The intention disappears before its trigger, fires repeatedly, or is consumed by another character."
+    },
+    {
+      "id": "life-cognition-memory-isolation",
+      "domain": "agent",
+      "incident": "Autonomous cognition could read another character's private memories and collapse distinct personalities into one shared agent.",
+      "invariant": "Every cognition request receives memories from exactly the requested character and world namespace.",
+      "testFile": "src/test/java/com/gahyeonbot/application/life/CharacterCognitionServiceTest.java",
+      "testMethod": "keepsMemoriesAndCognitionContextIsolatedPerCharacter",
+      "productionSignal": "Character ID, world ID, memory count, and cognition outcome without memory content.",
+      "rollbackTrigger": "Gahyeon receives Diana's memories, Diana receives Gahyeon's memories, or a world boundary is ignored."
+    },
+    {
+      "id": "life-cognition-intentional-silence",
+      "domain": "agent",
+      "incident": "Cognition admission was treated as mandatory speech, causing the character to narrate every internal thought.",
+      "invariant": "The cognition model can select speak=false, persist a useful reflection, and emit no utterance.",
+      "testFile": "src/test/java/com/gahyeonbot/application/life/CharacterCognitionServiceTest.java",
+      "testMethod": "preservesIntentionalSilenceWithoutInventingAnUtterance",
+      "productionSignal": "Spoken flag and outcome type without internal reflection content.",
+      "rollbackTrigger": "A speak=false result creates an utterance or every admitted cognition becomes audible speech."
+    },
+    {
+      "id": "life-cognition-provider-recovery",
+      "domain": "agent",
+      "incident": "One autonomous provider failure could poison the character loop and prevent later cognition.",
+      "invariant": "A failed cognition emits a failure outcome without fabricated speech, and a later request can complete normally.",
+      "testFile": "src/test/java/com/gahyeonbot/application/life/CharacterCognitionServiceTest.java",
+      "testMethod": "recordsFailureWithoutPoisoningTheNextCognitionRun",
+      "productionSignal": "Failure/completion counters by character and provider error class without prompt or memory content.",
+      "rollbackTrigger": "A provider failure stops future cognition, emits invented speech, or loses the failure signal."
+    },
+    {
+      "id": "conversation-selected-character-persona-isolation",
+      "domain": "agent",
+      "incident": "Changing the visible Desktop character left the agent on Gahyeon's system prompt or exposed another character's memory.",
+      "invariant": "A character-scoped agent session loads only the selected persona and its character/world memory and excludes legacy actor-wide memory.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentPromptProviderCharacterTest.java",
+      "testMethod": "selectsOnlyTheRequestedCharactersPersonaAndMemory",
+      "productionSignal": "Selected character ID, world ID, prompt profile ID, and memory count without prompt or memory content.",
+      "rollbackTrigger": "Diana receives Gahyeon's prompt or memory, a character session reads actor-wide history, or an unknown character silently becomes Gahyeon."
+    },
+    {
+      "id": "conversation-gahyeon-persona-depth",
+      "domain": "agent",
+      "incident": "Gahyeon's character prompt was only a few generic sentences, so her identity could collapse into a helpful default assistant or imitate shallow character-chat mannerisms.",
+      "invariant": "Gahyeon's persona defines a stable identity, relationship-sensitive behavior, conversational rhythm, grounded memory and knowledge use, intentional silence, and anti-dependency boundaries without relying on repeated catchphrases.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/GahyeonPersonaContractTest.java",
+      "testMethod": "personaDefinesStableIdentityAdaptiveRelationshipAndGroundedKnowledgeUse",
+      "productionSignal": "Persona profile revision, character ID, response-style bucket, grounded-context presence, and boundary-violation counters without prompt or conversation content.",
+      "rollbackTrigger": "Gahyeon loses her stable identity, exposes relationship scores, invents memories or retrieved facts, repeatedly uses a catchphrase, pressures the user to stay, or cannot choose intentional silence."
+    },
+    {
+      "id": "knowledge-korean-phrase-ranking",
+      "domain": "agent",
+      "incident": "Unified knowledge search ranked chunks only by unweighted substring coverage, allowing a recent document with one generic matching term to compete with a document whose title and body matched the complete Korean information need.",
+      "invariant": "Authorized candidates matching the complete normalized Korean phrase and title terms rank above partial single-term distractors while lexical and semantic scores remain bounded.",
+      "testFile": "src/test/java/com/gahyeonbot/application/knowledge/KnowledgeBaseServiceTest.java",
+      "testMethod": "ranksACompleteKoreanPhraseAboveARecentSingleTermDistractor",
+      "productionSignal": "Hashed query class, authorized candidate count, title/phrase match buckets, retriever availability, and selected source ID without query or document content.",
+      "rollbackTrigger": "A partial generic-term distractor outranks a complete phrase match, a score leaves 0..1, or an unauthorized source enters ranking."
+    },
+    {
+      "id": "conversation-character-shared-agent-behavior",
+      "domain": "agent",
+      "incident": "Character-scoped sessions replaced the legacy system prompt with a persona and therefore lost shared grounding, current-data tool use, failure honesty, and internal-state non-disclosure rules.",
+      "invariant": "Every selected character combines its isolated persona with identity-neutral shared agent behavior while never inheriting Gahyeon's Discord identity text.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentPromptProviderCharacterTest.java",
+      "testMethod": "characterSessionsKeepSharedGroundingAndToolBehaviorWithoutLosingPersona",
+      "productionSignal": "Character ID, shared-behavior revision, tool-required decision, and grounding/failure outcome without prompt or conversation content.",
+      "rollbackTrigger": "A character session loses current-data tool guidance, invents tool success, exposes internal state, or receives another character's identity."
+    },
+    {
+      "id": "stt-unreal-hallucination-admission",
+      "domain": "stt",
+      "incident": "Discord rejected characteristic short-audio hallucinations, but the canonical Unreal streaming path accepted any nonblank bounded provider transcript and could forward the same hallucination to the agent.",
+      "invariant": "Canonical streaming STT measures admitted audio duration and rejects known short-audio hallucinations, implausible transcript lengths, and dominant token repetition before emitting a final transcript.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/unreal/UnrealStreamingTranscriptionStateMachineTest.java",
+      "testMethod": "rejectsKnownShortHallucinationBeforeItReachesCanonicalRuntime",
+      "productionSignal": "Hashed stream ID, captured-duration bucket, transcript-shape bucket, rejection reason, and provider class without transcript or audio content.",
+      "rollbackTrigger": "A known short-audio hallucination, impossible-length transcript, or dominant repeated token reaches the Unreal final-transcript sink."
+    },
+    {
+      "id": "tts-single-candidate-baseline-blind-review",
+      "domain": "tts",
+      "incident": "The blind listening builder rejected a completed promotion set containing one objectively selected candidate and the operating baseline, preventing the required two-way human comparison.",
+      "invariant": "A complete, checksum-verified candidate plus a complete, checksum-verified operating baseline produces a randomized two-label five-prompt blind review without leaking model identity.",
+      "testFile": "scripts/test_piper_listening_review.py",
+      "testMethod": "test_builds_two_way_review_for_one_candidate_and_the_baseline",
+      "productionSignal": "Review ID, candidate count, prompt count, checksum verification outcome, and identity-leak validation without model labels or audio content.",
+      "rollbackTrigger": "A one-candidate-plus-baseline completion cannot build, either identity leaks into the page, checksums are bypassed, or the review contains fewer than five matched prompts."
+    },
+    {
+      "id": "conversation-selected-character-memory-write",
+      "domain": "agent",
+      "incident": "A completed conversation was stored in a shared history instead of the selected character's life memory.",
+      "invariant": "User and assistant turns are written only to the selected character/world namespace and advance that character's interaction state.",
+      "testFile": "src/test/java/com/gahyeonbot/application/life/CharacterConversationMemoryListenerTest.java",
+      "testMethod": "recordsACompletedConversationOnlyInTheSelectedCharactersNamespace",
+      "productionSignal": "Character ID, world ID, stored turn count, and life revision without message content.",
+      "rollbackTrigger": "A Diana conversation appears in Gahyeon's memory, does not update Diana's life state, or is written to the actor-wide legacy history."
+    },
+    {
+      "id": "desktop-selected-character-voice-routing",
+      "domain": "tts",
+      "incident": "The Desktop character changed visually while every response was still synthesized with gahyeon.assistant.",
+      "invariant": "Every segment in one speech sequence uses the voice profile pinned when the selected character began speaking.",
+      "testFile": "desktop/src/audio/speech-player.test.ts",
+      "testMethod": "pins the selected character voice profile across a speech sequence",
+      "productionSignal": "Character ID, voice profile ID, segment count, and synthesis status without audio or text content.",
+      "rollbackTrigger": "A Diana sequence uses gahyeon.assistant, segments within one utterance switch voice, or an unvalidated profile reaches Core."
+    },
+    {
+      "id": "memory-subject-privacy-boundary",
+      "domain": "agent",
+      "incident": "Two users speaking to the same character could receive each other's private memories.",
+      "invariant": "Personal recall includes only the exact current subject and excludes both unscoped rows and every other subject.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentPromptProviderCharacterTest.java",
+      "testMethod": "selectsOnlyExactCurrentUserMemoriesForTheSameCharacter",
+      "productionSignal": "Character ID, world ID, subject hash, and recalled count without memory content.",
+      "rollbackTrigger": "A prompt contains another actor's memory or a character session loses its actor subject scope."
+    },
+    {
+      "id": "memory-typed-consolidation-dedup",
+      "domain": "agent",
+      "incident": "Raw dialogue was treated as permanent memory and repeated processing generated duplicate or low-confidence facts.",
+      "invariant": "Consolidation emits only supported typed memories, ignores confidence below 0.55, and persists an identical fact once per namespace.",
+      "testFile": "src/test/java/com/gahyeonbot/application/life/CharacterMemoryConsolidationServiceTest.java",
+      "testMethod": "consolidatesTypedMemoriesOnceAndRejectsLowConfidenceCandidates",
+      "productionSignal": "Candidate counts by type, accepted count, deduplicated count, and confidence bucket without memory content.",
+      "rollbackTrigger": "Low-confidence memory persists, duplicate facts multiply, or an unsupported memory type is admitted."
+    },
+    {
+      "id": "memory-prospective-life-trigger",
+      "domain": "agent",
+      "incident": "A future intention was stored in the database but never affected the character when the user returned.",
+      "invariant": "A pending prospective intention changes the next completed interaction into user.returned, allowing the Life Policy to consume it once for cognition.",
+      "testFile": "src/test/java/com/gahyeonbot/application/life/CharacterConversationMemoryListenerTest.java",
+      "testMethod": "turnsTheNextConversationIntoAUserReturnedTriggerWhenAnIntentionIsPending",
+      "productionSignal": "Character ID, intention-present flag, user-returned trigger, and consumption revision without intention content.",
+      "rollbackTrigger": "A pending intention receives only user.interaction, never triggers cognition, or fires repeatedly after consumption."
+    },
+    {
+      "id": "memory-salience-decay-recall",
+      "domain": "agent",
+      "incident": "Recent low-value chatter displaced old but important preferences, while expired working memory remained recallable.",
+      "invariant": "Recall ranks importance, confidence, emotional weight, type-specific decay, and recency while excluding expired memory.",
+      "testFile": "src/test/java/com/gahyeonbot/core/life/CharacterMemoryRecallPolicyTest.java",
+      "testMethod": "keepsImportantDurableMemoryAboveRecentLowValueChatterAndDropsExpiredWorkingMemory",
+      "productionSignal": "Memory type, age bucket, score bucket, expiry status, and rank without memory content.",
+      "rollbackTrigger": "Expired working memory is recalled or recent trivial chatter displaces a high-confidence durable preference."
+    },
+    {
+      "id": "memory-topic-contradiction-supersession",
+      "domain": "agent",
+      "incident": "Contradicting semantic facts accumulated side by side, allowing the agent to claim both were currently true.",
+      "invariant": "A stable memoryKey has one active value per namespace; weaker contradictions are rejected and competitive evidence supersedes without deleting history.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/life/JpaCharacterMemoryStoreTest.java",
+      "testMethod": "supersedesAContradictingTopicOnlyWhenConfidenceIsCompetitive",
+      "productionSignal": "Memory key hash, old/new confidence buckets, merge result, and active-count without memory content.",
+      "rollbackTrigger": "Two values for one topic remain active, weaker evidence replaces stronger evidence, or superseded history is deleted."
+    },
+    {
+      "id": "relationship-state-character-user-isolation",
+      "domain": "agent",
+      "incident": "Trust or tension learned by one character with one user leaked into another character or user relationship.",
+      "invariant": "Relationship state is keyed by character, world, and actor subject, and positive/negative evidence updates bounded dimensions independently.",
+      "testFile": "src/test/java/com/gahyeonbot/application/life/CharacterRelationshipServiceTest.java",
+      "testMethod": "accumulatesPositiveAndNegativeEvidenceWithoutCrossingCharacterOrUserBoundaries",
+      "productionSignal": "Namespace IDs, revision, and bucketed familiarity/trust/affinity/tension without memory content.",
+      "rollbackTrigger": "Evidence changes another namespace, a dimension leaves 0..1, or negative evidence increases trust."
+    },
+    {
+      "id": "relationship-state-agent-conditioning",
+      "domain": "agent",
+      "incident": "Persistent relationship values existed in storage but never changed how the selected character generated a response.",
+      "invariant": "The selected character and actor relationship state is included in the system context without exposing another relationship.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentPromptProviderCharacterTest.java",
+      "testMethod": "includesOnlyTheSelectedCharactersRelationshipWithTheCurrentUser",
+      "productionSignal": "Character ID, actor subject hash, relationship revision, and value buckets without prompt content.",
+      "rollbackTrigger": "The agent omits current relationship state, reads another user's state, or narrates raw numeric values to the user."
+    },
+    {
+      "id": "expressive-tts-plan-preservation",
+      "domain": "tts",
+      "incident": "A cognition expression plan was discarded and the utterance was synthesized in the same neutral voice regardless of context.",
+      "invariant": "Style, continuous intensity, communicative intent, and voice identity cross Desktop and Core unchanged; an unavailable expressive provider fails closed instead of silently using neutral TTS.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/desktop/DesktopSpeechControllerTest.java",
+      "testMethod": "preservesExpressionControlsForAnExpressiveProvider",
+      "productionSignal": "Character ID, voice profile, bounded style, intensity bucket, provider readiness, and synthesis outcome without text or audio.",
+      "rollbackTrigger": "Expression controls disappear, an expressive request reaches neutral synthesis, or unavailable expressive TTS returns a successful neutral voice."
+    },
+    {
+      "id": "expressive-tts-speaker-model-attestation",
+      "domain": "tts",
+      "incident": "A remote expressive worker could return audio from the wrong speaker, model, or quantization while Core treated it as the requested Gahyeon voice.",
+      "invariant": "Every Qwen response attests the exact voice profile, model ID, and quantization requested by Core and returns bounded PCM WAV bytes.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/speech/QwenExpressiveTtsAdapterTest.java",
+      "testMethod": "rejectsAResponseFromTheWrongSpeakerIdentity",
+      "productionSignal": "Expected and observed identity hashes, model ID, quantization, byte count, media contract, latency, and outcome without audio or text.",
+      "rollbackTrigger": "A mismatched speaker/model/quantization is accepted, non-WAV audio is admitted, or the response exceeds the configured byte limit."
+    },
+    {
+      "id": "core-expression-planner-spring-startup",
+      "domain": "tts",
+      "incident": "Core startup failed because a multi-constructor expression planning service did not identify its Spring runtime injection constructor.",
+      "invariant": "Every multi-constructor Spring life or expression component explicitly annotates its runtime injection constructor.",
+      "testFile": "src/test/java/com/gahyeonbot/application/life/CharacterLifeSpringCompatibilityTest.java",
+      "testMethod": "multiConstructorLifeComponentsDeclareTheRuntimeInjectionConstructor",
+      "productionSignal": "Core application context reaches ready state and the expression planner bean is constructed without recording user content.",
+      "rollbackTrigger": "Core startup reports a missing default constructor or cannot construct the conversation expression planner."
+    },
+    {
+      "id": "canonical-runtime-electron-retirement",
+      "domain": "agent",
+      "incident": "A retired Electron compatibility client was launched and presented as the actual macOS character service.",
+      "invariant": "Service launch selects only the canonical Unreal runtime; retired Electron launch and packaging commands fail closed, and an unpromoted Unreal runtime cannot be substituted with another surface.",
+      "testFile": "scripts/test_canonical_macos_runtime.py",
+      "testMethod": "test_electron_service_commands_fail_closed",
+      "productionSignal": "Selected runtime, manifest status, Unreal project/map identity, and launcher outcome without user content.",
+      "rollbackTrigger": "Electron launches or packages as the service, or any legacy/diagnostic surface is shown after the canonical Unreal launcher refuses readiness."
+    },
+    {
+      "id": "zeze-qwen-rocm-gpu-reset",
+      "domain": "tts",
+      "incident": "Qwen3-TTS 1.7B reached ROCm inference on zeze but HIP launch failures wedged the Radeon 780M; an official PyTorch BF16 attempt also caused system OOM, restarted production Java pods, and forced an amdgpu reset.",
+      "invariant": "A zeze Qwen runtime is never promoted when synthesis evidence contains a HIP launch failure, GPU reset, recovered-wedged-device signal, system OOM, or production process termination.",
+      "testFile": "scripts/test_evaluate_zeze_qwen_rocm_evidence.py",
+      "testMethod": "test_blocks_unspecified_launch_failure_and_gpu_reset",
+      "productionSignal": "Runtime build identity, accelerator architecture, exit status, generated token count, latency, kernel reset/OOM markers, and privacy-safe pod restart counts without prompt text or audio.",
+      "rollbackTrigger": "Any HIP launch failure, amdgpu reset, device-wedged event, system OOM, production pod restart, missing qualifying traffic, or synthesis process termination blocks promotion and keeps the existing endpoint unchanged."
+    },
+    {
+      "id": "voice-assistant-direct-laughter-expression",
+      "domain": "tts",
+      "incident": "A direct request to laugh produced a capability disclaimer and was flattened through neutral custom TTS instead of audible expression.",
+      "invariant": "Direct laughter requests produce a suppressed_laugh expression and can reach only a ready expressive provider; neutral fallback fails closed.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceAssistantSpeechRouterTest.java",
+      "testMethod": "routesLaughterThroughTheAttestedExpressiveProvider",
+      "productionSignal": "Voice profile, style, intensity bucket, provider readiness, model attestation, latency, and outcome without transcript or audio.",
+      "rollbackTrigger": "A laughter request emits a capability disclaimer, reaches neutral TTS, loses its expression controls, or succeeds without provider attestation."
+    },
+    {
+      "id": "voice-assistant-concise-action-response",
+      "domain": "agent",
+      "incident": "Short voice actions and gratitude received repetitive multi-sentence offers of help instead of a direct natural response.",
+      "invariant": "Voice greetings, gratitude, and short action requests are answered in one sentence, and direct sound actions are performed without capability disclaimers.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/DefaultAgentRuntimeVoiceGuidanceTest.java",
+      "testMethod": "directVoiceActionsArePerformedBrieflyWithoutCapabilityDisclaimers",
+      "productionSignal": "Voice modality, response sentence-count bucket, action-request class, and sanitizer outcome without response text.",
+      "rollbackTrigger": "A short voice action produces a disclaimer or help-offer loop, or a simple acknowledgement exceeds one sentence."
+    },
+    {
+      "id": "macos-unreal-microphone-autostart",
+      "domain": "stt",
+      "incident": "The shared Unreal voice component compiled on macOS but the Diana runtime could not enable its private begin-play capture flag, leaving STT without microphone audio.",
+      "invariant": "The canonical macOS Unreal launcher explicitly opts into microphone capture and the shared Stage component honors that runtime argument without reintroducing Electron.",
+      "testFile": "scripts/test_macos_unreal_voice_runtime.py",
+      "testMethod": "test_launcher_enables_runtime_microphone_without_electron",
+      "productionSignal": "Runtime platform, audio-capture implementation, microphone-start outcome, STT mode, and failure reason without PCM or transcript content.",
+      "rollbackTrigger": "The macOS runtime starts without the microphone argument, AudioCapture has no platform implementation, Electron returns, or capture fails to open a device."
+    },
+    {
+      "id": "qwen-cutover-unreal-pcm-conditional-startup",
+      "domain": "tts",
+      "incident": "The Qwen cutover image entered CrashLoopBackOff because PCM streaming configuration required the Unreal TTS executor while the Unreal WebSocket runtime was disabled.",
+      "invariant": "PCM stream caching is created only when both the headless and Unreal WebSocket runtimes are enabled; Discord-only Qwen deployments start without an Unreal executor.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/unreal/UnrealPcmStreamingConfigurationTest.java",
+      "testMethod": "doesNotRequireUnrealExecutorWhenWebsocketRuntimeIsDisabled",
+      "productionSignal": "Application readiness, Unreal WebSocket enablement, PCM cache activation, and missing-bean failure class without transcript or audio.",
+      "rollbackTrigger": "The replacement Pod fails readiness, reports a missing unrealTtsExecutor bean, or PCM streaming activates while the Unreal WebSocket runtime is disabled."
+    },
+    {
+      "id": "macos-native-unreal-companion-control-parity",
+      "domain": "agent",
+      "incident": "The canonical macOS Unreal companion shipped only placement controls while Windows exposed chat, microphone/STT, speaker/TTS, and character model selection.",
+      "invariant": "The native macOS Unreal overlay retains transparent character controls and exposes a native control center with chat, STT, TTS, character selection, Core readiness, placement, scale, yaw, and reset without reviving Electron.",
+      "testFile": "scripts/test_canonical_macos_runtime.py",
+      "testMethod": "test_native_overlay_keeps_full_body_drag_and_utility_controls",
+      "productionSignal": "Runtime identity, Core reachability, STT/TTS readiness flags, selected character ID, and control action outcome without transcript, audio, or message content.",
+      "rollbackTrigger": "Electron is launched, transparency or animation regresses, a control silently does nothing, Core errors are hidden, or chat/STT/TTS/model controls disappear from the native macOS overlay."
     },
     {
       "id": "agent-personal-memory-subject-isolation",
@@ -181,58 +631,6 @@
       "productionSignal": "Deletion job ID, hashed subject class, per-layer completion booleans, deleted row count, and failure class without UUID, memory content, or conversation text.",
       "rollbackTrigger": "A job reports COMPLETED while a configured deletion layer did not run, an unauthorized principal deletes another subject, or any subject-owned relational or derived row remains."
     },
-    {
-      "id": "conversation-gahyeon-persona-depth",
-      "domain": "agent",
-      "incident": "Gahyeon character prompt was only a few generic sentences, so her identity could collapse into a helpful default assistant or imitate shallow character-chat mannerisms.",
-      "invariant": "Gahyeon persona defines a stable identity, relationship-sensitive behavior, conversational rhythm, grounded memory and knowledge use, intentional silence, and anti-dependency boundaries without relying on repeated catchphrases.",
-      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/GahyeonPersonaContractTest.java",
-      "testMethod": "personaDefinesStableIdentityAdaptiveRelationshipAndGroundedKnowledgeUse",
-      "productionSignal": "Persona profile revision, character ID, response-style bucket, grounded-context presence, and boundary-violation counters without prompt or conversation content.",
-      "rollbackTrigger": "Gahyeon loses her stable identity, exposes relationship scores, invents memories or retrieved facts, repeatedly uses a catchphrase, pressures the user to stay, or cannot choose intentional silence."
-    },
-    {
-      "id": "knowledge-korean-phrase-ranking",
-      "domain": "agent",
-      "incident": "Unified knowledge search ranked chunks only by unweighted substring coverage, allowing a recent document with one generic matching term to compete with a document whose title and body matched the complete Korean information need.",
-      "invariant": "Authorized candidates matching the complete normalized Korean phrase and title terms rank above partial single-term distractors while lexical and semantic scores remain bounded.",
-      "testFile": "src/test/java/com/gahyeonbot/application/knowledge/KnowledgeBaseServiceTest.java",
-      "testMethod": "ranksACompleteKoreanPhraseAboveARecentSingleTermDistractor",
-      "productionSignal": "Hashed query class, authorized candidate count, title/phrase match buckets, retriever availability, and selected source ID without query or document content.",
-      "rollbackTrigger": "A partial generic-term distractor outranks a complete phrase match, a score leaves 0..1, or an unauthorized source enters ranking."
-    },
-    {
-      "id": "conversation-character-shared-agent-behavior",
-      "domain": "agent",
-      "incident": "Character-scoped sessions replaced the legacy system prompt with a persona and therefore lost shared grounding, current-data tool use, failure honesty, and internal-state non-disclosure rules.",
-      "invariant": "Every selected character combines its isolated persona with identity-neutral shared agent behavior while never inheriting Gahyeon Discord identity text.",
-      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentPromptProviderCharacterTest.java",
-      "testMethod": "characterSessionsKeepSharedGroundingAndToolBehaviorWithoutLosingPersona",
-      "productionSignal": "Character ID, shared-behavior revision, tool-required decision, and grounding/failure outcome without prompt or conversation content.",
-      "rollbackTrigger": "A character session loses current-data tool guidance, invents tool success, exposes internal state, or receives another character identity."
-    },
-    {
-      "id": "stt-unreal-hallucination-admission",
-      "domain": "stt",
-      "incident": "Discord rejected characteristic short-audio hallucinations, but the canonical Unreal streaming path accepted any nonblank bounded provider transcript and could forward the same hallucination to the agent.",
-      "invariant": "Canonical streaming STT measures admitted audio duration and rejects known short-audio hallucinations, implausible transcript lengths, and dominant token repetition before emitting a final transcript.",
-      "testFile": "src/test/java/com/gahyeonbot/adapters/unreal/UnrealStreamingTranscriptionStateMachineTest.java",
-      "testMethod": "rejectsKnownShortHallucinationBeforeItReachesCanonicalRuntime",
-      "productionSignal": "Hashed stream ID, captured-duration bucket, transcript-shape bucket, rejection reason, and provider class without transcript or audio content.",
-      "rollbackTrigger": "A known short-audio hallucination, impossible-length transcript, or dominant repeated token reaches the Unreal final-transcript sink."
-    },
-    {
-      "id": "tts-single-candidate-baseline-blind-review",
-      "domain": "tts",
-      "incident": "The blind listening builder rejected a completed promotion set containing one objectively selected candidate and the operating baseline, preventing the required two-way human comparison.",
-      "invariant": "A complete, checksum-verified candidate plus a complete, checksum-verified operating baseline produces a randomized two-label five-prompt blind review without leaking model identity.",
-      "testFile": "scripts/test_piper_listening_review.py",
-      "testMethod": "test_builds_two_way_review_for_one_candidate_and_the_baseline",
-      "productionSignal": "Review ID, candidate count, prompt count, checksum verification outcome, and identity-leak validation without model labels or audio content.",
-      "rollbackTrigger": "A one-candidate-plus-baseline completion cannot build, either identity leaks into the page, checksums are bypassed, or the review contains fewer than five matched prompts."
-    }
-  ],
-  "incidents": [
     {
       "id": "qwen-concerned-production-loudness",
       "domain": "tts",

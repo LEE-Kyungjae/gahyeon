@@ -4,12 +4,15 @@
 #include "GahyeonCharacterPawn.generated.h"
 
 class UGahyeonCharacterPresentationComponent;
+class UGahyeonConversationCameraComponent;
+class UGahyeonMetaHumanFacialDriverComponent;
 class UGahyeonRuntimeDebugComponent;
 class UGahyeonWorldActionComponent;
 class UGahyeonVoiceInputComponent;
 class UCameraComponent;
 class USpringArmComponent;
 class UStaticMeshComponent;
+class AActor;
 
 /** Placeable source-only character shell; MetaHuman/custom mesh can replace inherited Mesh. */
 UCLASS(Blueprintable)
@@ -19,6 +22,10 @@ class GAHYEONSTAGE_API AGahyeonCharacterPawn : public ACharacter
 
 public:
     AGahyeonCharacterPawn();
+
+    static TSubclassOf<AActor> ResolveVisualActorClass(
+        const FSoftClassPath& VisualClassPath,
+        FString& OutError);
 
     UFUNCTION(BlueprintPure, Category = "Gahyeon")
     UGahyeonCharacterPresentationComponent* GetPresentation() const { return Presentation; }
@@ -32,12 +39,23 @@ public:
     UFUNCTION(BlueprintPure, Category = "Gahyeon")
     UGahyeonVoiceInputComponent* GetVoiceInput() const { return VoiceInput; }
 
+    /** Assembled MetaHuman/custom visual hosted without reparenting its Blueprint. */
+    UFUNCTION(BlueprintPure, Category = "Gahyeon")
+    AActor* GetVisualActor() const { return VisualActor; }
+
 protected:
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gahyeon", meta = (AllowPrivateAccess = "true"))
     TObjectPtr<UGahyeonCharacterPresentationComponent> Presentation;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gahyeon|Camera", meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<UGahyeonConversationCameraComponent> ConversationCamera;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gahyeon|Face", meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<UGahyeonMetaHumanFacialDriverComponent> MetaHumanFacialDriver;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gahyeon", meta = (AllowPrivateAccess = "true"))
     TObjectPtr<UGahyeonWorldActionComponent> WorldActions;
@@ -63,4 +81,9 @@ private:
 
     UPROPERTY(EditDefaultsOnly, Category = "Gahyeon|Diagnostic")
     bool bEnableDiagnosticOverlayWhenNoAvatar = true;
+
+    UPROPERTY(Transient)
+    TObjectPtr<AActor> VisualActor;
+
+    bool bOwnsVisualActor = false;
 };

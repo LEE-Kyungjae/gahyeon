@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "networkDefault": false,
+  "cacheRootMustBeAbsolute": true,
+  "requireEmptyInstallRoot": true,
+  "repositories": [
+    {"id": "trellis", "url": "https://github.com/microsoft/TRELLIS.2.git", "revision": "75fbf0183001ed9876c8dbb35de6b68552ee08bd", "recursive": true},
+    {"id": "instantmesh", "url": "https://github.com/TencentARC/InstantMesh.git", "revision": "08822c52fdc399b93ea00e4fa9e596344ed52ccc", "recursive": false}
+  ],
+  "snapshotContract": "character_pipeline/config/worker_handoff.json",
+  "requiredApprovals": ["facebook-dinov3-license"],
+  "forbiddenModels": ["briaai/RMBG-2.0", "Tencent-Hunyuan/Hunyuan3D-2"],
+  "inputRequirement": "pre-masked-rgba-png",
+  "productionMeshAllowed": false
+}

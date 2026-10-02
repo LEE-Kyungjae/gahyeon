@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P3-canonical-identity-measurement-baseline",
+  "status": "measured-not-scored",
+  "authority": {
+    "referenceIndex": 3,
+    "role": "master-neutral-face",
+    "source": "user-provided-original",
+    "rule": "image 03 controls front landmarks; images 06/07/08 remain mandatory depth/profile constraints"
+  },
+  "method": {
+    "detector": "MediaPipe Face Mesh 0.10.21",
+    "landmarks": 478,
+    "normalizedMeasurements": 10,
+    "repeatability": "identical measurements and pixel landmarks on immediate rerun",
+    "identitySimilarityScore": null
+  },
+  "highConfidenceFindings": [
+    {
+      "measurement": "faceAspectWidthOverHeight",
+      "reference": 0.829698,
+      "candidate": 0.962445,
+      "deltaPercent": 15.999,
+      "defect": "candidate front face reads proportionally wider/shorter than canonical 03",
+      "recommendedAction": "during MetaHuman conform, lengthen the facial vertical proportion or reduce upper/mid-face width while preserving eye-to-chin placement",
+      "automation": "measure automatically; change requires human review"
+    },
+    {
+      "measurement": "mouthWidthOverFaceWidth",
+      "reference": 0.334738,
+      "candidate": 0.227915,
+      "deltaPercent": -31.912,
+      "defect": "candidate mouth is substantially too narrow relative to face",
+      "recommendedAction": "widen lip corners conservatively after MetaHuman topology conform and retest neutral/lip-seal deformation",
+      "automation": "measure automatically; sculpt/conform requires human review"
+    },
+    {
+      "measurement": "noseWidthOverFaceWidth",
+      "reference": 0.279786,
+      "candidate": 0.241311,
+      "deltaPercent": -13.752,
+      "defect": "candidate nose base is too narrow relative to face",
+      "recommendedAction": "increase alar/base width during conform while checking profiles 07/08 before keeping the change",
+      "automation": "measure automatically; change requires profile review"
+    }
+  ],
+  "lowConfidenceEyeFindings": {
+    "rangePercent": [-19.901, -10.582],
+    "reason": "the candidate uses a visibly invalid prototype eye/iris assembly",
+    "decision": "do not drive geometry from eye deltas until MetaHuman eyes and eyelid contact exist"
+  },
+  "excludedFinding": {
+    "measurement": "lipOpeningOverFaceHeight",
+    "deltaPercent": 2325.287,
+    "reason": "canonical neutral lip opening is nearly zero, so relative percentage is numerically unstable"
+  },
+  "limitations": [
+    "front 2D landmarks do not establish skull depth, nose projection or jaw profile",
+    "hair and camera projection can bias contour landmarks",
+    "the detector does not replace human identity approval",
+    "profiles 07 and 08 still require post-conform visual and geometric comparison"
+  ],
+  "hypothesisForMetaHumanV002": {
+    "statement": "The largest front-identity mismatch comes from an overly wide/short face combined with a narrow mouth and nose base.",
+    "action": "conform to MetaHuman topology, then adjust face aspect, mouth width and nose base as separate reversible parameters.",
+    "expectedResult": "reduce the three front-landmark deltas without degrading images 06/07/08 profile agreement or facial deformation.",
+    "decisionRule": "keep each change only if fixed-view measurements improve and human side-by-side review agrees"
+  }
+}

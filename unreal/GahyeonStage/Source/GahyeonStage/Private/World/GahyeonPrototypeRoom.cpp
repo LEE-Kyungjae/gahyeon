@@ -1,6 +1,8 @@
 #include "World/GahyeonPrototypeRoom.h"
 
 #include "Components/SceneComponent.h"
+#include "Components/DirectionalLightComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "World/GahyeonInteractionPointComponent.h"
@@ -10,6 +12,21 @@ AGahyeonPrototypeRoom::AGahyeonPrototypeRoom()
     PrimaryActorTick.bCanEverTick = false;
     RoomRoot = CreateDefaultSubobject<USceneComponent>(TEXT("RoomRoot"));
     SetRootComponent(RoomRoot);
+
+    UDirectionalLightComponent* KeyLight =
+        CreateDefaultSubobject<UDirectionalLightComponent>(TEXT("KeyLight"));
+    KeyLight->SetupAttachment(RoomRoot);
+    KeyLight->SetRelativeRotation(FRotator(-38.0, -32.0, 0.0));
+    KeyLight->SetIntensity(4.0f);
+    KeyLight->SetLightColor(FLinearColor(1.0f, 0.91f, 0.82f));
+
+    UPointLightComponent* FillLight =
+        CreateDefaultSubobject<UPointLightComponent>(TEXT("FillLight"));
+    FillLight->SetupAttachment(RoomRoot);
+    FillLight->SetRelativeLocation(FVector(-180.0, 160.0, 260.0));
+    FillLight->SetIntensity(4200.0f);
+    FillLight->SetAttenuationRadius(1400.0f);
+    FillLight->SetLightColor(FLinearColor(0.58f, 0.72f, 1.0f));
 
     static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeAsset(
         TEXT("/Engine/BasicShapes/Cube.Cube"));

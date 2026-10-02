@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P1-cleanup-and-metahuman-identity-input",
+  "status": "validated-input-only",
+  "displayProfile": {
+    "id": "looking-glass-go-single-view",
+    "resolution": [1440, 2560],
+    "quiltViews": 66,
+    "quiltGeometry": "requires-connected-device-calibration"
+  },
+  "acceptedInput": {
+    "package": "artifacts/gahyeon-ch/metahuman-identity-head-v79",
+    "scope": "head-neck-and-eyes-only",
+    "claim": "neutral-static-mesh-input-not-metahuman-not-dna",
+    "vertices": 6520,
+    "polygons": 6452,
+    "normalizedHeadHeightCm": 42.0,
+    "duplicateVerticesRemoved": 0,
+    "nonManifoldEdges": 314,
+    "symmetryMeanNearestMirrorCm": 0.00225,
+    "visualQA": "passed for unobstructed neutral head shape and fixed-view framing"
+  },
+  "rejectedAttempts": [
+    {
+      "path": "blender/cleanup-metahuman-input-v79",
+      "reason": "raw body data retained hidden MPFB helper geometry and stale brown_eye.png MTL reference"
+    },
+    {
+      "path": "blender/cleanup-metahuman-input-v79-clean",
+      "reason": "clothing mask removed the torso, producing disconnected head, arms and legs; unsuitable as a full-body solve mesh"
+    },
+    {
+      "path": "blender/metahuman-identity-head-v79/looking-glass-go-renders",
+      "reason": "first head-only QA camera inherited full-body framing assumptions and enlarged the scalp instead of the face"
+    }
+  ],
+  "remainingDefects": [
+    {
+      "area": "identity",
+      "severity": "blocking-for-AAA",
+      "summary": "MPFB head remains a rough identity estimate and has not been conformed to MetaHuman topology or compared against complete canonical coverage"
+    },
+    {
+      "area": "eyes",
+      "severity": "blocking-for-AAA",
+      "summary": "temporary eye assembly is geometrically and materially unsuitable for close-up final use"
+    },
+    {
+      "area": "topology",
+      "severity": "expected-input-limitation",
+      "summary": "314 boundary/non-manifold edges come from separate head/eye shells; this is solve input, not production topology"
+    }
+  ],
+  "decision": "keep head-only package as the first MetaHuman Identity Solve input; do not claim MetaHuman, DNA, rig, deformation, or AAA completion"
+}

@@ -1,0 +1,14 @@
+{
+  "first": "character_pipeline/iterations/v001/blender/baseline-renders/body-front.png",
+  "second": "character_pipeline/iterations/v001/blender/baseline-renders-repro/body-front.png",
+  "dimensions": [
+    768,
+    768
+  ],
+  "meanAbsoluteError255": 2e-06,
+  "maxAbsoluteError255": 1,
+  "pixelsAbove2": 0,
+  "pixelCount": 589824,
+  "identical": false,
+  "qualityClaim": null
+}

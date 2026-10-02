@@ -1,0 +1,23 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.8",
+  "Category": "AI Character Talking POC",
+  "Description": "Editor-only v092 MetaHuman audio-driven animation profile",
+  "Modules": [
+    {"Name": "GahyeonStage", "Type": "Runtime", "LoadingPhase": "Default"}
+  ],
+  "Plugins": [
+    {"Name": "AudioCapture", "Enabled": true},
+    {"Name": "ControlRig", "Enabled": true},
+    {"Name": "FullBodyIK", "Enabled": true},
+    {"Name": "EnhancedInput", "Enabled": true},
+    {"Name": "PythonScriptPlugin", "Enabled": true},
+    {"Name": "EditorScriptingUtilities", "Enabled": true},
+    {"Name": "SequencerScripting", "Enabled": true},
+    {"Name": "MovieRenderPipeline", "Enabled": true},
+    {"Name": "MetaHuman", "Enabled": true},
+    {"Name": "MetaHumanCharacter", "Enabled": true},
+    {"Name": "RigLogic", "Enabled": true},
+    {"Name": "HairStrands", "Enabled": true}
+  ]
+}

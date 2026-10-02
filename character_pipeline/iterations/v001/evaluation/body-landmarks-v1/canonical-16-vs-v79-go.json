@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "method": "mediapipe-pose-ratio-delta-v1",
+  "deltas": [
+    {
+      "measurement": "armLengthOverSilhouetteHeight",
+      "reference": 0.277454,
+      "candidate": 0.248446,
+      "absoluteDelta": -0.029008,
+      "relativeDeltaPercent": -10.455,
+      "confidence": "low"
+    },
+    {
+      "measurement": "hipWidthOverSilhouetteHeight",
+      "reference": 0.095391,
+      "candidate": 0.102274,
+      "absoluteDelta": 0.006883,
+      "relativeDeltaPercent": 7.216,
+      "confidence": "low"
+    },
+    {
+      "measurement": "legLengthOverSilhouetteHeight",
+      "reference": 0.437125,
+      "candidate": 0.454721,
+      "absoluteDelta": 0.017596,
+      "relativeDeltaPercent": 4.025,
+      "confidence": "medium"
+    },
+    {
+      "measurement": "legToTorsoRatio",
+      "reference": 1.730415,
+      "candidate": 1.603991,
+      "absoluteDelta": -0.126424,
+      "relativeDeltaPercent": -7.306,
+      "confidence": "medium"
+    },
+    {
+      "measurement": "shoulderToHipWidthRatio",
+      "reference": 1.764056,
+      "candidate": 1.651353,
+      "absoluteDelta": -0.112703,
+      "relativeDeltaPercent": -6.389,
+      "confidence": "low"
+    },
+    {
+      "measurement": "shoulderWidthOverSilhouetteHeight",
+      "reference": 0.168275,
+      "candidate": 0.16889,
+      "absoluteDelta": 0.000615,
+      "relativeDeltaPercent": 0.365,
+      "confidence": "medium"
+    },
+    {
+      "measurement": "torsoLengthOverSilhouetteHeight",
+      "reference": 0.252613,
+      "candidate": 0.283494,
+      "absoluteDelta": 0.030881,
+      "relativeDeltaPercent": 12.225,
+      "confidence": "medium"
+    },
+    {
+      "measurement": "upperToLowerLegRatio",
+      "reference": 1.030826,
+      "candidate": 1.080612,
+      "absoluteDelta": 0.049786,
+      "relativeDeltaPercent": 4.83,
+      "confidence": "medium"
+    }
+  ],
+  "bodySimilarityScore": null,
+  "limitations": [
+    "reference and candidate poses differ",
+    "clothing affects segmentation and joint detection",
+    "2D ratios do not measure body depth",
+    "human review remains mandatory"
+  ]
+}

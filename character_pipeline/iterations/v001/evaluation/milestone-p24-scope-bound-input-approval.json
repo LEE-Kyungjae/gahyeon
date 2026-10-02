@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P24-scope-bound-reconstruction-input-approval",
+  "state": "completed-gate-unsigned-requests",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A matte can be adequate for coarse shape recovery while remaining inadequate for accessory or production detail; a single boolean approval would erase that distinction.",
+    "action": "Bind approval to canonical index, derivative checksum, matte lineage, narrow purpose, mandatory exclusions, named reviewer role and a maximum 30-day validity window, then require it in the runner.",
+    "expectedResult": "Temporary face/body shape reconstruction can be authorized without approving hair strands, earrings, fingers, shoelaces, garment topology, skin or final topology."
+  },
+  "actualResult": {
+    "approvalScopes": ["face-shape-only", "body-silhouette-only"],
+    "unsignedRequests": 2,
+    "approvedRequests": 0,
+    "automaticApproval": false,
+    "runnerRequiresApproval": true,
+    "candidateCount": 0
+  },
+  "faceExclusions": ["hair-strand-fidelity", "earring-geometry", "skin-texture", "final-topology"],
+  "bodyExclusions": ["finger-gap-fidelity", "shoelace-geometry", "garment-topology", "skin-texture", "final-topology"],
+  "failureHandling": [
+    "reject unsigned or automatic approvals",
+    "reject unauthorized reviewer roles",
+    "reject scope expansion or missing exclusions",
+    "reject future, expired or overlong approval windows",
+    "reject derivative or matte checksum changes",
+    "reject approval lineage that differs from runner input"
+  ],
+  "decision": "Keep both requests unsigned. The character owner or art director must explicitly accept the narrow shape-only scope before either draft reaches a reconstruction backend."
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "decisions": ["baseline", "keep", "reject", "inconclusive"],
+  "rules": {
+    "baselineRequiresNoParent": true,
+    "comparisonRequiresParent": true,
+    "keepRequiresPositiveTargetDelta": true,
+    "keepForbidsGuardrailRegression": true,
+    "rejectRequiresTargetRegressionOrBlockingDefect": true,
+    "unscoredComparisonIsInconclusive": true,
+    "automaticApproval": false
+  },
+  "minimumMeaningfulDelta": 0.1
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P39-control-rig-consumption-proof",
+  "state": "completed-consumption-contract-awaiting-ue56-anim-graph-acknowledgement",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A curve stored in the native AnimInstance is only staged input and does not prove the MetaHuman Control Rig graph evaluated or consumed it.",
+    "action": "Issue a monotonic token and deterministic digest per facial batch, hide staged curves from QA readback, and require the Anim Blueprint to acknowledge the exact current token after its Control Rig node consumes the map.",
+    "expectedResult": "P36 capture and runtime viseme confirmation can distinguish staged transport from graph-consumed facial control values."
+  },
+  "implementation": {
+    "pendingToken": "monotonic int64",
+    "digest": "MD5 over lexically sorted curve names and six-decimal weights",
+    "acknowledgement": "ConfirmFacialControlRigConsumed",
+    "qaReadback": "consumed snapshot only",
+    "runnerTimeoutSeconds": 10,
+    "perSampleEvidence": ["controlRigConsumption.token", "controlRigConsumption.digest"]
+  },
+  "actualResult": {"tokenProtocolImplemented": true, "digestImplemented": true, "stagedReadbackBlocked": true, "runtimeVisemeGuardImplemented": true, "realAnimGraphAcknowledged": false, "deformationVerified": false, "productionReady": false},
+  "scopeBoundary": [
+    "acknowledgement proves graph consumption, not correct visual deformation",
+    "the UE 5.6 face Anim Blueprint still must call acknowledgement after Control Rig evaluation",
+    "P12 geometry diagnostics and human review remain required"
+  ],
+  "failureHandling": [
+    "reject zero, stale or future acknowledgement tokens",
+    "do not expose staged Control Rig values as observed evidence",
+    "time out a P36 sample if the graph does not acknowledge within ten seconds",
+    "reject missing or malformed per-sample token/digest evidence",
+    "reject fabricated Control Rig evidence on morph-only mappings"
+  ],
+  "validation": {"consumptionContractTests": "12 passed", "staticRunnerVerifier": "passed", "UE56Compile": "pending", "realGraphConsumption": "pending"},
+  "decision": "Accept Control Rig evidence only after exact-token graph acknowledgement and subsequent consumed-snapshot readback."
+}

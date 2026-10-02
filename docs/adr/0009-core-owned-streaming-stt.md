@@ -65,7 +65,7 @@ barge-in, action completion과 오디오가 같은 queue에서 head-of-line bloc
 - Unreal에는 preallocated SPSC capture ring, bounded RuntimeCore egress lifecycle, 별도 authenticated
   `IWebSocket` client, reconnect/backoff, partial/final generation gate와 next-utterance batch fallback이
   구현됐다. opt-in 기본값은 꺼져 있다.
-- 실제 Backend provider adapter와 UE 5.6 compile/PIE 증거가 아직 없으므로 기본값은 여전히 batch
+- 실제 Backend provider adapter와 UE 5.8 compile/PIE 증거가 아직 없으므로 기본값은 여전히 batch
   WAV다. 이 ADR과 transport 구현만으로 Streaming STT 운영 완료를 주장하지 않는다.
 
 ## 최초 실제 provider 기준선

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static gate for the optional, plugin-dependent Looking Glass adapter boundary."""
+"""Static gate for the primary, plugin-isolated Looking Glass deployment boundary."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ def verify() -> dict:
 
     stage_build = _text(STAGE / "Source/GahyeonStage/GahyeonStage.Build.cs")
     if "LookingGlassRuntime" in stage_build or "GahyeonLookingGlassAdapter" in stage_build:
-        raise ValueError("base Stage build acquired an optional renderer dependency")
+        raise ValueError("base Stage build acquired a plugin dependency that breaks recovery fallback")
     adapter_build = _text(
         STAGE / "Source/GahyeonLookingGlassAdapter/GahyeonLookingGlassAdapter.Build.cs")
     for marker in ("UnrealTargetPlatform.Win64", '"GahyeonStage"', '"LookingGlassRuntime"'):

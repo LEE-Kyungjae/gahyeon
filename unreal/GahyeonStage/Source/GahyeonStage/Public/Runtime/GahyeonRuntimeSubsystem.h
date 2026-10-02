@@ -493,6 +493,10 @@ private:
     };
 
     struct FRuntimeCoreState;
+    struct FRuntimeCoreStateDeleter
+    {
+        void operator()(FRuntimeCoreState* Value) const;
+    };
 
     void DrainInbound();
     void ResetInboundForReconnect();
@@ -525,7 +529,7 @@ private:
     TOptional<FGahyeonProtocolEnvelope> DeferredInbound;
     FThreadSafeCounter InboundDepth;
     FThreadSafeCounter DroppedInbound;
-    TUniquePtr<FRuntimeCoreState> RuntimeCore;
+    TUniquePtr<FRuntimeCoreState, FRuntimeCoreStateDeleter> RuntimeCore;
     FOutboundSender OutboundSender;
     FReconnectRequester ReconnectRequester;
     UPROPERTY(Transient)

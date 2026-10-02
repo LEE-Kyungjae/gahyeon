@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v001",
+  "state": "awaiting-production-groom",
+  "groups": {},
+  "features": {},
+  "bindings": {},
+  "lods": [],
+  "editorEvidence": null,
+  "captureManifest": null,
+  "claim": "no-production-groom-yet",
+  "legacyEvidence": {
+    "sourceRevision": "g1-mpfb-v79",
+    "format": "blender-curves-geometry-nodes",
+    "guideCurves": 252,
+    "guidePoints": 4032,
+    "evaluatedCurves": 10191,
+    "evaluatedPoints": 621651,
+    "unrealGroomAsset": false,
+    "unrealBindingAsset": false,
+    "fallbackLod": false,
+    "acceptedAsProduction": false,
+    "reason": "generic Hair Editor blockout lacks canonical spatial density, production clumps/flyaways and Unreal binding/LOD evidence"
+  }
+}

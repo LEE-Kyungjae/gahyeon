@@ -1,0 +1,386 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v611",
+  "status": "draft-secondary-motion-chain-profiles",
+  "characters": {
+    "stella-lily": {
+      "skeletalMesh": "/Game/LivingCharacterPOC/v572/Characters/StellaCentimeterNormalized/StellaLily_CentimeterNormalized_v571",
+      "evaluationOrder": [
+        "baseAnimation",
+        "ikRetarget",
+        "secondaryMotion",
+        "postPhysicsCollision"
+      ],
+      "groups": {
+        "hair": {
+          "tuning": {
+            "stiffness": 0.34,
+            "damping": 0.72,
+            "gravityScale": 0.55,
+            "maxAngleDegrees": 18.0
+          },
+          "chainCount": 11,
+          "chains": [
+            {
+              "root": "Ab-BK-HairA01",
+              "bones": [
+                "Ab-BK-HairA01",
+                "Ab-BK-HairA02",
+                "Ab-BK-HairA03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "Ab-BK-HairB01",
+              "bones": [
+                "Ab-BK-HairB01",
+                "Ab-BK-HairB02",
+                "Ab-BK-HairB03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "Ab-BK-HairC01",
+              "bones": [
+                "Ab-BK-HairC01",
+                "Ab-BK-HairC02",
+                "Ab-BK-HairC03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "Ab-FR-HairA01",
+              "bones": [
+                "Ab-FR-HairA01",
+                "Ab-FR-HairA02"
+              ],
+              "boneCount": 2
+            },
+            {
+              "root": "Ab-FR-HairB01",
+              "bones": [
+                "Ab-FR-HairB01",
+                "Ab-FR-HairB02"
+              ],
+              "boneCount": 2
+            },
+            {
+              "root": "Ab-FR-HairC01",
+              "bones": [
+                "Ab-FR-HairC01",
+                "Ab-FR-HairC02"
+              ],
+              "boneCount": 2
+            },
+            {
+              "root": "Ab-L-HairA01",
+              "bones": [
+                "Ab-L-HairA01",
+                "Ab-L-HairA02",
+                "Ab-L-HairA03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "Ab-L-HairB01",
+              "bones": [
+                "Ab-L-HairB01",
+                "Ab-L-HairB02",
+                "Ab-L-HairB03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "Ab-R-HairA01",
+              "bones": [
+                "Ab-R-HairA01",
+                "Ab-R-HairA02",
+                "Ab-R-HairA03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "Ab-R-HairB01",
+              "bones": [
+                "Ab-R-HairB01",
+                "Ab-R-HairB02",
+                "Ab-R-HairB03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "Ab-UP-HairA01",
+              "bones": [
+                "Ab-UP-HairA01"
+              ],
+              "boneCount": 1
+            }
+          ]
+        },
+        "clothing": {
+          "tuning": {
+            "stiffness": 0.46,
+            "damping": 0.78,
+            "gravityScale": 0.8,
+            "maxAngleDegrees": 14.0
+          },
+          "chainCount": 6,
+          "chains": [
+            {
+              "root": "Ab-L-SkirtA-01",
+              "bones": [
+                "Ab-L-SkirtA-01",
+                "Ab-L-SkirtA-02",
+                "Ab-L-SkirtA-03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "Ab-L-SkirtB-01",
+              "bones": [
+                "Ab-L-SkirtB-01",
+                "Ab-L-SkirtB-02",
+                "Ab-L-SkirtB-03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "Ab-L-SkirtC-01",
+              "bones": [
+                "Ab-L-SkirtC-01",
+                "Ab-L-SkirtC-02",
+                "Ab-L-SkirtC-03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "Ab-R-SkirtA-01",
+              "bones": [
+                "Ab-R-SkirtA-01",
+                "Ab-R-SkirtA-02",
+                "Ab-R-SkirtA-03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "Ab-R-SkirtB-01",
+              "bones": [
+                "Ab-R-SkirtB-01",
+                "Ab-R-SkirtB-02",
+                "Ab-R-SkirtB-03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "Ab-R-SkirtC-01",
+              "bones": [
+                "Ab-R-SkirtC-01",
+                "Ab-R-SkirtC-02",
+                "Ab-R-SkirtC-03"
+              ],
+              "boneCount": 3
+            }
+          ]
+        }
+      }
+    },
+    "ururu": {
+      "skeletalMesh": "/Game/LivingCharacterPOC/v585/Characters/UruruCentimeterNormalized/Ururu_CentimeterNormalized_v584",
+      "evaluationOrder": [
+        "baseAnimation",
+        "ikRetarget",
+        "secondaryMotion",
+        "postPhysicsCollision"
+      ],
+      "groups": {
+        "hair": {
+          "tuning": {
+            "stiffness": 0.34,
+            "damping": 0.72,
+            "gravityScale": 0.55,
+            "maxAngleDegrees": 18.0
+          },
+          "chainCount": 15,
+          "chains": [
+            {
+              "root": "BackLeft_HairA_01",
+              "bones": [
+                "BackLeft_HairA_01",
+                "BackLeft_HairA_02",
+                "BackLeft_HairA_03",
+                "BackLeft_HairA_04"
+              ],
+              "boneCount": 4
+            },
+            {
+              "root": "BackLeft_HairB_01",
+              "bones": [
+                "BackLeft_HairB_01",
+                "BackLeft_HairB_02",
+                "BackLeft_HairB_03",
+                "BackLeft_HairB_04"
+              ],
+              "boneCount": 4
+            },
+            {
+              "root": "BackLeft_HairC_01",
+              "bones": [
+                "BackLeft_HairC_01",
+                "BackLeft_HairC_02",
+                "BackLeft_HairC_03",
+                "BackLeft_HairC_04"
+              ],
+              "boneCount": 4
+            },
+            {
+              "root": "BackLeft_HairD_01",
+              "bones": [
+                "BackLeft_HairD_01",
+                "BackLeft_HairD_02",
+                "BackLeft_HairD_03",
+                "BackLeft_HairD_04"
+              ],
+              "boneCount": 4
+            },
+            {
+              "root": "BackLeft_HairE_01",
+              "bones": [
+                "BackLeft_HairE_01"
+              ],
+              "boneCount": 1
+            },
+            {
+              "root": "BackRight_HairA_01",
+              "bones": [
+                "BackRight_HairA_01",
+                "BackRight_HairA_02",
+                "BackRight_HairA_03",
+                "BackRight_HairA_04"
+              ],
+              "boneCount": 4
+            },
+            {
+              "root": "BackRight_HairB_01",
+              "bones": [
+                "BackRight_HairB_01",
+                "BackRight_HairB_02",
+                "BackRight_HairB_03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "BackRight_HairC_01",
+              "bones": [
+                "BackRight_HairC_01",
+                "BackRight_HairC_02",
+                "BackRight_HairC_03",
+                "BackRight_HairC_04"
+              ],
+              "boneCount": 4
+            },
+            {
+              "root": "BackRight_HairD_01",
+              "bones": [
+                "BackRight_HairD_01",
+                "BackRight_HairD_02",
+                "BackRight_HairD_03",
+                "BackRight_HairD_04"
+              ],
+              "boneCount": 4
+            },
+            {
+              "root": "BackRight_HairE_01",
+              "bones": [
+                "BackRight_HairE_01"
+              ],
+              "boneCount": 1
+            },
+            {
+              "root": "Back_HairA_01",
+              "bones": [
+                "Back_HairA_01",
+                "Back_HairA_02",
+                "Back_HairA_03",
+                "Back_HairA_04"
+              ],
+              "boneCount": 4
+            },
+            {
+              "root": "LeftSide_HairC_01",
+              "bones": [
+                "LeftSide_HairC_01",
+                "LeftSide_HairC_02",
+                "LeftSide_HairC_03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "LeftSide_HairD_01",
+              "bones": [
+                "LeftSide_HairD_01"
+              ],
+              "boneCount": 1
+            },
+            {
+              "root": "RightSide_HairC_01",
+              "bones": [
+                "RightSide_HairC_01",
+                "RightSide_HairC_02",
+                "RightSide_HairC_03"
+              ],
+              "boneCount": 3
+            },
+            {
+              "root": "RightSide_HairD_01",
+              "bones": [
+                "RightSide_HairD_01"
+              ],
+              "boneCount": 1
+            }
+          ]
+        },
+        "clothing": {
+          "tuning": {
+            "stiffness": 0.46,
+            "damping": 0.78,
+            "gravityScale": 0.8,
+            "maxAngleDegrees": 14.0
+          },
+          "chainCount": 2,
+          "chains": [
+            {
+              "root": "Hips_Ribbon_Root_L",
+              "bones": [
+                "Hips_Ribbon_Root_L"
+              ],
+              "boneCount": 1
+            },
+            {
+              "root": "Hips_Ribbon_Root_R",
+              "bones": [
+                "Hips_Ribbon_Root_R"
+              ],
+              "boneCount": 1
+            }
+          ]
+        }
+      }
+    }
+  },
+  "runtime": {
+    "preferredSolver": "PhysicsControl-or-AnimDynamics",
+    "fixedTimestepRecommended": true,
+    "teleportResetRequired": true,
+    "lodDisableDistanceCm": 600.0,
+    "collisionPrimitivesRequired": [
+      "head",
+      "neck",
+      "shoulders",
+      "chest",
+      "pelvis",
+      "thighs"
+    ]
+  },
+  "humanApproved": false,
+  "releaseEligible": false
+}

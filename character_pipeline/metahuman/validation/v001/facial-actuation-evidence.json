@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v001",
+  "state": "awaiting-editor-runtime-capture",
+  "editorRuntimeVerified": false,
+  "mappingEvidence": null,
+  "displayProfile": {"id": "looking-glass-go", "resolution": [1440, 2560], "viewCount": 66},
+  "samples": [],
+  "summary": null,
+  "automaticApproval": false,
+  "deformationVerified": false,
+  "productionReady": false
+}

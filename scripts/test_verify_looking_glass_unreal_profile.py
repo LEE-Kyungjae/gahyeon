@@ -30,7 +30,7 @@ class LookingGlassUnrealProfileTest(unittest.TestCase):
 
     def test_go_cannot_change_core_plugin_set(self):
         self.mutate(self.go, lambda payload: payload["Plugins"].remove(
-            next(item for item in payload["Plugins"] if item["Name"] == "WebSockets")))
+            next(item for item in payload["Plugins"] if item["Name"] == "EnhancedInput")))
         with self.assertRaisesRegex(ValueError, "non-Looking-Glass plugin"):
             verify(self.base, self.go)
 

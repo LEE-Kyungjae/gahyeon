@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "displayProfile": "looking-glass-go",
+  "resolution": [1440, 2560],
+  "views": ["face-front", "face-left-45", "face-right-45", "face-left-profile", "face-right-profile", "body-front", "body-left", "body-right", "body-rear"],
+  "stages": ["verify-receipt", "cleanup", "qa-scene", "render", "render-quality", "face-measurement", "body-measurement", "comparison", "seal"],
+  "failurePolicy": "stop-on-error",
+  "resumePolicy": "verify-completed-prefix",
+  "overwrite": false,
+  "productionMeshAllowed": false
+}

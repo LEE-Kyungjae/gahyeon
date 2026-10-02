@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v550",
+  "status": "draft-runtime-registry-overlay",
+  "extends": "character_pipeline/config/living-character-runtime-v543.json",
+  "characterOverrides": {
+    "ururu": {
+      "skeletalMesh": "/Game/LivingCharacterPOC/v547/Characters/UruruTextured/Ururu_Textured_v545",
+      "skeleton": "/Game/LivingCharacterPOC/v525/Characters/UruruPreview/Ururu_Normalized_v523_Skeleton",
+      "motions": {
+        "celebrationEmphasis": "/Game/LivingCharacterPOC/v541/Animation/Ururu_RelaxedUpperIdle_v539"
+      },
+      "materialImport": {
+        "materialCount": 11,
+        "textureCount": 8,
+        "report": "artifacts/living-character-poc-v547-ururu-textured-import/report.json"
+      },
+      "evidence": {
+        "blenderTexturedFull": "artifacts/living-character-poc-v546-ururu-textured-evidence/full-front.png",
+        "blenderTexturedFace": "artifacts/living-character-poc-v546-ururu-textured-evidence/face-front.png",
+        "unrealAnimated": "artifacts/living-character-poc-v549-ururu-textured-emphasis-balanced/hayley-explain-and-stand-sit-phases.png"
+      },
+      "runtimeReady": true,
+      "quality": "animated-textured-poc",
+      "restrictions": [
+        "The current motion is a celebration/emphasis gesture, not a neutral idle.",
+        "The UE proof is readable but still dark; Blender fixed-camera evidence is the stronger material reference.",
+        "Full-body locomotion still requires UE IK Retargeter and foot IK.",
+        "License evidence is required before release or redistribution."
+      ]
+    }
+  },
+  "humanApproved": false,
+  "releaseEligible": false
+}

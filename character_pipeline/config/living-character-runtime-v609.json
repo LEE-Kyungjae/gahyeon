@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "iteration": "v609",
+  "status": "draft-living-idle-runtime-overlay",
+  "extends": "character_pipeline/config/living-character-runtime-v604.json",
+  "characterOverrides": {
+    "stella-lily": {
+      "motions": {
+        "livingIdle": "/Game/LivingCharacterPOC/v606/Animation/stella/AS_Stella_LivingIdle_v606"
+      },
+      "evidence": {
+        "livingIdle": "artifacts/living-character-poc-v607-stella-living-idle-evidence/hayley-explain-and-stand-sit-phases.png"
+      },
+      "livingIdleVisualStatus": "passed-draft"
+    },
+    "ururu": {
+      "motions": {
+        "livingIdle": "/Game/LivingCharacterPOC/v606/Animation/ururu/AS_Ururu_LivingIdle_Corrected_v606"
+      },
+      "evidence": {
+        "livingIdle": "artifacts/living-character-poc-v608-ururu-living-idle-evidence/hayley-explain-and-stand-sit-phases.png"
+      },
+      "livingIdleVisualStatus": "conditional-head-rest-bias-remains"
+    }
+  },
+  "humanApproved": false,
+  "releaseEligible": false
+}

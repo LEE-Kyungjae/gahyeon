@@ -1,0 +1,695 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "version": "v001",
+  "createdAt": "2026-08-12T22:44:27.425106+00:00",
+  "parent": null,
+  "state": "running",
+  "hypothesis": {
+    "statement": "The accepted v79 blockout can preserve useful identity and proportion evidence through Mesh-to-MetaHuman Identity Solve, but its topology and rig must not be treated as production assets.",
+    "action": "Bind the verified v79 neutral OBJ package as the first conform input; after Unreal and MetaHuman are installed, run Identity Solve and compare the conformed head against canonical 03/06/07/08 under fixed cameras.",
+    "expectedResult": "A real MetaHuman DNA/RigLogic candidate is produced without losing the v79 identity measurements, while the MPFB mesh remains only a reconstruction reference."
+  },
+  "inputs": [
+    {
+      "role": "source-bindings",
+      "uri": "inputs/source-bindings.json"
+    }
+  ],
+  "stages": [
+    {
+      "id": "metahuman-toolchain-preflight",
+      "state": "failed",
+      "failure": "Unreal Engine, MetaHuman Core Data and plugins are absent; free disk headroom is below the pipeline threshold.",
+      "retryable": true
+    },
+    {
+      "id": "reconstruction-cleanup-and-fixed-render",
+      "state": "completed",
+      "result": "head-only MetaHuman Identity input validated under five Looking Glass Go views; v3 capture gate passed 5/5"
+    },
+    {
+      "id": "metahuman-identity-solve",
+      "state": "pending",
+      "blockedBy": "metahuman-toolchain-preflight"
+    }
+  ],
+  "artifacts": [
+    {
+      "role": "source-bindings",
+      "uri": "inputs/source-bindings.json",
+      "bytes": 829,
+      "sha256": "7a369e0dc1a5604cf592b9c916e8716aaefeee640d200e4f7e8120955c7e6ccc"
+    },
+    {
+      "role": "looking-glass-go-render-manifest",
+      "uri": "blender/looking-glass-go-single-view/render-manifest.json",
+      "bytes": 817,
+      "sha256": "1fd5de1396b427441dedfbc26b7ba23e88850168676305970a79dbe7dd5309fd"
+    },
+    {
+      "role": "looking-glass-go-face-front",
+      "uri": "blender/looking-glass-go-single-view/face-front.png",
+      "bytes": 4535960,
+      "sha256": "2dc052c5e15a4ca48304c55a12bdee615e4352a432c551e2c0530be50d195a71"
+    },
+    {
+      "role": "looking-glass-go-body-front",
+      "uri": "blender/looking-glass-go-single-view/body-front.png",
+      "bytes": 3910556,
+      "sha256": "72d723ca4c88b71a746036c7c5459b6f6446428182b5434b9e835de7bae1ebba"
+    },
+    {
+      "role": "baseline-repro-face-front",
+      "uri": "evaluation/baseline-repro-face-front.json",
+      "bytes": 377,
+      "sha256": "7d4d4299cbfc1af415cce8058bf850ff129d636eec81ace5e736fb2ec0ab5b0e"
+    },
+    {
+      "role": "baseline-repro-body-front",
+      "uri": "evaluation/baseline-repro-body-front.json",
+      "bytes": 380,
+      "sha256": "b78bb85eac5a72eb80930cd84be3e10d300833e205ea7b5cf2d8bdbb659314be"
+    },
+    {
+      "role": "milestone-report",
+      "uri": "evaluation/milestone-p0.json",
+      "bytes": 2844,
+      "sha256": "5531faa320437f8098ee20c68ea74463d139e7b9833cc259357e8b0163b7c2a9"
+    },
+    {
+      "role": "metahuman-head-cleanup-report",
+      "uri": "blender/metahuman-identity-head-v79/cleanup-report.json",
+      "bytes": 1685,
+      "sha256": "1a880868a761bfd54211deaf298308756a3d69542bf68b52966067d780649475"
+    },
+    {
+      "role": "metahuman-head-normalized-blend",
+      "uri": "blender/metahuman-identity-head-v79/gahyeon-head-clean.blend",
+      "bytes": 374806,
+      "sha256": "f7c81244f4b0951298eba3d7055d5a3a72fd870f68bd197a808b5a6b847808a2"
+    },
+    {
+      "role": "metahuman-head-go-qa-blend",
+      "uri": "blender/metahuman-identity-head-v79/gahyeon-head-go-qa-v2.blend",
+      "bytes": 376286,
+      "sha256": "31454f399407b4f82fb6e781c589ba7384a895b4c0100d70bdd236c4c177f5f0"
+    },
+    {
+      "role": "metahuman-head-go-render-manifest",
+      "uri": "blender/metahuman-identity-head-v79/looking-glass-go-renders-v2/render-manifest.json",
+      "bytes": 1604,
+      "sha256": "5376d96d1e22e09240e04593d10b50a296411ba0a0abdd5914feb50d87651039"
+    },
+    {
+      "role": "metahuman-head-go-face-front",
+      "uri": "blender/metahuman-identity-head-v79/looking-glass-go-renders-v2/face-front.png",
+      "bytes": 3590223,
+      "sha256": "4798663833d39f242a0bcc27d1b0b54f8464c6f8051d6a4cc7e92a15e6e19dd1"
+    },
+    {
+      "role": "metahuman-head-go-face-left-45",
+      "uri": "blender/metahuman-identity-head-v79/looking-glass-go-renders-v2/face-left-45.png",
+      "bytes": 3634731,
+      "sha256": "303a8e5a87d2df471a22f4d26a3515b6490ceb3eb28f9a371919267e5a45fdbf"
+    },
+    {
+      "role": "metahuman-head-go-face-right-45",
+      "uri": "blender/metahuman-identity-head-v79/looking-glass-go-renders-v2/face-right-45.png",
+      "bytes": 3646084,
+      "sha256": "4ad9c948149aca7c62b0c5e83945ba5b4bc10ffe742bbe063e0268d8f7b546d8"
+    },
+    {
+      "role": "metahuman-head-go-face-left-profile",
+      "uri": "blender/metahuman-identity-head-v79/looking-glass-go-renders-v2/face-left-profile.png",
+      "bytes": 3690360,
+      "sha256": "524df42a55a63c19a6370d8b634b94e4d0b2a2a7d41f9441295edaef837aac4e"
+    },
+    {
+      "role": "metahuman-head-go-face-right-profile",
+      "uri": "blender/metahuman-identity-head-v79/looking-glass-go-renders-v2/face-right-profile.png",
+      "bytes": 3720598,
+      "sha256": "7ff9228afa663957224368c2180afee33142e7a16119d9e9b7289a52f8054db4"
+    },
+    {
+      "role": "milestone-p1-report",
+      "uri": "evaluation/milestone-p1-metahuman-input.json",
+      "bytes": 2209,
+      "sha256": "19a448a41f4cd3ea0ba73ea16c4179852aab6df6f9df6bb9105d986349b8f071"
+    },
+    {
+      "role": "metahuman-head-go-qa-blend-v3",
+      "uri": "blender/metahuman-identity-head-v79/gahyeon-head-go-qa-v3.blend",
+      "bytes": 375950,
+      "sha256": "01367ca98db5df61afddfde5ed2453faee036869eed36490f1cc7c8021f7cf41"
+    },
+    {
+      "role": "metahuman-head-go-render-manifest-v3",
+      "uri": "blender/metahuman-identity-head-v79/looking-glass-go-renders-v3/render-manifest.json",
+      "bytes": 1604,
+      "sha256": "97dab73c991ef44e986c69d17550a655cb13c635d4306515d9a5e9798bcc72f0"
+    },
+    {
+      "role": "metahuman-head-go-face-front-v3",
+      "uri": "blender/metahuman-identity-head-v79/looking-glass-go-renders-v3/face-front.png",
+      "bytes": 3573076,
+      "sha256": "883c8767721e6cbb2c42b8f839bf8fe88a14b34d4bb838793b27cdc1f1e42516"
+    },
+    {
+      "role": "metahuman-head-go-face-front-capture-gate-v3",
+      "uri": "evaluation/metahuman-head-go-capture-v3/face-front.json",
+      "bytes": 776,
+      "sha256": "228087e13daceb54b250c02c241b9b69130f69022376afbec266bfd61dc520ed"
+    },
+    {
+      "role": "metahuman-head-go-face-left-45-v3",
+      "uri": "blender/metahuman-identity-head-v79/looking-glass-go-renders-v3/face-left-45.png",
+      "bytes": 3596306,
+      "sha256": "00d9557549169e4cbf51794fb6ae72f4c41befd765ad24fa50c72e914c9ab8b7"
+    },
+    {
+      "role": "metahuman-head-go-face-left-45-capture-gate-v3",
+      "uri": "evaluation/metahuman-head-go-capture-v3/face-left-45.json",
+      "bytes": 781,
+      "sha256": "92f37868dd7a1e9fcacd4cb87f4d41b9ad3567867e4e0bc02cde88e06eff5b25"
+    },
+    {
+      "role": "metahuman-head-go-face-right-45-v3",
+      "uri": "blender/metahuman-identity-head-v79/looking-glass-go-renders-v3/face-right-45.png",
+      "bytes": 3604912,
+      "sha256": "192cedc2a55cdfe92567d503522884f728abc32e56b3392c3f4af3c9ace8028c"
+    },
+    {
+      "role": "metahuman-head-go-face-right-45-capture-gate-v3",
+      "uri": "evaluation/metahuman-head-go-capture-v3/face-right-45.json",
+      "bytes": 782,
+      "sha256": "915a72c92be0488c585ca62b7b99118cc277b2815b49c12ad782e7164a4f8efc"
+    },
+    {
+      "role": "metahuman-head-go-face-left-profile-v3",
+      "uri": "blender/metahuman-identity-head-v79/looking-glass-go-renders-v3/face-left-profile.png",
+      "bytes": 3651997,
+      "sha256": "fb190c6c89049bcc43533c54c33393a54e10b2f962152a953f087be460ade973"
+    },
+    {
+      "role": "metahuman-head-go-face-left-profile-capture-gate-v3",
+      "uri": "evaluation/metahuman-head-go-capture-v3/face-left-profile.json",
+      "bytes": 786,
+      "sha256": "8f494d8eefc18f43693c9ff8f05854e4c70831e116076da79e0c6660c731efd1"
+    },
+    {
+      "role": "metahuman-head-go-face-right-profile-v3",
+      "uri": "blender/metahuman-identity-head-v79/looking-glass-go-renders-v3/face-right-profile.png",
+      "bytes": 3667512,
+      "sha256": "893e9ca56124f18bf3a44cbb4b2d1979c859ac275d0101f7af7d86b3b79995b8"
+    },
+    {
+      "role": "metahuman-head-go-face-right-profile-capture-gate-v3",
+      "uri": "evaluation/metahuman-head-go-capture-v3/face-right-profile.json",
+      "bytes": 787,
+      "sha256": "de61bc68602b52a07cd013c2c39f818668328618f73cc948ac75aec1e288e274"
+    },
+    {
+      "role": "milestone-p2-report",
+      "uri": "evaluation/milestone-p2-capture-and-handoff.json",
+      "bytes": 1905,
+      "sha256": "be8235c61c3689e49663bfc089bac18c7b41e5411af79a9b794585adc18c351b"
+    },
+    {
+      "role": "canonical-03-landmarks",
+      "uri": "evaluation/identity-landmarks-v1/canonical-03.json",
+      "bytes": 1896,
+      "sha256": "9d124c35a8d6b8bcdfdc25def12f8d0df7f8fc8b089e3f09f80a403865810b21"
+    },
+    {
+      "role": "canonical-03-landmark-overlay",
+      "uri": "evaluation/identity-landmarks-v1/canonical-03-overlay.png",
+      "bytes": 2499227,
+      "sha256": "88ca094b314b8bc74294f546dddfbd0482ed777ef1cd8a80ac5299f437668c37"
+    },
+    {
+      "role": "v79-go-v3-front-landmarks",
+      "uri": "evaluation/identity-landmarks-v1/v79-go-v3-front.json",
+      "bytes": 1949,
+      "sha256": "29fb44798296bb7ad82706bd1f067fd8cb3c55c66505fb1740c491871599ec95"
+    },
+    {
+      "role": "v79-go-v3-front-landmark-overlay",
+      "uri": "evaluation/identity-landmarks-v1/v79-go-v3-front-overlay.png",
+      "bytes": 2379390,
+      "sha256": "dcb7b7164b0ce8b561fd464a8569f40f7e3f68c8181451a9854d83840dd603e9"
+    },
+    {
+      "role": "canonical-03-vs-v79-go-v3-deltas",
+      "uri": "evaluation/identity-landmarks-v1/canonical-03-vs-v79-go-v3.json",
+      "bytes": 3262,
+      "sha256": "8c59b81be5d1944a00bef141c1b2c19d15fa498708cd4e7e96cc3414bc0b137b"
+    },
+    {
+      "role": "milestone-p3-report",
+      "uri": "evaluation/milestone-p3-identity-measurements.json",
+      "bytes": 3339,
+      "sha256": "861e9fc911009792ca0757e73b9e2f3e54b1cbcd9923a2e98e72f116108b0574"
+    },
+    {
+      "role": "profile-detection-audit",
+      "uri": "evaluation/identity-profiles-v1/detection-audit.json",
+      "bytes": 1690,
+      "sha256": "b149ce3e102fef4d70bff53a28ca6d90a8b25fafb606b90f7510191db1c069fe"
+    },
+    {
+      "role": "profile-comparison-board",
+      "uri": "evaluation/identity-profiles-v1/comparison-board.jpg",
+      "bytes": 338340,
+      "sha256": "16abcacf9fb777d1a5f78388f88e5377d12f9c83b790c30a824798fff9ccbe62"
+    },
+    {
+      "role": "milestone-p4-report",
+      "uri": "evaluation/milestone-p4-profile-constraints.json",
+      "bytes": 2584,
+      "sha256": "022aebda635a02328609e0f5afbb9d8f7efe68073e3dc66694898740f92f94b9"
+    },
+    {
+      "role": "milestone-p5-report",
+      "uri": "evaluation/milestone-p5-deformation-qa-contract.json",
+      "bytes": 2191,
+      "sha256": "faa495ef3532a55685be71c233908a5eb98d47f702f325e8930525c4586e65f0"
+    },
+    {
+      "role": "canonical-16-body-landmarks",
+      "uri": "evaluation/body-landmarks-v1/canonical-16.json",
+      "bytes": 1984,
+      "sha256": "62ee3222a3af92076a179a30e88ce5f74932bd7090248cb5e1fcc9628f177145"
+    },
+    {
+      "role": "canonical-16-body-overlay",
+      "uri": "evaluation/body-landmarks-v1/canonical-16-overlay.png",
+      "bytes": 1811874,
+      "sha256": "fdd4fa301fcde3c4eee6c33c4f8aa7c7a02dbeb3b2460d2868cd0ad7a5925ed1"
+    },
+    {
+      "role": "v79-go-body-landmarks",
+      "uri": "evaluation/body-landmarks-v1/v79-go-front.json",
+      "bytes": 2004,
+      "sha256": "d7590ce4f479c038e0c9ec5346cba48ec8f217996e714e5920c06b693a954960"
+    },
+    {
+      "role": "v79-go-body-overlay",
+      "uri": "evaluation/body-landmarks-v1/v79-go-front-overlay.png",
+      "bytes": 2855278,
+      "sha256": "2ad083d6a8694b146053f1af2f0fc283e056c3b69a6dfbde3e38585208f7d8c9"
+    },
+    {
+      "role": "canonical-16-vs-v79-body-deltas",
+      "uri": "evaluation/body-landmarks-v1/canonical-16-vs-v79-go.json",
+      "bytes": 2089,
+      "sha256": "0fc6e1ff629400693a461028c371290b50114916d30ac667447530babb151968"
+    },
+    {
+      "role": "milestone-p6-report",
+      "uri": "evaluation/milestone-p6-body-proportions.json",
+      "bytes": 2941,
+      "sha256": "5e1c86983e9e3f949f16fc290334f6d7799ba5724fbf1f5f6b5ae69dff55cfe1"
+    },
+    {
+      "role": "canonical-03-expression-measurements",
+      "uri": "evaluation/expression-ground-truth-v1/neutral-03.json",
+      "bytes": 917,
+      "sha256": "a09fbd5f99764c039afe198d9395492d342aad9aca18ca56c26da3ee47920cc5"
+    },
+    {
+      "role": "supporting-14-expression-measurements",
+      "uri": "evaluation/expression-ground-truth-v1/smile-14.json",
+      "bytes": 915,
+      "sha256": "e84913fbbc1b3aa76f648235deb0e2cca43e3ed4572ca766b2150ea24bfd50af"
+    },
+    {
+      "role": "supporting-15-expression-measurements",
+      "uri": "evaluation/expression-ground-truth-v1/mouth-open-15.json",
+      "bytes": 917,
+      "sha256": "dcfef021e3b329359f11bfccc290a49ee3cb6231285237daf252290eb10bdd94"
+    },
+    {
+      "role": "looking-glass-go-expression-comparison",
+      "uri": "evaluation/expression-ground-truth-v1/looking-glass-go-comparison.png",
+      "bytes": 3034672,
+      "sha256": "1d1dcab2282cb0c426259c0c2df7f6a50b5d354622dc3accabbc83db96a5000b"
+    },
+    {
+      "role": "milestone-p7-report",
+      "uri": "evaluation/milestone-p7-expression-ground-truth.json",
+      "bytes": 2101,
+      "sha256": "24a7736cf8f130eb5d5cdcfdc6978df0cf274cc8fa47530facf8b1ea571ecdcf"
+    },
+    {
+      "role": "milestone-p8-report",
+      "uri": "evaluation/milestone-p8-metahuman-post-conform-gate.json",
+      "bytes": 1790,
+      "sha256": "3a834c20d1d4a16d45c4b84cd5938af4d7c9a4ad388f3d6cf71d439b90ef0b7d"
+    },
+    {
+      "role": "milestone-p9-report",
+      "uri": "evaluation/milestone-p9-skin-eye-surface-gate.json",
+      "bytes": 1539,
+      "sha256": "e32eb60d0aeea596cae353c948a6724249ae86d8c1ef87f2e1fa633ce02265d9"
+    },
+    {
+      "role": "milestone-p10-report",
+      "uri": "evaluation/milestone-p10-groom-binding-gate.json",
+      "bytes": 1712,
+      "sha256": "988c02d1a988712ab4c1270c68acd814e92257f1f642c225946a8f160342e48b"
+    },
+    {
+      "role": "milestone-p11-report",
+      "uri": "evaluation/milestone-p11-modular-clothing-gate.json",
+      "bytes": 1757,
+      "sha256": "9e47d9bd4db466afce4dd9947891faddfda7fde85135f5c69938d545b66c6115"
+    },
+    {
+      "role": "milestone-p12-report",
+      "uri": "evaluation/milestone-p12-deformation-diagnostics-gate.json",
+      "bytes": 1541,
+      "sha256": "1dc1002a4d0625f18811a086fc8c52317b1dbc40b49e07b9d3ee3ca1e35ccd95"
+    },
+    {
+      "role": "evidence-scorecard",
+      "uri": "evaluation/scorecard.json",
+      "bytes": 7734,
+      "sha256": "5712ee84315f7847235f8690763d10cc49cfd4be9132b543196849bd53d931de"
+    },
+    {
+      "role": "milestone-p13-report",
+      "uri": "evaluation/milestone-p13-evidence-scorecard.json",
+      "bytes": 1445,
+      "sha256": "24d85ea9c576f17dd9656b28ede676bc49b7ab67987259b48c13b1e83105ed45"
+    },
+    {
+      "role": "refinement-decision",
+      "uri": "evaluation/refinement-decision.json",
+      "bytes": 1255,
+      "sha256": "2a22bdbbbd757a92cbf1d49be045e9f96619d59eeb987ea96149c281c2e506d6"
+    },
+    {
+      "role": "milestone-p14-report",
+      "uri": "evaluation/milestone-p14-refinement-decision-engine.json",
+      "bytes": 1509,
+      "sha256": "7c999b1e4df4b8e5de1553eaab8b9aab904cf48ab4f62a3cf222f07a88ca2afe"
+    },
+    {
+      "role": "reconstruction-benchmark-status",
+      "uri": "generation/benchmark-status.json",
+      "bytes": 563,
+      "sha256": "f3788c3a21476802554569f0ea3db78d7fd8d6e0eca6d6fc2cea4ebad3243346"
+    },
+    {
+      "role": "milestone-p15-report",
+      "uri": "evaluation/milestone-p15-reconstruction-benchmark-gate.json",
+      "bytes": 1804,
+      "sha256": "533a6f3484a3dd41a7ef17ce51ac746eec52d89bbc362c04232323fcff93b464"
+    },
+    {
+      "role": "pipeline-run-p16",
+      "uri": "evaluation/pipeline-run-p16.json",
+      "bytes": 1653,
+      "sha256": "149d61c82e1bf74067f64648ab18118cdcb64bcebed5702f892e30c71a746680"
+    },
+    {
+      "role": "milestone-p16-report",
+      "uri": "evaluation/milestone-p16-fail-closed-orchestration.json",
+      "bytes": 1441,
+      "sha256": "2900c5079f348406ab8e56ad02debd38b96dbc3aee4575beb636de2c4ffc3555"
+    },
+    {
+      "role": "reconstruction-toolchain-preflight-p17",
+      "uri": "evaluation/reconstruction-toolchain-preflight-p17.json",
+      "bytes": 826,
+      "sha256": "f53eb63c8a3dc1d333b0056ca145a0a7f8a28e00370424f438f66c428056a182"
+    },
+    {
+      "role": "milestone-p17-report",
+      "uri": "evaluation/milestone-p17-reconstruction-toolchain-preflight.json",
+      "bytes": 1819,
+      "sha256": "d8b7023c1dcef6903dc8de0bbf3ae76d7e4fc79080e2f9ef93f548aa7acdb4d2"
+    },
+    {
+      "role": "reconstruction-toolchain-preflight-p18",
+      "uri": "evaluation/reconstruction-toolchain-preflight-p18.json",
+      "bytes": 753,
+      "sha256": "b6dc5d638a3689f64f2ebfba200feb3789602456ce6a14ab21619bfab6cc691e"
+    },
+    {
+      "role": "milestone-p18-report",
+      "uri": "evaluation/milestone-p18-kr-compatible-backend.json",
+      "bytes": 2027,
+      "sha256": "c3329fe74a0ae4f3d7d4ccb929a348dfb0a9eb1cac9daa180a5c1833a7c124f3"
+    },
+    {
+      "role": "worker-availability-p19",
+      "uri": "evaluation/worker-availability-p19.json",
+      "bytes": 354,
+      "sha256": "7d3688dd6dc30262ebf934c6279eda0dec626c8246f7828c9c3eab3dbcbc6a17"
+    },
+    {
+      "role": "milestone-p19-report",
+      "uri": "evaluation/milestone-p19-worker-handoff.json",
+      "bytes": 1804,
+      "sha256": "36dbf0f0a419f8a22e2a55e790e9651b5eff1239c098695626cd51616efff5c4"
+    },
+    {
+      "role": "milestone-p20-report",
+      "uri": "evaluation/milestone-p20-portable-worker-bootstrap.json",
+      "bytes": 1619,
+      "sha256": "91bfa5500ee1ece8a6e6cc316600a449ff0af589f264257228eee43c23bc493d"
+    },
+    {
+      "role": "reconstruction-input-readiness-p21",
+      "uri": "evaluation/reconstruction-input-readiness-p21.json",
+      "bytes": 611,
+      "sha256": "1bf1e2ed714646be11a98ec762376c3909cbcfcc5c86a4ac153dba7e3d5c630c"
+    },
+    {
+      "role": "milestone-p21-report",
+      "uri": "evaluation/milestone-p21-atomic-candidate-runner.json",
+      "bytes": 1565,
+      "sha256": "c76ac63573d8a336b7e73a1816c6d6e8628665ad872e06a8a4b0f5cdfc13809d"
+    },
+    {
+      "role": "milestone-p22-report",
+      "uri": "evaluation/milestone-p22-canonical-alpha-mattes.json",
+      "bytes": 1635,
+      "sha256": "49c420fe0e4733cec1d4fec73c4bab56ed4d4ecf7af0ad9ab1b0da861e73bdc8"
+    },
+    {
+      "role": "milestone-p23-report",
+      "uri": "evaluation/milestone-p23-matte-correction-and-edge-qa.json",
+      "bytes": 1985,
+      "sha256": "4b0bcebc17b5b5283f153c012cdc6b63fb9db04b8d72b23bc8cbf0ff08511735"
+    },
+    {
+      "role": "milestone-p24-report",
+      "uri": "evaluation/milestone-p24-scope-bound-input-approval.json",
+      "bytes": 1773,
+      "sha256": "7a6f1ba658c13fee937896372509b4a76fb7a1d624401d20638817a9425af7c8"
+    },
+    {
+      "role": "milestone-p25-report",
+      "uri": "evaluation/milestone-p25-looking-glass-go-candidate-postprocess.json",
+      "bytes": 2162,
+      "sha256": "678233310bd949bcd1815599c5b3ed7274b57520337a45325cedef98b9826845"
+    },
+    {
+      "role": "milestone-p26-report",
+      "uri": "evaluation/milestone-p26-reconstruction-shortlist-gate.json",
+      "bytes": 2030,
+      "sha256": "8b99c922c4bbf3a198e309a7994141778fa8379f88938e22025fee1fba1a157b"
+    },
+    {
+      "role": "milestone-p27-report",
+      "uri": "evaluation/milestone-p27-human-reviewed-reconstruction-selection.json",
+      "bytes": 2106,
+      "sha256": "fcb0aa4f9078830b6651a1001f9c8eaa1fee02c97e2c98eb849820a36162c935"
+    },
+    {
+      "role": "milestone-p28-report",
+      "uri": "evaluation/milestone-p28-selected-metahuman-identity-handoff.json",
+      "bytes": 2044,
+      "sha256": "d700af650e3c90b15a98261516f7e4d87b51fab6cd62328939d8eac9d4b71d59"
+    },
+    {
+      "role": "milestone-p29-report",
+      "uri": "evaluation/milestone-p29-reviewed-metahuman-head-export.json",
+      "bytes": 2229,
+      "sha256": "99d46a0dcb819deab1cd49559dc646fd54acc3c7bff15142281fac3e8070d86c"
+    },
+    {
+      "role": "milestone-p30-report",
+      "uri": "evaluation/milestone-p30-unreal-metahuman-identity-import.json",
+      "bytes": 2277,
+      "sha256": "d5d28939eb69ed57a2ed498d594b6b6401ce5bdfa4e7c0cdef670e6c532efeb9"
+    },
+    {
+      "role": "milestone-p31-report",
+      "uri": "evaluation/milestone-p31-metahuman-conform-from-identity.json",
+      "bytes": 2346,
+      "sha256": "f40edabd4d17aafac37fdec0c59f35ad5731099d67fbbc93e027b1a41d879e7f"
+    },
+    {
+      "role": "milestone-p32-report",
+      "uri": "evaluation/milestone-p32-metahuman-cloud-rig-textures.json",
+      "bytes": 2146,
+      "sha256": "e173853a03fa2714407d2c5b51acdd59077a1e49793866fffaa14ad2747764fd"
+    },
+    {
+      "role": "milestone-p33-report",
+      "uri": "evaluation/milestone-p33-metahuman-cloud-asset-evidence.json",
+      "bytes": 2346,
+      "sha256": "aa5292f29e1c5d2b780e23d4f4ce7aedce767db7e62b1c4441b284df8571d987"
+    },
+    {
+      "role": "milestone-p34-report",
+      "uri": "evaluation/milestone-p34-facial-semantic-coverage.json",
+      "bytes": 2214,
+      "sha256": "37211ed73c904849a6c632339e4127cbb4e379ef31f2d934f7cdc22307d8d526"
+    },
+    {
+      "role": "milestone-p35-report",
+      "uri": "evaluation/milestone-p35-facial-actuation-capture-gate.json",
+      "bytes": 2100,
+      "sha256": "82e8a60755f4e8d16b0861ca7ec679391ca3ffda2eca847b4ba898cd2050cd9f"
+    },
+    {
+      "role": "milestone-p36-report",
+      "uri": "evaluation/milestone-p36-facial-actuation-editor-runner.json",
+      "bytes": 2521,
+      "sha256": "2b172d02b63b9023a0dba06b63903ec0fb836993ec46ea6566050f3838ec8eac"
+    },
+    {
+      "role": "milestone-p37-report",
+      "uri": "evaluation/milestone-p37-typed-metahuman-facial-route.json",
+      "bytes": 2443,
+      "sha256": "268e7d478e801e18cf4a52763d191f6d8ccc9b20e56a70b6de9f55edfd8cf215"
+    },
+    {
+      "role": "milestone-p38-report",
+      "uri": "evaluation/milestone-p38-native-face-anim-bridge.json",
+      "bytes": 2435,
+      "sha256": "a71c079f4aac41961a67b3d4924ea8661a11a351e34c7b4a3ede3a3d44bdf4f7"
+    },
+    {
+      "role": "milestone-p39-report",
+      "uri": "evaluation/milestone-p39-control-rig-consumption-proof.json",
+      "bytes": 2306,
+      "sha256": "a6f2082a06fe2839e302edbaf3e3cb0d0281dd8276825ef2b65611a2d9da0d54"
+    },
+    {
+      "role": "metahuman-input-v4-topology-audit",
+      "uri": "evaluation/metahuman-identity-input-v79-v3-topology-audit.json",
+      "bytes": 2106,
+      "sha256": "3dc369db361f1a2dc9cee6658e60d83ac12c9c1843484421d2cc0cea155073d9"
+    },
+    {
+      "role": "milestone-p40-report",
+      "uri": "evaluation/milestone-p40-solve-input-v4.json",
+      "bytes": 1833,
+      "sha256": "bf75782de4deb3608638335b4bec9700bdce8b75a699fa38c7f031d7757418a6"
+    },
+    {
+      "role": "milestone-p41-report",
+      "uri": "evaluation/milestone-p41-v4-handoff-and-disk-readiness.json",
+      "bytes": 2085,
+      "sha256": "7229097b39728ca2fff5ba0a61c6b40ac6dfd4fdc25d742a6f91cacff76e3f42"
+    },
+    {
+      "role": "milestone-p42-report",
+      "uri": "evaluation/milestone-p42-fail-closed-metahuman-preflight.json",
+      "bytes": 2099,
+      "sha256": "a3568c4e8909ceb318f347735562ce25ae637095d312ab5e1bbc5e199837267d"
+    },
+    {
+      "role": "milestone-p43-report",
+      "uri": "evaluation/milestone-p43-metahuman-identity-session-bundle.json",
+      "bytes": 1637,
+      "sha256": "eaa93bbce7b33cfea5f93c15aca3a35cb42ef1d0d4271014b43c48c7ac58a948"
+    },
+    {
+      "role": "milestone-p44-report",
+      "uri": "evaluation/milestone-p44-v002-unreal-shape-importer.json",
+      "bytes": 2186,
+      "sha256": "d7a1fa06ddb59f369d431a90929016c98a3ddf308031da31ad551e09991e779e"
+    },
+    {
+      "role": "milestone-p45-report",
+      "uri": "evaluation/milestone-p45-guided-identity-solve-evidence.json",
+      "bytes": 1891,
+      "sha256": "e9412d25ae28363c29e19d87bca25e817414fcad247e26c808a971e9624d11f2"
+    },
+    {
+      "role": "milestone-p46-report",
+      "uri": "evaluation/milestone-p46-reviewed-identity-conform-v002.json",
+      "bytes": 2148,
+      "sha256": "3affceefbdc4b91d29ee0a4c4fb6954519bf10bc102fbb0a681e022a906fe3f0"
+    },
+    {
+      "role": "milestone-p47-report",
+      "uri": "evaluation/milestone-p47-early-post-conform-identity-checkpoint.json",
+      "bytes": 2028,
+      "sha256": "dc9ccc7193e8917b791c24e53429c0981819e47a6d008666ba96a312c30606eb"
+    },
+    {
+      "role": "milestone-p48-report",
+      "uri": "evaluation/milestone-p48-unreal-post-conform-capture-runner.json",
+      "bytes": 2170,
+      "sha256": "aeb7531fb39af3c2907a90ba3abdde285d64864d09d13b04149786d0ad0e5f37"
+    },
+    {
+      "role": "milestone-p49-report",
+      "uri": "evaluation/milestone-p49-metahuman-disk-recovery-audit.json",
+      "bytes": 2053,
+      "sha256": "08d2db9a80b427543f847f8cc705bfef8a3085252327d8386f1a813d01c91047"
+    },
+    {
+      "role": "milestone-p50-report",
+      "uri": "evaluation/milestone-p50-selective-cache-recovery.json",
+      "bytes": 1977,
+      "sha256": "e836e7e334e7fb74632211342654beaee504505d5c2107f3d2ac295b00d69dd5"
+    }
+  ],
+  "evaluation": {
+    "evaluatorVersion": null,
+    "scores": {
+      "identitySimilarity": null,
+      "faceGeometry": null,
+      "bodyGeometry": null,
+      "skin": null,
+      "eyes": null,
+      "hair": null,
+      "materials": null,
+      "rig": null,
+      "facialDeformation": null,
+      "bodyDeformation": null,
+      "lightingRobustness": null,
+      "closeUpQuality": null,
+      "runtimePerformance": null,
+      "overall": null
+    },
+    "defects": [],
+    "scoreDeltaFromParent": {
+      "identitySimilarity": null,
+      "faceGeometry": null,
+      "bodyGeometry": null,
+      "skin": null,
+      "eyes": null,
+      "hair": null,
+      "materials": null,
+      "rig": null,
+      "facialDeformation": null,
+      "bodyDeformation": null,
+      "lightingRobustness": null,
+      "closeUpQuality": null,
+      "runtimePerformance": null,
+      "overall": null
+    }
+  },
+  "actualResult": "The original full-body export was rejected after visual QA exposed hidden helper geometry. A clean head-neck-and-eyes-only solve package was rebuilt, normalized, measured and rendered at 1440x2560 from five fixed views; it remains only an input for a future MetaHuman Identity solve. A reproducible MediaPipe landmark baseline against canonical image 03 measured the principal front-view identity deltas without fabricating an identity score. Canonical profiles 07/08 were detector-valid, but both candidate profiles failed detection; automated profile scoring therefore failed closed and a human-reviewed comparison board defines conform constraints. An Editor-only UE 5.6 deformation QA contract now covers 15 cases and 11 defect classes under the Looking Glass Go profile; runtime verification remains explicitly pending. Canonical body reference 16 and the v79 Go render produced stable pose landmarks; the baseline shows shoulder width is close while torso length, not absolute leg length, is the primary proportion mismatch. Human-reviewed source evidence now establishes neutral, smile and mouth-open expression anchors, raising truthful expression coverage from 0/16 to 3/16; the other 13 states remain explicitly missing and no viseme labels were inferred. A null-by-default MetaHuman candidate binding, read-only UE 5.6 asset collector and post-conform gate now require real Identity, mesh, rig, Groom, DNA/RigLogic and five immutable Go renders; fixture evidence passes while the current workspace correctly remains pending. A separate production surface gate now rejects the diffuse-only v79 skin and prototype eyes unless a real 4K eight-channel skin set, eight facial zones, six physical eye parts, Editor bindings and seven immutable Go close-ups exist. A production Groom gate similarly rejects the dense generic Hair Editor blockout until canonical grouping and styling, real Unreal Groom/scalp bindings, strands plus fallback LOD, runtime collision checks and fourteen immutable Go captures exist. A modular clothing gate preserves the valuable body/garment separation but rejects the procedural v79 outfit until patterned PBR assets, Chaos Cloth/Dataflow, body-independent swapping, LODs, zero-penetration runtime checks and sixteen immutable Go captures exist. A frame-level deformation evaluator now requires eleven unit-bound geometry diagnostics at all forty-five declared samples, rejecting missing, duplicate, non-finite, threshold-exceeding or self-inconsistent evidence before G4 review. The evidence scorecard reports three measured-but-unscored components, ten unverified components and eleven blocking defects; overall remains null instead of presenting a fabricated AAA percentage. A deterministic refinement decision engine registers v001 as the baseline and will only keep future iterations when target metrics improve without guardrail regression or blocking defects; unscored comparisons remain inconclusive. A fail-closed TRELLIS.2/Hunyuan3D benchmark now requires six equally seeded, fully attributable temporary shape candidates with cleanup, measurements and nine fixed Looking Glass Go renders each; the workspace truthfully remains at zero candidates until both pinned toolchains and reviewed weights are available.",
+  "decision": null
+}

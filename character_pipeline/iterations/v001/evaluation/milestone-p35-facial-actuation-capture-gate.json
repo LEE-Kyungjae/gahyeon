@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P35-facial-actuation-capture-gate",
+  "state": "completed-gate-awaiting-p34-profile-ue56-and-57-captures",
+  "displayProfile": "looking-glass-go",
+  "displayContract": {"resolution": [1440, 2560], "viewCount": 66, "camera": "face-close-up"},
+  "hypothesis": {
+    "statement": "A complete semantic map can still fail at runtime through weak response, curve crosstalk, bilateral blink leakage, missing frames or presentation-profile bypass.",
+    "action": "Drive 19 required facial cases at 0, 0.5 and 1.0 through the real presentation profile, export all resolved curve weights, and bind each of the 57 samples to a unique checksummed Looking Glass Go PNG.",
+    "expectedResult": "Facial actuation mechanics become reproducible and measurable before separate geometry-deformation and human visual approval."
+  },
+  "requiredEvidence": {"cases": 19, "weightsPerCase": 3, "samples": 57, "uniquePngCaptures": 57, "fullCurveTracePerSample": true, "mappingLineage": "P34 SHA-256"},
+  "actualResult": {"captureJob": null, "currentEditorEvidence": null, "mappingActuationVerified": false, "deformationVerified": false, "productionReady": false},
+  "scopeBoundary": [
+    "P35 verifies runtime curve actuation mechanics, not facial geometry quality",
+    "P12 still owns lip, eyelid, volume, clipping and temporal deformation diagnostics",
+    "human review still owns likeness and expression credibility at conversational distance"
+  ],
+  "failureHandling": [
+    "reject missing or duplicate case/weight samples",
+    "reject non-finite, out-of-range or incomplete curve traces",
+    "reject weak half/peak response, curve crosstalk and opposite-eye blink leakage",
+    "reject missing, reused, changed or non-1440x2560 PNG captures",
+    "reject P34 lineage drift and any deformation or production overclaim"
+  ],
+  "validation": {"captureJobTests": "3 passed", "actuationEvidenceTests": "9 passed", "realEditorCapture": "pending"},
+  "decision": "Only a passing 57-sample report may enter P12 deformation capture; semantic motion alone is never AAA approval."
+}

@@ -18,7 +18,7 @@ class UnrealEngineWindowsGateContractTest(unittest.TestCase):
         self.assertNotIn("GahyeonStageLookingGlass.uproject", self.source)
         self.assertIn("GahyeonStageEditor Win64 Development", self.source)
         self.assertIn("MajorVersion -ne 5", self.source)
-        self.assertIn("MinorVersion -ne 6", self.source)
+        self.assertIn("MinorVersion -ne 8", self.source)
 
     def test_requires_both_vertical_slice_automation_results(self):
         self.assertIn("Gahyeon.Runtime.MockCognitionDelayFailureAndReordering", self.source)
@@ -31,13 +31,20 @@ class UnrealEngineWindowsGateContractTest(unittest.TestCase):
         self.assertIn('"automationLog": {"path": "automation.log"', self.source)
         self.assertIn("verify_unreal_engine_evidence.py", self.source)
         self.assertIn("temporary.replace(root / \"manifest.json\")", self.source)
+        self.assertIn("$ManifestScript | & $Python - $EvidenceRoot", self.source)
+        self.assertNotIn("& $Python -c $ManifestScript", self.source)
 
     def test_optional_package_is_cooked_and_fully_inventoried(self):
         self.assertIn("[switch]$Package", self.source)
         self.assertIn("RunUAT.bat", self.source)
         self.assertIn("BuildCookRun", self.source)
         self.assertIn("-clientconfig=Development", self.source)
+        self.assertIn("-NoAssetRegistryCache", self.source)
+        self.assertIn("-NoUBA", self.source)
+        self.assertIn("'-ubtargs=-NoUBA'", self.source)
         self.assertIn("package-files.json", self.source)
+        self.assertIn("$InventoryScript | & $Python - $PackageRoot", self.source)
+        self.assertNotIn("& $Python -c $InventoryScript", self.source)
         self.assertIn('"packagedBuild": packaged', self.source)
 
     def test_hero_gate_is_optional_but_strict(self):

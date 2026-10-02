@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "canonicalIndex": 3,
+  "scope": "face-shape-only",
+  "exclusions": ["hair-strand-fidelity", "earring-geometry", "skin-texture", "final-topology"],
+  "purpose": "temporary-shape-estimate-for-metahuman-conform",
+  "productionMeshAllowed": false,
+  "approved": false,
+  "automatic": false,
+  "reviewer": null,
+  "approvedAt": null,
+  "expiresAt": null,
+  "derivative": {
+    "path": "/Users/ze/work/gahyeonbot/character_pipeline/reference/canonical/derived/canonical-03-rgba-draft.png",
+    "sha256": "42a83d3a2f395ed963a38eb8dd93d0c919e446b3723d1131cd36cac0135685da"
+  },
+  "matteManifest": {
+    "path": "/Users/ze/work/gahyeonbot/character_pipeline/reference/canonical/derived/canonical-03-rgba-draft.json",
+    "sha256": "52c366d46f0559c192aa5b00445a4a6adc937640ca82951060ffb8b96fd17d6c"
+  },
+  "reviewBoard": "canonical-03-matte-review-board.png",
+  "knownDefects": ["some flyaway hair boundaries are thickened", "star earring is mostly omitted"],
+  "question": "Accept only the large neutral face/head silhouette as a temporary reconstruction input?"
+}

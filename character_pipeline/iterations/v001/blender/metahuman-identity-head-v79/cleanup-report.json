@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "claim": "normalized-temporary-shape-estimate-not-production-mesh",
+  "input": {
+    "uri": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/metahuman-identity-head-v79/gahyeon-metahuman-identity-v79.obj",
+    "bytes": 863911,
+    "sha256": "848c2a89ea743a2549d6e49d1f91c36d0c85bda5a508225115e668474a15c839"
+  },
+  "parameters": {
+    "targetHeightCm": 42.0,
+    "mergeDistanceCm": 0.001,
+    "forward": "-Y",
+    "up": "+Z"
+  },
+  "before": {
+    "Gahyeon_MetaHuman_IdentitySolve_v79": {
+      "vertices": 6520,
+      "edges": 12965,
+      "polygons": 6452,
+      "boundaryEdges": 314,
+      "nonManifoldEdges": 314,
+      "looseEdges": 0
+    }
+  },
+  "after": {
+    "Gahyeon_MetaHuman_IdentitySolve_v79": {
+      "vertices": 6520,
+      "edges": 12965,
+      "polygons": 6452,
+      "boundaryEdges": 314,
+      "nonManifoldEdges": 314,
+      "looseEdges": 0
+    }
+  },
+  "duplicateVerticesRemoved": 0,
+  "boundsCm": {
+    "minimum": [
+      -19.15814,
+      -13.017066,
+      0.0
+    ],
+    "maximum": [
+      19.15814,
+      13.017066,
+      42.0
+    ],
+    "dimensions": [
+      38.31628,
+      26.034132,
+      42.0
+    ]
+  },
+  "symmetry": {
+    "sampleCount": 2174,
+    "meanNearestMirrorCm": 0.00225,
+    "maxNearestMirrorCm": 0.035593
+  },
+  "validation": {
+    "grounded": true,
+    "heightNormalized": true,
+    "nonManifoldEdges": 314,
+    "status": "measured-not-production-approved"
+  },
+  "output": {
+    "uri": "/Users/ze/work/gahyeonbot/character_pipeline/iterations/v001/blender/metahuman-identity-head-v79/gahyeon-head-clean.blend",
+    "bytes": 374806,
+    "sha256": "f7c81244f4b0951298eba3d7055d5a3a72fd870f68bd197a808b5a6b847808a2"
+  }
+}

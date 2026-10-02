@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P19-weight-snapshot-and-cuda-worker-handoff",
+  "state": "completed-contract-worker-unreachable",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A repository revision alone cannot reproduce reconstruction because mutable or partial model blobs and unknown worker capabilities can silently change geometry.",
+    "action": "Allowlist exact weight files, pin revision, byte length and LFS SHA-256, require Linux/CUDA/disk evidence, forbid symlinked blobs and reject overclaimed worker readiness.",
+    "expectedResult": "Only a verified worker snapshot can feed the six-candidate benchmark, while large blobs stay outside Git and the local Mac."
+  },
+  "actualResult": {
+    "instantMeshSnapshot": {
+      "revision": "b785b4ecfb6636ef34a08c748f96f6a5686244d0",
+      "gated": false,
+      "files": 2,
+      "bytes": 3246874579,
+      "filesVerifiedFromOfficialMetadata": ["diffusion_pytorch_model.bin", "instant_mesh_large.ckpt"]
+    },
+    "trellisSnapshot": {
+      "ready": false,
+      "blocker": "official-weight-snapshot-unpinned"
+    },
+    "worker": {
+      "name": "land",
+      "state": "unreachable",
+      "failure": "SSH banner timeout",
+      "capabilitiesVerified": false
+    },
+    "candidateCount": 0,
+    "productionMeshAllowed": false
+  },
+  "validation": [
+    "reject incomplete or extra snapshot files",
+    "reject size or SHA-256 changes",
+    "reject symlinked materialization",
+    "reject non-Linux or non-CUDA worker",
+    "reject worker disk below 40 GiB",
+    "reject readiness while TRELLIS snapshot remains unpinned"
+  ],
+  "decision": "Keep the handoff contract. Do not download multi-gigabyte snapshots locally or claim worker readiness until land is reachable and both official snapshots validate."
+}

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "sessionId": "gahyeon-metahuman-identity-v002",
+  "state": "awaiting-guided-identity",
+  "automatic": false,
+  "productionReady": false,
+  "qualityClaim": null,
+  "importReceipt": {"uri": "import-receipt.json", "sha256": null},
+  "identityAsset": {"path": null, "class": "MetaHumanIdentity"},
+  "reviewer": {"name": null, "role": null},
+  "reviewedAt": null,
+  "checks": {
+    "componentsConfiguredFromMesh": false,
+    "neutralFramePromoted": false,
+    "neutralFrameTracked": false,
+    "markersHumanCorrected": false,
+    "identitySolveCompleted": false,
+    "templateOverlayReviewed": false,
+    "frontIdentityReviewed": false,
+    "bothProfilesReviewed": false
+  },
+  "evidence": [
+    {"view": "front", "captureType": "viewport-screenshot", "uri": null, "sha256": null},
+    {"view": "left-profile", "captureType": "viewport-screenshot", "uri": null, "sha256": null},
+    {"view": "right-profile", "captureType": "viewport-screenshot", "uri": null, "sha256": null},
+    {"view": "template-a", "captureType": "identity-template-overlay", "uri": null, "sha256": null},
+    {"view": "template-b", "captureType": "identity-template-overlay", "uri": null, "sha256": null}
+  ],
+  "canonicalComparison": {
+    "referenceIndices": [3, 6, 7, 8],
+    "identityDecision": null,
+    "identityScore": null,
+    "notes": null
+  },
+  "blockingFindings": ["unreviewed-template"]
+}

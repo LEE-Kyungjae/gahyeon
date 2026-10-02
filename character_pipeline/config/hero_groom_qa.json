@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "target": "metahuman-post-conform",
+  "displayProfile": "looking-glass-go",
+  "resolution": [1440, 2560],
+  "requiredGroups": ["scalp", "brows", "lashes", "flyaways"],
+  "requiredFeatures": ["hairline", "center-part", "root-direction", "major-clumps", "face-framing-locks", "layered-tips", "loose-waves", "flyaways"],
+  "requiredBindings": ["groom-asset", "groom-binding-asset", "target-skeletal-mesh", "physics-asset", "material-instance"],
+  "lodPolicy": {
+    "requiredModes": ["strands", "fallback"],
+    "fallbackAllowed": ["cards", "mesh"],
+    "uniqueDescendingScreenSizes": true,
+    "transitionPopMustBeReviewed": true
+  },
+  "runtimeChecks": [
+    "root-lock-head-yaw", "root-lock-head-pitch", "scalp-penetration", "face-penetration",
+    "eye-occlusion", "shoulder-collision", "jacket-collision", "simulation-settle",
+    "lod-transition-pop", "shadow-stability"
+  ],
+  "captures": [
+    "groom-front", "groom-left", "groom-right", "groom-rear", "groom-top",
+    "groom-hairline", "groom-brows", "groom-lashes", "groom-flyaways",
+    "groom-head-yaw", "groom-head-pitch", "lod-strands", "lod-fallback", "lod-transition"
+  ],
+  "approvalPolicy": {
+    "automaticApproval": false,
+    "requireEditorEvidence": true,
+    "requireHumanReview": true,
+    "failOnMissingGroup": true,
+    "failOnMissingFallbackLod": true,
+    "neverOverwritePriorEvidence": true
+  }
+}

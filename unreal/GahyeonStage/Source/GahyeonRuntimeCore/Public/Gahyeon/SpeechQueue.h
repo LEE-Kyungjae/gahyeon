@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Gahyeon/IntentRuntime.h"
+#include "Gahyeon/EmotionRuntime.h"
 
 #include <cstddef>
 #include <deque>
@@ -29,6 +30,7 @@ struct PreparedSpeech {
     std::string AudioUrl;
     std::string MimeType;
     std::vector<VisemeCue> Visemes;
+    std::optional<EmotionTarget> Expression;
 };
 
 struct SpeechSequenceEnd {

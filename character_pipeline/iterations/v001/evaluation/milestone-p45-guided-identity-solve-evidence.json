@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P45-guided-identity-solve-evidence",
+  "state": "completed-contract-awaiting-real-solve",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "MetaHuman Identity Solve can technically succeed while preserving an unattractive or incorrect face, so solve success alone must not authorize conform.",
+    "action": "Require immutable front, both profile and Template A/B captures, an authorized named reviewer, canonical 03/06/07/08 comparison, explicit keep/reject decision and zero blocking findings before conform.",
+    "expectedResult": "A technically solved but visually wrong face remains a valid rejected iteration and cannot become the production MetaHuman."
+  },
+  "actualResult": {
+    "template": "../../../metahuman/identity/v002/solve-evidence-template.json",
+    "verifier": "../../../tools/verify_metahuman_identity_solve_evidence.py",
+    "requiredEvidenceViews": 5,
+    "canonicalReferenceIndices": [3, 6, 7, 8],
+    "allowedDecisions": ["keep-for-conform", "reject-and-resolve"],
+    "unvalidatedNumericIdentityScoreAllowed": false,
+    "currentConformAllowed": false,
+    "qualityClaim": null
+  },
+  "validation": {
+    "tests": "6 passed",
+    "keepFixture": "passed and allows conform",
+    "rejectFixture": "passed but blocks conform",
+    "missingProfile": "rejected",
+    "unauthorizedReviewer": "rejected",
+    "fabricatedNumericScore": "rejected",
+    "keepWithBlockingFinding": "rejected",
+    "currentTemplate": "rejected as awaiting guided Identity"
+  },
+  "qualityBoundary": "This contract does not claim that Identity Solve has run. It ensures MetaHuman cannot merely render the existing ugly MPFB proportions at higher fidelity and pass automatically.",
+  "decision": "The first real solve should default to reject unless the user can recognize the canonical identity in front and both profiles."
+}

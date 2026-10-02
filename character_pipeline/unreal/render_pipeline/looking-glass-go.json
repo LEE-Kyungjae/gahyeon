@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "profileId": "looking-glass-go",
+  "device": {
+    "panelResolution": [1440, 2560],
+    "orientation": "portrait",
+    "aspectRatio": 0.5625,
+    "refreshHz": 60,
+    "source": "https://checkout.lookingglassfactory.com/products/looking-glass-go"
+  },
+  "qa": {
+    "singleViewResolution": [1440, 2560],
+    "safeAreaPolicy": "subject must remain visible across calibrated view cone",
+    "background": "neutral-mid-gray",
+    "colorDepthBits": 8
+  },
+  "quilt": {
+    "viewCount": 66,
+    "columns": null,
+    "rows": null,
+    "resolution": null,
+    "calibrationAuthority": "Looking Glass Bridge connected-device runtime attestation",
+    "failClosedWithoutCalibration": true
+  },
+  "notes": [
+    "Panel resolution is not quilt texture resolution.",
+    "Do not infer Go quilt columns, rows or texture size from other Looking Glass models.",
+    "The repository's pinned Unreal plugin uses 66 default realtime views."
+  ]
+}
+

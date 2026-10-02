@@ -1,0 +1,27 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.8",
+  "Category": "AI Character POC",
+  "Description": "Content-only UE 5.8 desktop proof of concept for the Gahyeon MetaHuman pipeline",
+  "Modules": [
+    {"Name": "GahyeonDesktopMetaHumanPOC", "Type": "Runtime", "LoadingPhase": "PostEngineInit"}
+  ],
+  "DisableEnginePluginsByDefault": true,
+  "Plugins": [
+    {"Name": "AnimationData", "Enabled": true},
+    {"Name": "ControlRig", "Enabled": true},
+    {"Name": "ControlRigSpline", "Enabled": true},
+    {"Name": "FullBodyIK", "Enabled": true},
+    {"Name": "IKRig", "Enabled": true},
+    {"Name": "RigLogic", "Enabled": true},
+    {"Name": "HairStrands", "Enabled": true},
+    {"Name": "MetaHumanSDK", "Enabled": true},
+    {"Name": "MetaHumanCharacter", "Enabled": true},
+    {"Name": "MetaHuman", "Enabled": true, "SupportedTargetPlatforms": ["Mac", "Win64", "Linux"]},
+    {"Name": "PythonScriptPlugin", "Enabled": true},
+    {"Name": "MovieRenderPipeline", "Enabled": true}
+    ,{"Name": "AudioCapture", "Enabled": true}
+    ,{"Name": "EnhancedInput", "Enabled": true}
+    ,{"Name": "GahyeonVoiceRuntime", "Enabled": true}
+  ]
+}

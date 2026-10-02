@@ -24,8 +24,8 @@ find_engine_root() {
   fi
   local candidate
   for candidate in \
-    "/Users/Shared/Epic Games/UE_5.6" \
-    "/opt/UnrealEngine/UE_5.6" \
+    "/Users/Shared/Epic Games/UE_5.8" \
+    "/opt/UnrealEngine/UE_5.8" \
     "/opt/UnrealEngine"; do
     if [[ -f "$candidate/Engine/Build/Build.version" ]]; then
       printf '%s\n' "$candidate"
@@ -36,7 +36,7 @@ find_engine_root() {
 }
 
 if ! engine_root="$(find_engine_root)"; then
-  echo "Unreal Engine 5.6 was not found. Set GAHYEON_UE_ROOT to the installed engine root." >&2
+  echo "Unreal Engine 5.8 was not found. Set GAHYEON_UE_ROOT to the installed engine root." >&2
   exit 3
 fi
 
@@ -51,8 +51,8 @@ value = json.load(open(sys.argv[1], encoding="utf-8"))
 print(f"{value.get('MajorVersion')}.{value.get('MinorVersion')}")
 PY
 )"
-if [[ "$engine_version" != "5.6" ]]; then
-  echo "GahyeonStage requires Unreal Engine 5.6; found $engine_version at $engine_root" >&2
+if [[ "$engine_version" != "5.8" ]]; then
+  echo "GahyeonStage requires Unreal Engine 5.8; found $engine_version at $engine_root" >&2
   exit 5
 fi
 

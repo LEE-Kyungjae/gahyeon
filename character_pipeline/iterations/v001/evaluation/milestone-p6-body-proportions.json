@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P6-canonical-body-proportion-baseline",
+  "status": "measured-not-scored",
+  "authority": {
+    "referenceIndex": 16,
+    "role": "primary-front-body-geometry",
+    "source": "user-provided-original"
+  },
+  "method": {
+    "detector": "MediaPipe Pose Heavy 0.10.21",
+    "landmarks": 33,
+    "segmentation": true,
+    "normalizedMeasurements": 8,
+    "bodySimilarityScore": null
+  },
+  "findings": [
+    {
+      "measurement": "shoulderWidthOverSilhouetteHeight",
+      "deltaPercent": 0.365,
+      "confidence": "medium",
+      "finding": "candidate skeletal shoulder width is already close to canonical",
+      "decision": "preserve shoulder width during MetaHuman body selection"
+    },
+    {
+      "measurement": "torsoLengthOverSilhouetteHeight",
+      "deltaPercent": 12.225,
+      "confidence": "medium",
+      "finding": "candidate torso is proportionally too long",
+      "decision": "select or tune a shorter MetaHuman torso before changing leg length"
+    },
+    {
+      "measurement": "legToTorsoRatio",
+      "deltaPercent": -7.306,
+      "confidence": "medium",
+      "finding": "candidate legs are too short relative to its torso",
+      "decision": "improve primarily by shortening torso; avoid blindly lengthening legs"
+    },
+    {
+      "measurement": "legLengthOverSilhouetteHeight",
+      "deltaPercent": 4.025,
+      "confidence": "medium",
+      "finding": "candidate absolute 2D leg proportion is already slightly longer than canonical",
+      "decision": "do not apply a global leg-length increase"
+    },
+    {
+      "measurement": "upperToLowerLegRatio",
+      "deltaPercent": 4.83,
+      "confidence": "medium",
+      "finding": "candidate upper leg is modestly long relative to lower leg",
+      "decision": "prefer balanced MetaHuman limb preset and retest under walk/sit"
+    }
+  ],
+  "lowConfidence": [
+    "arm length delta -10.455% because canonical arms are down and candidate is A-pose",
+    "hip width delta +7.216% because shorts/jacket and pose affect detector placement",
+    "shoulder-to-hip ratio delta -6.389% inherits hip uncertainty"
+  ],
+  "metahumanBodyConstraints": [
+    "preserve current shoulder width",
+    "reduce torso length before changing leg length",
+    "do not globally lengthen legs",
+    "validate upper/lower leg balance in standing, walking and sitting",
+    "rerun measurements on a matched neutral pose and clothing-minimized render"
+  ],
+  "deformationQaLinks": [
+    "shorter torso must pass breathing volume and spine bending checks",
+    "preserved shoulders must pass shoulder raise without collapse",
+    "limb choice must pass sitting, standing and walking before acceptance"
+  ],
+  "limitations": [
+    "reference and candidate poses differ",
+    "clothing affects segmentation and joint placement",
+    "2D ratios do not measure chest, hip or limb depth",
+    "human approval and matched-pose rerender remain mandatory"
+  ]
+}

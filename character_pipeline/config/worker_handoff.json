@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "executionRegion": "KR",
+  "requiredModels": ["trellis", "instantmesh"],
+  "minimumFreeDiskGiB": 40,
+  "forbidSymlinks": true,
+  "productionMeshAllowed": false,
+  "snapshots": {
+    "instantmesh": {
+      "repository": "TencentARC/InstantMesh",
+      "revision": "b785b4ecfb6636ef34a08c748f96f6a5686244d0",
+      "allowPatterns": ["diffusion_pytorch_model.bin", "instant_mesh_large.ckpt"],
+      "files": [
+        {"path": "diffusion_pytorch_model.bin", "bytes": 1732056502, "sha256": "9d78d78421d1feb6871d13e13e86ed8099628648d7d9c51ffca9015b7d5fa3c4"},
+        {"path": "instant_mesh_large.ckpt", "bytes": 1514818077, "sha256": "329f7aae9b583fd7c1b27d0221463db7b808a03c48a1f7aa26649af6a03b91a1"}
+      ]
+    },
+    "trellis": {
+      "repository": "microsoft/TRELLIS.2-4B",
+      "revision": "af44b45f2e35a493886929c6d786e563ec68364d",
+      "allowPatterns": [
+        "pipeline.json",
+        "ckpts/shape_dec_next_dc_f16c32_fp16.*",
+        "ckpts/slat_flow_img2shape_dit_1_3B_1024_bf16.*",
+        "ckpts/slat_flow_img2shape_dit_1_3B_512_bf16.*",
+        "ckpts/ss_flow_img_dit_1_3B_64_bf16.*"
+      ],
+      "files": [
+        {"path": "ckpts/shape_dec_next_dc_f16c32_fp16.safetensors", "bytes": 948490494, "sha256": "e3b718d3e43e4f8780e9a24ac6fff231811a67e3b058e336e10fe654c911d581"},
+        {"path": "ckpts/slat_flow_img2shape_dit_1_3B_1024_bf16.safetensors", "bytes": 2584574424, "sha256": "07cd0596f634c5adc1890023d16023afc5eed02fb84b22bb23aff5bf0030fbbd"},
+        {"path": "ckpts/slat_flow_img2shape_dit_1_3B_512_bf16.safetensors", "bytes": 2584574424, "sha256": "ec5e0917ef9b7e25ad51dffc7d19687a42019871f94239f2fa7f86264c55b70f"},
+        {"path": "ckpts/ss_flow_img_dit_1_3B_64_bf16.safetensors", "bytes": 2584426920, "sha256": "ca01377c485bec418076d38ee80166d32dc776d744f2553b835cba1e97a7abf6"}
+      ],
+      "dependencies": [
+        {
+          "repository": "microsoft/TRELLIS-image-large",
+          "revision": "25e0d31ffbebe4b5a97464dd851910efc3002d96",
+          "files": [
+            {"path": "ckpts/ss_dec_conv3d_16l8_fp16.safetensors", "bytes": 147591972, "sha256": "1c76d4a40519aa2d711cc263a8404105231ac26db31d946bed48b84fee79009a"}
+          ]
+        }
+      ],
+      "gatedDependency": {
+        "repository": "facebook/dinov3-vitl16-pretrain-lvd1689m",
+        "license": "DINOv3-License",
+        "approvalRequired": true
+      },
+      "forbiddenDependency": {
+        "repository": "briaai/RMBG-2.0",
+        "reason": "self-hosted-weights-not-approved-for-commercial-production"
+      },
+      "inputRequirement": "pre-masked-rgba-png"
+    }
+  }
+}

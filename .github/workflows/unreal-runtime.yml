@@ -43,6 +43,10 @@ on:
       - "scripts/looking_glass_runtime_attestation.py"
       - "scripts/looking_glass_contract_fixture.py"
       - "scripts/run_looking_glass_windows_gate.ps1"
+      - "scripts/run_desktop_runtime_poc_v091_windows.ps1"
+      - "scripts/test_run_desktop_runtime_poc_v091_windows.py"
+      - "config/desktop-looking-glass-runtime-poc-v091.json"
+      - "docs/DESKTOP_LOOKING_GLASS_RUNTIME_POC_V091.md"
       - "scripts/verify_gahyeon_hero_asset.py"
       - "scripts/test_verify_gahyeon_hero_asset.py"
       - "scripts/package_gahyeon_unreal_content.py"
@@ -95,6 +99,10 @@ on:
       - "scripts/looking_glass_runtime_attestation.py"
       - "scripts/looking_glass_contract_fixture.py"
       - "scripts/run_looking_glass_windows_gate.ps1"
+      - "scripts/run_desktop_runtime_poc_v091_windows.ps1"
+      - "scripts/test_run_desktop_runtime_poc_v091_windows.py"
+      - "config/desktop-looking-glass-runtime-poc-v091.json"
+      - "docs/DESKTOP_LOOKING_GLASS_RUNTIME_POC_V091.md"
       - "scripts/verify_gahyeon_hero_asset.py"
       - "scripts/test_verify_gahyeon_hero_asset.py"
       - "scripts/package_gahyeon_unreal_content.py"
@@ -106,6 +114,17 @@ on:
       - "scripts/requirements-contracts.txt"
       - ".github/workflows/unreal-runtime.yml"
   workflow_dispatch:
+    inputs:
+      run_native_windows:
+        description: "Run the packaged v091 proof on a self-hosted Windows UE 5.8 runner"
+        required: false
+        default: false
+        type: boolean
+      run_realtime_acceptance:
+        description: "Also run the 10-minute Desktop realtime acceptance gate"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -131,12 +150,13 @@ jobs:
       - name: Install contract validator dependencies
         run: python -m pip install --disable-pip-version-check -r scripts/requirements-contracts.txt
 
-      - name: Validate UE 5.6 source scaffold
+      - name: Validate UE 5.8 source scaffold
         run: |
           ./scripts/verify_unreal_stage_scaffold.sh
           bash -n ./scripts/run_unreal_engine_gate.sh
           ./scripts/test_run_unreal_engine_gate.sh
           python3 ./scripts/test_run_unreal_engine_windows_gate.py
+          python3 ./scripts/test_run_desktop_runtime_poc_v091_windows.py
           python3 ./scripts/test_verify_unreal_engine_evidence.py
           python3 ./scripts/test_build_desktop_realtime_acceptance.py
           python3 ./scripts/test_run_desktop_realtime_acceptance.py
@@ -175,3 +195,49 @@ jobs:
 
       - name: Test Unreal backend adapter
         run: ./gradlew test --tests 'com.gahyeonbot.adapters.unreal.*'
+
+  native-windows-v091:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_native_windows }}
+    runs-on: [self-hosted, Windows, X64, unreal-5.8]
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve Unreal Engine 5.8
+        id: unreal
+        shell: pwsh
+        run: |
+          $root = if ($env:GAHYEON_UE_ROOT) {
+            $env:GAHYEON_UE_ROOT
+          } else {
+            'C:\Program Files\Epic Games\UE_5.8'
+          }
+          if (-not (Test-Path -LiteralPath (Join-Path $root 'Engine\Build\BatchFiles\RunUAT.bat'))) {
+            throw "UE 5.8 RunUAT.bat is unavailable at $root"
+          }
+          "root=$root" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Run packaged Windows launch and restart proof
+        shell: pwsh
+        run: |
+          $arguments = @(
+            '-ExecutionPolicy', 'Bypass',
+            '-File', 'scripts\run_desktop_runtime_poc_v091_windows.ps1',
+            '-UnrealRoot', '${{ steps.unreal.outputs.root }}',
+            '-EvidenceRoot', 'artifacts\desktop-looking-glass-runtime-poc-v091\windows-native-${{ github.run_id }}-${{ github.run_attempt }}'
+          )
+          if ('${{ inputs.run_realtime_acceptance }}' -eq 'true') {
+            $arguments += '-RunRealtimeAcceptance'
+          }
+          & powershell @arguments
+          if ($LASTEXITCODE -ne 0) { throw "v091 native Windows proof failed" }
+
+      - name: Upload native Windows evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gahyeon-v091-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/desktop-looking-glass-runtime-poc-v091/windows-native-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Keep Looking Glass optional until its real-time/device gates are evidenced."""
+"""Require Looking Glass as the primary release surface while keeping Core decoupled."""
 
 from __future__ import annotations
 
@@ -17,8 +17,10 @@ EXPECTED_COMMIT = "8a82363c80c6998357e8eb20994d6a69d8eff827"
 def verify(lock_path: Path, project_path: Path) -> dict:
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
     project = json.loads(project_path.read_text(encoding="utf-8"))
-    if lock.get("schemaVersion") != 1 or lock.get("status") != "evaluated-not-enabled":
-        raise ValueError("Looking Glass integration must remain explicitly evaluated-not-enabled")
+    if lock.get("schemaVersion") != 1 or lock.get("status") != "primary-release-gated":
+        raise ValueError("Looking Glass must remain an explicit primary production release gate")
+    if lock.get("role") != "primary-deployment-surface":
+        raise ValueError("Looking Glass is not declared as the primary deployment surface")
     upstream = lock.get("upstream", {})
     compatibility = lock.get("compatibility", {})
     policy = lock.get("policy", {})
@@ -32,7 +34,7 @@ def verify(lock_path: Path, project_path: Path) -> dict:
             or archive.get("root") != "LookingGlass/"):
         raise ValueError("Looking Glass release archive is not byte-for-byte pinned")
     if compatibility != {
-        "unrealEngine": "5.6",
+        "unrealEngine": "5.8",
         "platforms": ["Win64"],
         "minimumBridge": "2.5.1",
         "realtimeModeImplemented": True,
@@ -46,6 +48,9 @@ def verify(lock_path: Path, project_path: Path) -> dict:
     }
     if any(policy.get(key) is not False for key in required_false):
         raise ValueError("Looking Glass must not become a required or duplicate AI runtime")
+    if (policy.get("requiredForProductionRelease") is not True
+            or policy.get("monitorIsDevelopmentAndRecoveryFallback") is not True):
+        raise ValueError("Looking Glass primary-release policy is incomplete")
     if policy.get("deviceAbsentMustRemainHealthy") is not True or policy.get("sharesWorldAndSession") is not True:
         raise ValueError("Looking Glass renderer isolation policy is incomplete")
     gates = lock.get("adoptionGates", [])
@@ -57,8 +62,8 @@ def verify(lock_path: Path, project_path: Path) -> dict:
     plugins = {item.get("Name"): item for item in project.get("Plugins", [])}
     if plugins.get("LookingGlass", {}).get("Enabled") is True:
         raise ValueError("Looking Glass cannot be enabled before device and latency evidence exists")
-    if project.get("EngineAssociation") != "5.6":
-        raise ValueError("Looking Glass evaluation is pinned to the UE 5.6 Stage baseline")
+    if project.get("EngineAssociation") != "5.8":
+        raise ValueError("Looking Glass evaluation is pinned to the UE 5.8 Stage baseline")
     return {"valid": True, "release": upstream["release"], "status": lock["status"],
             "adoptionGateCount": len(gates)}
 

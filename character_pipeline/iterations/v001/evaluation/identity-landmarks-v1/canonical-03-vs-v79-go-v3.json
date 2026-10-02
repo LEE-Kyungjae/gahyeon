@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "method": "normalized-mediapipe-landmark-delta-v1",
+  "referenceImage": {
+    "uri": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/ChatGPT Image 2026년 8월 10일 오후 10_57_38.png",
+    "sha256": "84855cabf133616975e5699217af54bc00e3804ecdfe5dfb1d22bd6887dfbc99",
+    "dimensions": [
+      1254,
+      1254
+    ]
+  },
+  "candidateImage": {
+    "uri": "/Users/ze/work/gahyeonbot/character_pipeline/iterations/v001/blender/metahuman-identity-head-v79/looking-glass-go-renders-v3/face-front.png",
+    "sha256": "883c8767721e6cbb2c42b8f839bf8fe88a14b34d4bb838793b27cdc1f1e42516",
+    "dimensions": [
+      1440,
+      2560
+    ]
+  },
+  "prototypeEyes": true,
+  "deltas": [
+    {
+      "measurement": "eyeCenterSeparationOverFaceWidth",
+      "reference": 0.474626,
+      "candidate": 0.399528,
+      "absoluteDelta": -0.075098,
+      "relativeDeltaPercent": -15.823,
+      "confidence": "low"
+    },
+    {
+      "measurement": "eyeLineToChinOverFaceHeight",
+      "reference": 0.6545,
+      "candidate": 0.650521,
+      "absoluteDelta": -0.003979,
+      "relativeDeltaPercent": -0.608,
+      "confidence": "low"
+    },
+    {
+      "measurement": "faceAspectWidthOverHeight",
+      "reference": 0.829698,
+      "candidate": 0.962445,
+      "absoluteDelta": 0.132747,
+      "relativeDeltaPercent": 15.999,
+      "confidence": "medium"
+    },
+    {
+      "measurement": "leftEyeWidthOverFaceWidth",
+      "reference": 0.207899,
+      "candidate": 0.1859,
+      "absoluteDelta": -0.021999,
+      "relativeDeltaPercent": -10.582,
+      "confidence": "low"
+    },
+    {
+      "measurement": "lipOpeningOverFaceHeight",
+      "reference": 8.7e-05,
+      "candidate": 0.00211,
+      "absoluteDelta": 0.002023,
+      "relativeDeltaPercent": 2325.287,
+      "confidence": "medium"
+    },
+    {
+      "measurement": "mouthToChinOverFaceHeight",
+      "reference": 0.236235,
+      "candidate": 0.230259,
+      "absoluteDelta": -0.005976,
+      "relativeDeltaPercent": -2.53,
+      "confidence": "medium"
+    },
+    {
+      "measurement": "mouthWidthOverFaceWidth",
+      "reference": 0.334738,
+      "candidate": 0.227915,
+      "absoluteDelta": -0.106823,
+      "relativeDeltaPercent": -31.912,
+      "confidence": "medium"
+    },
+    {
+      "measurement": "noseTipToChinOverFaceHeight",
+      "reference": 0.395792,
+      "candidate": 0.399062,
+      "absoluteDelta": 0.00327,
+      "relativeDeltaPercent": 0.826,
+      "confidence": "medium"
+    },
+    {
+      "measurement": "noseWidthOverFaceWidth",
+      "reference": 0.279786,
+      "candidate": 0.241311,
+      "absoluteDelta": -0.038475,
+      "relativeDeltaPercent": -13.752,
+      "confidence": "medium"
+    },
+    {
+      "measurement": "rightEyeWidthOverFaceWidth",
+      "reference": 0.215101,
+      "candidate": 0.172294,
+      "absoluteDelta": -0.042807,
+      "relativeDeltaPercent": -19.901,
+      "confidence": "low"
+    }
+  ],
+  "identitySimilarityScore": null,
+  "limitations": [
+    "2D landmarks do not measure depth or profile identity",
+    "hair, perspective and detector bias can alter face contour landmarks",
+    "prototype eye geometry lowers confidence for eye-related measurements",
+    "human review against canonical images 03/06/07/08 remains mandatory"
+  ]
+}

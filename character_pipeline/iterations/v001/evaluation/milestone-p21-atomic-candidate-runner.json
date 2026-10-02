@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P21-atomic-reconstruction-candidate-runner",
+  "state": "completed-contract-input-not-ready",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A GPU process can fail after creating partial files, causing an incomplete mesh to be mistaken for a valid reconstruction iteration.",
+    "action": "Validate immutable RGBA input, benchmark seed and snapshot inventory before execution, isolate backend output, promote one plausible mesh by directory rename and atomically replace candidate metadata only after success.",
+    "expectedResult": "OOM, interruption, malformed output and retries never expose a generated candidate, while success records exact input, model, seed, snapshot and mesh checksums."
+  },
+  "actualResult": {
+    "models": ["trellis", "instantmesh"],
+    "allowedSeeds": [20260813, 20260814, 20260815],
+    "atomicDirectoryPromotion": true,
+    "atomicManifestReplacement": true,
+    "overwrite": false,
+    "partialOutputPromotion": false,
+    "currentCanonicalInputsReady": 0,
+    "candidateCount": 0
+  },
+  "validatedFailures": [
+    "seed outside benchmark",
+    "input checksum mismatch",
+    "RGB or opaque PNG",
+    "missing snapshot provenance",
+    "backend exception or GPU OOM",
+    "zero, multiple or implausibly small meshes",
+    "backend model or seed mismatch",
+    "second execution against promoted candidate"
+  ],
+  "decision": "Keep the atomic runner boundary. Produce reviewed alpha mattes from canonical 03 and 16 before any real reconstruction invocation."
+}

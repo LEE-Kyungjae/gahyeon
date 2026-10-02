@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "sessionId": "gahyeon-metahuman-identity-v002",
+  "state": "blocked-before-launch",
+  "qualityClaim": null,
+  "workspace": "/Users/ze/work/gahyeonbot",
+  "handoff": {
+    "path": "/Users/ze/work/gahyeonbot/character_pipeline/metahuman/identity/v002/handoff.json",
+    "sha256": "ffe41abacb811d88c8707881619b0cbf45e02b0a1325428537beccf8c9724233"
+  },
+  "preflight": {
+    "path": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/metahuman-toolchain-preflight-v3.json",
+    "sha256": "0a74d8fb60b263258349c70a1c3dce246117c30e7ff4aa70b75b02e842bf7e70"
+  },
+  "source": {
+    "path": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/metahuman-identity-input-v79-v4/gahyeon-metahuman-identity-v79.obj",
+    "sha256": "de78fd95e706d4b95e158d6258200dff61527cc014685d927b0cbb2e8e5af5f6",
+    "claim": "neutral-static-mesh-input-not-metahuman-not-dna"
+  },
+  "unreal": {
+    "editor": null,
+    "project": "/Users/ze/work/gahyeonbot/unreal/GahyeonStage/GahyeonStage.uproject",
+    "identityAsset": "/Game/Gahyeon/CharacterPipeline/v002/Identity/MHI_Gahyeon_v002",
+    "characterAsset": "/Game/Gahyeon/CharacterPipeline/v002/Character/MHC_Gahyeon_v002",
+    "replaceExisting": false
+  },
+  "guidedStages": [
+    {
+      "id": "import-static-shape",
+      "automatic": true,
+      "requiredEvidence": [
+        "StaticMesh asset path",
+        "source checksum"
+      ]
+    },
+    {
+      "id": "components-from-mesh",
+      "automatic": false,
+      "requiredEvidence": [
+        "promoted neutral frame",
+        "component assignment"
+      ]
+    },
+    {
+      "id": "marker-correction",
+      "automatic": false,
+      "requiredEvidence": [
+        "front marker overlay",
+        "profile marker overlay",
+        "named reviewer"
+      ]
+    },
+    {
+      "id": "identity-solve",
+      "automatic": false,
+      "requiredEvidence": [
+        "solved Identity asset",
+        "template A/B overlay"
+      ]
+    },
+    {
+      "id": "conform-character",
+      "automatic": true,
+      "requiredEvidence": [
+        "import_from_identity SUCCESS",
+        "MetaHuman Character asset"
+      ]
+    },
+    {
+      "id": "go-identity-capture",
+      "automatic": true,
+      "requiredEvidence": [
+        "face-front",
+        "face-left-45",
+        "face-right-45",
+        "face-left-profile",
+        "face-right-profile"
+      ]
+    },
+    {
+      "id": "human-identity-decision",
+      "automatic": false,
+      "requiredEvidence": [
+        "canonical 03/06/07/08 comparison",
+        "keep/reject decision"
+      ]
+    }
+  ],
+  "capture": {
+    "profile": "../../../unreal/render_pipeline/looking-glass-go.json",
+    "resolution": [
+      1440,
+      2560
+    ],
+    "views": [
+      "face-front",
+      "face-left-45",
+      "face-right-45",
+      "face-left-profile",
+      "face-right-profile"
+    ],
+    "quiltViewCount": 66,
+    "quiltRequiresConnectedCalibration": true
+  },
+  "blockedChecks": [
+    "allRequiredPluginsPresent",
+    "editorPresent",
+    "engineInstalled",
+    "engineVersionSupported",
+    "metaHumanCoreDataPresent",
+    "minimumFreeDiskHeadroom",
+    "recommendedMetaHumanMemory"
+  ],
+  "forbiddenClaimsUntilEvidence": [
+    "metahuman-created",
+    "dna-created",
+    "facial-rig-validated",
+    "identity-approved",
+    "aaa-quality"
+  ],
+  "nextAction": "satisfy every preflight check; do not launch or claim a MetaHuman solve"
+}

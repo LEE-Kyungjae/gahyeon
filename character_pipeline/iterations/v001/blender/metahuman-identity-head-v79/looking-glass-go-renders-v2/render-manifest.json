@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "renderer": "blender-fixed-baseline-v1",
+  "sourceBlend": "/Users/ze/work/gahyeonbot/character_pipeline/iterations/v001/blender/metahuman-identity-head-v79/gahyeon-head-go-qa-v2.blend",
+  "sourceRevision": null,
+  "resolution": [
+    1440,
+    2560
+  ],
+  "displayProfile": "looking-glass-go-single-view",
+  "engine": "BLENDER_EEVEE",
+  "filmTransparent": false,
+  "views": [
+    {
+      "view": "face-front",
+      "evidenceView": "face-neutral-front",
+      "uri": "face-front.png",
+      "bytes": 3590223,
+      "sha256": "4798663833d39f242a0bcc27d1b0b54f8464c6f8051d6a4cc7e92a15e6e19dd1"
+    },
+    {
+      "view": "face-left-45",
+      "evidenceView": "face-neutral-three-quarter-left",
+      "uri": "face-left-45.png",
+      "bytes": 3634731,
+      "sha256": "303a8e5a87d2df471a22f4d26a3515b6490ceb3eb28f9a371919267e5a45fdbf"
+    },
+    {
+      "view": "face-right-45",
+      "evidenceView": "face-neutral-three-quarter-right",
+      "uri": "face-right-45.png",
+      "bytes": 3646084,
+      "sha256": "4ad9c948149aca7c62b0c5e83945ba5b4bc10ffe742bbe063e0268d8f7b546d8"
+    },
+    {
+      "view": "face-left-profile",
+      "evidenceView": "face-neutral-left-profile",
+      "uri": "face-left-profile.png",
+      "bytes": 3690360,
+      "sha256": "524df42a55a63c19a6370d8b634b94e4d0b2a2a7d41f9441295edaef837aac4e"
+    },
+    {
+      "view": "face-right-profile",
+      "evidenceView": "face-neutral-right-profile",
+      "uri": "face-right-profile.png",
+      "bytes": 3720598,
+      "sha256": "7ff9228afa663957224368c2180afee33142e7a16119d9e9b7289a52f8054db4"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v091",
+  "characterBlueprint": "/Game/Gahyeon/CharacterPipeline/v088/AssembledMedium/Skotukeda_WardrobeGroomQA_v088/BP_Skotukeda_WardrobeGroomQA_v088",
+    "map": "/Game/Gahyeon/DesktopRuntime/v091/L_GahyeonDesktopRuntime_v091",
+  "desktop": {
+    "width": 1280,
+    "height": 720,
+    "windowMode": "windowed",
+    "background": "qa-map",
+    "alwaysOnTop": false,
+    "transparent": false,
+    "clickThrough": false,
+    "cameraPresets": ["face", "bust", "full-body"]
+  },
+  "platforms": {
+    "macos": {
+      "engineDefault": "/Users/Shared/Epic Games/UE_5.8",
+      "editorRelative": "Engine/Binaries/Mac/UnrealEditor.app/Contents/MacOS/UnrealEditor"
+    },
+    "windows": {
+      "engineDefault": "C:/Program Files/Epic Games/UE_5.8",
+      "editorRelative": "Engine/Binaries/Win64/UnrealEditor.exe"
+    }
+  },
+  "lookingGlass": {
+    "deviceProfile": "Looking Glass Go",
+    "verificationState": "hardware-unverified",
+    "views": 66,
+    "columns": 11,
+    "rows": 6,
+    "quiltWidth": 4092,
+    "quiltHeight": 4092,
+    "viewOrder": "bottom-left-row-major",
+    "calibrationAuthority": "Looking Glass Bridge on connected hardware"
+  },
+  "stateContract": {
+    "states": ["idle", "listening", "thinking", "speaking"],
+    "optionalInputs": ["emotion", "gazeTarget", "viseme"]
+  }
+}

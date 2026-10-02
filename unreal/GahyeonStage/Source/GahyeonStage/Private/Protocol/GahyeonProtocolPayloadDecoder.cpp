@@ -243,7 +243,8 @@ bool DecodeSpeechPrepared(
     if (!AllowedFields(Payload, {
         TEXT("generation"), TEXT("utteranceId"), TEXT("utteranceIndex"),
         TEXT("segmentIndex"), TEXT("segmentCount"), TEXT("finalSegment"),
-        TEXT("audio"), TEXT("visemes")}, Error)
+        TEXT("voiceProfile"), TEXT("voiceExpression"), TEXT("audio"),
+        TEXT("visemes")}, Error)
         || !OptionalGeneration(Payload, Message, Error)
         || !Message.GenerationId.has_value())
     {
@@ -257,6 +258,8 @@ bool DecodeSpeechPrepared(
     const TSharedPtr<FJsonObject>* Audio = nullptr;
     FString AudioUrl;
     FString MimeType;
+    TOptional<FString> VoiceProfile;
+    const TSharedPtr<FJsonObject>* VoiceExpression = nullptr;
     const TArray<TSharedPtr<FJsonValue>>* Visemes = nullptr;
     if (!RequiredString(Payload, TEXT("utteranceId"), UtteranceId, Error)
         || !Integer(Payload, TEXT("utteranceIndex"), 0.0, INT32_MAX,
@@ -267,6 +270,8 @@ bool DecodeSpeechPrepared(
             SegmentCount, Error)
         || SegmentIndex >= SegmentCount
         || !Payload->TryGetBoolField(TEXT("finalSegment"), bFinalSegment)
+        || !OptionalString(Payload, TEXT("voiceProfile"), VoiceProfile, Error)
+        || (VoiceProfile.IsSet() && VoiceProfile.GetValue().Len() > 128)
         || !Payload->TryGetObjectField(TEXT("audio"), Audio) || Audio == nullptr
         || !AllowedFields(*Audio, {TEXT("url"), TEXT("mimeType")}, Error)
         || !RequiredString(*Audio, TEXT("url"), AudioUrl, Error)
@@ -276,6 +281,36 @@ bool DecodeSpeechPrepared(
     {
         if (Error.IsEmpty()) Error = TEXT("invalid speech prepared payload");
         return false;
+    }
+    if (Payload->HasField(TEXT("voiceExpression")))
+    {
+        FString Style;
+        FString CommunicativeIntent;
+        double Intensity = 0.0;
+        if (!Payload->TryGetObjectField(TEXT("voiceExpression"), VoiceExpression)
+            || VoiceExpression == nullptr
+            || !AllowedFields(*VoiceExpression, {
+                TEXT("style"), TEXT("intensity"), TEXT("communicativeIntent")}, Error)
+            || !RequiredString(*VoiceExpression, TEXT("style"), Style, Error)
+            || Style.Len() > 32
+            || (Style != TEXT("natural") && Style != TEXT("warm")
+                && Style != TEXT("gentle") && Style != TEXT("bright")
+                && Style != TEXT("surprised") && Style != TEXT("concerned")
+                && Style != TEXT("serious") && Style != TEXT("playful")
+                && Style != TEXT("fake_cute") && Style != TEXT("sarcastic")
+                && Style != TEXT("sleepy") && Style != TEXT("whisper")
+                && Style != TEXT("excited") && Style != TEXT("annoyed")
+                && Style != TEXT("sad") && Style != TEXT("suppressed_laugh"))
+            || !Number(*VoiceExpression, TEXT("intensity"), 0.0, 1.0, Intensity, Error)
+            || !RequiredString(*VoiceExpression, TEXT("communicativeIntent"),
+                CommunicativeIntent, Error)
+            || CommunicativeIntent.Len() > 160)
+        {
+            if (Error.IsEmpty()) Error = TEXT("invalid voice expression payload");
+            return false;
+        }
+        Message.Semantic = ToUtf8(Style);
+        Message.Intensity = Intensity;
     }
     Gahyeon::Millis PreviousAt = -1;
     for (const TSharedPtr<FJsonValue>& Value : *Visemes)

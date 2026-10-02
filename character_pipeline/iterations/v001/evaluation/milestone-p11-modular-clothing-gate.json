@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P11-modular-clothing-gate",
+  "state": "automation-complete-assets-pending",
+  "hypothesis": {
+    "statement": "Separate G1 garment objects preserve modular intent but do not establish production clothing without patterned topology, PBR assets, Chaos Cloth, runtime swapping and deformation evidence.",
+    "action": "Require four outfit slots, five production asset classes, PBR channels, body-independent swapping, two or more LODs, fourteen runtime checks and sixteen Looking Glass Go captures.",
+    "expectedResult": "Complete fixture evidence passes while the procedural v79 jacket and footwear remain explicitly non-production."
+  },
+  "actualResult": {
+    "legacyBodyAndClothingSeparate": true,
+    "legacyChaosCloth": false,
+    "legacyOutfitSwapVerified": false,
+    "legacySeatedPoseVerified": false,
+    "legacyExtremePoseVerified": false,
+    "requiredSlots": 4,
+    "requiredAssets": 5,
+    "requiredPbrChannels": 5,
+    "requiredRuntimeChecks": 14,
+    "requiredGoCaptures": 16,
+    "maximumObservedBodyPenetrations": 0,
+    "qualityClaim": null
+  },
+  "knownMissing": [
+    "pattern-authored garment topology",
+    "production PBR texture set",
+    "Chaos Cloth config and Dataflow",
+    "body and chair collision evidence",
+    "seated and extreme-pose deformation evidence",
+    "outfit swap without body reimport",
+    "runtime clothing LOD transition evidence"
+  ],
+  "decision": "Preserve v79 object separation as architecture evidence only. Replace the procedural jacket and footwear before production registration.",
+  "nextEvidence": "MetaHuman-fitted modular skeletal garment assets, Chaos Cloth bindings, slot manifest, zero-penetration runtime report and sixteen immutable Go captures"
+}

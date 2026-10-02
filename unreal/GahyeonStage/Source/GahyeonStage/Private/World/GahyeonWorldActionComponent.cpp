@@ -5,6 +5,7 @@
 #include "HAL/PlatformTime.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
@@ -251,7 +252,8 @@ void UGahyeonWorldActionComponent::BeginNavigation()
             return;
         }
         bNavigationIssued = true;
-        UNavigationSystemV1::SimpleMoveToLocation(PawnOwner->GetController(), CurrentTarget);
+        UAIBlueprintHelperLibrary::SimpleMoveToLocation(
+            PawnOwner->GetController(), CurrentTarget);
     }
     OnNavigationRequested.Broadcast(
         CurrentActionId, CurrentTarget, CurrentActivity, CurrentInteractionTarget);

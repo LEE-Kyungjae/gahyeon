@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "canonicalIndex": 3,
+  "status": "draft-awaiting-human-review",
+  "identityAuthority": "canonical-original-rgb",
+  "alphaAuthority": "ai-proposed-human-review-required",
+  "source": {
+    "path": "artifacts/gahyeon-ch/ChatGPT Image 2026\ub144 8\uc6d4 10\uc77c \uc624\ud6c4 10_57_38.png",
+    "sha256": "84855cabf133616975e5699217af54bc00e3804ecdfe5dfb1d22bd6887dfbc99"
+  },
+  "alphaSource": {
+    "path": "character_pipeline/reference/masks/drafts/canonical-03-alpha-source.png",
+    "sha256": "78cd98fb8f62bacbb62f78fab694d402a5e2a4ee7aad6f87a7b4bb64bcd4052c"
+  },
+  "derivative": {
+    "path": "character_pipeline/reference/canonical/derived/canonical-03-rgba-draft.png",
+    "sha256": "42a83d3a2f395ed963a38eb8dd93d0c919e446b3723d1131cd36cac0135685da",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA"
+  },
+  "coverage": {
+    "transparentFraction": 0.3314637180162237,
+    "opaqueFraction": 0.6387025632807551,
+    "partialFraction": 0.029833718703021147
+  },
+  "rgbInvariant": "derivative RGB equals canonical source RGB for every pixel",
+  "approved": false,
+  "reviewer": null,
+  "reviewedAt": null,
+  "claim": "draft-mask-not-approved-reconstruction-input"
+}

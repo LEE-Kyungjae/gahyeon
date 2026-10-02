@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gahyeon.local/schemas/gahyeon-modeling-input.schema.json",
+  "title": "Gahyeon G1 modeling input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "characterId", "identityManifest", "authorityOrder", "anchors", "geometryAuthority", "missingRequiredCaptures", "rules", "nextGate"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "characterId": {"const": "gahyeon"},
+    "identityManifest": {"type": "string", "minLength": 1},
+    "authorityOrder": {
+      "const": ["canonical original references", "approved artist-authored model sheet", "approved 3D sculpt", "LoRA concept output"]
+    },
+    "anchors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["neutralFaceFront", "faceThreeQuarter", "faceLeftProfile", "faceRightProfile", "verticalFaceShape", "expressionRange", "bodyFront", "bodyProfile", "bodyThreeQuarter", "bodyMotion", "hairFront", "primaryOutfit", "alternateOutfit"],
+      "properties": {
+        "neutralFaceFront": {"$ref": "#/$defs/indices"},
+        "faceThreeQuarter": {"$ref": "#/$defs/indices"},
+        "faceLeftProfile": {"$ref": "#/$defs/indices"},
+        "faceRightProfile": {"$ref": "#/$defs/indices"},
+        "verticalFaceShape": {"$ref": "#/$defs/indices"},
+        "expressionRange": {"$ref": "#/$defs/indices"},
+        "bodyFront": {"$ref": "#/$defs/indices"},
+        "bodyProfile": {"$ref": "#/$defs/indices"},
+        "bodyThreeQuarter": {"$ref": "#/$defs/indices"},
+        "bodyMotion": {"$ref": "#/$defs/indices"},
+        "hairFront": {"$ref": "#/$defs/indices"},
+        "primaryOutfit": {"$ref": "#/$defs/indices"},
+        "alternateOutfit": {"$ref": "#/$defs/indices"}
+      }
+    },
+    "geometryAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["masterNeutralFace", "primaryFaceGeometry", "angleCrossChecks", "expressionOnly", "styleAndHairOnly", "primaryBodyGeometry", "bodyMotionAndOutfitOnly"],
+      "properties": {
+        "masterNeutralFace": {"type": "integer", "minimum": 1},
+        "primaryFaceGeometry": {"$ref": "#/$defs/indices"},
+        "angleCrossChecks": {"$ref": "#/$defs/indices"},
+        "expressionOnly": {"$ref": "#/$defs/indices"},
+        "styleAndHairOnly": {"$ref": "#/$defs/indices"},
+        "primaryBodyGeometry": {"$ref": "#/$defs/indices"},
+        "bodyMotionAndOutfitOnly": {"$ref": "#/$defs/indices"}
+      }
+    },
+    "missingRequiredCaptures": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "rules": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "nextGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "status", "approvalRequires"],
+      "properties": {
+        "id": {"const": "G1"},
+        "name": {"const": "model-sheet"},
+        "status": {"const": "ready-for-authoring"},
+        "approvalRequires": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  },
+  "$defs": {
+    "indices": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}}
+  }
+}

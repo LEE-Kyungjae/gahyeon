@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P38-native-face-anim-bridge",
+  "state": "completed-native-bridge-awaiting-ue56-face-anim-blueprint-and-control-rig-wiring",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "An interface-only Control Rig route still leaves reset, range validation and QA observation to ad-hoc Blueprint implementations, risking inconsistent runtime and evidence behavior.",
+    "action": "Make the existing required UGahyeonCharacterAnimInstance implement the facial bridge natively, own the active Control Rig map, reject invalid or conflicting updates, and expose a read-only Blueprint input for the MetaHuman face graph.",
+    "expectedResult": "The future face Anim Blueprint only wires a stable native map into the Control Rig; transport, reset and evidence readback no longer depend on subjective Blueprint logic."
+  },
+  "implementation": {
+    "nativeClass": "UGahyeonCharacterAnimInstance",
+    "implements": "IGahyeonFacialControlRigBridge",
+    "graphInput": "GahyeonFacialControlRigCurves",
+    "range": [0.0, 1.0],
+    "resetSemantics": "explicit removal of stale named controls",
+    "preflight": "face Anim Blueprint class must inherit /Script/GahyeonStage.GahyeonCharacterAnimInstance"
+  },
+  "actualResult": {"nativeBridgeImplemented": true, "nativeValidationImplemented": true, "nativeReadbackImplemented": true, "faceAnimBlueprintAssetVerified": false, "controlRigGraphWired": false, "realEditorRuntimeVerified": false, "productionReady": false},
+  "scopeBoundary": [
+    "native transport does not fabricate or edit a MetaHuman Anim Blueprint asset without UE 5.6",
+    "the Blueprint still must consume the map before its Control Rig evaluation",
+    "P36 observation and P12 deformation evidence remain required"
+  ],
+  "failureHandling": [
+    "reject None, non-finite and values outside 0..1",
+    "reject a curve present in active and reset sets",
+    "reject duplicate or None reset names",
+    "clear all native state when the AnimInstance uninitializes",
+    "P36 preflight rejects a face Anim Blueprint not inheriting the native bridge"
+  ],
+  "validation": {"nativeBridgeAutomation": "implemented-awaiting-UE56", "staticBridgeVerifier": "passed", "UE56Compile": "pending", "realFaceAnimBlueprint": "pending"},
+  "decision": "Use UGahyeonCharacterAnimInstance as the required parent for both body/latency semantics and MetaHuman face Control Rig input."
+}

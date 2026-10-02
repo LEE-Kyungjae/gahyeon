@@ -1,0 +1,36 @@
+{
+  "valid": true,
+  "state": "blocked",
+  "executionRegion": "KR",
+  "capabilities": {
+    "os": "darwin",
+    "architecture": "arm64",
+    "nvidiaCuda": false,
+    "maximumVramGiB": 0
+  },
+  "models": {
+    "trellis": {
+      "ready": false,
+      "blockers": [
+        "license-review-incomplete",
+        "weights-checksum-missing",
+        "unsupported-operating-system",
+        "nvidia-cuda-unavailable",
+        "insufficient-vram"
+      ],
+      "productionMeshAllowed": false
+    },
+    "hunyuan": {
+      "ready": false,
+      "blockers": [
+        "weights-checksum-missing",
+        "license-territory-forbids-execution",
+        "unsupported-operating-system",
+        "nvidia-cuda-unavailable",
+        "insufficient-vram",
+        "runner-unavailable"
+      ],
+      "productionMeshAllowed": false
+    }
+  }
+}

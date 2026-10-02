@@ -1,6 +1,7 @@
 #include "Runtime/GahyeonRuntimeSubsystem.h"
 
 #include "Dom/JsonObject.h"
+#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Gahyeon/ClientRuntimeSaveState.h"
@@ -135,9 +136,10 @@ struct UGahyeonRuntimeSubsystem::FRuntimeCoreState
     FRuntimeCoreState(int64 PersistedSequence, int64 NowMs)
         : Trace(), Convergence(2'000, &Trace), Cursor(PersistedSequence),
           Actions(), Egress(Cursor, Actions), Character(NowMs),
-          LipSync({}, &Trace), Playback(Character, 16, &LipSync),
-          Voice(Character, Playback, {}, &Trace), Emotion(), Gestures({}),
-          Ambient(NowMs), Attention(NowMs), World(), WorldActions(), Events(
+          Emotion(), SpeechExpression(), LipSync({}, &Trace),
+          Playback(Character, 16, &LipSync, &SpeechExpression),
+          Voice(Character, Playback, {}, &Trace), Gestures({}), Ambient(NowMs),
+          Attention(NowMs), World(), WorldActions(), Events(
               Character, Playback, &Emotion, &Gestures, &World, &WorldActions)
     {
     }
@@ -148,10 +150,11 @@ struct UGahyeonRuntimeSubsystem::FRuntimeCoreState
     Gahyeon::WorldActionCommandBridge Actions;
     Gahyeon::ProtocolNetworkEgressRuntime Egress;
     Gahyeon::RealtimeCharacterCoordinator Character;
+    Gahyeon::EmotionRuntime Emotion;
+    Gahyeon::EmotionRuntime SpeechExpression;
     Gahyeon::LipSyncRuntime LipSync;
     Gahyeon::SpeechPlaybackCoordinator Playback;
     Gahyeon::VoiceInteractionController Voice;
-    Gahyeon::EmotionRuntime Emotion;
     Gahyeon::GestureRuntime Gestures;
     Gahyeon::AmbientMotionRuntime Ambient;
     Gahyeon::AttentionRuntime Attention;
@@ -168,6 +171,12 @@ struct UGahyeonRuntimeSubsystem::FRuntimeCoreState
     std::optional<int64> BatchSttGeneration;
     std::uint64_t NextLocalSpan = (std::uint64_t{1} << 62);
 };
+
+void UGahyeonRuntimeSubsystem::FRuntimeCoreStateDeleter::operator()(
+    FRuntimeCoreState* Value) const
+{
+    delete Value;
+}
 
 UGahyeonRuntimeSubsystem::~UGahyeonRuntimeSubsystem() = default;
 
@@ -190,7 +199,7 @@ void UGahyeonRuntimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     NextReflexAt = Now;
     NextBehaviorAt = Now;
     bInitialized = true;
-    RuntimeCore = MakeUnique<FRuntimeCoreState>(0, MonotonicMillis());
+    RuntimeCore.Reset(new FRuntimeCoreState(0, MonotonicMillis()));
     ++RuntimeEpoch;
 }
 
@@ -285,7 +294,8 @@ void UGahyeonRuntimeSubsystem::EnsurePresentationHost()
     {
         return;
     }
-    for (TActorIterator<AGahyeonPresentationHost> Existing(World); Existing; ++Existing)
+    TActorIterator<AGahyeonPresentationHost> Existing(World);
+    if (Existing)
     {
         PresentationHost = *Existing;
         bOwnsPresentationHost = false;
@@ -465,7 +475,7 @@ UGahyeonRuntimeSubsystem::ObserveMicrophoneLevelAtDetailed(
             : Result.Event == Gahyeon::VoiceActivityEvent::Ended
                 ? EGahyeonVoiceActivityEdge::Ended
                 : EGahyeonVoiceActivityEdge::None,
-        .GenerationId = Result.GenerationId};
+        .GenerationId = static_cast<int64>(Result.GenerationId)};
 }
 
 bool UGahyeonRuntimeSubsystem::AbortMicrophoneCapture(int64& OutAbortedGeneration)
@@ -826,7 +836,7 @@ bool UGahyeonRuntimeSubsystem::RestorePersistentState(
         }
     }
     ++PersistenceGeneration;
-    RuntimeCore = MoveTemp(Restored);
+    RuntimeCore.Reset(Restored.Release());
     ++RuntimeEpoch;
     {
         FScopeLock Lock(&InboundResetMutex);
@@ -937,7 +947,7 @@ bool UGahyeonRuntimeSubsystem::QueueActionCompletion(
     }
     const Gahyeon::CompletionOutboxResult Result = RuntimeCore->Actions.Queue({
         .ActionId = ToUtf8(ActionId),
-        .ExpectedRevision = ExpectedRevision,
+        .ExpectedRevision = static_cast<Gahyeon::Generation>(ExpectedRevision),
         .Outcome = ToUtf8(Outcome),
         .Reason = ToUtf8(Reason),
         .FinalPosition = FGahyeonWorldCoordinateAdapter::ToCoreMeters(FinalPosition)},
@@ -1441,13 +1451,15 @@ void UGahyeonRuntimeSubsystem::RefreshPresentationSnapshot(int64 NowMs)
     }
 
     const Gahyeon::EmotionSample Emotion = RuntimeCore->Emotion.Sample(NowMs);
+    const Gahyeon::EmotionSample SpeechExpression =
+        RuntimeCore->SpeechExpression.Sample(NowMs);
     Snapshot.DominantEmotion.Reset();
     Snapshot.DominantEmotionIntensity = 0.0;
     Snapshot.EmotionDimensions.Reset();
     Snapshot.EmotionValence = Emotion.Valence;
     Snapshot.EmotionArousal = Emotion.Arousal;
     Snapshot.EmotionDominance = Emotion.Dominance;
-    Snapshot.bEmotionReleasing = Emotion.Releasing;
+    Snapshot.bEmotionReleasing = Emotion.Releasing || SpeechExpression.Releasing;
     for (const auto& [Name, Intensity] : Emotion.Dimensions)
     {
         Snapshot.EmotionDimensions.Add(FName(UTF8_TO_TCHAR(Name.c_str())), Intensity);
@@ -1463,6 +1475,18 @@ void UGahyeonRuntimeSubsystem::RefreshPresentationSnapshot(int64 NowMs)
         Snapshot.DominantEmotionIntensity = World->EmotionIntensity;
         Snapshot.EmotionDimensions.Add(
             FName(*Snapshot.DominantEmotion), Snapshot.DominantEmotionIntensity);
+    }
+    for (const auto& [Name, Intensity] : SpeechExpression.Dimensions)
+    {
+        const FName Semantic(UTF8_TO_TCHAR(Name.c_str()));
+        const double BaseIntensity = Snapshot.EmotionDimensions.FindRef(Semantic);
+        const double ComposedIntensity = FMath::Max(BaseIntensity, Intensity);
+        Snapshot.EmotionDimensions.Add(Semantic, ComposedIntensity);
+        if (ComposedIntensity > Snapshot.DominantEmotionIntensity)
+        {
+            Snapshot.DominantEmotion = FromUtf8(Name);
+            Snapshot.DominantEmotionIntensity = ComposedIntensity;
+        }
     }
 
     const Gahyeon::AmbientMotionSample Ambient = RuntimeCore->Ambient.Sample(NowMs);

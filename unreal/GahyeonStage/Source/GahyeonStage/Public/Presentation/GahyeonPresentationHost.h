@@ -4,8 +4,10 @@
 #include "GahyeonPresentationHost.generated.h"
 
 class UGahyeonSpeechAudioComponent;
+class UGahyeonRuntimeBootstrapComponent;
 class UGahyeonLookingGlassBenchmarkComponent;
 class UGahyeonRealtimeBenchmarkComponent;
+class UGahyeonLiveSpeechCaptureComponent;
 class USceneComponent;
 
 /** Transient, non-visual owner for presentation services that must exist before an avatar does. */
@@ -27,9 +29,15 @@ private:
     UPROPERTY(VisibleAnywhere, Category = "Gahyeon|Presentation")
     TObjectPtr<UGahyeonSpeechAudioComponent> SpeechAudio;
 
+    UPROPERTY(VisibleAnywhere, Category = "Gahyeon|Network")
+    TObjectPtr<UGahyeonRuntimeBootstrapComponent> RuntimeBootstrap;
+
     UPROPERTY(VisibleAnywhere, Category = "Gahyeon|Debug")
     TObjectPtr<UGahyeonLookingGlassBenchmarkComponent> LookingGlassBenchmark;
 
     UPROPERTY(VisibleAnywhere, Category = "Gahyeon|Debug")
     TObjectPtr<UGahyeonRealtimeBenchmarkComponent> RealtimeBenchmark;
+
+    UPROPERTY(VisibleAnywhere, Category = "Gahyeon|Debug")
+    TObjectPtr<UGahyeonLiveSpeechCaptureComponent> LiveSpeechCapture;
 };

@@ -9,6 +9,7 @@ from pathlib import Path
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 
 
@@ -65,7 +66,8 @@ def read_display_profile() -> tuple[float, int]:
 def build_encoder() -> None:
     BUILD.mkdir(parents=True, exist_ok=True)
     source = NATIVE / "frame_encoder.mm"
-    if ENCODER.is_file() and ENCODER.stat().st_mtime >= source.stat().st_mtime:
+    dependencies = (source, NATIVE / "quilt_frame_cache.h")
+    if ENCODER.is_file() and ENCODER.stat().st_mtime >= max(p.stat().st_mtime for p in dependencies):
         return
     subprocess.run([
         "clang++", "-std=c++17", "-Werror", "-Wall", "-Wextra", "-fobjc-arc",
@@ -73,7 +75,7 @@ def build_encoder() -> None:
         "-I", str(BRIDGE_APP / "runtime"), str(source),
         "-framework", "Foundation", "-framework", "AppKit",
         "-framework", "CoreGraphics", "-framework", "IOSurface", "-framework", "Metal",
-        "-framework", "OpenGL",
+        "-framework", "OpenGL", "-lcompression",
         str(BRIDGE_APP / "MacOS/libbridge_inproc.dylib"),
         "-Wl,-rpath," + str(BRIDGE_APP / "MacOS"), "-o", str(ENCODER),
     ], cwd=ROOT, check=True)
@@ -106,14 +108,29 @@ def main() -> int:
         "/Game/Gahyeon/Character2/Diana/v450/Runtime/L_DianaLookingGlassContactFloor_v450"
     )
     runtime_environment["GAHYEON_LOOKING_GLASS_ANIMATED_QA"] = "1"
+    ready_directory = tempfile.TemporaryDirectory(prefix="gahyeon-lg-ready-")
+    ready_file = Path(ready_directory.name) / "runtime.ready"
+    runtime_environment["GAHYEON_RUNTIME_READY_FILE"] = str(ready_file)
     runtime = subprocess.Popen(
         [sys.executable, str(ROOT / "scripts/launch_canonical_macos_runtime.py")],
         cwd=ROOT,
         env=runtime_environment,
     )
-    # The canonical launcher removes stale shared-memory segments before Unreal starts.
-    # Do not let the encoder attach to the previous segment during that short window.
-    time.sleep(2.0)
+    # Compilation/startup may exceed a fixed delay: wait for stale-memory cleanup.
+    try:
+        deadline = time.monotonic() + 120.0
+        while not ready_file.is_file():
+            if runtime.poll() is not None:
+                raise RuntimeError("canonical runtime exited before consumer readiness")
+            if time.monotonic() >= deadline:
+                raise RuntimeError("canonical runtime consumer readiness timed out")
+            time.sleep(0.05)
+        time.sleep(2.0)
+    except BaseException:
+        terminate(runtime)
+        raise
+    finally:
+        ready_directory.cleanup()
     stream_environment = os.environ.copy()
     stream_environment["GAHYEON_LOOKING_GLASS_ANIMATED_QA"] = "1"
     stream = subprocess.Popen([str(ENCODER)], cwd=ROOT, env=stream_environment)

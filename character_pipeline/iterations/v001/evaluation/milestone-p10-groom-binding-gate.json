@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P10-groom-binding-gate",
+  "state": "automation-complete-assets-pending",
+  "hypothesis": {
+    "statement": "A dense Blender Curves groom can still look generic or fail in Unreal, so curve count cannot substitute for canonical styling, binding, collision and LOD evidence.",
+    "action": "Require four semantic Groom groups, eight canonical features, five Unreal bindings, strands plus fallback LOD, ten runtime checks and fourteen Looking Glass Go captures.",
+    "expectedResult": "Complete fixture evidence passes while the v79 Hair Editor blockout remains explicitly non-production."
+  },
+  "actualResult": {
+    "legacyGuideCurves": 252,
+    "legacyGuidePoints": 4032,
+    "legacyEvaluatedCurves": 10191,
+    "legacyEvaluatedPoints": 621651,
+    "requiredGroups": 4,
+    "requiredCanonicalFeatures": 8,
+    "requiredBindings": 5,
+    "requiredRuntimeChecks": 10,
+    "requiredGoCaptures": 14,
+    "currentUnrealGroomAsset": false,
+    "currentUnrealBindingAsset": false,
+    "currentFallbackLod": false,
+    "qualityClaim": null
+  },
+  "knownMissing": [
+    "identity-authored spatial density and hairline",
+    "canonical center-part clumps and loose waves",
+    "controlled layered tips and flyaways",
+    "separate production brow and lash groups",
+    "Unreal Groom and Groom Binding assets",
+    "cards or mesh fallback LOD",
+    "head-motion, collision and LOD transition evidence"
+  ],
+  "decision": "Preserve the v79 groom as blockout history only. Do not promote it based on evaluated strand count.",
+  "nextEvidence": "production Alembic Groom source, MetaHuman scalp binding, semantic group inventory, fallback LODs and fourteen immutable Go captures"
+}

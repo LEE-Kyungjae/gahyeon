@@ -10,6 +10,8 @@
 #include "HAL/ThreadSafeBool.h"
 #include "HAL/ThreadSafeCounter.h"
 #include "Interfaces/IHttpResponse.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "Network/GahyeonTransportSubsystem.h"
 #include "Runtime/GahyeonRuntimeSubsystem.h"
 #include "Serialization/JsonReader.h"
@@ -107,6 +109,18 @@ struct FGahyeonVoiceHttpState
     int32 StaleResultCount = 0;
 };
 
+void UGahyeonVoiceInputComponent::FAudioCaptureDeleter::operator()(
+    Audio::FAudioCapture* Value) const
+{
+    delete Value;
+}
+
+void UGahyeonVoiceInputComponent::FVoiceHttpStateDeleter::operator()(
+    FGahyeonVoiceHttpState* Value) const
+{
+    delete Value;
+}
+
 UGahyeonVoiceInputComponent::UGahyeonVoiceInputComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
@@ -115,7 +129,7 @@ UGahyeonVoiceInputComponent::UGahyeonVoiceInputComponent()
     InputState = MakeShared<FGahyeonVoiceInputState, ESPMode::ThreadSafe>();
     BatchSttAudioSink = MakeShared<FGahyeonBatchSttAudioSink, ESPMode::ThreadSafe>();
     StreamingSttAudioSink = BatchSttAudioSink;
-    VoiceHttpState = MakeUnique<FGahyeonVoiceHttpState>();
+    VoiceHttpState.Reset(new FGahyeonVoiceHttpState());
 }
 
 UGahyeonVoiceInputComponent::~UGahyeonVoiceInputComponent() = default;
@@ -125,7 +139,11 @@ void UGahyeonVoiceInputComponent::BeginPlay()
     Super::BeginPlay();
     RefreshRuntime();
     ConfigureStreamingStt();
-    if (bStartCaptureOnBeginPlay) StartMicrophoneCapture();
+    if (bStartCaptureOnBeginPlay
+        || FParse::Param(FCommandLine::Get(), TEXT("GahyeonAutoStartMicrophone")))
+    {
+        StartMicrophoneCapture();
+    }
 }
 
 void UGahyeonVoiceInputComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -259,15 +277,15 @@ bool UGahyeonVoiceInputComponent::StartMicrophoneCapture()
     if (AudioCapture.IsValid() && AudioCapture->IsCapturing()) return true;
     StopMicrophoneCapture();
     InputState->bAccepting = true;
-    AudioCapture = MakeUnique<Audio::FAudioCapture>();
+    AudioCapture.Reset(new Audio::FAudioCapture());
     Audio::FAudioCaptureDeviceParams Params;
     const TSharedPtr<FGahyeonVoiceInputState, ESPMode::ThreadSafe> CallbackState = InputState;
     const TSharedPtr<IGahyeonStreamingSttAudioSink, ESPMode::ThreadSafe> CallbackSttSink =
         StreamingSttAudioSink;
-    const bool bOpened = AudioCapture->OpenCaptureStream(
+    const bool bOpened = AudioCapture->OpenAudioCaptureStream(
         Params,
         [CallbackState, CallbackSttSink](
-            const float* InAudio,
+            const void* InAudio,
             int32 NumFrames,
             int32 NumChannels,
             int32 SampleRate,
@@ -280,11 +298,12 @@ bool UGahyeonVoiceInputComponent::StartMicrophoneCapture()
             {
                 return;
             }
+            const float* Samples = static_cast<const float*>(InAudio);
             if (bOverflow) CallbackState->OverflowCount.Increment();
             const int64 ObservedAtMs =
                 static_cast<int64>(FPlatformTime::Seconds() * 1000.0);
             if (CallbackSttSink.IsValid() && !CallbackSttSink->TryEnqueuePcm(
-                InAudio, NumFrames, NumChannels, SampleRate, ObservedAtMs))
+                Samples, NumFrames, NumChannels, SampleRate, ObservedAtMs))
             {
                 CallbackState->SttBackpressureCount.Increment();
             }
@@ -292,8 +311,8 @@ bool UGahyeonVoiceInputComponent::StartMicrophoneCapture()
             double SumSquares = 0.0;
             for (int64 Index = 0; Index < SampleCount; ++Index)
             {
-                const double Sample = FMath::IsFinite(InAudio[Index])
-                    ? static_cast<double>(InAudio[Index])
+                const double Sample = FMath::IsFinite(Samples[Index])
+                    ? static_cast<double>(Samples[Index])
                     : 0.0;
                 SumSquares += Sample * Sample;
             }
@@ -312,8 +331,11 @@ bool UGahyeonVoiceInputComponent::StartMicrophoneCapture()
         if (AudioCapture->IsStreamOpen()) AudioCapture->CloseStream();
         AudioCapture.Reset();
         InputState->bAccepting = false;
+        UE_LOG(LogTemp, Error, TEXT("Gahyeon microphone capture failed: %s"),
+            *LastCaptureError);
         return false;
     }
+    UE_LOG(LogTemp, Display, TEXT("Gahyeon microphone capture started"));
     return true;
 }
 

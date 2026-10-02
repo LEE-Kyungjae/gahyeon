@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "characterId": "gahyeon",
+  "iteration": "v001",
+  "state": "toolchain-unavailable",
+  "inputManifest": "../iterations/v001/inputs/source-bindings.json",
+  "models": ["trellis", "instantmesh"],
+  "seedSet": [20260813, 20260814, 20260815],
+  "candidateCountPerModel": 3,
+  "inputPolicy": {
+    "sameInputsAcrossModels": true,
+    "canonicalIdentityAuthority": "user-provided-originals",
+    "hairAndClothingMinimized": true,
+    "generatedImagesAreNotAuthority": true
+  },
+  "requiredOutputs": [
+    "raw-mesh", "normalized-blend", "cleanup-report", "render-manifest",
+    "face-measurements", "body-measurements", "candidate-evaluation"
+  ],
+  "requiredViews": [
+    "face-front", "face-left-45", "face-right-45", "face-left-profile",
+    "face-right-profile", "body-front", "body-left", "body-right", "body-rear"
+  ],
+  "measurements": [
+    "facial-width", "jaw-length", "chin-shape", "cheekbone-projection",
+    "eye-spacing", "eye-shape", "nose-width", "nose-projection", "lip-shape",
+    "forehead", "skull-silhouette", "ear-placement", "shoulder-width",
+    "torso-length", "hip-width", "arm-length", "leg-length"
+  ],
+  "selectionPolicy": {
+    "requireBothModels": true,
+    "requireAllSeeds": true,
+    "requirePinnedProvenanceAndLicenseReview": true,
+    "visualImpressionAloneForbidden": true,
+    "productionMeshAllowed": false,
+    "automaticSelection": false,
+    "selectedRole": "temporary-shape-estimate-for-metahuman-conform"
+  },
+  "historicalRejectedBackend": {
+    "model": "hunyuan",
+    "reason": "official-license-excludes-south-korea",
+    "mayExecuteInKR": false
+  }
+}

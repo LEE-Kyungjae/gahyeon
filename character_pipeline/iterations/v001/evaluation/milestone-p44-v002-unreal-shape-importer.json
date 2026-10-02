@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P44-v002-unreal-shape-importer",
+  "state": "completed-tooling-runtime-blocked",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A valid session description is not sufficient unless Unreal revalidates readiness and lineage at execution time and stops before subjective Identity work.",
+    "action": "Add a v002-only Unreal Editor importer backed by a pure-Python contract that rejects blocked/stale sessions, refuses asset replacement, requires exactly one StaticMesh, and emits an immutable import-only receipt.",
+    "expectedResult": "Once UE 5.6 is installed, the verified shape can be imported reproducibly without fabricating Identity Solve, conform, DNA or quality completion."
+  },
+  "actualResult": {
+    "unrealImporter": "../../../../unreal/GahyeonStage/Content/Python/gahyeon_import_metahuman_identity_v002.py",
+    "contract": "../../../tools/metahuman_identity_session_contract.py",
+    "currentSessionAccepted": false,
+    "currentFailure": "MetaHuman Identity session is not ready to launch",
+    "receiptState": "shape-imported-awaiting-guided-identity",
+    "nextRequiredStage": "components-from-mesh",
+    "identitySolved": false,
+    "characterConformed": false,
+    "qualityClaim": null
+  },
+  "validation": {
+    "contractTests": "4 passed",
+    "pythonCompilation": "passed",
+    "blockedRealSessionTest": "passed",
+    "realUnrealExecution": "pending because UE 5.6 is not installed"
+  },
+  "failureHandling": [
+    "reject a blocked or checksum-drifted session",
+    "reject a preflight that is no longer ready",
+    "reject formats other than OBJ/FBX",
+    "refuse existing destination assets",
+    "reject zero, multiple or non-StaticMesh import results",
+    "write no receipt before successful import",
+    "reject receipts that claim Identity Solve or conform"
+  ],
+  "qualityBoundary": "This importer advances only the mechanical shape-import step. The visible MPFB face remains unapproved and must be corrected and rejected or kept through the guided MetaHuman workflow.",
+  "decision": "Run only after P43 changes to ready-to-launch; stop after import for human marker correction."
+}

@@ -1,0 +1,44 @@
+{
+  "uri": "/Users/ze/work/gahyeonbot/character_pipeline/iterations/v001/blender/metahuman-identity-head-v79/looking-glass-go-renders-v2/face-left-45.png",
+  "dimensions": [
+    1440,
+    2560
+  ],
+  "expectedDimensions": [
+    1440,
+    2560
+  ],
+  "viewClass": "face",
+  "backgroundMedianRgb": [
+    80.0,
+    84.0,
+    89.0
+  ],
+  "foreground": {
+    "thresholdRgbDistance": 12.0,
+    "pixelFraction": 0.673364,
+    "boundsPixels": [
+      0,
+      94,
+      1385,
+      2465
+    ],
+    "marginsFraction": {
+      "left": 0.0,
+      "right": 0.0375,
+      "top": 0.036719,
+      "bottom": 0.036719
+    },
+    "luminance255": {
+      "p10": 32.029,
+      "p50": 47.245,
+      "p90": 55.033
+    }
+  },
+  "validCapture": false,
+  "defects": [
+    "subject-clipped-or-too-close-to-frame",
+    "foreground-too-dark"
+  ],
+  "qualityClaim": null
+}

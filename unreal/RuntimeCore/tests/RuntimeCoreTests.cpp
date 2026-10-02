@@ -408,9 +408,11 @@ void CognitionCompletionDoesNotStartSpeakingBeforeAudio() {
     const auto speech = translator.Translate(Gahyeon::ProtocolMessage{
         .Type = "speech.prepared",
         .GenerationId = 1,
+        .Semantic = "bright",
         .UtteranceId = "utterance-1",
         .AudioUrl = "/speech/utterance-1",
         .MimeType = "audio/wav",
+        .Intensity = 0.7,
         .Visemes = {{"aa", 0, 80, 1.0}},
     }, 200);
     Require(speech.Status == Gahyeon::TranslationStatus::Translated,
@@ -422,6 +424,15 @@ void CognitionCompletionDoesNotStartSpeakingBeforeAudio() {
     Require(speech.Speech->AudioUrl == "/speech/utterance-1"
             && speech.Speech->MimeType == "audio/wav",
         "audio retrieval metadata must survive protocol normalization");
+    Require(!speech.Emotion.has_value(),
+        "expressive speech must not replace the persistent life emotion target");
+    Require(speech.Speech->Expression.has_value(),
+        "expressive speech must carry a transient facial emotion target");
+    Require(speech.Speech->Expression->Dimensions.at("happy") == 0.7,
+        "bright voice style must normalize to the happy facial semantic");
+    Require(speech.Speech->Expression->BlendMs == 180
+            && speech.Speech->Expression->HoldMs.value_or(0) >= 600,
+        "speech emotion must blend and release on a bounded timeline");
 }
 
 void GenerationAdvanceInterruptsOwnedAudioWithoutWaitingForSpeechPayload() {
@@ -951,10 +962,13 @@ void ProtocolPreservesEmotionWhileSpeechAndAttentionRunInParallel() {
     const auto generation = character.VoiceStarted(0);
     character.VoiceEnded(generation, 10);
     Gahyeon::LipSyncRuntime lipSync;
-    Gahyeon::SpeechPlaybackCoordinator playback(character, 4, &lipSync);
-    playback.SetGeneration(generation);
     Gahyeon::EmotionRuntime emotion;
-    Gahyeon::ProtocolEventRuntime protocol(character, playback, &emotion);
+    Gahyeon::EmotionRuntime speechExpression;
+    Gahyeon::SpeechPlaybackCoordinator expressivePlayback(
+        character, 4, &lipSync, &speechExpression);
+    expressivePlayback.SetGeneration(generation);
+    Gahyeon::ProtocolEventRuntime protocol(
+        character, expressivePlayback, &emotion);
     const auto applied = protocol.Apply(Gahyeon::ProtocolMessage{
         .Type = "emotion.target",
         .GenerationId = generation,
@@ -969,21 +983,51 @@ void ProtocolPreservesEmotionWhileSpeechAndAttentionRunInParallel() {
     Require(applied.Status == Gahyeon::ProtocolApplyStatus::Applied,
         "protocol runtime should preserve the full emotion target");
 
-    playback.Prepared(Gahyeon::PreparedSpeech{
+    expressivePlayback.Prepared(Gahyeon::PreparedSpeech{
         .GenerationId = generation,
         .UtteranceId = "parallel-audio",
         .FinalSegment = true,
     });
-    playback.AcquireNext();
-    playback.PlaybackStarted("parallel-audio", 30);
+    expressivePlayback.AcquireNext();
+    expressivePlayback.PlaybackStarted("parallel-audio", 30);
     const auto face = emotion.Sample(120);
     Require(face.Dimensions.size() == 2
             && std::abs(face.Dimensions.at("curiosity") - 0.7) < 0.001,
         "speaking phase must not collapse multidimensional facial emotion");
     Require(Value(character.Intents().Resolve(120), Gahyeon::IntentChannel::Phase) == "speaking",
         "emotion layer must remain independent from conversation phase");
+
+    const auto expressiveSpeech = protocol.Apply(Gahyeon::ProtocolMessage{
+        .Type = "speech.prepared",
+        .GenerationId = generation,
+        .Semantic = "bright",
+        .UtteranceId = "expressive-audio",
+        .Intensity = 0.8,
+        .FinalSegment = true,
+        .Visemes = {{"aa", 0, 500, 1.0}},
+    }, 130);
+    Require(expressiveSpeech.Status == Gahyeon::ProtocolApplyStatus::Applied,
+        "expressive speech should enter the independent presentation overlay");
+    Require(speechExpression.Sample(129).Dimensions.empty(),
+        "prepared audio must not start facial expression before playback");
+    expressivePlayback.PlaybackFinished("parallel-audio", 125);
+    Require(expressivePlayback.AcquireNext().has_value()
+            && expressivePlayback.PlaybackStarted("expressive-audio", 130),
+        "speech expression must wait for actual audio playback start");
+    const auto lifeDuringSpeech = emotion.Sample(310);
+    const auto overlayDuringSpeech = speechExpression.Sample(310);
+    Require(std::abs(lifeDuringSpeech.Dimensions.at("curiosity") - 0.7) < 0.001,
+        "speech expression must not overwrite the persistent life emotion");
+    Require(std::abs(overlayDuringSpeech.Dimensions.at("happy") - 0.8) < 0.001,
+        "speech expression should reach its requested facial intensity");
+    const auto lifeAfterSpeech = emotion.Sample(1'200);
+    const auto overlayAfterSpeech = speechExpression.Sample(1'200);
+    Require(std::abs(lifeAfterSpeech.Dimensions.at("curiosity") - 0.7) < 0.001,
+        "persistent life emotion must survive after speech expression releases");
+    Require(overlayAfterSpeech.Dimensions.empty(),
+        "speech expression overlay must release without erasing life emotion");
     character.VoiceStarted(130);
-    playback.SetGeneration(generation + 1);
+    expressivePlayback.SetGeneration(generation + 1);
     Require(emotion.Sample(140).Dimensions.contains("curiosity"),
         "barge-in should stop speech without erasing continuous emotion state");
 }

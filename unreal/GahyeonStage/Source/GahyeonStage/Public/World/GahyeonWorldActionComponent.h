@@ -9,7 +9,7 @@ class UAnimMontage;
 class UAnimInstance;
 class UGahyeonCharacterPresentationComponent;
 class UGahyeonInteractionPointComponent;
-class FStreamableHandle;
+struct FStreamableHandle;
 
 enum class EGahyeonNavigationReadiness : uint8
 {

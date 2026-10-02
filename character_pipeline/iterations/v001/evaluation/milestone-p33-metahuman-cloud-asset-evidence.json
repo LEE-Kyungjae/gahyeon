@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P33-metahuman-cloud-asset-evidence",
+  "state": "completed-verifier-awaiting-p32-cloud-assets-and-ue56",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A returned P32 cloud request does not prove a usable facial rig, morph targets, or high-resolution texture sources, and those sources alone do not satisfy the AAA skin material contract.",
+    "action": "Collect explicit UE Editor evidence for the expected MetaHumanCharacter, face SkeletalMesh, unique morph targets and named Texture2D sources, validate every source is at least 4K, and retain production and surface approval as false.",
+    "expectedResult": "Rig and texture-source availability becomes evidence-backed while the separate layered-skin, deformation and runtime gates remain mandatory."
+  },
+  "requiredEvidence": {
+    "characterClass": "MetaHumanCharacter",
+    "faceMeshClass": "SkeletalMesh",
+    "minimumMorphTargets": 1,
+    "textureClass": "Texture2D",
+    "minimumTextureSources": 1,
+    "minimumTextureDimension": 4096,
+    "rigType": "JOINTS_AND_BLENDSHAPES"
+  },
+  "actualResult": {
+    "currentEditorEvidence": null,
+    "faceRigVerified": false,
+    "blendshapesVerified": false,
+    "textureSourcesVerified": false,
+    "surfaceProductionApproved": false,
+    "productionReady": false
+  },
+  "scopeBoundary": [
+    "P33 verifies cloud output availability only",
+    "P9 still requires eight 4K skin channels, eight facial zones, six physical eye parts and seven Go close-ups",
+    "P12 still requires frame-level facial and body deformation evidence",
+    "Looking Glass Go runtime quality remains unverified"
+  ],
+  "failureHandling": [
+    "reject P32 job or receipt lineage drift",
+    "reject wrong Character or face mesh class",
+    "reject empty or duplicate morph target list",
+    "reject missing, wrong-class or sub-4K texture sources",
+    "reject request rig type other than JOINTS_AND_BLENDSHAPES",
+    "reject evidence that auto-approves or claims production readiness"
+  ],
+  "validation": {"assetEvidenceTests": "5 passed", "P32P33CombinedTests": "10 passed", "unrealCollectorStaticCheck": "passed", "realEditorEvidence": "pending"},
+  "decision": "Use verified outputs as inputs to later rig and surface work only; never equate cloud source availability with AAA completion."
+}

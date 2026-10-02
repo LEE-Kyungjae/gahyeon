@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 3,
+  "iteration": "v645",
+  "status": "desktop-action-runtime-candidate-registry",
+  "extends": "character_pipeline/config/living-character-runtime-v604.json",
+  "selectionPolicy": {
+    "defaultCharacter": "stella-lily",
+    "desktopSelectable": ["stella-lily", "ururu"],
+    "fallbackActivity": "idle",
+    "rejectUnlistedActivities": false,
+    "requireVisualEvidence": true
+  },
+  "characters": {
+    "stella-lily": {
+      "skeletalMesh": "/Game/LivingCharacterPOC/v572/Characters/StellaCentimeterNormalized/StellaLily_CentimeterNormalized_v571",
+      "livingIdle": "/Game/LivingCharacterPOC/v606/Animation/stella/AS_Stella_LivingIdle_v606",
+      "secondaryMotionRig": "/Game/LivingCharacterPOC/v633/ControlRig/CR_Stella_HairClothingDynamics_v633",
+      "qaMap": "/Game/LivingCharacterPOC/v641/QA/L_StellaLilyDesktopActions_v641",
+      "actionSequences": {
+        "walk": "/Game/LivingCharacterPOC/v641/Sequence/StellaLily/LS_StellaLily_walk_v641",
+        "run": "/Game/LivingCharacterPOC/v641/Sequence/StellaLily/LS_StellaLily_run_v641",
+        "standSit": "/Game/LivingCharacterPOC/v641/Sequence/StellaLily/LS_StellaLily_standSit_v641",
+        "narration": "/Game/LivingCharacterPOC/v641/Sequence/StellaLily/LS_StellaLily_narration_v641",
+        "subtleReaction": "/Game/LivingCharacterPOC/v641/Sequence/StellaLily/LS_StellaLily_subtleReaction_v641",
+        "present": "/Game/LivingCharacterPOC/v641/Sequence/StellaLily/LS_StellaLily_present_v641"
+      },
+      "desktopMedia": {
+        "idle": "desktop/public/poc/stella-lily-living-idle-v640.webm",
+        "walk": "desktop/public/poc/actions/stella-lily/walk-v644.webm",
+        "run": "desktop/public/poc/actions/stella-lily/run-v644.webm",
+        "sit": "desktop/public/poc/actions/stella-lily/standSit-v644.webm",
+        "conversation": "desktop/public/poc/actions/stella-lily/narration-v644.webm",
+        "attention": "desktop/public/poc/actions/stella-lily/present-v644.webm",
+        "listening": "desktop/public/poc/actions/stella-lily/subtleReaction-v644.webm",
+        "thinking": "desktop/public/poc/actions/stella-lily/subtleReaction-v644.webm"
+      },
+      "evidence": {
+        "idle": "artifacts/living-character-poc-v635-stella-hair-clothing-render/render-report.json",
+        "actions": "artifacts/living-character-poc-v642-desktop-action-renders/report.json",
+        "review": "artifacts/living-character-poc-v643-desktop-action-review/stella-actions.png",
+        "desktop": "output/playwright/stella-desktop-v644-framed.png"
+      },
+      "runtimeCandidate": true,
+      "humanApproved": false
+    },
+    "ururu": {
+      "skeletalMesh": "/Game/LivingCharacterPOC/v585/Characters/UruruCentimeterNormalized/Ururu_CentimeterNormalized_v584",
+      "livingIdle": "/Game/LivingCharacterPOC/v606/Animation/ururu/AS_Ururu_LivingIdle_Corrected_v606",
+      "secondaryMotionRig": "/Game/LivingCharacterPOC/v636/ControlRig/CR_Ururu_HairClothingDynamics_v636",
+      "qaMap": "/Game/LivingCharacterPOC/v641/QA/L_UruruDesktopActions_v641",
+      "actionSequences": {
+        "walk": "/Game/LivingCharacterPOC/v641/Sequence/Ururu/LS_Ururu_walk_v641",
+        "run": "/Game/LivingCharacterPOC/v641/Sequence/Ururu/LS_Ururu_run_v641",
+        "standSit": "/Game/LivingCharacterPOC/v641/Sequence/Ururu/LS_Ururu_standSit_v641",
+        "narration": "/Game/LivingCharacterPOC/v641/Sequence/Ururu/LS_Ururu_narration_v641",
+        "subtleReaction": "/Game/LivingCharacterPOC/v641/Sequence/Ururu/LS_Ururu_subtleReaction_v641",
+        "present": "/Game/LivingCharacterPOC/v641/Sequence/Ururu/LS_Ururu_present_v641"
+      },
+      "desktopMedia": {
+        "idle": "desktop/public/poc/ururu-living-idle-v640.webm",
+        "walk": "desktop/public/poc/actions/ururu/walk-v644.webm",
+        "run": "desktop/public/poc/actions/ururu/run-v644.webm",
+        "sit": "desktop/public/poc/actions/ururu/standSit-v644.webm",
+        "conversation": "desktop/public/poc/actions/ururu/narration-v644.webm",
+        "attention": "desktop/public/poc/actions/ururu/present-v644.webm",
+        "listening": "desktop/public/poc/actions/ururu/subtleReaction-v644.webm",
+        "thinking": "desktop/public/poc/actions/ururu/subtleReaction-v644.webm"
+      },
+      "evidence": {
+        "idle": "artifacts/living-character-poc-v638-ururu-hair-clothing-render/render-report.json",
+        "actions": "artifacts/living-character-poc-v642-desktop-action-renders/report.json",
+        "review": "artifacts/living-character-poc-v643-desktop-action-review/ururu-actions.png",
+        "desktop": "output/playwright/ururu-desktop-v644-framed.png"
+      },
+      "runtimeCandidate": true,
+      "humanApproved": false
+    }
+  },
+  "rejectedAssets": {
+    "explain": "The v641 explain sequences are structurally present but v642 produced alternating visible/empty frames. They are excluded from Desktop media; narration is the explicit fallback.",
+    "gahyeon": "Preserved only and excluded from the v645 selectable runtime by user decision.",
+    "diana": "Private-only and excluded from the shared v645 selectable runtime."
+  },
+  "knownLimitations": [
+    "Desktop currently plays pre-rendered transparent media; interactive skeletal evaluation remains inside Unreal.",
+    "No character is human-approved or release-eligible.",
+    "Facial lip sync and expression transfer are not yet integrated for Stella or Ururu.",
+    "Looking Glass hardware validation is pending device arrival."
+  ],
+  "humanApproved": false,
+  "releaseEligible": false
+}

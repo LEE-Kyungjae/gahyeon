@@ -7,8 +7,10 @@ namespace Gahyeon {
 SpeechPlaybackCoordinator::SpeechPlaybackCoordinator(
     RealtimeCharacterCoordinator& character,
     std::size_t queueCapacity,
-    LipSyncRuntime* lipSync)
-    : character_(character), queue_(queueCapacity), lipSync_(lipSync) {}
+    LipSyncRuntime* lipSync,
+    EmotionRuntime* speechExpression)
+    : character_(character), queue_(queueCapacity), lipSync_(lipSync),
+      speechExpression_(speechExpression) {}
 
 std::optional<std::string> SpeechPlaybackCoordinator::SetGeneration(
     Generation generation) {
@@ -57,6 +59,11 @@ bool SpeechPlaybackCoordinator::PlaybackStarted(
         if (lipSync_ != nullptr) lipSync_->EndPlayback(utteranceId);
         active_.reset();
         return false;
+    }
+    if (speechExpression_ != nullptr && active_->Expression.has_value()) {
+        // Translation already validated the target. A clock anomaly must not
+        // stop audible playback; it only suppresses this presentation layer.
+        speechExpression_->ApplyTarget(active_->Expression.value(), nowMs);
     }
     playing_ = true;
     return true;

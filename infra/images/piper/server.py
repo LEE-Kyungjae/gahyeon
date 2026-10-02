@@ -54,9 +54,6 @@ TECH_PRONUNCIATIONS = {
     "stt": "에스티티",
     "ai": "에이아이",
 }
-PHONEME_PRONUNCIATIONS = {
-    "깃허브": "[[ɡithʌbɯ]]",
-}
 
 
 def file_sha256(path: Path) -> str:
@@ -86,10 +83,7 @@ def prepare_synthesis_text(text: str) -> tuple[str, str]:
     if not text:
         return "", "markup-stripped"
     if not LATIN_TEXT.search(text):
-        prepared = text
-        for source, pronunciation in PHONEME_PRONUNCIATIONS.items():
-            prepared = prepared.replace(source, pronunciation)
-        return prepared, "phoneme-overridden" if prepared != text else "original"
+        return text, "original"
     prepared = text
     for source, pronunciation in TECH_PRONUNCIATIONS.items():
         prepared = re.sub(rf"(?i)\b{re.escape(source)}\b", pronunciation, prepared)
@@ -102,8 +96,6 @@ def prepare_synthesis_text(text: str) -> tuple[str, str]:
         converted = prepared
         text_mode = "pronunciation-dictionary-fallback"
     converted = converted or text
-    for source, pronunciation in PHONEME_PRONUNCIATIONS.items():
-        converted = converted.replace(source, pronunciation)
     return converted, text_mode
 
 

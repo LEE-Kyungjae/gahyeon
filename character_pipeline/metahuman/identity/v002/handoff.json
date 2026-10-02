@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v002",
+  "stage": "metahuman-identity-solve",
+  "state": "ready-input-toolchain-blocked",
+  "input": {
+    "manifest": "../../../../artifacts/gahyeon-ch/metahuman-identity-input-v79-v4/manifest.json",
+    "manifestSha256": "e3eb3421467dd306d645fb9924fa4374f6f6b9a4e1fd93eab0e43adb0a63d486",
+    "mesh": "../../../../artifacts/gahyeon-ch/metahuman-identity-input-v79-v4/gahyeon-metahuman-identity-v79.obj",
+    "meshSha256": "de78fd95e706d4b95e158d6258200dff61527cc014685d927b0cbb2e8e5af5f6",
+    "scope": "head-neck-and-eyes-only",
+    "claim": "neutral-static-mesh-input-not-metahuman-not-dna",
+    "topology": {"connectedComponents": 5, "boundaryEdges": 122, "boundaryLoops": 5}
+  },
+  "referenceAuthority": {
+    "manifest": "../../../../artifacts/gahyeon-ch/identity-reference.json",
+    "manifestSha256": "41653f14ce045ad86bcf703a806cd61a416ce284a3c831917bac899c901b0179"
+  },
+  "captureProtocol": {
+    "profile": "../../../unreal/render_pipeline/looking-glass-go.json",
+    "resolution": [1440, 2560],
+    "views": ["face-front", "face-left-45", "face-right-45", "face-left-profile", "face-right-profile"],
+    "quiltViewCount": 66,
+    "quiltRequiresConnectedCalibration": true
+  },
+  "requiredUnrealActions": [
+    "import the v4 mesh with materials and textures",
+    "create MetaHuman Identity from mesh",
+    "set and promote the neutral front frame",
+    "track active frame, manually correct markers and solve Identity",
+    "conform MetaHuman production topology with eyes and teeth",
+    "render five immutable Looking Glass Go views",
+    "compare against canonical 03/06/07/08 and reject unattractive v79 proportion carryover"
+  ],
+  "forbiddenClaimsUntilEvidence": ["metahuman-created", "dna-created", "facial-rig-validated", "identity-approved", "aaa-quality"]
+}

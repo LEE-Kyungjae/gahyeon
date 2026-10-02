@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P13-evidence-scorecard",
+  "state": "completed-current-iteration-unscored",
+  "hypothesis": {
+    "statement": "A numeric scorecard created before production evidence would hide the gap between a functioning blockout and an AAA digital human.",
+    "action": "Require per-component state, local evidence, defects, likely causes, recommended modifications, confidence and review mode; calculate overall only when every component is scored and no blocking defect remains.",
+    "expectedResult": "The current v001 scorecard remains honest and useful with measured/unverified states rather than fabricated numbers."
+  },
+  "actualResult": {
+    "components": 13,
+    "scored": 0,
+    "measuredNotScored": 3,
+    "unverified": 10,
+    "blockingDefects": 11,
+    "overall": null,
+    "automaticApproval": false
+  },
+  "measuredNotScored": ["identitySimilarity", "faceGeometry", "bodyGeometry"],
+  "unverified": ["skin", "eyes", "hair", "materials", "rig", "facialDeformation", "bodyDeformation", "lightingRobustness", "closeUpQuality", "runtimePerformance"],
+  "decision": "Do not publish a percentage or overall quality score for v001. Preserve geometric measurements and blockers until component-specific evidence supports calibrated scoring.",
+  "nextEvidence": "post-conform MetaHuman renders and Editor evidence sufficient to promote individual components from unverified/measured-not-scored to scored"
+}

@@ -21,8 +21,8 @@ REQUIRED = (
     "Behavior",
     "Cognition",
     "persist-before-ack",
-    "Unreal Engine 5.6",
-    "실제 UE 5.6 compile/PIE 증거를 대신하지 않는다",
+    "Unreal Engine 5.8",
+    "실제 UE 5.8 compile/PIE 증거를 대신하지 않는다",
 )
 
 STALE = (

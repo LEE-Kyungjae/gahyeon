@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P17-reconstruction-toolchain-preflight",
+  "state": "completed-preflight-execution-blocked",
+  "observedAt": "2026-08-13",
+  "executionRegion": "KR",
+  "hypothesis": {
+    "statement": "Installing reconstruction repositories without checking hardware, immutable provenance and territory terms can produce unreproducible or unauthorized candidates.",
+    "action": "Pin official repository revisions, require weight checksums and reviewed licenses, inspect host capabilities and block argv construction unless every model-specific requirement passes.",
+    "expectedResult": "Only attributable, licensed runs on capable workers can enter the six-candidate benchmark."
+  },
+  "actualResult": {
+    "host": {"os": "darwin", "architecture": "arm64", "nvidiaCuda": false, "maximumVramGiB": 0},
+    "trellis": {
+      "ready": false,
+      "officialMinimum": "Linux, NVIDIA CUDA GPU, 24 GiB VRAM",
+      "blockers": ["license-review-incomplete", "weights-checksum-missing", "unsupported-operating-system", "nvidia-cuda-unavailable", "insufficient-vram"]
+    },
+    "hunyuan": {
+      "ready": false,
+      "blockers": ["license-territory-forbids-execution", "weights-checksum-missing", "unsupported-operating-system", "nvidia-cuda-unavailable", "insufficient-vram", "runner-unavailable"],
+      "territoryFinding": "The official Hunyuan3D 2.x community license excludes South Korea and forbids use of its works and outputs outside the licensed Territory."
+    },
+    "candidateCount": 0,
+    "productionMeshAllowed": false
+  },
+  "decision": "Do not install or execute Hunyuan3D in South Korea. Run TRELLIS.2 only after an approved Linux/CUDA worker and exact weights checksum are available. The second-model requirement needs a legally usable replacement before generation begins."
+}

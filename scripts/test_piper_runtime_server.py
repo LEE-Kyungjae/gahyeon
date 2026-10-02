@@ -127,7 +127,7 @@ class PiperRuntimeServerTest(unittest.TestCase):
 
     def test_github_pronunciation_survives_transliterator_failure(self) -> None:
         prepared, mode = self.server.prepare_synthesis_text("GitHub 확인")
-        self.assertEqual(prepared, "[[ɡithʌbɯ]] 확인")
+        self.assertEqual(prepared, "깃허브 확인")
         self.assertEqual(mode, "pronunciation-dictionary-fallback")
 
     def test_uses_approved_medium_noise_filter(self) -> None:

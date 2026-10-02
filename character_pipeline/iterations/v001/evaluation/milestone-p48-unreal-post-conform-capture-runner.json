@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P48-unreal-post-conform-capture-runner",
+  "state": "completed-runner-awaiting-real-conform",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A five-image contract is weak if arbitrary PNGs can satisfy it without proving which MetaHuman, Unreal camera or Editor session produced them.",
+    "action": "Add an interactive UE 5.6 capture driver that validates the conformed Character, resolves exactly one hero and five named cameras, enforces 50-120mm lenses, renders 1440x2560 and seals camera transforms plus checksums.",
+    "expectedResult": "The first conformed face can be shown immediately under repeatable conditions and cannot be substituted by unrelated images."
+  },
+  "actualResult": {
+    "runner": "../../../../unreal/GahyeonStage/Content/Python/gahyeon_capture_post_conform_identity_v002.py",
+    "verifier": "../../../tools/post_conform_identity_checkpoint_v002.py",
+    "views": 5,
+    "resolution": [1440, 2560],
+    "lensRangeMm": [50, 120],
+    "sealedPerView": ["actorPath", "location", "rotation", "focalLengthMm", "imageSha256"],
+    "editorRuntimeRequired": true,
+    "headOnlyCheckpoint": true,
+    "qualityClaim": null
+  },
+  "failureHandling": [
+    "reject missing or duplicate hero/camera actors",
+    "reject missing or wrong-class MetaHuman Character",
+    "reject conform receipt checksum drift",
+    "refuse existing output directories",
+    "reject lenses outside conversational portrait range",
+    "time out missing screenshots",
+    "reject image, camera or capture-job provenance drift"
+  ],
+  "validation": {
+    "checkpointTests": "7 passed",
+    "pythonCompilation": "passed",
+    "cameraProvenanceMissing": "rejected",
+    "wrongResolution": "rejected",
+    "realEditorCapture": "pending because UE 5.6 and a conformed MetaHuman are absent"
+  },
+  "qualityBoundary": "The runner proves real fixed-view capture provenance, not facial likeness or AAA quality. Human P47 review remains mandatory.",
+  "decision": "Use these five real images as the first user-visible MetaHuman checkpoint; reject and re-solve if the face remains unattractive or unrecognizable."
+}

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "jobId": "gahyeon-expression-ground-truth-v1",
+  "state": "toolchain-unavailable",
+  "executionHost": "land",
+  "generator": {
+    "runtime": "ComfyUI",
+    "endpoint": "http://127.0.0.1:8188",
+    "checkpoint": "sd_xl_base_1.0.safetensors",
+    "lora": "gahyeon-sdxl-v1-continued-from0800-step00001200.safetensors",
+    "loraSha256": "8ceb5048b52e400c0ea0525efe76bcd641880317e0f44ec932650110a0dae084",
+    "loraStrength": 0.65,
+    "clipStrength": 0.0,
+    "steps": 30,
+    "cfg": 5.5,
+    "sampler": "dpmpp_2m",
+    "scheduler": "karras"
+  },
+  "capture": {
+    "width": 1024,
+    "height": 1024,
+    "camera": "front-facing head-and-shoulders, 85mm-equivalent, eye-level",
+    "lighting": "neutral soft studio lighting",
+    "background": "neutral gray",
+    "identityPrompt": "gahyeonch woman, exact established character identity, no beautification, no redesign",
+    "negativePrompt": "different person, identity drift, beauty filter, stylized, anime, low quality, blurry, distorted face, asymmetrical eyes, text, logo, watermark"
+  },
+  "targets": [
+    {"label": "angry", "seed": 425001, "prompt": "controlled angry expression, brows lowered and drawn together, lips pressed"},
+    {"label": "sad", "seed": 425002, "prompt": "controlled sad expression, inner brows raised, mouth corners lowered"},
+    {"label": "eyes-closed", "seed": 425003, "prompt": "neutral face with both eyes gently closed, lips relaxed"},
+    {"label": "viseme-sil", "seed": 425004, "prompt": "speech reference, relaxed closed mouth, silence pose"},
+    {"label": "viseme-aa", "seed": 425005, "prompt": "speech reference saying Korean ah, jaw open, tongue relaxed"},
+    {"label": "viseme-ih", "seed": 425006, "prompt": "speech reference saying Korean ih, lips slightly spread"},
+    {"label": "viseme-ou", "seed": 425007, "prompt": "speech reference saying Korean oo, lips rounded and protruded"},
+    {"label": "viseme-ee", "seed": 425008, "prompt": "speech reference saying Korean ee, lips spread horizontally"},
+    {"label": "viseme-oh", "seed": 425009, "prompt": "speech reference saying Korean oh, rounded open mouth"},
+    {"label": "viseme-fv", "seed": 425010, "prompt": "speech reference, upper teeth touching lower lip"},
+    {"label": "viseme-l", "seed": 425011, "prompt": "speech reference, tongue tip touching behind upper teeth"},
+    {"label": "viseme-mbp", "seed": 425012, "prompt": "speech reference, lips firmly closed for m b p"},
+    {"label": "viseme-wq", "seed": 425013, "prompt": "speech reference, tightly rounded lips for w"}
+  ],
+  "outputPolicy": {
+    "directory": "/opt/zaeze-ai/training/gahyeon-expression-ground-truth-v1",
+    "neverOverwrite": true,
+    "recordPromptId": true,
+    "recordSha256": true,
+    "initialAuthority": "candidate",
+    "automaticPromotion": false,
+    "requiredReview": ["identity-match", "expression-label", "geometry-consistency", "no-hair-occlusion"]
+  }
+}

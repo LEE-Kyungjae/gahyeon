@@ -29,20 +29,24 @@ def main():
     destination = "/Game/Gahyeon/CharacterPipeline/v002/IdentityInput"
     asset_name = "SM_Gahyeon_IdentityInput_v002"
     expected = f"{destination}/{asset_name}"
-    if unreal.EditorAssetLibrary.does_asset_exist(expected):
+    existing = unreal.EditorAssetLibrary.does_asset_exist(expected)
+    verify_existing = os.environ.get("GAHYEON_VERIFY_EXISTING_IDENTITY_IMPORT") == "1"
+    if existing and not verify_existing:
         raise RuntimeError(f"refusing to replace existing Identity input: {expected}")
 
-    task = unreal.AssetImportTask()
-    task.set_editor_property("filename", str(source))
-    task.set_editor_property("destination_path", destination)
-    task.set_editor_property("destination_name", asset_name)
-    task.set_editor_property("automated", True)
-    task.set_editor_property("replace_existing", False)
-    task.set_editor_property("save", True)
-    unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
-    imported = list(task.get_editor_property("imported_object_paths"))
-    if imported != [expected] or not unreal.EditorAssetLibrary.does_asset_exist(expected):
-        raise RuntimeError(f"Identity shape import mismatch: {imported}")
+    if not existing:
+        task = unreal.AssetImportTask()
+        task.set_editor_property("filename", str(source))
+        task.set_editor_property("destination_path", destination)
+        task.set_editor_property("destination_name", asset_name)
+        task.set_editor_property("automated", True)
+        task.set_editor_property("replace_existing", False)
+        task.set_editor_property("save", True)
+        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+        imported = list(task.get_editor_property("imported_object_paths"))
+        imported_packages = {path.split(".", 1)[0] for path in imported}
+        if expected not in imported_packages or not unreal.EditorAssetLibrary.does_asset_exist(expected):
+            raise RuntimeError(f"Identity shape import mismatch: {imported}")
     asset = unreal.EditorAssetLibrary.load_asset(expected)
     if asset is None or asset.get_class().get_name() != "StaticMesh":
         raise RuntimeError("Identity input did not produce exactly one StaticMesh")

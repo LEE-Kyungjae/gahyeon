@@ -1,0 +1,2 @@
+# Isolated evaluator environment; not a runtime dependency of Gahyeon.
+mediapipe==0.10.21

@@ -4,6 +4,7 @@ import com.gahyeonbot.adapters.discord.bootstrap.BotInitializerRunner;
 import com.gahyeonbot.entity.DmSubscription;
 import com.gahyeonbot.entity.NewsletterTheme;
 import com.gahyeonbot.repository.NewsArticleRepository;
+import com.gahyeonbot.services.ai.GlmService;
 import com.gahyeonbot.services.news.NewsEventRanker;
 import com.gahyeonbot.services.news.PersonalizedNewsProperties;
 import com.gahyeonbot.services.notification.DmSubscriptionService;
@@ -29,6 +30,7 @@ public class PersonalizedNewsCampaignService {
     private final DmSubscriptionService subscriptionService;
     private final DmDispatchService dispatchService;
     private final BotInitializerRunner botInitializerRunner;
+    private final GlmService glmService;
 
     @Scheduled(cron = "${news.personalized.digest-cron:0 0 8 * * *}",
             zone = "${news.personalized.schedule-zone:Asia/Seoul}")
@@ -42,7 +44,7 @@ public class PersonalizedNewsCampaignService {
             log.info("맞춤뉴스 발송 생략 - 검증된 관련 사건 없음");
             return;
         }
-        String message = format(events, ZoneId.of("Asia/Seoul"));
+        String message = format(localizeToKorean(events), ZoneId.of("Asia/Seoul"));
         if (message.isBlank()) {
             log.warn("맞춤뉴스 발송 생략 - 출처를 보존한 채 메시지 길이 제한을 충족할 수 없음");
             return;
@@ -52,6 +54,30 @@ public class PersonalizedNewsCampaignService {
             dispatchService.dispatchGeneratedMessage(runId, subscription.getUserId(), message,
                     runId + "-" + subscription.getUserId());
         }
+    }
+
+    List<NewsEventRanker.NewsEvent> localizeToKorean(List<NewsEventRanker.NewsEvent> events) {
+        return events.stream().map(event -> {
+            if (containsHangul(event.title())
+                    && (event.summary() == null || event.summary().isBlank() || containsHangul(event.summary()))) {
+                return event;
+            }
+            GlmService.KoreanNewsTranslation translation =
+                    glmService.translateNewsToKorean(event.title(), event.summary());
+            if (translation == null) {
+                log.warn("맞춤뉴스 번역 실패로 외국어 사건 제외 - sources={}", event.sources().size());
+                return null;
+            }
+            return new NewsEventRanker.NewsEvent(
+                    translation.title(), translation.summary(), event.publishedAt(),
+                    event.score(), event.sources());
+        }).filter(java.util.Objects::nonNull).toList();
+    }
+
+    private static boolean containsHangul(String text) {
+        return text != null && text.codePoints().anyMatch(codePoint ->
+                (codePoint >= 0xAC00 && codePoint <= 0xD7A3)
+                        || (codePoint >= 0x3131 && codePoint <= 0x318E));
     }
 
     String format(List<NewsEventRanker.NewsEvent> events, ZoneId zone) {

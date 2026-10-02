@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "models": ["trellis", "instantmesh"],
+  "allowedSeeds": [20260813, 20260814, 20260815],
+  "input": {
+    "format": "png",
+    "mode": "RGBA",
+    "minimumWidth": 512,
+    "minimumHeight": 512,
+    "requireTransparentPixel": true,
+    "authority": "user-provided-original-derived-mask"
+    ,"requireHumanScopeApproval": true
+  },
+  "output": {
+    "formats": ["glb", "obj"],
+    "minimumBytes": 1024,
+    "exactMeshCount": 1,
+    "atomicPromotion": true,
+    "overwrite": false
+  },
+  "claim": "temporary-shape-estimate-not-production-mesh",
+  "productionMeshAllowed": false
+}

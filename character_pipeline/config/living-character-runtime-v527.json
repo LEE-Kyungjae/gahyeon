@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v527",
+  "status": "draft-multi-character-runtime-registry",
+  "defaultCharacter": "hayley",
+  "characters": {
+    "hayley": {
+      "usage": "primary-shared-poc",
+      "skeletalMesh": "/Game/LivingCharacterPOC/v448/Characters/HayleyBindClean/Hayley_BindPoseClean_v447",
+      "skeleton": "/Game/LivingCharacterPOC/v448/Characters/HayleyBindClean/Hayley_BindPoseClean_v447_Skeleton",
+      "livingIdle": "/Game/LivingCharacterPOC/v511/Animation/Hayley_LivingIdle_v509",
+      "motionManifest": "character_pipeline/config/hayley-living-character-v488.json",
+      "evidence": "artifacts/living-character-poc-v513-hayley-living-idle-readable/hayley-explain-and-stand-sit-phases.png",
+      "runtimeReady": true,
+      "quality": "poc"
+    },
+    "stella-lily": {
+      "usage": "independent-character-candidate",
+      "skeletalMesh": "/Game/LivingCharacterPOC/v520/Characters/StellaLilyPreview/StellaLily_Modular_v518",
+      "skeleton": "/Game/LivingCharacterPOC/v520/Characters/StellaLilyPreview/StellaLily_Modular_v518_Skeleton",
+      "sourceModularFbx": "artifacts/living-character-poc-v518-stella-lily-unreal-export/StellaLily_Modular_v518.fbx",
+      "sourceModularMeshCount": 13,
+      "boneCount": 219,
+      "evidence": "artifacts/living-character-poc-v522-stella-lily-ue-evidence/front-left45-profile.png",
+      "runtimeReady": false,
+      "quality": "static-preview",
+      "nextGate": "retargeted-idle-and-deformation-qa"
+    },
+    "ururu": {
+      "usage": "independent-character-candidate",
+      "skeletalMesh": "/Game/LivingCharacterPOC/v525/Characters/UruruPreview/Ururu_Normalized_v523",
+      "skeleton": "/Game/LivingCharacterPOC/v525/Characters/UruruPreview/Ururu_Normalized_v523_Skeleton",
+      "sourceNormalizedFbx": "artifacts/living-character-poc-v523-ururu-normalized/Ururu_Normalized_v523.fbx",
+      "sourceModularMeshCount": 5,
+      "boneCount": 179,
+      "evidence": "artifacts/living-character-poc-v526-ururu-ue-evidence/front-left45-profile.png",
+      "runtimeReady": false,
+      "quality": "static-preview",
+      "nextGate": "retargeted-idle-and-deformation-qa"
+    },
+    "diana": {
+      "usage": "private-only",
+      "runtimeReady": false,
+      "distributionAllowed": false
+    },
+    "gahyeon": {
+      "usage": "archive-only",
+      "runtimeReady": false
+    }
+  },
+  "sharedMotionIntents": [
+    "neutralIdle",
+    "engagedIdle",
+    "walk",
+    "run",
+    "standSit",
+    "explain",
+    "narration",
+    "subtleReaction",
+    "present",
+    "emphasis"
+  ],
+  "runtimeStateContract": {
+    "listening": ["neutralIdle", "subtleReaction"],
+    "thinking": ["neutralIdle", "engagedIdle"],
+    "speaking": ["narration", "explain"],
+    "presenting": ["present"],
+    "emphasizing": ["emphasis"],
+    "locomotion": ["walk", "run"],
+    "postureTransition": ["standSit"]
+  },
+  "knownGaps": [
+    "Stella/Lily and Ururu need per-skeleton retarget profiles and runtime animation QA",
+    "materials and source textures are not yet rebuilt for the UE previews",
+    "true TTS visemes are not yet connected",
+    "hair and clothing secondary motion are not yet active",
+    "desktop runtime does not yet select characters and motion states from this registry",
+    "license evidence is required before any release or redistribution"
+  ],
+  "humanApproved": false,
+  "releaseEligible": false
+}

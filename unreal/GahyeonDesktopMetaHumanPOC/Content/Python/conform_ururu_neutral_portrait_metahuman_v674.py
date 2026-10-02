@@ -1,0 +1,140 @@
+"""Conform Ururu with the validated v673 neutral UE portrait and matched camera."""
+
+import hashlib
+import json
+import math
+from pathlib import Path
+
+import unreal
+
+
+ROOT = Path("/Users/ze/work/gahyeonbot")
+SOURCE = ROOT / "artifacts/living-character-poc-v659-unreal-axis-heads/ururu-neutral-head-v659.fbx"
+SOURCE_SHA256 = "28910ddc9790d1600022097f25b45682910f50f427274d2d612a847efd605210"
+PORTRAIT = ROOT / "artifacts/living-character-poc-v673-ururu-neutral-textured-portrait/ururu-neutral-front.png"
+PORTRAIT_REPORT = ROOT / "artifacts/living-character-poc-v673-ururu-neutral-textured-portrait/report.json"
+OUTPUT = ROOT / "artifacts/living-character-poc-v674-ururu-neutral-metahuman-conform"
+TARGET_MESH = "/Game/LivingCharacterPOC/v660/Input/SM_Ururu_UEAxisHead_v660"
+TARGET_CHARACTER = "/Game/LivingCharacterPOC/v674/Character/MHC_Ururu_Draft_v674"
+SENSOR_WIDTH_MM = 36.0
+FOCAL_LENGTH_MM = 55.0
+FOV_DEGREES = math.degrees(2.0 * math.atan(SENSOR_WIDTH_MM / (2.0 * FOCAL_LENGTH_MM)))
+
+
+def _sha256(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def conform_ururu_neutral_portrait_metahuman_v674():
+    if OUTPUT.exists():
+        raise RuntimeError(f"refusing to overwrite immutable v674 output: {OUTPUT}")
+    if not SOURCE.is_file() or _sha256(SOURCE) != SOURCE_SHA256:
+        raise RuntimeError("sealed Ururu v659 source lineage differs")
+    portrait_report = json.loads(PORTRAIT_REPORT.read_text(encoding="utf-8"))
+    if portrait_report.get("state") != "captured-neutral-textured-conform-preflight":
+        raise RuntimeError("v673 portrait lineage is not a conform preflight")
+    if _sha256(PORTRAIT) != portrait_report.get("sha256"):
+        raise RuntimeError("v673 portrait checksum differs")
+    if unreal.EditorAssetLibrary.does_asset_exist(TARGET_CHARACTER):
+        raise RuntimeError(f"refusing to overwrite immutable asset: {TARGET_CHARACTER}")
+    mesh = unreal.load_asset(TARGET_MESH)
+    if mesh is None or mesh.get_class().get_name() != "StaticMesh":
+        raise RuntimeError("sealed Ururu v660 head is not a StaticMesh")
+    subsystem = unreal.get_editor_subsystem(unreal.MetaHumanCharacterEditorSubsystem)
+    image_size, pixels = unreal.PromotedFrameUtils.get_promoted_frame_as_pixel_array_from_disk(
+        str(PORTRAIT)
+    )
+    tracked = subsystem.track_face_landmarks_from_image(pixels, image_size.x, image_size.y)
+    if isinstance(tracked, tuple) and len(tracked) == 1:
+        tracked = tracked[0]
+    if not tracked or not hasattr(tracked, "items"):
+        raise RuntimeError("UE tracker found no curves on validated v673 Ururu portrait")
+    head_vertices, head_indices, *_ = subsystem.get_mesh_data_for_conforming(mesh)
+    if len(head_vertices) < 1000 or len(head_indices) < 3000:
+        raise RuntimeError("Ururu v660 target topology is implausibly small")
+
+    bounds = mesh.get_bounds()
+    target = bounds.origin
+    camera_location = target + unreal.Vector(0.0, 155.0, 0.0)
+    camera_rotation = unreal.MathLibrary.find_look_at_rotation(camera_location, target)
+    package, name = TARGET_CHARACTER.rsplit("/", 1)
+    character = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        asset_name=name,
+        package_path=package,
+        asset_class=unreal.MetaHumanCharacter,
+        factory=unreal.new_object(type=unreal.MetaHumanCharacterFactoryNew),
+    )
+    if character is None:
+        raise RuntimeError("failed to create Ururu v674 MetaHuman Character")
+    if not subsystem.try_add_object_to_edit(character):
+        unreal.EditorAssetLibrary.delete_asset(TARGET_CHARACTER)
+        raise RuntimeError("failed to lock Ururu v674 Character for editing")
+    conformed = False
+    try:
+        params = unreal.ConformTargetParams()
+        params.conform_target_mesh.target_parts_type = unreal.TargetPartsType.HEAD_ONLY
+        params.conform_target_mesh.head_vertices = head_vertices
+        params.conform_target_mesh.head_vertex_indices = head_indices
+        params.auto_solve = True
+        params.body_conform_solve_settings.pipeline_name = "head_only"
+        params.curve_tracking_points = tracked
+        view = unreal.MinimalViewInfo()
+        view.location = camera_location
+        view.rotation = camera_rotation
+        view.fov = FOV_DEGREES
+        view.aspect_ratio = float(image_size.x) / float(image_size.y)
+        view.projection_mode = unreal.CameraProjectionMode.PERSPECTIVE
+        params.camera_view_info = view
+        params.image_size = image_size
+        key = unreal.MetaHumanCharacterTargetMeshKey()
+        key.head_mesh = mesh
+        if not subsystem.conform_to_target_meshes(character, key, params):
+            raise RuntimeError("UE 5.8 Ururu v674 conform_to_target_meshes failed")
+        subsystem.commit_posed_state_as_a_pose(character, key)
+        if not unreal.EditorAssetLibrary.save_asset(TARGET_CHARACTER, only_if_is_dirty=True):
+            raise RuntimeError("failed to save Ururu v674 MetaHuman draft")
+        conformed = True
+    finally:
+        if subsystem.is_object_added_for_editing(character):
+            subsystem.remove_object_to_edit(character)
+        if not conformed:
+            unreal.EditorAssetLibrary.delete_asset(TARGET_CHARACTER)
+    OUTPUT.mkdir(parents=True, exist_ok=False)
+    (OUTPUT / "conform-receipt.json").write_text(json.dumps({
+        "schemaVersion": 1,
+        "iteration": "v674",
+        "state": "draft-conformed-awaiting-fixed-camera-surface-qa",
+        "engine": "5.8",
+        "characterId": "ururu",
+        "source": {"path": str(SOURCE), "sha256": SOURCE_SHA256},
+        "portrait": {"path": str(PORTRAIT), "sha256": _sha256(PORTRAIT)},
+        "portraitReport": str(PORTRAIT_REPORT),
+        "targetMesh": TARGET_MESH,
+        "targetCharacter": TARGET_CHARACTER,
+        "camera": {
+            "locationCm": [camera_location.x, camera_location.y, camera_location.z],
+            "targetCm": [target.x, target.y, target.z],
+            "rotationDegrees": [camera_rotation.pitch, camera_rotation.yaw, camera_rotation.roll],
+            "sensorWidthMm": SENSOR_WIDTH_MM,
+            "focalLengthMm": FOCAL_LENGTH_MM,
+            "fovDegrees": FOV_DEGREES,
+            "aspectRatio": float(image_size.x) / float(image_size.y),
+        },
+        "targetTopology": {
+            "vertices": len(head_vertices),
+            "triangles": len(head_indices) // 3,
+        },
+        "trackedCurveCount": len(tracked),
+        "hypothesis": (
+            "The neutral v525 pose, v585 materials, and matched 55mm UE camera remove "
+            "the pose and projection mismatch that destroyed v669."
+        ),
+        "decision": "retain as draft until fixed-camera surface QA",
+        "automaticApproval": False,
+        "identityApproved": False,
+        "productionReady": False,
+    }, indent=2) + "\n", encoding="utf-8")
+    unreal.SystemLibrary.quit_editor()
+
+
+conform_ururu_neutral_portrait_metahuman_v674()

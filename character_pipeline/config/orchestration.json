@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "displayProfile": "looking-glass-go",
+  "failurePolicy": "stop-on-error-or-blocked",
+  "overwrite": false,
+  "stages": [
+    {
+      "id": "display-profile",
+      "command": ["python3", "character_pipeline/tools/verify_display_profile.py", "character_pipeline/unreal/render_pipeline/looking-glass-go.json"],
+      "continueStates": ["passed"]
+    },
+    {
+      "id": "iteration-integrity",
+      "command": ["python3", "character_pipeline/tools/verify_iteration.py", "character_pipeline/iterations/v001", "--verify-files"],
+      "continueStates": ["passed"]
+    },
+    {
+      "id": "reconstruction-toolchain-preflight",
+      "command": ["python3", "character_pipeline/tools/reconstruction_toolchain.py"],
+      "jsonStateField": "state",
+      "blockedStates": ["blocked"],
+      "continueStates": ["ready"]
+    },
+    {
+      "id": "reconstruction-benchmark",
+      "command": ["python3", "character_pipeline/evaluation/validate_reconstruction_benchmark.py"],
+      "jsonStateField": "state",
+      "blockedStates": ["toolchain-unavailable", "planned", "running", "failed"],
+      "continueStates": ["validated", "selection-reviewed"]
+    }
+  ]
+}

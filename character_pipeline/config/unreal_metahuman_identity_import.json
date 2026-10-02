@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "engine": "5.6",
+  "project": "GahyeonStageCharacterQA",
+  "destinationPath": "/Game/Gahyeon/CharacterPipeline/v001/IdentityInput",
+  "assetName": "SM_Gahyeon_IdentityInput_v001",
+  "combineMeshes": true,
+  "replaceExisting": false,
+  "automated": true,
+  "save": true,
+  "allowedFormats": ["obj", "fbx"],
+  "nextState": "awaiting-components-from-mesh-and-neutral-tracking",
+  "productionMeshAllowed": false
+}

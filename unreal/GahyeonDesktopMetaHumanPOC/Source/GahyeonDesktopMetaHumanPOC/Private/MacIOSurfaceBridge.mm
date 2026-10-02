@@ -4,6 +4,8 @@
 #include "Framework/Application/SlateApplication.h"
 #include "Rendering/SlateRenderer.h"
 #include "RHIResources.h"
+#include "RHICommandList.h"
+#include "RHIGPUReadback.h"
 #include "HAL/PlatformMemory.h"
 #include "Mac/MacSystemIncludes.h"
 #include "Slate/SlateViewportProvider.h"
@@ -27,7 +29,7 @@ struct alignas(64) FIOSurfaceHeader
     volatile uint64 Sequence = 0;
     volatile uint32 ViewIndex = 0;
     volatile uint32 ViewCount = 1;
-    uint8 Reserved[8] = {};
+    volatile uint64 ConsumerSequence = 0;
 };
 static_assert(sizeof(FIOSurfaceHeader) == 64);
 
@@ -40,6 +42,15 @@ id<MTLCommandQueue> Queue = nil;
 TAtomic<bool> CopyInFlight(false);
 TAtomic<uint32> RequestedViewIndex(0);
 TAtomic<uint32> RequestedViewCount(1);
+TAtomic<uint64> RequestedViewGeneration(0);
+TAtomic<uint64> PublishedViewGeneration(0);
+TUniquePtr<FRHIGPUTextureReadback> Readback;
+bool bReadbackPending = false;
+uint64 ReadbackGeneration = 0;
+uint32 ReadbackView = 0, ReadbackViews = 1, ReadbackWidth = 0, ReadbackHeight = 0;
+uint32 ReadbackPixelBytes = 0;
+MTLPixelFormat ReadbackFormat = MTLPixelFormatInvalid;
+id<MTLTexture> ReadbackUpload = nil;
 
 void ReleaseGPU()
 {
@@ -76,10 +87,94 @@ bool CreateGPU(id<MTLTexture> Source)
     return true;
 }
 
+void OnStableBackBuffer(ISlateViewportProvider& ViewportProvider)
+{
+    auto* Header = SharedRegion
+        ? static_cast<FIOSurfaceHeader*>(SharedRegion->GetAddress()) : nullptr;
+    if (!Header) return;
+    if (bReadbackPending)
+    {
+        if (!Readback->IsReady()) return;
+        int32 RowPixels = 0, BufferHeight = 0;
+        void* Bytes = Readback->Lock(RowPixels, &BufferHeight);
+        if (!Bytes || RowPixels < int32(ReadbackWidth) || BufferHeight < int32(ReadbackHeight))
+        {
+            UE_LOG(LogTemp, Error, TEXT("Looking Glass GPU readback layout invalid"));
+            if (Bytes) Readback->Unlock();
+            bReadbackPending = false;
+            return;
+        }
+        if (!ReadbackUpload || ReadbackUpload.width != ReadbackWidth
+            || ReadbackUpload.height != ReadbackHeight || ReadbackUpload.pixelFormat != ReadbackFormat)
+        {
+            MTLTextureDescriptor* Descriptor = [MTLTextureDescriptor
+                texture2DDescriptorWithPixelFormat:ReadbackFormat width:ReadbackWidth
+                height:ReadbackHeight mipmapped:NO];
+            Descriptor.storageMode = MTLStorageModeShared;
+            Descriptor.usage = MTLTextureUsageShaderRead;
+            ReadbackUpload = [MTLCreateSystemDefaultDevice() newTextureWithDescriptor:Descriptor];
+        }
+        if (!ReadbackUpload) { Readback->Unlock(); bReadbackPending = false; return; }
+        [ReadbackUpload replaceRegion:MTLRegionMake2D(0, 0, ReadbackWidth, ReadbackHeight)
+            mipmapLevel:0 withBytes:Bytes bytesPerRow:RowPixels * ReadbackPixelBytes];
+        Readback->Unlock();
+        if ((!SharedTexture || SharedTexture.width != ReadbackWidth || SharedTexture.height != ReadbackHeight)
+            && !CreateGPU(ReadbackUpload)) { bReadbackPending = false; return; }
+        // This queue reads our completed CPU upload, never Unreal's live back buffer.
+        id<MTLCommandBuffer> Command = [Queue commandBuffer];
+        id<MTLComputeCommandEncoder> Encoder = [Command computeCommandEncoder];
+        [Encoder setComputePipelineState:Pipeline];
+        [Encoder setTexture:ReadbackUpload atIndex:0]; [Encoder setTexture:SharedTexture atIndex:1];
+        [Encoder dispatchThreads:MTLSizeMake(ReadbackWidth, ReadbackHeight, 1)
+            threadsPerThreadgroup:MTLSizeMake(16, 16, 1)];
+        [Encoder endEncoding]; [Command commit]; [Command waitUntilCompleted];
+        if (Command.status != MTLCommandBufferStatusCompleted) { bReadbackPending = false; return; }
+        Header->ViewIndex = ReadbackView; Header->ViewCount = ReadbackViews;
+        FPlatformMisc::MemoryBarrier();
+        PublishedViewGeneration.Store(ReadbackGeneration);
+        ++Header->Sequence;
+        bReadbackPending = false;
+        return;
+    }
+    if (Header->Sequence != Header->ConsumerSequence) return;
+    const uint64 Generation = RequestedViewGeneration.Load();
+    if (Generation == PublishedViewGeneration.Load()) return;
+    FRHITexture* BackBuffer = ViewportProvider.GetBackBufferResource();
+    if (!BackBuffer) return;
+    if (!Readback) Readback = MakeUnique<FRHIGPUTextureReadback>(TEXT("GahyeonQuiltReadback"));
+    ReadbackWidth = BackBuffer->GetSizeXYZ().X; ReadbackHeight = BackBuffer->GetSizeXYZ().Y;
+    ReadbackPixelBytes = GPixelFormats[BackBuffer->GetFormat()].BlockBytes;
+    ReadbackFormat = MTLPixelFormat(GPixelFormats[BackBuffer->GetFormat()].PlatformFormat);
+    id<MTLTexture> Native = (__bridge id<MTLTexture>)BackBuffer->GetNativeResource();
+    if (Native) ReadbackFormat = Native.pixelFormat;
+    ReadbackGeneration = Generation;
+    ReadbackView = RequestedViewIndex.Load(); ReadbackViews = RequestedViewCount.Load();
+    Readback->EnqueueCopy(FRHICommandListExecutor::GetImmediateCommandList(), BackBuffer);
+    bReadbackPending = true;
+}
+
 void OnBackBuffer(SWindow&, ISlateViewportProvider& ViewportProvider)
 {
     @autoreleasepool {
+        if (FPlatformMisc::GetEnvironmentVariable(TEXT("GAHYEON_LOOKING_GLASS_STABLE_CAPTURE")) == TEXT("1"))
+        {
+            OnStableBackBuffer(ViewportProvider);
+            return;
+        }
         if (CopyInFlight.Exchange(true)) return;
+        auto* Header = SharedRegion
+            ? static_cast<FIOSurfaceHeader*>(SharedRegion->GetAddress()) : nullptr;
+        if (!Header || Header->Sequence != Header->ConsumerSequence)
+        {
+            CopyInFlight.Store(false);
+            return;
+        }
+        const uint64 ViewGeneration = RequestedViewGeneration.Load();
+        if (ViewGeneration == PublishedViewGeneration.Load())
+        {
+            CopyInFlight.Store(false);
+            return;
+        }
         FRHITexture* BackBuffer = ViewportProvider.GetBackBufferResource();
         id<MTLTexture> Source = BackBuffer ? (__bridge id<MTLTexture>)BackBuffer->GetNativeResource() : nil;
         if (!Source || !SharedRegion) { CopyInFlight.Store(false); return; }
@@ -90,13 +185,13 @@ void OnBackBuffer(SWindow&, ISlateViewportProvider& ViewportProvider)
         [Encoder setComputePipelineState:Pipeline]; [Encoder setTexture:Source atIndex:0]; [Encoder setTexture:SharedTexture atIndex:1];
         MTLSize Group = MTLSizeMake(16, 16, 1), Grid = MTLSizeMake(Source.width, Source.height, 1);
         [Encoder dispatchThreads:Grid threadsPerThreadgroup:Group]; [Encoder endEncoding];
-        auto* Header = static_cast<FIOSurfaceHeader*>(SharedRegion->GetAddress());
         const uint32 ViewIndex = RequestedViewIndex.Load();
         const uint32 ViewCount = RequestedViewCount.Load();
         [Command addCompletedHandler:^(id<MTLCommandBuffer>){
             Header->ViewIndex = ViewIndex;
             Header->ViewCount = ViewCount;
             FPlatformMisc::MemoryBarrier();
+            PublishedViewGeneration.Store(ViewGeneration);
             ++Header->Sequence;
             CopyInFlight.Store(false);
         }];
@@ -116,6 +211,7 @@ void StartGahyeonMacIOSurfaceBridge()
 void StopGahyeonMacIOSurfaceBridge()
 {
     if (DelegateHandle.IsValid() && FSlateApplication::IsInitialized()) FSlateApplication::Get().GetRenderer()->OnBackBufferReadyToPresent().Remove(DelegateHandle);
+    Readback.Reset(); ReadbackUpload = nil; bReadbackPending = false;
     ReleaseGPU();
     if (SharedRegion) { FPlatformMemory::UnmapNamedSharedMemoryRegion(SharedRegion); SharedRegion = nullptr; }
 }
@@ -124,6 +220,7 @@ void ConfigureGahyeonMacIOSurfaceQuilt(uint32 ViewIndex, uint32 ViewCount)
 {
     RequestedViewIndex.Store(ViewIndex);
     RequestedViewCount.Store(FMath::Max(1u, ViewCount));
+    ++RequestedViewGeneration;
 }
 
 uint64 GetGahyeonMacIOSurfaceSequence()

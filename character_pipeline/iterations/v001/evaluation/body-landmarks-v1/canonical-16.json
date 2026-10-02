@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "image": {
+    "uri": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/ChatGPT Image 2026년 8월 10일 오후 11_27_02.png",
+    "sha256": "50a75bd9dd57b38ddb05ab35871a40d9a1eb632da4928e05fc60fe2b81635e1f",
+    "dimensions": [
+      1023,
+      1537
+    ]
+  },
+  "detector": {
+    "name": "MediaPipe Pose Heavy",
+    "version": "0.10.21",
+    "landmarkCount": 33
+  },
+  "segmentationBoundsPixels": [
+    308,
+    118,
+    712,
+    1475
+  ],
+  "measurements": {
+    "shoulderWidthOverSilhouetteHeight": 0.168275,
+    "hipWidthOverSilhouetteHeight": 0.095391,
+    "torsoLengthOverSilhouetteHeight": 0.252613,
+    "legLengthOverSilhouetteHeight": 0.437125,
+    "armLengthOverSilhouetteHeight": 0.277454,
+    "shoulderToHipWidthRatio": 1.764056,
+    "legToTorsoRatio": 1.730415,
+    "upperToLowerLegRatio": 1.030826
+  },
+  "landmarksPixels": {
+    "nose": [
+      513.354,
+      244.701
+    ],
+    "leftShoulder": [
+      636.275,
+      383.101
+    ],
+    "rightShoulder": [
+      408.257,
+      398.199
+    ],
+    "leftElbow": [
+      667.629,
+      586.798
+    ],
+    "rightElbow": [
+      371.328,
+      590.545
+    ],
+    "leftWrist": [
+      663.691,
+      765.91
+    ],
+    "rightWrist": [
+      345.476,
+      761.052
+    ],
+    "leftHip": [
+      556.056,
+      731.464
+    ],
+    "rightHip": [
+      426.526,
+      733.13
+    ],
+    "leftKnee": [
+      592.408,
+      1034.754
+    ],
+    "rightKnee": [
+      450.919,
+      1029.293
+    ],
+    "leftAnkle": [
+      668.229,
+      1327.043
+    ],
+    "rightAnkle": [
+      485.806,
+      1309.774
+    ]
+  },
+  "visibility": {
+    "nose": 0.999981,
+    "leftShoulder": 0.999992,
+    "rightShoulder": 0.999952,
+    "leftElbow": 0.992445,
+    "rightElbow": 0.888884,
+    "leftWrist": 0.991703,
+    "rightWrist": 0.944516,
+    "leftHip": 0.999943,
+    "rightHip": 0.99992,
+    "leftKnee": 0.9721,
+    "rightKnee": 0.887584,
+    "leftAnkle": 0.984506,
+    "rightAnkle": 0.957601
+  },
+  "qualityClaim": null
+}

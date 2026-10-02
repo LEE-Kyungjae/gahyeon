@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "target": "metahuman-post-conform",
+  "displayProfile": "looking-glass-go",
+  "resolution": [1440, 2560],
+  "skin": {
+    "minimumTextureResolution": 4096,
+    "requiredChannels": ["baseColor", "normal", "microNormal", "roughness", "specular", "subsurface", "cavity", "ambientOcclusion"],
+    "optionalChannels": ["displacement"],
+    "requiredZones": ["forehead", "nose", "cheeks", "lips", "eyelids", "eyeSockets", "chin", "ears"],
+    "forbidBakedLighting": true
+  },
+  "eyes": {
+    "requiredParts": ["sclera", "iris", "pupil", "cornea", "tearLine", "wetness"],
+    "requiredChecks": ["eyeball-scale", "cornea-profile", "iris-depth", "pupil-response", "sclera-response", "tearline-continuity", "eyelid-contact", "eye-socket-depth", "catchlight", "corneal-refraction"]
+  },
+  "captures": [
+    {"id": "skin-neutral", "lighting": "neutral", "crop": "face-close-up"},
+    {"id": "skin-cross-polarized-style", "lighting": "flat-inspection", "crop": "face-close-up"},
+    {"id": "eye-left-macro", "lighting": "neutral", "crop": "left-eye-macro"},
+    {"id": "eye-right-macro", "lighting": "neutral", "crop": "right-eye-macro"},
+    {"id": "eye-left-profile", "lighting": "neutral", "crop": "left-eye-profile"},
+    {"id": "eye-right-profile", "lighting": "neutral", "crop": "right-eye-profile"},
+    {"id": "blink-contact", "lighting": "neutral", "crop": "eyes-close-up"}
+  ],
+  "approvalPolicy": {
+    "automaticApproval": false,
+    "requireEditorEvidence": true,
+    "requireHumanReview": true,
+    "failOnMissingChannel": true,
+    "failOnMissingEyePart": true,
+    "neverOverwritePriorEvidence": true
+  }
+}

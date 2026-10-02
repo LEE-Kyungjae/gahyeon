@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-08-13",
+  "worker": "land",
+  "state": "unreachable",
+  "probe": {
+    "transport": "ssh",
+    "batchMode": true,
+    "connectTimeoutSeconds": 5,
+    "result": "connection-timed-out-during-banner-exchange"
+  },
+  "capabilities": null,
+  "snapshotMaterialized": false,
+  "candidateGenerationStarted": false
+}

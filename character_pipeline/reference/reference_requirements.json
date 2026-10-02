@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "required": {
+    "face": [
+      "front", "left-30", "right-30", "left-45", "right-45",
+      "left-60", "right-60", "left-90", "right-90", "slightly-up", "slightly-down"
+    ],
+    "body": [
+      "front", "back", "left", "right", "left-45", "right-45"
+    ],
+    "expressions": [
+      "neutral", "smile", "angry", "sad", "eyes-closed", "mouth-open",
+      "viseme-sil", "viseme-aa", "viseme-ih", "viseme-ou", "viseme-ee",
+      "viseme-oh", "viseme-fv", "viseme-l", "viseme-mbp", "viseme-wq"
+    ]
+  },
+  "captureRules": {
+    "sameIdentity": true,
+    "neutralGeometryAuthority": "user-provided-originals",
+    "hairInterference": "minimized",
+    "clothingInterference": "minimized",
+    "beautification": false,
+    "rearInferenceAllowed": false
+  }
+}
+

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P29-reviewed-metahuman-head-export",
+  "state": "completed-tooling-awaiting-p28-handoff-and-real-review",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "Directly cutting and exporting an AI reconstruction head can destroy identity, include hidden geometry, or silently use the wrong Unreal coordinate convention.",
+    "action": "Prepare a non-destructive review scene from the P28 source, seal five Go face cameras and object statistics, require named approval of ten scope checks, then export only approved objects as a separate OBJ or FBX with cm, +Z up and +X forward lineage.",
+    "expectedResult": "Mechanical preparation is automated while semantic head, neck and eye selection remains reviewable and immutable before MetaHuman Identity import."
+  },
+  "actualResult": {
+    "reviewViews": 5,
+    "scopeChecks": 10,
+    "allowedExports": ["obj", "fbx"],
+    "sourceOverwrite": false,
+    "automaticApproval": false,
+    "productionMeshAllowed": false,
+    "realSelectedCandidateProcessed": false
+  },
+  "requiredChecks": [
+    "head complete", "neck transition complete", "eyes open and present",
+    "hair removed", "clothing removed", "accessories removed", "hidden helpers removed",
+    "neutral expression", "identity shape preserved", "nonzero bounds"
+  ],
+  "blenderSmoke": {
+    "version": "5.2.0 LTS",
+    "fixture": "existing v79 MetaHuman Identity input only",
+    "workingSceneObjects": 1,
+    "sealedReviewCameras": 5,
+    "objExportBytes": 1954867,
+    "claim": "mechanical-path-verification-not-new-character-quality"
+  },
+  "failureHandling": [
+    "reject P28 source checksum drift",
+    "reject degenerate or meshless reconstruction",
+    "refuse output overwrite",
+    "reject missing, duplicate or unknown approved objects",
+    "reject incomplete view or scope review",
+    "reject working scene checksum drift before export",
+    "reject formats other than OBJ or FBX"
+  ],
+  "validation": {"scopeReviewTests": "5 passed", "blenderPrepareReviewExportRoundTrip": "passed"},
+  "decision": "Use this gate for a future P28-selected reconstruction; do not auto-cut the head or treat the v79 smoke fixture as reconstruction progress."
+}

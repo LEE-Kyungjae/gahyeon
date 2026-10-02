@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P47-early-post-conform-identity-checkpoint",
+  "state": "completed-contract-awaiting-real-conform",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "Requiring final Groom, skin, body and rigs before reviewing the conformed face wastes production effort when the MetaHuman still has the wrong or unattractive identity.",
+    "action": "Add a head-only checkpoint immediately after conform with five fixed 1440x2560 neutral-gray views and a human keep/reject decision against canonical 03/06/07/08.",
+    "expectedResult": "Incorrect faces return to Identity Solve before any production surface or Groom investment."
+  },
+  "actualResult": {
+    "tool": "../../../tools/post_conform_identity_checkpoint_v002.py",
+    "decisionTemplate": "../../../metahuman/validation/v002/post-conform-identity-decision-template.json",
+    "views": ["face-front", "face-left-45", "face-right-45", "face-left-profile", "face-right-profile"],
+    "resolution": [1440, 2560],
+    "background": "neutral-mid-gray",
+    "requiresGroom": false,
+    "requiresFinalSkin": false,
+    "currentSurfaceWorkAllowed": false,
+    "qualityClaim": null
+  },
+  "decisions": {
+    "keep-and-build-surfaces": "allowed only with zero blocking identity findings",
+    "reject-and-resolve-identity": "valid checkpoint result; blocks skin, eye and Groom production"
+  },
+  "validation": {
+    "tests": "6 passed",
+    "headOnlyJob": "passed",
+    "fiveViewCapture": "passed",
+    "keepFixture": "surface work allowed",
+    "rejectFixture": "surface work blocked",
+    "wrongResolution": "rejected",
+    "keepWithBlockingFinding": "rejected",
+    "currentEmptyTemplate": "rejected"
+  },
+  "qualityBoundary": "This checkpoint evaluates identity geometry early. It neither requires nor approves final skin, eyes, Groom, deformation, body, clothing, runtime performance or holographic quality.",
+  "decision": "Do not start production surfaces until the user recognizes the face in all five fixed views."
+}

@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gahyeon.local/schemas/gahyeon-identity-reference.schema.json",
+  "title": "Gahyeon identity reference pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "characterId", "status", "canonicalSource", "sourceInventory", "minimums", "references", "supportingReferences", "auxiliaryModels"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "characterId": {"const": "gahyeon"},
+    "status": {"enum": ["candidate", "source-canon", "g0-approved"]},
+    "canonicalSource": {"const": "user-provided-originals"},
+    "sourceInventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operatorDeclaredCount", "presentCount", "status", "note"],
+      "properties": {
+        "operatorDeclaredCount": {"type": "integer", "minimum": 1},
+        "presentCount": {"type": "integer", "minimum": 1},
+        "status": {"enum": ["complete", "count-discrepancy"]},
+        "note": {"type": "string", "minLength": 1}
+      }
+    },
+    "minimums": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["face", "fullBody"],
+      "properties": {
+        "face": {"type": "integer", "minimum": 12},
+        "fullBody": {"type": "integer", "minimum": 6}
+      }
+    },
+    "references": {
+      "type": "array",
+      "minItems": 18,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["index", "file", "sha256", "kind", "view", "identityAuthority"],
+        "properties": {
+          "index": {"type": "integer", "minimum": 1},
+          "file": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "kind": {"enum": ["face", "upper-body", "full-body"]},
+          "view": {"enum": ["front", "left-profile", "right-profile", "three-quarter", "high-angle", "low-angle", "action"]},
+          "identityAuthority": {"const": "canonical"}
+        }
+      }
+    },
+    "supportingReferences": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["index", "file", "sha256", "kind", "view", "identityAuthority", "allowedUses", "excludedFrom", "rationale"],
+        "properties": {
+          "index": {"type": "integer", "minimum": 1},
+          "file": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "kind": {"enum": ["face", "upper-body", "full-body"]},
+          "view": {"enum": ["front", "left-profile", "right-profile", "three-quarter", "high-angle", "low-angle", "action"]},
+          "identityAuthority": {"const": "supporting"},
+          "allowedUses": {
+            "type": "array", "minItems": 1, "uniqueItems": true,
+            "items": {"enum": ["identity-cross-check", "expression-range", "hair-silhouette", "outfit-construction", "body-proportion-cross-check", "body-motion", "hand-reference"]}
+          },
+          "excludedFrom": {
+            "type": "array", "minItems": 1, "uniqueItems": true,
+            "items": {"enum": ["neutral-face-geometry", "primary-body-geometry", "canonical-rear-evidence"]}
+          },
+          "rationale": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "auxiliaryModels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "totalSteps", "sha256", "role", "heroReferenceAllowed"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "totalSteps": {"type": "integer", "minimum": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "role": {"enum": ["general-concept", "front-face-helper"]},
+          "heroReferenceAllowed": {"const": false}
+        }
+      }
+    }
+  }
+}

@@ -34,6 +34,13 @@ def contained_file(root: pathlib.Path, relative: object) -> pathlib.Path:
     return candidate
 
 
+def read_log_text(path: pathlib.Path) -> str:
+    data = path.read_bytes()
+    if data.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return data.decode("utf-16", errors="replace")
+    return data.decode("utf-8-sig", errors="replace")
+
+
 def verify(root: pathlib.Path) -> dict:
     root = root.resolve()
     manifest_path = root / "manifest.json"
@@ -42,8 +49,8 @@ def verify(root: pathlib.Path) -> dict:
     value = json.loads(manifest_path.read_text(encoding="utf-8"))
     if value.get("schemaVersion") != 2 or value.get("status") != "passed":
         raise ValueError("evidence manifest is not a passed schema v2 result")
-    if value.get("engineVersion") != "5.6" or value.get("configuration") != "Development":
-        raise ValueError("evidence was not produced by the UE 5.6 Development gate")
+    if value.get("engineVersion") != "5.8" or value.get("configuration") != "Development":
+        raise ValueError("evidence was not produced by the UE 5.8 Development gate")
     if value.get("requiredAutomationTests") != list(REQUIRED_TESTS):
         raise ValueError("required Automation identities are missing or reordered")
     packaged = value.get("packagedBuild")
@@ -80,8 +87,7 @@ def verify(root: pathlib.Path) -> dict:
         if digest(path) != expected:
             raise ValueError(f"{key} SHA-256 mismatch")
         resolved_evidence[key] = path
-    automation_log = resolved_evidence["automationLog"].read_text(
-        encoding="utf-8", errors="replace")
+    automation_log = read_log_text(resolved_evidence["automationLog"])
     for test_name in REQUIRED_TESTS:
         escaped = re.escape(test_name)
         if not re.search(

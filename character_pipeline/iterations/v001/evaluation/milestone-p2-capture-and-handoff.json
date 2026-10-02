@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P2-looking-glass-capture-gate-and-metahuman-handoff",
+  "status": "validated-input-toolchain-blocked",
+  "captureGate": {
+    "profile": "looking-glass-go-single-view",
+    "resolution": [1440, 2560],
+    "viewsEvaluated": 5,
+    "viewsPassed": 5,
+    "viewsFailed": 0,
+    "foregroundMedianLuminanceRange255": [72.084, 79.16],
+    "minimumHorizontalMarginFraction": 0.036806,
+    "qualityClaim": null,
+    "meaning": "all five renders are legible and unclipped enough for comparison; this is not an identity or AAA score"
+  },
+  "hypothesis": {
+    "statement": "The v2 capture failures are caused by calculating only vertical orthographic fit and using insufficient exposure for the narrow 9:16 Looking Glass Go panel.",
+    "action": "Fit camera scale to max(subject height, subject width / panel aspect) and increase exposure from 0.65 to 1.65.",
+    "expectedResult": "No subject clipping and foreground median luminance above 55/255 for all five identity views.",
+    "actualResult": "Capture gate improved from 0/5 to 5/5; median luminance is 72.084-79.16/255 and minimum horizontal margin is 3.6806%.",
+    "decision": "keep v3 camera and exposure protocol"
+  },
+  "metahumanHandoff": {
+    "manifest": "../../../metahuman/identity/v001/handoff.json",
+    "validation": "passed",
+    "identityInputVerifiedShape": true,
+    "readyToLaunchIdentitySolve": false
+  },
+  "toolchainBlockers": [
+    "Unreal Engine editor is not installed",
+    "MetaHuman Creator Core Data is not installed",
+    "required MetaHuman/RigLogic/HairStrands plugins are unavailable",
+    "free disk is 46.39 GiB, below the 80 GiB installation headroom gate",
+    "16 GiB RAM meets the minimum but not the 32 GiB recommended tier"
+  ],
+  "nextEvidence": "real MetaHuman Identity asset, conformed template mesh, DNA/RigLogic character and five post-conform Looking Glass Go renders"
+}

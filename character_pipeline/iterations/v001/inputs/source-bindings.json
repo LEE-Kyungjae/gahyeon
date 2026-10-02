@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "bindings": [
+    {
+      "role": "identity-manifest",
+      "uri": "../../../../artifacts/gahyeon-ch/identity-reference.json",
+      "sha256": "41653f14ce045ad86bcf703a806cd61a416ce284a3c831917bac899c901b0179"
+    },
+    {
+      "role": "modeling-manifest",
+      "uri": "../../../../artifacts/gahyeon-ch/modeling-input.json",
+      "sha256": "914628a1597a0deb30fc172f5023e2bb2674ad9b141d404b0ca342f13544e29f"
+    },
+    {
+      "role": "metahuman-identity-solve-input-manifest",
+      "uri": "../../../../artifacts/gahyeon-ch/metahuman-identity-head-v79/manifest.json",
+      "sha256": "5d1e2d3cd451d195b72bd5d497628ddc6b0a274875d4208903e90ec5646c2ecb",
+      "claim": "neutral-static-mesh-input-not-metahuman-not-dna",
+      "scope": "head-neck-and-eyes-only"
+    }
+  ]
+}

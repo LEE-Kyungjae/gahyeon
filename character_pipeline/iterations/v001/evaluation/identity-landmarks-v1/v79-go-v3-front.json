@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "image": {
+    "uri": "/Users/ze/work/gahyeonbot/character_pipeline/iterations/v001/blender/metahuman-identity-head-v79/looking-glass-go-renders-v3/face-front.png",
+    "sha256": "883c8767721e6cbb2c42b8f839bf8fe88a14b34d4bb838793b27cdc1f1e42516",
+    "dimensions": [
+      1440,
+      2560
+    ]
+  },
+  "detector": {
+    "name": "MediaPipe Face Mesh",
+    "version": "0.10.21",
+    "landmarkCount": 478,
+    "singleFaceDetected": true
+  },
+  "normalization": {
+    "faceWidthIndices": [
+      234,
+      454
+    ],
+    "faceHeightIndices": [
+      10,
+      152
+    ]
+  },
+  "measurements": {
+    "faceAspectWidthOverHeight": 0.962445,
+    "eyeCenterSeparationOverFaceWidth": 0.399528,
+    "leftEyeWidthOverFaceWidth": 0.1859,
+    "rightEyeWidthOverFaceWidth": 0.172294,
+    "noseWidthOverFaceWidth": 0.241311,
+    "mouthWidthOverFaceWidth": 0.227915,
+    "lipOpeningOverFaceHeight": 0.00211,
+    "eyeLineToChinOverFaceHeight": 0.650521,
+    "noseTipToChinOverFaceHeight": 0.399062,
+    "mouthToChinOverFaceHeight": 0.230259
+  },
+  "landmarksPixels": {
+    "foreheadTop": [
+      723.726,
+      829.59
+    ],
+    "chin": [
+      715.037,
+      1527.563
+    ],
+    "faceLeft": [
+      382.389,
+      1134.369
+    ],
+    "faceRight": [
+      1054.19,
+      1138.321
+    ],
+    "leftEyeOuter": [
+      518.709,
+      1062.446
+    ],
+    "leftEyeInner": [
+      642.757,
+      1076.919
+    ],
+    "rightEyeInner": [
+      791.618,
+      1084.556
+    ],
+    "rightEyeOuter": [
+      906.449,
+      1070.006
+    ],
+    "noseLeft": [
+      637.312,
+      1232.95
+    ],
+    "noseRight": [
+      799.42,
+      1234.473
+    ],
+    "noseTip": [
+      718.569,
+      1249.007
+    ],
+    "mouthLeft": [
+      642.523,
+      1367.411
+    ],
+    "mouthRight": [
+      795.586,
+      1371.433
+    ],
+    "upperLip": [
+      720.41,
+      1366.121
+    ],
+    "lowerLip": [
+      720.056,
+      1367.551
+    ]
+  },
+  "qualityClaim": null
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P49-metahuman-disk-recovery-audit",
+  "state": "completed-read-only-audit-awaiting-cleanup-approval",
+  "hypothesis": {
+    "statement": "UE 5.6 installation cannot safely begin with less than the project headroom, but broad cache or Docker deletion could interrupt Voicebox generation or destroy active development databases.",
+    "action": "Measure physical disk, regenerable host caches, Docker reclaim categories and active processes read-only; protect all volumes, running containers and Voicebox generation.",
+    "expectedResult": "A bounded cleanup choice can reach installation headroom without treating active or stateful data as disposable."
+  },
+  "actualResult": {
+    "report": "../../../../artifacts/gahyeon-ch/metahuman-disk-recovery-p49.json",
+    "reportSha256": "4ea0cac3af285898a49a8c844b78dfded34950aa6e8410aec16c3fa552dcf7fb",
+    "currentFreeGiB": 42.92,
+    "requiredFreeGiB": 80,
+    "shortfallGiB": 37.08,
+    "regenerableHostCachesGiB": 27.63,
+    "dockerUnusedImagesAndBuildCacheGiB": 18.45,
+    "combinedPotentialGiB": 46.08,
+    "dockerVolumesReclaimableButProtectedGiB": 6.09,
+    "runningDockerContainers": 13,
+    "voiceboxGenerationActive": true
+  },
+  "safeBoundary": {
+    "filesDeleted": false,
+    "dockerPruned": false,
+    "containersStopped": false,
+    "volumesDeleted": false,
+    "voiceboxStopped": false,
+    "engineInstallStarted": false
+  },
+  "importantCaveat": "Docker.raw is a sparse VM disk; logical prune estimates do not guarantee immediate host free-space recovery until Docker compacts/reclaims the image.",
+  "decision": "Cache-only cleanup is insufficient. The least destructive candidate is selected regenerable host caches plus Docker build cache and unused images, explicitly excluding volumes and active containers; it still requires user approval and a post-cleanup df/preflight checkpoint.",
+  "nextGate": "After approved cleanup, require at least 80 GiB actual free space and rerun metahuman-toolchain preflight before starting UE installation."
+}

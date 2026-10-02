@@ -39,7 +39,7 @@ Unreal 로컬 monotonic trace로 측정하며 Backend metric으로 대체하지 
 first-delta가 전체 모델 응답 시간과 같아지므로 실제 streaming 적용 여부도 계측으로
 드러난다. 새 generation으로 취소된 stale cognition 수는
 `gahyeon.unreal.cognition.cancelled`로 확인한다.
-립싱크 timeline 출처는 `gahyeon.unreal.viseme.timeline{source=provider|heuristic|amplitude}`로
+립싱크 timeline 출처는 `gahyeon.unreal.viseme.timeline{source=provider|waveform-guided|heuristic|amplitude}`로
 분리하며 RT-08 exact timing 합격에는 `provider` sample만 사용한다.
 Aligner 호출 자체는 `gahyeon.unreal.viseme.alignment{source,result}` timer로 측정하며 result는
 `success|empty|audio_invalid|contract_invalid|failure`의 고정 집합이다. 따라서 amplitude fallback이

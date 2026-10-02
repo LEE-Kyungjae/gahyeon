@@ -1,0 +1,18 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.8",
+  "Category": "Gahyeon Talking Playback QA",
+  "Description": "Content-only Windows playback verification for v088 + v092",
+  "Plugins": [
+    {"Name": "ControlRig", "Enabled": true},
+    {"Name": "FullBodyIK", "Enabled": true},
+    {"Name": "PythonScriptPlugin", "Enabled": true},
+    {"Name": "EditorScriptingUtilities", "Enabled": true},
+    {"Name": "SequencerScripting", "Enabled": true},
+    {"Name": "MovieRenderPipeline", "Enabled": true},
+    {"Name": "MetaHuman", "Enabled": true},
+    {"Name": "MetaHumanCharacter", "Enabled": true},
+    {"Name": "RigLogic", "Enabled": true},
+    {"Name": "HairStrands", "Enabled": true}
+  ]
+}

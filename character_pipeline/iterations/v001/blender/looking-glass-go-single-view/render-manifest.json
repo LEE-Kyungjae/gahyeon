@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "renderer": "blender-fixed-baseline-v1",
+  "sourceBlend": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/models/gahyeon-g1-mpfb-v79.blend",
+  "sourceRevision": "g1-mpfb-v79",
+  "resolution": [
+    1440,
+    2560
+  ],
+  "displayProfile": "looking-glass-go-single-view",
+  "engine": "BLENDER_EEVEE",
+  "filmTransparent": false,
+  "views": [
+    {
+      "view": "face-front",
+      "evidenceView": "face-neutral-front",
+      "uri": "face-front.png",
+      "bytes": 4535960,
+      "sha256": "2dc052c5e15a4ca48304c55a12bdee615e4352a432c551e2c0530be50d195a71"
+    },
+    {
+      "view": "body-front",
+      "evidenceView": "body-neutral-front",
+      "uri": "body-front.png",
+      "bytes": 3910556,
+      "sha256": "72d723ca4c88b71a746036c7c5459b6f6446428182b5434b9e835de7bae1ebba"
+    }
+  ]
+}

@@ -149,7 +149,7 @@ event를 조용히 버리지 않고 backpressure 또는 reconnect를 요청한�
 
 ## Unreal Presentation Client
 
-Unreal Stage는 UE 5.6 기준 source project다. AI 판단을 포함하지 않고 semantic event를
+Unreal Stage는 UE 5.8 기준 source project다. AI 판단을 포함하지 않고 semantic event를
 Control Rig/Animation/Audio/World 표현으로 변환한다.
 
 ```text
@@ -218,7 +218,7 @@ client가 정상 동작해야 한다. 물리 장치 acceptance는 아직 완료�
 - PostgreSQL 42.7.4, H2 test, Flyway
 - JDA 6.4.1, Lavaplayer 2.2.2
 - Electron/Vue/TypeScript Desktop
-- Unreal Engine 5.6 target, C++20 RuntimeCore
+- Unreal Engine 5.8 target(현재 검증 기준 5.8.1), C++20 RuntimeCore
 - Micrometer/Prometheus metrics
 
 버전의 정본은 `build.gradle`, `desktop/package.json`과
@@ -235,7 +235,7 @@ bash scripts/verify_unreal_stage_scaffold.sh
 bash scripts/verify_unreal_protocol_contract.sh
 ```
 
-정적 Stage 검증과 RuntimeCore harness 통과는 실제 UE 5.6 compile/PIE 증거를 대신하지 않는다.
+정적 Stage 검증과 RuntimeCore harness 통과는 실제 UE 5.8 compile/PIE 증거를 대신하지 않는다.
 실기 acceptance와 캐릭터 품질 gate는 각각 Unreal 문서와
 캐릭터 제작 트랙에서 작성 중인 `GAHYEON_CHARACTER_QUALITY_GATES.md` 계약을 따른다. 해당 문서는 캐릭터 소스와 함께 별도 반영한다.
 

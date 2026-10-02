@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v001",
+  "stage": "metahuman-identity-solve",
+  "state": "ready-input-toolchain-blocked",
+  "input": {
+    "manifest": "../../../../artifacts/gahyeon-ch/metahuman-identity-head-v79/manifest.json",
+    "manifestSha256": "5d1e2d3cd451d195b72bd5d497628ddc6b0a274875d4208903e90ec5646c2ecb",
+    "mesh": "../../../../artifacts/gahyeon-ch/metahuman-identity-head-v79/gahyeon-metahuman-identity-v79.obj",
+    "meshSha256": "848c2a89ea743a2549d6e49d1f91c36d0c85bda5a508225115e668474a15c839",
+    "scope": "head-neck-and-eyes-only",
+    "claim": "neutral-static-mesh-input-not-metahuman-not-dna"
+  },
+  "referenceAuthority": {
+    "manifest": "../../../../artifacts/gahyeon-ch/identity-reference.json",
+    "manifestSha256": "41653f14ce045ad86bcf703a806cd61a416ce284a3c831917bac899c901b0179"
+  },
+  "captureProtocol": {
+    "profile": "../../../unreal/render_pipeline/looking-glass-go.json",
+    "resolution": [1440, 2560],
+    "views": [
+      "face-front",
+      "face-left-45",
+      "face-right-45",
+      "face-left-profile",
+      "face-right-profile"
+    ],
+    "quiltViewCount": 66,
+    "quiltRequiresConnectedCalibration": true
+  },
+  "requiredUnrealActions": [
+    "import mesh with materials and textures",
+    "create MetaHuman Identity from mesh",
+    "set neutral front frame and promote frame",
+    "track active frame and solve Identity",
+    "conform template mesh and retrieve rigged MetaHuman",
+    "render the five fixed views under the Looking Glass Go QA scene",
+    "compare post-conform renders against canonical references and v001 pre-conform renders"
+  ],
+  "forbiddenClaimsUntilEvidence": [
+    "metahuman-created",
+    "dna-created",
+    "facial-rig-validated",
+    "identity-approved",
+    "aaa-quality"
+  ]
+}

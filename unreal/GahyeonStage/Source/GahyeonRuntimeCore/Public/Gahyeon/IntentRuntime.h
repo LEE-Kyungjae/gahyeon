@@ -49,7 +49,7 @@ enum class GenerationSyncResult {
     Stale,
 };
 
-struct ResolvedIntents {
+struct GAHYEON_RUNTIME_CORE_API ResolvedIntents {
     Generation CurrentGeneration = 0;
     std::map<IntentChannel, CharacterIntent> Channels;
 

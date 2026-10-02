@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v149",
+  "stage": "coherent-photogrammetric-head-reconstruction",
+  "preferredTool": "keentools-facebuilder",
+  "allowedTools": ["keentools-facebuilder", "faceform-wrap", "manual-multiview-fit"],
+  "requiredCanonicalIndices": [3, 6, 7, 8],
+  "optionalCanonicalIndices": [1, 4, 5, 9, 10, 11, 24, 27],
+  "neutralExpressionRequired": true,
+  "hairGeometryForbidden": true,
+  "productionTopologyClaimAllowed": false,
+  "requiredOutput": {
+    "formats": ["obj", "fbx", "ply"],
+    "minimumVertices": 1000,
+    "maximumVertices": 2000000,
+    "singleCoherentHeadSurfaceRequired": true,
+    "separateEyesAllowed": true,
+    "cameraRecordsRequired": true
+  },
+  "target": {
+    "engine": "Unreal Engine 5.8",
+    "operation": "MetaHuman From Custom Mesh",
+    "exactPortraitCameraRequired": true,
+    "finalTopology": "MetaHuman"
+  }
+}

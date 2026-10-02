@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "characterId": "gahyeon",
+  "iteration": "v001",
+  "status": "incomplete",
+  "components": {
+    "identitySimilarity": {
+      "status": "measured-not-scored", "score": null, "confidence": "medium",
+      "evidence": ["milestone-p3-identity-measurements.json", "milestone-p4-profile-constraints.json"],
+      "defects": [{"summary": "Front likeness has large proportion deltas and profile candidate detection fails.", "likelyCause": "MPFB blockout is not conformed MetaHuman identity topology and uses prototype eyes.", "recommendedModification": "Run MetaHuman Identity solve, then tune face aspect, mouth and nose while preserving canonical profiles.", "confidence": "high", "reviewMode": "automated-then-manual", "severity": "blocking"}]
+    },
+    "faceGeometry": {
+      "status": "measured-not-scored", "score": null, "confidence": "medium",
+      "evidence": ["milestone-p3-identity-measurements.json", "milestone-p4-profile-constraints.json"],
+      "defects": [{"summary": "Face is too wide/short, mouth too narrow and profile skull/jaw remain incorrect.", "likelyCause": "Low-resolution parametric blockout and absent high-resolution identity sculpt.", "recommendedModification": "Conform to MetaHuman topology and author reversible high-resolution face corrections under fixed cameras.", "confidence": "high", "reviewMode": "automated-then-manual", "severity": "blocking"}]
+    },
+    "bodyGeometry": {
+      "status": "measured-not-scored", "score": null, "confidence": "medium",
+      "evidence": ["milestone-p6-body-proportions.json"],
+      "defects": [{"summary": "Torso is proportionally too long although shoulder width is close.", "likelyCause": "Current MPFB body preset does not match canonical torso-to-leg balance.", "recommendedModification": "Choose a shorter MetaHuman torso without globally lengthening legs; validate walk and sit.", "confidence": "medium", "reviewMode": "automated-then-manual", "severity": "major"}]
+    },
+    "skin": {
+      "status": "unverified", "score": null, "confidence": "none",
+      "evidence": ["milestone-p9-skin-eye-surface-gate.json"],
+      "defects": [{"summary": "Only a 2K diffuse skin source exists.", "likelyCause": "No production scan or authored multi-channel surface set has been created.", "recommendedModification": "Author and bind the required 4K skin channels and facial-zone masks.", "confidence": "high", "reviewMode": "manual", "severity": "blocking"}]
+    },
+    "eyes": {
+      "status": "unverified", "score": null, "confidence": "none",
+      "evidence": ["milestone-p9-skin-eye-surface-gate.json"],
+      "defects": [{"summary": "Prototype eyes lack physical tear line, wetness and MetaHuman eyelid-contact evidence.", "likelyCause": "G1 semantic eye assembly was designed as blockout, not close-up production anatomy.", "recommendedModification": "Use MetaHuman eye topology/materials and validate all six eye parts and blink contact.", "confidence": "high", "reviewMode": "automated-then-manual", "severity": "blocking"}]
+    },
+    "hair": {
+      "status": "unverified", "score": null, "confidence": "none",
+      "evidence": ["milestone-p10-groom-binding-gate.json"],
+      "defects": [{"summary": "Dense generic Blender groom lacks production styling, Unreal binding and fallback LOD.", "likelyCause": "Hair Editor template cannot encode the canonical spatial density and clump design.", "recommendedModification": "Author a production Groom with semantic groups, MetaHuman binding and cards/mesh fallback.", "confidence": "high", "reviewMode": "automated-then-manual", "severity": "blocking"}]
+    },
+    "materials": {
+      "status": "unverified", "score": null, "confidence": "none",
+      "evidence": ["milestone-p9-skin-eye-surface-gate.json", "milestone-p11-modular-clothing-gate.json"],
+      "defects": [{"summary": "Production skin, eye and clothing material bindings do not exist.", "likelyCause": "Current assets are reconstruction blockouts with diffuse/procedural materials.", "recommendedModification": "Create Unreal material instances and checksummed PBR channel bindings.", "confidence": "high", "reviewMode": "automated-then-manual", "severity": "blocking"}]
+    },
+    "rig": {
+      "status": "unverified", "score": null, "confidence": "none",
+      "evidence": ["milestone-p8-metahuman-post-conform-gate.json"],
+      "defects": [{"summary": "No real MetaHuman DNA/RigLogic or Control Rig candidate exists.", "likelyCause": "UE 5.6 MetaHuman Identity solve has not run.", "recommendedModification": "Complete Identity solve and verify face/body Control Rig plus DNA/RigLogic in Editor.", "confidence": "high", "reviewMode": "automated-then-manual", "severity": "blocking"}]
+    },
+    "facialDeformation": {
+      "status": "unverified", "score": null, "confidence": "none",
+      "evidence": ["milestone-p12-deformation-diagnostics-gate.json"],
+      "defects": [{"summary": "No frame-level lip, eyelid, cheek or temporal deformation samples exist.", "likelyCause": "A production facial rig and Editor capture are absent.", "recommendedModification": "Emit all 495 diagnostics from the fixed 45-frame sequence and review matching renders.", "confidence": "high", "reviewMode": "automated-then-manual", "severity": "blocking"}]
+    },
+    "bodyDeformation": {
+      "status": "unverified", "score": null, "confidence": "none",
+      "evidence": ["milestone-p11-modular-clothing-gate.json", "milestone-p12-deformation-diagnostics-gate.json"],
+      "defects": [{"summary": "Walk, sit, shoulder and extreme-pose body deformation is unverified.", "likelyCause": "MetaHuman body selection, skinning and Editor runtime tests are pending.", "recommendedModification": "Run fixed body/deformation cases and accept only zero clipping and bounded volume loss.", "confidence": "high", "reviewMode": "automated-then-manual", "severity": "blocking"}]
+    },
+    "lightingRobustness": {
+      "status": "unverified", "score": null, "confidence": "low",
+      "evidence": ["milestone-p2-capture-and-handoff.json", "milestone-p9-skin-eye-surface-gate.json"],
+      "defects": [{"summary": "Blockout capture exposure passes, but production skin under multiple lighting conditions is absent.", "likelyCause": "No production surface candidate exists.", "recommendedModification": "Render neutral, flat inspection and adverse-light Go close-ups after surface binding.", "confidence": "high", "reviewMode": "automated-then-manual", "severity": "major"}]
+    },
+    "closeUpQuality": {
+      "status": "unverified", "score": null, "confidence": "none",
+      "evidence": ["milestone-p3-identity-measurements.json", "milestone-p9-skin-eye-surface-gate.json", "milestone-p10-groom-binding-gate.json"],
+      "defects": [{"summary": "Current close-up remains a blockout with non-production face, eyes, skin and hair.", "likelyCause": "All hero-scale surface and Groom stages are pending.", "recommendedModification": "Complete MetaHuman conform, production surfaces and Groom before close-up scoring.", "confidence": "high", "reviewMode": "manual", "severity": "blocking"}]
+    },
+    "runtimePerformance": {
+      "status": "unverified", "score": null, "confidence": "none",
+      "evidence": ["milestone-p5-deformation-qa-contract.json", "milestone-p8-metahuman-post-conform-gate.json"],
+      "defects": [{"summary": "No production Hero has run in Unreal or on Looking Glass Go.", "likelyCause": "UE/MetaHuman toolchain and final assets are unavailable.", "recommendedModification": "Run Editor and device QA, record frame time, memory, LOD and 66-view quilt evidence.", "confidence": "high", "reviewMode": "automated-then-manual", "severity": "blocking"}]
+    }
+  },
+  "overall": null,
+  "automaticApproval": false
+}

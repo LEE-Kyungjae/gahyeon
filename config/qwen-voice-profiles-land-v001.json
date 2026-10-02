@@ -1,0 +1,9 @@
+{
+  "gahyeon.assistant": {
+    "mode": "voice_clone",
+    "referenceAudio": "/home/ubuntu/voicebox-land/input/reference.wav",
+    "referenceText": "인도네시아 정부가 팜유와 석탄, 니켈 등 전략 원자재 수출을 국영기업을 통해 관리하는 수출 일원화 정책을 발표했다. 이후 현지 팜열매 가격이 급락하면서 시장에서는 팜유 수출이 제한되는 것 아니냐는 우려가 확대됐다. 인도네시아 정부가 팜유와 석탄, 니켈 등 전략 원자재 수출을 국영기업을 통해 관리하는 수출 일원화 정책을 발표했다. 이후 현지 팜열매 가격이 급락하면서 시장에서는 팜유 수출이 제한되는 것 아니냐는 우려가 확대됐다.",
+    "language": "Korean",
+    "expressionControl": false
+  }
+}

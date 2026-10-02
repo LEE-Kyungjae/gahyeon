@@ -8,6 +8,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ToolPolicyTest {
     @Test
+    void allowsTheReadOnlyRecentNewsTool() {
+        assertThat(new ToolPolicy().decide("get_recent_personalized_news"))
+                .isEqualTo(ToolDecision.ALLOW);
+    }
+
+    @Test
     void unknownToolsFailClosed() {
         ToolPolicy policy = new ToolPolicy();
 

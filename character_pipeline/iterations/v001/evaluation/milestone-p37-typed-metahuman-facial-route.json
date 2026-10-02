@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P37-typed-metahuman-facial-route",
+  "state": "completed-runtime-contract-awaiting-ue56-anim-blueprint-implementation",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "Treating MetaHuman Control Rig controls as SkeletalMesh morph targets can silently report successful lip sync while no production facial rig is actually driven.",
+    "action": "Type every facial binding as MorphTarget or ControlRig, reject conflicting routes, route morphs only to the face mesh, and require a fail-closed AnimInstance interface that applies and reports actual Control Rig values.",
+    "expectedResult": "Runtime presentation and the 57-sample QA runner use the same explicit target route and cannot confuse Control Rig controls with morph targets."
+  },
+  "implementation": {
+    "targetEnum": ["MorphTarget", "ControlRig"],
+    "bridge": "IGahyeonFacialControlRigBridge",
+    "bridgeOperations": ["ApplyFacialControlRigCurves", "GetFacialControlRigCurveWeights"],
+    "runtimeConsumer": "UGahyeonCharacterPresentationComponent::ApplyFacialCurves",
+    "qaConsumer": "gahyeon_run_facial_actuation_capture.py"
+  },
+  "actualResult": {"typedRoutingImplemented": true, "routeConflictValidationImplemented": true, "animBlueprintBridgeImplementedInAsset": false, "realEditorRuntimeVerified": false, "deformationVerified": false, "productionReady": false},
+  "scopeBoundary": [
+    "the C++ interface is a stable boundary; the future MetaHuman face Anim Blueprint must still implement it",
+    "the bridge does not assume undocumented direct UControlRig mutation APIs",
+    "successful curve transport still does not prove facial deformation quality"
+  ],
+  "failureHandling": [
+    "reject one curve registered as both morph and Control Rig",
+    "do not call SetMorphTarget for Control Rig routes",
+    "do not confirm viseme latency unless the target route was actually accepted",
+    "P36 runner rejects Control Rig evidence without a bridge-capable AnimInstance",
+    "P34 collector derives route from the DataAsset target enum and requires explicit bridge acknowledgement"
+  ],
+  "validation": {"facialRouteContractTests": "20 passed", "UnrealStaticScaffold": "passed", "UE56Compile": "pending", "realAnimBlueprintBridge": "pending"},
+  "decision": "Keep production readiness false until a real MetaHuman face Anim Blueprint implements the bridge and P36 observes all required values."
+}

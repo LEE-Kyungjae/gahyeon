@@ -1,0 +1,25 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.8",
+  "Category": "AI Character QA",
+  "Description": "UE 5.8 editor-only MetaHuman character refinement and fixed-render QA project",
+  "DisableEnginePluginsByDefault": true,
+  "Plugins": [
+    {"Name": "AudioCapture", "Enabled": true},
+    {"Name": "AnimationData", "Enabled": true},
+    {"Name": "ControlRig", "Enabled": true},
+    {"Name": "ControlRigSpline", "Enabled": true},
+    {"Name": "FullBodyIK", "Enabled": true},
+    {"Name": "EnhancedInput", "Enabled": true},
+    {"Name": "PythonScriptPlugin", "Enabled": true},
+    {"Name": "EditorScriptingUtilities", "Enabled": true},
+    {"Name": "SequencerScripting", "Enabled": true},
+    {"Name": "MovieRenderPipeline", "Enabled": true},
+    {"Name": "MetaHumanCharacter", "Enabled": true},
+    {"Name": "MetaHuman", "Enabled": true, "SupportedTargetPlatforms": ["Win64", "Linux", "Mac"]},
+    {"Name": "MetaHumanCalibrationProcessing", "Enabled": true, "SupportedTargetPlatforms": ["Win64", "Linux", "Mac"]},
+    {"Name": "MetaHumanSDK", "Enabled": true},
+    {"Name": "RigLogic", "Enabled": true},
+    {"Name": "HairStrands", "Enabled": true}
+  ]
+}

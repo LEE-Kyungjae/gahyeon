@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "iteration": "v528",
+  "status": "draft-semantic-retarget-profiles",
+  "source": {
+    "id": "hayley-clean",
+    "skeleton": "/Game/LivingCharacterPOC/v448/Characters/HayleyBindClean/Hayley_BindPoseClean_v447_Skeleton",
+    "roles": {
+      "root": "root",
+      "pelvis": "pelvis",
+      "spineLower": "spine",
+      "spineMid": "spine1",
+      "spineUpper": "chest",
+      "neck": "neck",
+      "head": "head",
+      "clavicleL": "lScapula",
+      "upperArmL": "lShoulder",
+      "lowerArmL": "lForearm",
+      "handL": "lHand",
+      "clavicleR": "rScapula",
+      "upperArmR": "rShoulder",
+      "lowerArmR": "rForearm",
+      "handR": "rHand",
+      "thighL": "lThigh",
+      "calfL": "lKnee",
+      "footL": "lFoot",
+      "toeL": "lToe",
+      "thighR": "rThigh",
+      "calfR": "rKnee",
+      "footR": "rFoot",
+      "toeR": "rToe"
+    }
+  },
+  "targets": {
+    "stella-lily": {
+      "skeleton": "/Game/LivingCharacterPOC/v520/Characters/StellaLilyPreview/StellaLily_Modular_v518_Skeleton",
+      "roles": {
+        "root": "Bip001",
+        "pelvis": "Bip001-Pelvis",
+        "spineLower": "Bip001-Spine",
+        "spineMid": "Bip001-Spine1",
+        "spineUpper": "Bip001-Spine2",
+        "neck": "Bip001-Neck",
+        "head": "Bip001-Head",
+        "clavicleL": "Bip001-L-Clavicle",
+        "upperArmL": "Bip001-L-UpperArm",
+        "lowerArmL": "Bip001-L-Forearm",
+        "handL": "Bip001-L-Hand",
+        "clavicleR": "Bip001-R-Clavicle",
+        "upperArmR": "Bip001-R-UpperArm",
+        "lowerArmR": "Bip001-R-Forearm",
+        "handR": "Bip001-R-Hand",
+        "thighL": "Bip001-L-Thigh",
+        "calfL": "Bip001-L-Calf",
+        "footL": "Bip001-L-Foot",
+        "toeL": "Bip001-L-Toe0",
+        "thighR": "Bip001-R-Thigh",
+        "calfR": "Bip001-R-Calf",
+        "footR": "Bip001-R-Foot",
+        "toeR": "Bip001-R-Toe0"
+      },
+      "translationModes": {
+        "root": "absolute-scaled",
+        "pelvis": "globally-scaled",
+        "allOthers": "rotation-only"
+      }
+    },
+    "ururu": {
+      "skeleton": "/Game/LivingCharacterPOC/v525/Characters/UruruPreview/Ururu_Normalized_v523_Skeleton",
+      "roles": {
+        "root": "root",
+        "pelvis": "ValveBiped_Bip01_Pelvis",
+        "spineLower": "ValveBiped_Bip01_Spine",
+        "spineMid": "ValveBiped_Bip01_Spine1",
+        "spineUpper": "ValveBiped_Bip01_Spine4",
+        "neck": "ValveBiped_Bip01_Neck1",
+        "head": "ValveBiped_Bip01_Head1",
+        "clavicleL": "ValveBiped_Bip01_L_Clavicle",
+        "upperArmL": "ValveBiped_Bip01_L_UpperArm",
+        "lowerArmL": "ValveBiped_Bip01_L_Forearm",
+        "handL": "ValveBiped_Bip01_L_Hand",
+        "clavicleR": "ValveBiped_Bip01_R_Clavicle",
+        "upperArmR": "ValveBiped_Bip01_R_UpperArm",
+        "lowerArmR": "ValveBiped_Bip01_R_Forearm",
+        "handR": "ValveBiped_Bip01_R_Hand",
+        "thighL": "ValveBiped_Bip01_L_Thigh",
+        "calfL": "ValveBiped_Bip01_L_Calf",
+        "footL": "ValveBiped_Bip01_L_Foot",
+        "toeL": "ValveBiped_Bip01_L_Toe0",
+        "thighR": "ValveBiped_Bip01_R_Thigh",
+        "calfR": "ValveBiped_Bip01_R_Calf",
+        "footR": "ValveBiped_Bip01_R_Foot",
+        "toeR": "ValveBiped_Bip01_R_Toe0"
+      },
+      "translationModes": {
+        "root": "absolute-scaled",
+        "pelvis": "globally-scaled",
+        "allOthers": "rotation-only"
+      },
+      "globalRestPoseCorrectionDegrees": {
+        "upperArmL": {"axis": "Y", "degrees": -42.0},
+        "lowerArmL": {"axis": "Y", "degrees": -42.0},
+        "handL": {"axis": "Y", "degrees": -42.0},
+        "upperArmR": {"axis": "Y", "degrees": 42.0},
+        "lowerArmR": {"axis": "Y", "degrees": 42.0},
+        "handR": {"axis": "Y", "degrees": 42.0}
+      }
+    }
+  },
+  "requiredQa": [
+    "neutral",
+    "activeIdle",
+    "walk",
+    "run",
+    "standSit",
+    "shoulderRaise",
+    "elbowBend",
+    "kneeBend",
+    "footContact"
+  ],
+  "automaticPromotionAllowed": false,
+  "humanApproved": false,
+  "releaseEligible": false
+}

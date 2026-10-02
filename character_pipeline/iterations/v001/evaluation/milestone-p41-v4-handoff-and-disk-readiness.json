@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P41-v4-handoff-and-disk-readiness",
+  "state": "completed-handoff-toolchain-install-blocked-by-disk-and-ue",
+  "displayProfile": "looking-glass-go",
+  "hypothesis": {
+    "statement": "A verified v4 mesh cannot reach MetaHuman if downstream handoffs still reference stale packages or the workstation lacks installation headroom.",
+    "action": "Create an immutable v002 handoff bound to v4 manifest/mesh/topology checksums and audit disk usage read-only without deleting user data.",
+    "expectedResult": "The next UE session consumes only v4 and the user can make an informed, recoverable disk-space decision."
+  },
+  "actualResult": {
+    "handoff": "character_pipeline/metahuman/identity/v002/handoff.json",
+    "handoffVerified": true,
+    "inputVertices": 5558,
+    "inputPolygons": 5492,
+    "freeDiskGiB": 44.93,
+    "requiredHeadroomGiB": 80,
+    "shortfallGiB": 35.07
+  },
+  "readOnlyDiskAudit": [
+    {"path": "/Users/ze/Library/Containers/com.docker.docker", "sizeGiB": 46, "risk": "high", "action": "inspect Docker images, containers and volumes; require user approval before pruning"},
+    {"path": "/Users/ze/Library/Caches", "sizeGiB": 14, "risk": "medium", "action": "application caches are generally regenerable but should be cleaned selectively"},
+    {"path": "/Users/ze/.gradle", "sizeGiB": 7.9, "risk": "low-medium", "action": "dependency/build caches are regenerable; do not remove while builds run"},
+    {"path": "/Users/ze/.cache", "sizeGiB": 5.8, "risk": "medium", "action": "inspect owners before selective cleanup"}
+  ],
+  "safety": {"filesDeleted": false, "dockerPruned": false, "engineInstallStarted": false},
+  "remainingBlockers": ["user-authorized recovery of at least 35.07 GiB", "Unreal Engine 5.6 installation", "MetaHuman Core Data/plugins installation"],
+  "qualityBoundary": "v002 prepares the first MetaHuman solve only; it does not approve the MPFB face or claim AAA quality.",
+  "decision": "Use v002 exclusively. Do not start the large UE installation or prune Docker until explicitly authorized."
+}

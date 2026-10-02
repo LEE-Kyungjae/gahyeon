@@ -133,13 +133,13 @@ public final class UnrealRuntimeMetrics {
     }
 
     void visemeTimeline(String source) {
-        String safe = Set.of("provider", "heuristic", "amplitude").contains(source)
+        String safe = Set.of("provider", "waveform-guided", "heuristic", "amplitude").contains(source)
                 ? source : "other";
         counter("gahyeon.unreal.viseme.timeline", "source", safe).increment();
     }
 
     void visemeAlignment(String source, String result, long elapsedNanos) {
-        String safeSource = Set.of("provider", "heuristic", "unavailable").contains(source)
+        String safeSource = Set.of("provider", "waveform-guided", "heuristic", "unavailable").contains(source)
                 ? source : "other";
         String safeResult = Set.of("success", "empty", "audio_invalid", "contract_invalid", "failure")
                 .contains(result) ? result : "other";

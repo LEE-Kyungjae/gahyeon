@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "status": "incomplete",
+  "coverage": {
+    "face": {
+      "front": [
+        1,
+        3,
+        4,
+        5,
+        24,
+        27
+      ],
+      "left-30": [],
+      "right-30": [],
+      "left-45": [],
+      "right-45": [],
+      "left-60": [],
+      "right-60": [],
+      "left-90": [
+        7
+      ],
+      "right-90": [
+        8
+      ],
+      "slightly-up": [
+        10
+      ],
+      "slightly-down": [
+        9
+      ]
+    },
+    "body": {
+      "front": [
+        16,
+        29
+      ],
+      "back": [],
+      "left": [],
+      "right": [
+        19
+      ],
+      "left-45": [],
+      "right-45": []
+    },
+    "expressions": {
+      "neutral": [
+        3
+      ],
+      "smile": [
+        14
+      ],
+      "angry": [],
+      "sad": [],
+      "eyes-closed": [],
+      "mouth-open": [
+        15
+      ],
+      "viseme-sil": [],
+      "viseme-aa": [],
+      "viseme-ih": [],
+      "viseme-ou": [],
+      "viseme-ee": [],
+      "viseme-oh": [],
+      "viseme-fv": [],
+      "viseme-l": [],
+      "viseme-mbp": [],
+      "viseme-wq": []
+    }
+  },
+  "coveredCounts": {
+    "face": 5,
+    "body": 2,
+    "expressions": 3
+  },
+  "requiredCounts": {
+    "face": 11,
+    "body": 6,
+    "expressions": 16
+  },
+  "missing": {
+    "face": [
+      "left-30",
+      "right-30",
+      "left-45",
+      "right-45",
+      "left-60",
+      "right-60"
+    ],
+    "body": [
+      "back",
+      "left",
+      "left-45",
+      "right-45"
+    ],
+    "expressions": [
+      "angry",
+      "sad",
+      "eyes-closed",
+      "viseme-sil",
+      "viseme-aa",
+      "viseme-ih",
+      "viseme-ou",
+      "viseme-ee",
+      "viseme-oh",
+      "viseme-fv",
+      "viseme-l",
+      "viseme-mbp",
+      "viseme-wq"
+    ]
+  },
+  "ambiguousNotCounted": [
+    {
+      "index": 1,
+      "reason": "expression label is not controlled in identity manifest"
+    },
+    {
+      "index": 4,
+      "reason": "expression label is not controlled in identity manifest"
+    },
+    {
+      "index": 5,
+      "reason": "expression label is not controlled in identity manifest"
+    },
+    {
+      "index": 6,
+      "reason": "three-quarter angle and side are not calibrated"
+    },
+    {
+      "index": 11,
+      "reason": "three-quarter angle and side are not calibrated"
+    },
+    {
+      "index": 11,
+      "reason": "expression label is not controlled in identity manifest"
+    },
+    {
+      "index": 20,
+      "reason": "body three-quarter angle and side are not calibrated"
+    }
+  ],
+  "generationPolicy": "missing views require controlled capture/generation and human identity review; never infer authority"
+}

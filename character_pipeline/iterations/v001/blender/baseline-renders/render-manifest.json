@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "renderer": "blender-fixed-baseline-v1",
+  "sourceBlend": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/models/gahyeon-g1-mpfb-v79.blend",
+  "sourceRevision": "g1-mpfb-v79",
+  "resolution": [
+    768,
+    768
+  ],
+  "engine": "BLENDER_EEVEE",
+  "filmTransparent": false,
+  "views": [
+    {
+      "view": "face-front",
+      "evidenceView": "face-neutral-front",
+      "uri": "face-front.png",
+      "bytes": 682925,
+      "sha256": "a17eb8ee27eee977b2c6a3d4006b35c0a58c280cd3a57a69c5d7f9e3054bfa5f"
+    },
+    {
+      "view": "face-left-45",
+      "evidenceView": "face-neutral-three-quarter-left",
+      "uri": "face-left-45.png",
+      "bytes": 677641,
+      "sha256": "f08e257d247fa3224540421ccfe43e59613dbaec7ded252fe042abd669c30e52"
+    },
+    {
+      "view": "face-right-45",
+      "evidenceView": "face-neutral-three-quarter-right",
+      "uri": "face-right-45.png",
+      "bytes": 683604,
+      "sha256": "337102901824665444df9e26dce9c600302246abee630c483dc68e24a71a55de"
+    },
+    {
+      "view": "face-left-profile",
+      "evidenceView": "face-neutral-left-profile",
+      "uri": "face-left-profile.png",
+      "bytes": 631214,
+      "sha256": "e8083144f7cc070b51483e1b94017b8e1daee0ba961c9f7c14c8d162047a5be9"
+    },
+    {
+      "view": "face-right-profile",
+      "evidenceView": "face-neutral-right-profile",
+      "uri": "face-right-profile.png",
+      "bytes": 634678,
+      "sha256": "eb550fee1620a9f1d21f0fb368c425ae385e0b5d2a2c9cd4cc284027faeebc15"
+    },
+    {
+      "view": "body-front",
+      "evidenceView": "body-neutral-front",
+      "uri": "body-front.png",
+      "bytes": 625435,
+      "sha256": "a023aaa679bde0ddb4b992238e89a609fd393e03861f7658d144cf7b63f36527"
+    },
+    {
+      "view": "body-profile",
+      "evidenceView": "body-neutral-profile",
+      "uri": "body-profile.png",
+      "bytes": 601087,
+      "sha256": "57c0e5fdb8a2b91cffcfbce16f1b0cfa8d7d82d73f017e1425644d93200b968d"
+    },
+    {
+      "view": "body-rear",
+      "evidenceView": "body-neutral-rear",
+      "uri": "body-rear.png",
+      "bytes": 609575,
+      "sha256": "940c7aab8f05880e4738c8d8a6eb74f37821025afef17309c013d6540d955efd"
+    }
+  ]
+}

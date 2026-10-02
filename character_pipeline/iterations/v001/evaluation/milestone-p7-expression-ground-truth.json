@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "milestone": "P7-expression-ground-truth",
+  "state": "completed-with-missing-coverage",
+  "displayProfile": {
+    "id": "looking-glass-go",
+    "singleViewResolution": [1440, 2560],
+    "quiltRequiresConnectedCalibration": true
+  },
+  "hypothesis": {
+    "statement": "Existing user-provided originals contain a small but measurable expression range that can seed deformation QA without fabricating emotion or viseme authority.",
+    "action": "Human-label only unambiguous neutral, smile and mouth-open sources; extract eye, mouth and corner geometry with MediaPipe; preserve all other requirements as missing.",
+    "expectedResult": "Expression coverage rises from 0/16 to evidence-backed 3/16 while the remaining 13 cases continue to fail closed."
+  },
+  "actualResult": {
+    "covered": 3,
+    "required": 16,
+    "missing": 13,
+    "observed": ["neutral", "smile", "mouth-open"],
+    "neutralMouthOpeningOverFaceHeight": 0.000087,
+    "smileMouthWidthDeltaPercentVersusNeutral": 19.23,
+    "openSmileMouthOpeningOverFaceHeight": 0.062257,
+    "qualityClaim": null
+  },
+  "defects": [
+    {
+      "severity": "blocking-for-expression-completion",
+      "finding": "Angry, sad, eyes-closed and all 10 requested speech/viseme reference states are absent.",
+      "recommendedAction": "Capture or generate a controlled same-identity expression sheet, then require human identity and label review before registration."
+    },
+    {
+      "severity": "medium",
+      "finding": "Smile and mouth-open sources are wider upper-body crops than the neutral face master.",
+      "recommendedAction": "Use the fixed Looking Glass Go face close-up camera for post-conform MetaHuman comparison; do not compare raw pixel scale across these source images."
+    }
+  ],
+  "decision": "Keep the three reviewed labels as deformation evidence only. Do not derive viseme labels or an expression quality score from landmark thresholds.",
+  "nextEvidence": "controlled same-identity angry, sad, eyes-closed and viseme sheet plus post-conform MetaHuman close-up renders under the Go profile"
+}

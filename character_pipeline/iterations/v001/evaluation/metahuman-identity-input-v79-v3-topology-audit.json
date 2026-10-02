@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "claim": "topology-measurement-not-solve-approval",
+  "input": "/Users/ze/work/gahyeonbot/artifacts/gahyeon-ch/metahuman-identity-input-v79-v3/gahyeon-metahuman-identity-v79.obj",
+  "objects": [
+    {
+      "object": "Gahyeon_MetaHuman_IdentitySolve_v79",
+      "vertices": 5558,
+      "polygons": 5492,
+      "connectedComponents": 5,
+      "componentVertexCounts": [
+        4494,
+        276,
+        276,
+        256,
+        256
+      ],
+      "boundaryEdges": 122,
+      "nonManifoldEdges": 122,
+      "boundaryLoops": [
+        {
+          "edges": 42,
+          "vertices": 42,
+          "zRange": [
+            139.3321075439453,
+            143.03875732421875
+          ],
+          "radialRange": [
+            3.9516067504882812,
+            15.019524292948455
+          ]
+        },
+        {
+          "edges": 20,
+          "vertices": 20,
+          "zRange": [
+            159.25949096679688,
+            162.0121612548828
+          ],
+          "radialRange": [
+            11.839665191151203,
+            12.467257131777597
+          ]
+        },
+        {
+          "edges": 20,
+          "vertices": 20,
+          "zRange": [
+            159.29666137695312,
+            161.97314453125
+          ],
+          "radialRange": [
+            11.863377299907322,
+            12.470808746525032
+          ]
+        },
+        {
+          "edges": 20,
+          "vertices": 20,
+          "zRange": [
+            159.29666137695312,
+            161.97311401367188
+          ],
+          "radialRange": [
+            11.863378247795056,
+            12.470808746525032
+          ]
+        },
+        {
+          "edges": 20,
+          "vertices": 20,
+          "zRange": [
+            159.25949096679688,
+            162.01217651367188
+          ],
+          "radialRange": [
+            11.839666139373332,
+            12.467257131777597
+          ]
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "objects": 1,
+    "vertices": 5558,
+    "polygons": 5492,
+    "connectedComponents": 5,
+    "boundaryEdges": 122,
+    "nonManifoldEdges": 122,
+    "boundaryLoops": 5
+  }
+}
