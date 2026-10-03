@@ -170,6 +170,16 @@
       "testMethod": "test_updates_core_by_name_without_touching_first_sidecar",
       "productionSignal": "Expected source tag, Core container image digest, sidecar image identity, Pod UID, and Qwen request count without conversation content.",
       "rollbackTrigger": "The running Core image does not resolve to the release digest or any sidecar image is changed by the Core release step."
+    },
+    {
+      "id": "discord-explicit-piper-neutral-routing",
+      "domain": "tts",
+      "incident": "2026-10-03 Qwen tunnel connection refused prevented final answer audio; simply disabling Qwen still rejects planned non-natural expressions. User selected existing Piper.",
+      "invariant": "Explicit Piper selection disables expressive planning so every answer can use standard synthesis without silently substituting expressive voices in normal mode.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoicePiperSelectionTest.java",
+      "testMethod": "explicitPiperSelectionRoutesEveryExpressionToStandardSpeech",
+      "productionSignal": "Selected provider, synthesis completion count and audio bytes without conversation text.",
+      "rollbackTrigger": "Any final answer is dropped due to expressive style while explicit Piper mode is selected."
     }
   ]
 }
