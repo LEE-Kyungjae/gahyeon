@@ -7,7 +7,11 @@ import java.util.Locale;
 
 @Component
 final class VoiceAssistantExpressionPolicy {
+    @org.springframework.beans.factory.annotation.Value("${assistant.expressive-responses-enabled:true}")
+    private boolean expressiveResponsesEnabled = true;
+
     VoiceExpression plan(String transcript) {
+        if (!expressiveResponsesEnabled) return VoiceExpression.NATURAL;
         String normalized = transcript == null ? "" : transcript.trim().toLowerCase(Locale.ROOT);
         if (containsAny(normalized, "웃어", "웃음", "ㅋㅋ", "ㅎㅎ")) {
             return new VoiceExpression("suppressed_laugh", 0.72, "respond_with_audible_laughter");
