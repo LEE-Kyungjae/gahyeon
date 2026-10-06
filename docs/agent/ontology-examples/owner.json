@@ -1,0 +1,35 @@
+{
+  "document": {
+    "serviceId": "gahyeon",
+    "ownerSubjectId": "zezestudio:example-user",
+    "sourceType": "text",
+    "displayName": "owner",
+    "sourceUri": null,
+    "accessScope": "PRIVATE",
+    "title": "owner",
+    "language": "ko",
+    "bodyText": "민지는 출시 검증을 맡았다.",
+    "metadataJson": "{}"
+  },
+  "ontology": {
+    "schemaVersion": 1,
+    "claims": [
+      {
+        "subject": {
+          "key": "person:minji",
+          "type": "PERSON",
+          "label": "민지",
+          "aliases": []
+        },
+        "relation": "RESPONSIBLE_FOR",
+        "object": {
+          "key": "task:release-check",
+          "type": "TASK",
+          "label": "출시 검증",
+          "aliases": []
+        },
+        "evidenceQuote": "민지는 출시 검증을 맡았다."
+      }
+    ]
+  }
+}

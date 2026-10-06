@@ -52,6 +52,11 @@ server:
   shutdown: graceful
 
 gahyeon:
+  ontology:
+    enabled: ${GAHYEON_ONTOLOGY_ENABLED:false}
+  admin:
+    enabled: ${GAHYEON_ADMIN_ENABLED:false}
+    token: ${GAHYEON_ADMIN_TOKEN:}
   memory:
     compaction:
       # Provider calls never run on the conversation/TTS path. A single bounded

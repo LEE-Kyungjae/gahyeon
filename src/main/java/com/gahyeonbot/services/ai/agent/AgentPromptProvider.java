@@ -12,11 +12,16 @@ import com.gahyeonbot.core.life.CharacterMemoryRecallPolicy;
 import com.gahyeonbot.application.life.CharacterRelationshipStore;
 
 import java.nio.charset.StandardCharsets;
+import com.gahyeonbot.application.knowledge.KnowledgeBaseService;
 
 @Component
 @Slf4j
 public class AgentPromptProvider {
     private String systemPrompt;
+    @Autowired(required = false)
+    private com.gahyeonbot.application.knowledge.KnowledgeBaseService knowledge;
+    @Autowired(required = false)
+    private com.gahyeonbot.application.knowledge.OntologyRagService ontologyRag;
     private CharacterDefinitionRegistry characters;
     private CharacterMemoryStore characterMemories;
     private CharacterRelationshipStore relationships;
@@ -82,6 +87,42 @@ public class AgentPromptProvider {
                 다른 캐릭터의 말투나 기억을 가져오지 않는다. 기억에 없는 사실을 아는 척하지 않는다.
                 관계 상태는 말투의 친밀도와 조심성을 조절하는 참고값이며, 수치를 사용자에게 직접 읽지 않는다.
                 """.formatted(definition.id().value(), definition.displayName(), memory, relationship);
+    }
+
+    void configureKnowledge(com.gahyeonbot.application.knowledge.KnowledgeBaseService knowledge) {
+        this.knowledge = knowledge;
+    }
+
+    public String systemPrompt(String longTermSummary, String sessionKey, String currentQuery) {
+        String base = systemPrompt(longTermSummary, sessionKey);
+        var context = CharacterConversationContext.fromScopedSessionKey(sessionKey);
+        if (context.isEmpty()) return base;
+        return base + retrieveKnowledge(context.get().subjectId(), currentQuery);
+    }
+
+    private String retrieveKnowledge(String subjectId, String query) {
+        if (knowledge == null || query == null || query.isBlank()) return "";
+        try {
+            var request = new KnowledgeBaseService.SearchRequest("gahyeon", subjectId, query, 5);
+            var retrieval = ontologyRag == null ? null : ontologyRag.search(request);
+            var results = retrieval == null ? knowledge.search(request) : retrieval.results();
+            String coverage = retrieval != null && retrieval.graphTruncated()
+                    ? "\n[지식 검색 범위 제한] 일부 관계가 제외되었다. 결과가 없다는 이유만으로 관계가 없다고 단정하지 않는다.\n" : "";
+            if (results.isEmpty()) return coverage;
+            String evidence = results.stream()
+                    .map(result -> "- source=%s title=%s score=%.3f\n  %s".formatted(
+                            result.sourceId(), result.title(), result.score(), limited(result.content(), 1_200)))
+                    .reduce((left, right) -> left + "\n" + right).orElse("");
+            return "\n\n[권한 검증된 통합 지식 검색 결과]\n" + limited(evidence, 6_000)
+                    + "\n검색 결과에 없는 사실은 지식베이스에 있다고 단정하지 않는다." + coverage;
+        } catch (RuntimeException unavailable) {
+            log.warn("통합 지식 검색 실패, 기존 프롬프트 유지", unavailable);
+            return "";
+        }
+    }
+
+    private static String limited(String value, int maximum) {
+        return value.length() <= maximum ? value : value.substring(0, maximum) + "…";
     }
 
     private String loadPrompt(String location) {
