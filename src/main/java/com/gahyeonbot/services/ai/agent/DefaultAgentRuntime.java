@@ -430,7 +430,7 @@ public class DefaultAgentRuntime implements AgentRuntime {
             MemorySnapshot memory,
             String backgroundResult) {
         List<Message> messages = new ArrayList<>();
-        messages.add(new SystemMessage(promptProvider.systemPrompt(memory.summary(), request.sessionKey())));
+        messages.add(new SystemMessage(promptProvider.systemPrompt(memory.summary(), request.sessionKey(), request.message())));
         if (usesSharedActorMemory(request.sessionKey())) {
             memory.recentMessages().forEach(message -> messages.add(
                     message.role() == MemoryRole.USER
