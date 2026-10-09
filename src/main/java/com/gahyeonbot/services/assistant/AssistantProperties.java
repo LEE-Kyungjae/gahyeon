@@ -68,6 +68,8 @@ public class AssistantProperties {
     @Setter
     public static class Vad {
         private boolean enabled = true;
+        private String provider = "ten";
+        private String sileroModelPath = "";
         private int hopSize = 256;
         private float threshold = 0.5f;
         private long minSpeechMillis = 300;

@@ -150,6 +150,65 @@
       "testMethod": "explicitPiperSelectionRoutesEveryExpressionToStandardSpeech",
       "productionSignal": "Selected provider, synthesis completion count and audio bytes without conversation text.",
       "rollbackTrigger": "Any final answer is dropped due to expressive style while explicit Piper mode is selected."
+    },
+    {
+      "id": "stt-short-affirmation-held",
+      "domain": "stt",
+      "incident": "Production Discord RequestGuard holds correctly recognized one-syllable Korean replies and prefixes them to the next request. Reproduced using production defaults; no raw user recording assumed.",
+      "invariant": "Standalone 네/예/응 replies must reach conversation admission without being concatenated to a later request.",
+      "testFile": "src/test/java/com/gahyeonbot/application/speech/VoiceUnderstandingRegressionTest.java",
+      "testMethod": "completeShortAnswersAreDeliveredWithoutContaminatingNextRequest",
+      "productionSignal": "Audio duration and admission reason counts without transcript, user ID or audio.",
+      "rollbackTrigger": "Any valid reply or next utterance is lost or contaminated by rejected audio.",
+      "status": "validated-locally-not-deployed",
+      "coverageKind": "regression-invariant"
+    },
+    {
+      "id": "stt-expired-invalid-audio-contamination",
+      "domain": "stt",
+      "incident": "Production audio accumulator retains a sub-minimum speech burst after the silence deadline, then includes it in the next utterance.",
+      "invariant": "An expired rejected fragment must not contribute PCM or speech duration to the next utterance.",
+      "testFile": "src/test/java/com/gahyeonbot/application/speech/VoiceUnderstandingRegressionTest.java",
+      "testMethod": "expiredShortBurstCannotContaminateFollowingUtterance",
+      "productionSignal": "Audio duration and admission reason counts without transcript, user ID or audio.",
+      "rollbackTrigger": "Any valid reply or next utterance is lost or contaminated by rejected audio.",
+      "status": "validated-locally-not-deployed",
+      "coverageKind": "regression-invariant"
+    },
+    {
+      "id": "stt-saturated-invalid-buffer-drops-next-turn",
+      "domain": "stt",
+      "incident": "Production audio accumulator can stay full after an invalid burst and discard the next valid spoken audio.",
+      "invariant": "A full rejected buffer must reset so subsequent valid speech is retained.",
+      "testFile": "src/test/java/com/gahyeonbot/application/speech/VoiceUnderstandingRegressionTest.java",
+      "testMethod": "fullInvalidBufferReleasesCapacityForNextSpokenAudio",
+      "productionSignal": "Audio duration and admission reason counts without transcript, user ID or audio.",
+      "rollbackTrigger": "Any valid reply or next utterance is lost or contaminated by rejected audio.",
+      "status": "validated-locally-not-deployed",
+      "coverageKind": "regression-invariant"
+    },
+    {
+      "id": "stt-exact-digital-silence-hallucination",
+      "domain": "stt",
+      "incident": "Controlled production Whisper requests for one and three seconds of zero PCM returned 감사합니다 and unrelated closing phrases on 2026-10-07 KST. User also reports unsolicited 감사합니다 attributed to their Discord speech; their original audio is unavailable, so the exact user incident is not claimed reproduced.",
+      "invariant": "Exact digital silence produces no words; even a one-unit PCM speech sample must not be suppressed by this guard.",
+      "testFile": "src/test/java/com/gahyeonbot/services/assistant/OpenAiTranscriptionSilenceTest.java",
+      "testMethod": "coreServiceRejectsExactSilenceWithoutCallingPrimaryOrFallback",
+      "productionSignal": "Exact-silence rejection and provider-call counts without raw audio or text.",
+      "rollbackTrigger": "Silent audio becomes a user utterance or nonzero quiet speech is suppressed.",
+      "status": "validated-locally-not-deployed"
+    },
+    {
+      "id": "stt-vad-nonspeech-admission",
+      "domain": "stt",
+      "incident": "User reports unsolicited 감사합니다 attributed to their speech while not speaking; controlled synthetic noise can pass the TEN 0.30 segmentation configuration. Actual incident audio is unavailable.",
+      "invariant": "Candidate Silero VAD must reject deterministic non-speech without losing a quiet short Korean acknowledgment under identical admission settings.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/speech/SileroVadAdmissionTest.java",
+      "testMethod": "nonSpeechDoesNotReachTranscriptionWithShortReplyCandidateSettings",
+      "productionSignal": "VAD provider/model identity, detected/captured durations and admission counts without raw audio or transcripts.",
+      "rollbackTrigger": "Non-speech reaches STT, valid quiet short replies are lost, or CPU/latency regresses in an authorized rollout.",
+      "status": "candidate-only-not-deployed",
+      "companionTestMethod": "preservesQuietKoreanYesWithTheSameSettings"
     }
   ]
 }
