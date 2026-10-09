@@ -289,6 +289,8 @@ assistant:
   max-ai-requests-per-minute: ${ASSISTANT_MAX_AI_REQUESTS_PER_MINUTE:12}
   duplicate-transcript-millis: ${ASSISTANT_DUPLICATE_TRANSCRIPT_MILLIS:10000}
   vad:
+    provider: ${ASSISTANT_VAD_PROVIDER:ten}
+    silero-model-path: ${ASSISTANT_VAD_SILERO_MODEL_PATH:}
     enabled: ${ASSISTANT_VAD_ENABLED:true}
     hop-size: ${ASSISTANT_VAD_HOP_SIZE:256}
     threshold: ${ASSISTANT_VAD_THRESHOLD:0.3}

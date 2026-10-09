@@ -2,7 +2,7 @@ package com.gahyeonbot.adapters.discord.voice;
 
 import com.gahyeonbot.adapters.discord.DiscordIdentityMapper;
 import com.gahyeonbot.adapters.discord.DiscordAudioFileMaterializer;
-import com.gahyeonbot.adapters.speech.TenVadDetector;
+import com.gahyeonbot.adapters.speech.VoiceActivityDetectorFactory;
 import com.gahyeonbot.application.speech.StreamingUtteranceAccumulator;
 import com.gahyeonbot.application.speech.UtteranceSegmentationPolicy;
 import com.gahyeonbot.adapters.discord.audio.GuildMusicManager;
@@ -503,7 +503,8 @@ public class VoiceAssistantService {
                     16_000);
             this.accumulator = new StreamingUtteranceAccumulator(
                     policy,
-                    vad.isEnabled() ? new TenVadDetector(vad.getHopSize(), vad.getThreshold()) : null,
+                    vad.isEnabled() ? VoiceActivityDetectorFactory.create(vad.getProvider(),
+                            vad.getHopSize(), vad.getThreshold(), vad.getSileroModelPath()) : null,
                     System.currentTimeMillis());
         }
 
@@ -522,6 +523,12 @@ public class VoiceAssistantService {
 
         private synchronized String mergeOrHold(String transcript, long now) {
             String clean = transcript == null ? "" : transcript.trim();
+            String spokenWord = clean.replaceAll("[^\\p{L}\\p{N}]", "");
+            if (java.util.Set.of("네", "예", "응").contains(spokenWord)) {
+                pendingFragment = "";
+                pendingFragmentAt = 0;
+                return clean;
+            }
             if (!pendingFragment.isBlank()) {
                 if (now - pendingFragmentAt <= properties.getFragmentMergeMillis()) {
                     clean = pendingFragment + " " + clean;
