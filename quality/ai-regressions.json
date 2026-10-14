@@ -209,6 +209,16 @@
       "rollbackTrigger": "Non-speech reaches STT, valid quiet short replies are lost, or CPU/latency regresses in an authorized rollout.",
       "status": "candidate-only-not-deployed",
       "companionTestMethod": "preservesQuietKoreanYesWithTheSameSettings"
+    },
+    {
+      "id": "stt-user-feedback-evidence-gates",
+      "domain": "stt",
+      "incident": "2026-10-03 stored voice inputs included unconfirmed suspicious recognitions, with no retained original audio or verified reference transcript. Successful conversation status must not become correction ground truth.",
+      "invariant": "Only explicit owner labels can activate an exact, user/server/pipeline-scoped rule after three training observations and two prospectively captured validation observations; unlabelled history never self-labels.",
+      "testFile": "src/test/java/com/gahyeonbot/application/speech/SttLearningServiceTest.java",
+      "testMethod": "requiresThreeLabelsAndTwoFutureHoldoutsBeforeApplying",
+      "productionSignal": "Decision state, opaque observation identifier, aggregate explicit label/conflict counts and failure class without utterances, audio or account identifiers.",
+      "rollbackTrigger": "An unverified or cross-user correction is applied, validation reuses historical training observations, or an explicit conflict fails to disable its rule."
     }
   ]
 }
