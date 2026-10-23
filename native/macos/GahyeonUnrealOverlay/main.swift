@@ -12,6 +12,38 @@ private let verticalContentInset: CGFloat = 20
 @_silgen_name("shm_open") private func posixShmOpen(_ name: UnsafePointer<CChar>, _ flags: Int32, _ mode: mode_t) -> Int32
 @_silgen_name("ftruncate") private func posixFtruncate(_ fd: Int32, _ length: off_t) -> Int32
 
+final class CharacterLetteringRow: NSView {
+    private weak var item: NSMenuItem?
+    init(item: NSMenuItem, image: NSImage, label: String, suffix: String, selected: Bool) {
+        self.item = item
+        super.init(frame: NSRect(x: 0, y: 0, width: 288, height: 56))
+        let artwork = NSImageView(frame: NSRect(x: 32, y: 4, width: 144, height: 48))
+        artwork.image = image; artwork.imageScaling = .scaleNone
+        addSubview(artwork)
+        if selected {
+            let check = NSTextField(labelWithString: "✓")
+            check.frame = NSRect(x: 8, y: 18, width: 20, height: 20)
+            check.textColor = .systemCyan; addSubview(check)
+        }
+        let text = NSTextField(labelWithString: suffix)
+        text.frame = NSRect(x: 184, y: 18, width: 100, height: 20)
+        text.font = .systemFont(ofSize: 12); text.textColor = .white
+        addSubview(text)
+        let button = NSButton(frame: bounds)
+        button.title = ""; button.isBordered = false; button.isTransparent = true
+        button.target = self; button.action = #selector(activate)
+        button.setAccessibilityLabel(label); button.toolTip = label
+        button.isEnabled = item.isEnabled
+        addSubview(button)
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) is unavailable") }
+    @objc private func activate() {
+        guard let item, let action = item.action else { return }
+        item.menu?.cancelTracking()
+        DispatchQueue.main.async { NSApp.sendAction(action, to: item.target, from: item) }
+    }
+}
+
 final class DragSurfaceView: NSView { override var mouseDownCanMoveWindow: Bool { true } }
 final class LiquidGlassHighlightView: NSView {
     override var isOpaque: Bool { false }
@@ -32,7 +64,73 @@ final class LiquidGlassHighlightView: NSView {
         shape.stroke()
     }
 }
+enum ConversationZoomGeometry {
+    static func horizontalShift(body: NSRect, workArea: NSRect, chatWidth: CGFloat, chatOnRight: Bool) -> CGFloat {
+        let safe = workArea.insetBy(dx: 8, dy: 8), reserve = chatWidth + 12
+        guard body.width + reserve <= safe.width else { return 0 }
+        let left = safe.minX + (chatOnRight ? 0 : reserve)
+        let right = safe.maxX - body.width - (chatOnRight ? reserve : 0)
+        return min(max(body.minX, left), right) - body.minX
+    }
+}
+
+enum OverlayDragGeometry {
+    static func recoveredOrigin(window: NSRect, body: NSRect, workArea: NSRect) -> NSPoint {
+        let safe = workArea.insetBy(dx: 8, dy: 8)
+        let head = min(body.height, min(140, max(72, body.height * 0.22)))
+        let x = body.width > safe.width ? safe.midX-body.width/2 : min(max(body.minX,safe.minX),safe.maxX-body.width)
+        let top = min(max(body.maxY,safe.minY+head),safe.maxY)
+        return NSPoint(x: window.minX+x-body.minX, y: window.minY+top-body.maxY)
+    }
+    static func progress(_ t: Double) -> Double { let t = min(max(t,0),1); return 1-pow(1-t,3) }
+}
+
 final class InteractiveOverlayWindow: NSWindow {
+    var preservesResizeAnchor = false
+    private(set) var isPointerDragging = false
+    private var pointerStart = NSPoint.zero
+    private var originStart = NSPoint.zero
+    var onDragBegin: (() -> Void)?
+    var onDragEnd: (() -> Void)?
+    var onDoubleClick: (() -> Void)?
+    override func sendEvent(_ event: NSEvent) {
+        switch event.type {
+        case .leftMouseDown:
+            guard !ignoresMouseEvents else { super.sendEvent(event); return }
+            beginPointerDrag(at: NSEvent.mouseLocation)
+            if event.clickCount == 2 { onDoubleClick?() }
+        case .leftMouseDragged where isPointerDragging:
+            updatePointerDrag(at: NSEvent.mouseLocation)
+        case .leftMouseUp where isPointerDragging:
+            endPointerDrag()
+        default: super.sendEvent(event)
+        }
+    }
+    func beginPointerDrag(at point: NSPoint) {
+        onDragBegin?(); makeKey(); pointerStart = point; originStart = frame.origin; isPointerDragging = true
+    }
+    func updatePointerDrag(at point: NSPoint) {
+        guard isPointerDragging else { return }
+        setFrameOrigin(NSPoint(x: originStart.x+point.x-pointerStart.x, y: originStart.y+point.y-pointerStart.y))
+    }
+    func endPointerDrag() { isPointerDragging = false; onDragEnd?() }
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
+        (preservesResizeAnchor || isPointerDragging) ? frameRect : super.constrainFrameRect(frameRect, to: screen)
+    }
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
+}
+
+final class OverlayActionButton: NSButton {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override func sendAction(_ action: Selector?, to target: Any?) -> Bool {
+        fputs("overlay action: \(action.map(NSStringFromSelector) ?? "none")\n", stderr)
+        let delivered = super.sendAction(action, to: target)
+        fputs("overlay delivered: \(delivered) target: \(String(describing: target))\n", stderr)
+        return delivered
+    }
+}
+final class QuickChatPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 }
@@ -67,7 +165,8 @@ final class SharedOverlayControlWriter {
     private func connect() -> Bool {
         if address != nil { return true }
         fd = "/gahyeon_overlay_control_v001".withCString { posixShmOpen($0, O_RDWR, 0) }
-        guard fd >= 0, posixFtruncate(fd, off_t(Self.bytes)) == 0 else {
+        var info = stat()
+        guard fd >= 0, fstat(fd, &info) == 0, info.st_size >= Self.bytes else {
             if fd >= 0 { close(fd) }; fd = -1; return false
         }
         let mappedResult = mmap(nil, Self.bytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)
@@ -76,6 +175,18 @@ final class SharedOverlayControlWriter {
         mapped.storeBytes(of: Self.magic, toByteOffset: 0, as: UInt32.self)
         mapped.storeBytes(of: UInt32(1), toByteOffset: 4, as: UInt32.self)
         return true
+    }
+
+    func selectCharacter(_ index: UInt32) -> Bool {
+        guard index < 8, connect(), let address,
+              address.load(fromByteOffset: 44, as: UInt32.self) == 0x524F5354 else { return false }
+        address.storeBytes(of: index, toByteOffset: 32, as: UInt32.self)
+        return true
+    }
+    func appliedCharacter() -> UInt32? {
+        guard connect(), let address,
+              address.load(fromByteOffset: 44, as: UInt32.self) == 0x524F5354 else { return nil }
+        return address.load(fromByteOffset: 36, as: UInt32.self)
     }
 
     func publish(yaw: Float, reset: Bool = false) {
@@ -222,10 +333,36 @@ final class DesktopCoreClient {
                 body: try? JSONSerialization.data(withJSONObject: body), completion: completion)
     }
 
+    func speechData(path: String, data: Data, mediaType: String,
+                    completion: @escaping (Result<Data, Error>) -> Void) {
+        var request = URLRequest(url: root.appendingPathComponent("gahyeon/desktop/speech/" + path))
+        request.httpMethod = "POST"; request.httpBody = data; request.timeoutInterval = 60
+        request.setValue(mediaType, forHTTPHeaderField: "Content-Type")
+        if let token = ProcessInfo.processInfo.environment["GAHYEON_CLIENT_TOKEN"], !token.isEmpty {
+            request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization")
+        }
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            let result: Result<Data, Error>
+            if let error { result = .failure(error) }
+            else if let response = response as? HTTPURLResponse, (200..<300).contains(response.statusCode), let data {
+                result = .success(data)
+            } else {
+                result = .failure(NSError(domain: "GahyeonCore", code: (response as? HTTPURLResponse)?.statusCode ?? -1,
+                    userInfo: [NSLocalizedDescriptionKey: "음성 서버 요청에 실패했습니다."]))
+            }
+            DispatchQueue.main.async { completion(result) }
+        }.resume()
+    }
+
     private func request<T: Decodable>(path: String, method: String, body: Data?,
                                        completion: @escaping (Result<T, Error>) -> Void) {
-        var request = URLRequest(url: URL(string: path, relativeTo: root)!)
-        request.httpMethod = method; request.httpBody = body; request.timeoutInterval = 20
+        var request = URLRequest(url: root.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))))
+        request.httpMethod = method; request.httpBody = body
+        // Multi-step research includes several provider and source-fetch round trips.
+        request.timeoutInterval = method == "POST" && path.hasPrefix("/gahyeon/desktop/conversations/") ? 180 : 20
+        if let token = ProcessInfo.processInfo.environment["GAHYEON_CLIENT_TOKEN"], !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
         URLSession.shared.dataTask(with: request) { data, response, error in
             let result: Result<T, Error>
@@ -288,14 +425,196 @@ final class NativeSpeechInput {
     }
 }
 
+// MARK: - Bounded speech segments
+func desktopSpeechSegments(_ text: String) -> [String] {
+    var clean = text.replacingOccurrences(of: #"\[([^\]]+)\]\(https?://[^\s)]+\)"#, with: "$1", options: .regularExpression)
+    clean = clean.replacingOccurrences(of: #"https?://\S+"#, with: "", options: .regularExpression)
+    clean = clean.replacingOccurrences(of: #"(?m)^\s*\|?[-:| ]{3,}\|?\s*$"#, with: "", options: .regularExpression)
+    clean = clean.replacingOccurrences(of: #"[*#`|>]"#, with: " ", options: .regularExpression)
+    var result: [String] = [], part = ""
+    for character in clean {
+        part.append(character)
+        if part.unicodeScalars.count >= 180 || (character == " " && part.count >= 100) || ((character == "!" || character == "?" || character == "\n") && part.count >= 12) {
+            let value = part.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !value.isEmpty { result.append(value) }
+            part = ""
+        }
+    }
+    let remaining = part.trimmingCharacters(in: .whitespacesAndNewlines)
+    if !remaining.isEmpty { result.append(remaining) }
+    return result
+}
+
+final class DesktopSegmentedSpeech: NSObject, AVAudioPlayerDelegate {
+    private let core: DesktopCoreClient
+    private let current: () -> Bool
+    private let deliver: (AVAudioPlayer) -> Void
+    private let failure: (Error) -> Void
+    private var segments: [String] = []
+    private var ready: [Int: Data] = [:]
+    private var index = 0
+    private var playing = false
+    private var failed = false
+    private let started = ProcessInfo.processInfo.systemUptime
+    init(core: DesktopCoreClient, current: @escaping () -> Bool,
+         deliver: @escaping (AVAudioPlayer) -> Void, failure: @escaping (Error) -> Void) {
+        self.core = core; self.current = current; self.deliver = deliver; self.failure = failure
+    }
+    func start(_ text: String) { segments = desktopSpeechSegments(text); fetch(0) }
+    private func fetch(_ target: Int) {
+        guard current(), !failed, target < segments.count else { return }
+        let payload: [String: Any] = ["index": target, "text": segments[target], "voiceProfile": "gahyeon.assistant"]
+        guard let body = try? JSONSerialization.data(withJSONObject: payload) else { return }
+        core.speechData(path: "synthesis", data: body, mediaType: "application/json") { [weak self] result in
+            guard let self, self.current(), !self.failed else { return }
+            do { self.ready[target] = try result.get(); self.playReady() }
+            catch { self.failed = true; self.failure(error) }
+        }
+    }
+    private func playReady() {
+        guard current(), !failed, !playing, let data = ready.removeValue(forKey: index) else { return }
+        do {
+            let player = try AVAudioPlayer(data: data)
+            player.delegate = self; player.prepareToPlay()
+            deliver(player)
+            guard player.play() else { throw NSError(domain: "AudioPlayback", code: 1) }
+            playing = true
+            if index == 0 { fputs("LATENCY_AUDIO first_play_ms=\((ProcessInfo.processInfo.systemUptime-started)*1000)\n", stderr) }
+            fetch(index + 1) // One bounded prefetch while this segment plays.
+        } catch { failed = true; failure(error) }
+    }
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        guard current(), !failed else { return }
+        guard flag else { failed = true; failure(NSError(domain: "AudioPlayback", code: 2)); return }
+        playing = false; index += 1; playReady()
+    }
+}
+// MARK: - End bounded speech segments
+
+final class ServerMicrophoneRecorder: NSObject, AVAudioRecorderDelegate {
+    private var recorder: AVAudioRecorder?
+    private var completion: ((Result<Data, Error>) -> Void)?
+    private var file: URL?
+    private var timeout: Timer?
+    var recording: Bool { recorder?.isRecording ?? false }
+
+    func start(state: @escaping (Bool) -> Void, completion: @escaping (Result<Data, Error>) -> Void) {
+        AVCaptureDevice.requestAccess(for: .audio) { [weak self] allowed in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                guard allowed else {
+                    state(false)
+                    completion(.failure(NSError(domain: "Microphone", code: 1,
+                        userInfo: [NSLocalizedDescriptionKey: "마이크 권한이 필요합니다."])))
+                    return
+                }
+                do {
+                    let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
+                    self.file = url; self.completion = completion
+                    self.recorder = try AVAudioRecorder(url: url, settings: [
+                        AVFormatIDKey: kAudioFormatLinearPCM, AVSampleRateKey: 16000,
+                        AVNumberOfChannelsKey: 1, AVLinearPCMBitDepthKey: 16,
+                        AVLinearPCMIsFloatKey: false, AVLinearPCMIsBigEndianKey: false])
+                    guard self.recorder?.record() == true else { throw NSError(domain: "Microphone", code: 2) }
+                    state(true)
+                    self.timeout = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
+                        self?.stop(); state(false)
+                    }
+                } catch { state(false); self.clean(); completion(.failure(error)) }
+            }
+        }
+    }
+    func stop() {
+        guard recording else { return }
+        recorder?.stop(); timeout?.invalidate(); timeout = nil
+        let callback = completion
+        do {
+            guard let file else { throw NSError(domain: "Microphone", code: 3) }
+            let data = try Data(contentsOf: file)
+            clean(); callback?(.success(data))
+        } catch { clean(); callback?(.failure(error)) }
+    }
+    private func clean() {
+        recorder = nil; completion = nil
+        if let file { try? FileManager.default.removeItem(at: file) }
+        file = nil
+    }
+    deinit { recorder?.stop(); timeout?.invalidate(); if let file { try? FileManager.default.removeItem(at: file) } }
+}
+
+final class ConversationSurface: NSView {
+    var lines = true
+    override func draw(_ dirtyRect: NSRect) {
+        NSColor(calibratedRed: 0.141, green: 0.157, blue: 0.188, alpha: 0.97).setFill()
+        let shape = NSBezierPath(roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5), xRadius: 16, yRadius: 16)
+        shape.fill(); NSColor.white.withAlphaComponent(0.12).setStroke(); shape.lineWidth = 1; shape.stroke()
+        if lines {
+            let path = NSBezierPath(); path.move(to: NSPoint(x: 16, y: bounds.height - 48)); path.line(to: NSPoint(x: bounds.width - 16, y: bounds.height - 48))
+            path.move(to: NSPoint(x: 16, y: 100)); path.line(to: NSPoint(x: bounds.width - 16, y: 100))
+            NSColor.white.withAlphaComponent(0.08).setStroke(); path.stroke()
+        }
+    }
+}
+final class ConversationActionButton: NSButton {
+    private var hoverArea: NSTrackingArea?
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas(); if let hoverArea { removeTrackingArea(hoverArea) }
+        let area = NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self)
+        addTrackingArea(area); hoverArea = area
+    }
+    override func mouseEntered(with event: NSEvent) { layer?.backgroundColor = NSColor.white.withAlphaComponent(0.12).cgColor }
+    override func mouseExited(with event: NSEvent) { layer?.backgroundColor = NSColor.clear.cgColor }
+}
+final class RosterCardButton: NSButton {
+    override var isFlipped: Bool { false }
+    var preview: NSImage?
+    var lettering: NSImage?
+    var source = NSRect.zero
+    var selected = false
+    private var hover = false
+    private var hoverArea: NSTrackingArea?
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas(); if let hoverArea { removeTrackingArea(hoverArea) }
+        let area = NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self)
+        addTrackingArea(area); hoverArea = area
+    }
+    override func mouseEntered(with event: NSEvent) { hover = true; needsDisplay = true }
+    override func mouseExited(with event: NSEvent) { hover = false; needsDisplay = true }
+    override func draw(_ dirtyRect: NSRect) {
+        let shape = NSBezierPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), xRadius: 12, yRadius: 12)
+        NSColor.white.withAlphaComponent(isHighlighted ? 0.16 : hover ? 0.10 : 0.035).setFill(); shape.fill()
+        (selected ? NSColor(calibratedRed: 0.51, green: 0.85, blue: 0.86, alpha: 1) : NSColor.white.withAlphaComponent(0.10)).setStroke()
+        shape.lineWidth = selected ? 2 : 1; shape.stroke()
+        if let preview, source.width > 0 {
+            let factor = min(124 / source.width, 74 / source.height)
+            let size = NSSize(width: source.width * factor, height: source.height * factor)
+            preview.draw(in: NSRect(x: (bounds.width-size.width)/2, y: 34, width: size.width, height: size.height), from: source, operation: .sourceOver, fraction: isEnabled ? 1 : 0.4)
+        }
+        lettering?.draw(in: NSRect(x: 14, y: 3, width: bounds.width-28, height: 32), from: .zero, operation: .sourceOver, fraction: isEnabled ? 1 : 0.4)
+        if selected { ("✓" as NSString).draw(at: NSPoint(x: 12, y: bounds.height-25), withAttributes: [.font: NSFont.systemFont(ofSize: 13, weight: .semibold), .foregroundColor: NSColor.systemCyan]) }
+        if window?.firstResponder === self { NSColor.keyboardFocusIndicatorColor.setStroke(); shape.stroke() }
+    }
+}
+private enum ConversationDesign {
+    static let data = (try? Data(contentsOf: URL(fileURLWithPath: "config/desktop-conversation-design.json"))) ?? Data()
+    static let values = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
+    static func number(_ key: String, _ fallback: CGFloat) -> CGFloat { (values[key] as? NSNumber).map { CGFloat(truncating: $0) } ?? fallback }
+}
+
 final class OverlayController: NSObject, NSApplicationDelegate {
     private let gpuEnabled = ProcessInfo.processInfo.environment["GAHYEON_GPU_IOSURFACE"] == "1"
     private let gpuReader = SharedIOSurfaceReader()
     private let reader = SharedRGBAReader()
     private let controlWriter = SharedOverlayControlWriter()
     private let core = DesktopCoreClient()
-    private let speechInput = NativeSpeechInput()
-    private let speechOutput = AVSpeechSynthesizer()
+    private let serverMicrophone = ServerMicrophoneRecorder()
+    private var microphonePending = false
+    private var serverAudio: AVAudioPlayer?
+    private var segmentedSpeech: DesktopSegmentedSpeech?
+    private var speechGeneration = 0
+
     private let imageView = DragImageView()
     private var window: NSWindow?
     private var panel: NSPanel?
@@ -303,9 +622,25 @@ final class OverlayController: NSObject, NSApplicationDelegate {
     private var chatPanel: NSPanel?
     private var chatHistory: NSTextView?
     private var chatInput: NSTextField?
+    private var chatScroll: NSScrollView?
+    private var chatHistoryButton: NSButton?
+    private var chatExpanded = false
+    private var pickerPanel: NSPanel?
+    private var chatHeader: NSView?
+    private var activityLabel: NSTextField?
+    private var reactionStarted: CFAbsoluteTime = -100
+    private var lastInteractionTick: CFAbsoluteTime = 0
+    private var publishedReactionYaw: Float = .greatestFiniteMagnitude
+    private var lastBaseYaw: CGFloat = .nan
+    private var interactionPhase = ""
+    private var quickChatLayoutBusy = false
+    private var nextIdleReaction = CFAbsoluteTimeGetCurrent() + 45
+    private var reducedMotion = UserDefaults.standard.bool(forKey: "reducedCharacterMotion")
     private var connectionLabel: NSTextField?
     private var micButton: NSButton?
     private var soundButton: NSButton?
+    private var pinButton: NSButton?
+    private var pauseButton: NSButton?
     private var controlsToggleButton: NSButton?
     private var modelPopup: NSPopUpButton?
     private var animationPopup: NSPopUpButton?
@@ -315,14 +650,19 @@ final class OverlayController: NSObject, NSApplicationDelegate {
     private var controlsExpanded = false
     private var alwaysOnTop = true
     private var paused = false
+    private var recoveryTimer: Timer?
+    private var layoutSize = NSSize.zero
+    private var pointerMonitor: Any?
+    private var bodyBounds = CGRect(x: 0, y: 0, width: 1, height: 1)
+    private var bodySide: CGFloat = 1
     private var scale: CGFloat = 1
     private var characterYaw: CGFloat = 0
     private var baseSize = NSSize(width: 815, height: 640)
     private var frameCount = 0
     private var fpsStart = CFAbsoluteTimeGetCurrent()
     private var fittedToCharacter = false
-    private var soundEnabled = UserDefaults.standard.object(forKey: "voiceOutput") as? Bool ?? true
-    private var selectedCharacter = UserDefaults.standard.string(forKey: "selectedCharacter") ?? "diana"
+    private var soundEnabled = false
+    private var selectedCharacter = ProcessInfo.processInfo.environment["GAHYEON_CHARACTER_ID"] ?? "gahyeon"
     private var selectedAnimationIndex = UserDefaults.standard.integer(forKey: "selectedAnimationIndex")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -332,13 +672,19 @@ final class OverlayController: NSObject, NSApplicationDelegate {
             UserDefaults.standard.set(9, forKey: "layoutVersion")
         }
         installMenu(); createWindow(); refreshCoreStatus()
+        positionPanel()
+        createChatPanel()
         characterYaw = CGFloat(UserDefaults.standard.double(forKey: "overlayYaw"))
         if !(-75...75).contains(characterYaw) { characterYaw = 0 }
         controlWriter.publish(yaw: Float(characterYaw))
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in self?.displayFrame() }
+        timer = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in self?.displayFrame() }
+        RunLoop.main.add(timer!, forMode: .common)
     }
 
     private func displayFrame() {
+        updateInteraction()
+        // Reuse the last rendered image while moving; avoid CPU readback competing with pointer events.
+        if (window as? InteractiveOverlayWindow)?.isPointerDragging == true || recoveryTimer != nil { return }
         if !paused, gpuEnabled, let (surface, width, height, crop) = gpuReader.nextSurface() {
             if !fittedToCharacter { fitWindowToDimensions(width: width, height: height); fittedToCharacter = true }
             imageView.image = nil; imageView.wantsLayer = true
@@ -348,7 +694,7 @@ final class OverlayController: NSObject, NSApplicationDelegate {
             countFrame(); return
         }
         guard !paused, let frame = reader.nextImage() else { return }
-        if !fittedToCharacter { fitWindowToCharacter(frame); fittedToCharacter = true }
+        if !fittedToCharacter { measureBody(frame); fitWindowToCharacter(frame); fittedToCharacter = true }
         imageView.image = NSImage(cgImage: frame, size: NSSize(width: frame.width, height: frame.height))
         countFrame()
     }
@@ -357,6 +703,31 @@ final class OverlayController: NSObject, NSApplicationDelegate {
         frameCount += 1
         let now = CFAbsoluteTimeGetCurrent(), elapsed = now - fpsStart
         if elapsed >= 2 { fputs(String(format: "direct-alpha measured fps: %.1f\n", Double(frameCount) / elapsed), stderr); frameCount = 0; fpsStart = now }
+    }
+
+    private func measureBody(_ frame: CGImage) {
+        let width = frame.width, height = frame.height
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        pixels.withUnsafeMutableBytes { bytes in
+            guard let context = CGContext(data: bytes.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return }
+            context.draw(frame, in: CGRect(x: 0, y: 0, width: width, height: height))
+        }
+        var left = width, right = 0, top = height, bottom = 0, side = 0
+        for y in 0..<height { for x in 0..<width where pixels[(y * width + x) * 4 + 3] > 24 {
+            left = min(left, x); right = max(right, x); top = min(top, y); bottom = max(bottom, y)
+        } }
+        guard right > left, bottom > top else { return }
+        let mid = (top + bottom) / 2, band = max(18, (bottom - top) / 12)
+        for y in max(0,mid-band)...min(height-1,mid+band) { for x in 0..<width where pixels[(y * width + x) * 4 + 3] > 24 { side = max(side, x) } }
+        bodyBounds = CGRect(x: CGFloat(left)/CGFloat(width), y: CGFloat(height-bottom-1)/CGFloat(height), width: CGFloat(right-left+1)/CGFloat(width), height: CGFloat(bottom-top+1)/CGFloat(height))
+        bodySide = CGFloat(max(left, side) + 1) / CGFloat(width)
+    }
+    private func bodyFrameOnScreen() -> NSRect {
+        guard let window else { return .zero }
+        let frame = imageView.convert(imageView.bounds, to: nil)
+        return NSRect(x: window.frame.minX + frame.minX + frame.width * bodyBounds.minX,
+                      y: window.frame.minY + frame.minY + frame.height * bodyBounds.minY,
+                      width: frame.width * bodyBounds.width, height: frame.height * bodyBounds.height)
     }
 
     private func fitWindowToCharacter(_ frame: CGImage) {
@@ -370,8 +741,9 @@ final class OverlayController: NSObject, NSApplicationDelegate {
         baseSize = NSSize(width: contentWidth + horizontalContentInset * 2,
                           height: contentHeight + verticalContentInset * 2)
         let center = NSPoint(x: window.frame.midX, y: window.frame.midY)
-        let target = NSRect(x: center.x - baseSize.width / 2, y: center.y - baseSize.height / 2,
-                            width: baseSize.width, height: baseSize.height)
+        let size = NSSize(width: baseSize.width * scale, height: baseSize.height * scale)
+        let target = NSRect(x: center.x - size.width / 2, y: center.y - size.height / 2,
+                            width: size.width, height: size.height)
         window.setFrame(window.constrainFrameRect(target, to: screen), display: true)
         positionPanel()
     }
@@ -398,9 +770,23 @@ final class OverlayController: NSObject, NSApplicationDelegate {
         imageView.frame = surface.bounds.insetBy(dx: horizontalContentInset, dy: verticalContentInset)
         imageView.autoresizingMask = [.width, .height]
         surface.addSubview(imageView)
+        let reactionClick = NSClickGestureRecognizer(target: self, action: #selector(reactToCharacter))
+        reactionClick.numberOfClicksRequired = 2; reactionClick.delaysPrimaryMouseButtonEvents = false
+        imageView.addGestureRecognizer(reactionClick)
         value.contentView = surface
+        value.onDragBegin = { [weak self] in self?.cancelRecovery() }
+        value.onDragEnd = { [weak self] in self?.recoverAfterDrag() }
+        value.onDoubleClick = { [weak self] in self?.reactToCharacter() }
         NotificationCenter.default.addObserver(self, selector: #selector(didMove), name: NSWindow.didMoveNotification, object: value)
         value.orderFrontRegardless(); window = value; createPanel()
+        pointerMonitor = NSEvent.addLocalMonitorForEvents(matching: [.scrollWheel, .magnify]) { [weak self, weak value] event in
+            guard let self, let value, event.window === value, !self.clickThrough else { return event }
+            if event.type == .magnify { self.applyScale(self.scale * (1 + event.magnification)) }
+            else if event.momentumPhase.isEmpty {
+                self.zoomFromScroll(delta: event.scrollingDeltaY, precise: event.hasPreciseScrollingDeltas, inverted: event.isDirectionInvertedFromDevice)
+            }
+            return nil
+        }
     }
 
     private func installMenu() {
@@ -419,35 +805,9 @@ final class OverlayController: NSObject, NSApplicationDelegate {
     }
 
     private func createPanel() {
-        guard let window else { return }
-        let frame = NSRect(x: window.frame.minX - 126, y: window.frame.midY - 58, width: 116, height: 116)
-        let value = NSPanel(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-        value.isOpaque = false; value.backgroundColor = .clear; value.hasShadow = false; value.level = .floating
-        value.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        let effect = liquidGlassEffect(frame: NSRect(origin: .zero, size: frame.size), radius: 15)
-        let character = islandButton("person.crop.circle", #selector(cycleCharacterModel), "캐릭터 선택")
-        let refresh = islandButton("arrow.clockwise", #selector(refreshIsland), "화면 새로고침")
-        let reset = islandButton("scope", #selector(resetPlacement), "캐릭터 중앙 정렬")
-        let background = islandButton("circle.lefthalf.filled", #selector(togglePause), "배경 전환")
-        let pin = islandButton("pin", #selector(toggleAlwaysOnTop), "항상 위에 표시")
-        let terminate = islandButton("power", #selector(quit), "캐릭터 종료", tint: .systemPink)
-        let chat = islandButton("message", #selector(toggleChat), "채팅 열기")
-        micButton = islandButton("mic", #selector(toggleMicrophone), "마이크 켜기 또는 끄기", tint: .systemGreen)
-        soundButton = islandButton(soundEnabled ? "speaker.wave.2" : "speaker.slash", #selector(toggleSound), "스피커 켜기 또는 끄기", tint: .systemCyan)
-        let grid = NSGridView(views: [
-            [character, refresh, reset],
-            [background, pin, terminate],
-            [chat, micButton!, soundButton!],
-        ])
-        grid.rowSpacing = 4; grid.columnSpacing = 4; grid.translatesAutoresizingMaskIntoConstraints = false
-        for row in 0..<3 { grid.row(at: row).height = 30 }
-        effect.addSubview(grid); NSLayoutConstraint.activate([
-            grid.leadingAnchor.constraint(equalTo: effect.leadingAnchor, constant: 9),
-            grid.trailingAnchor.constraint(equalTo: effect.trailingAnchor, constant: -9),
-            grid.topAnchor.constraint(equalTo: effect.topAnchor, constant: 9),
-            grid.bottomAnchor.constraint(equalTo: effect.bottomAnchor, constant: -9),
-        ])
-        value.contentView = effect; panel = value; createControlBubble(); value.orderOut(nil)
+        let value = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 1, height: 1), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        value.isOpaque = false; value.backgroundColor = .clear
+        panel = value; createControlBubble(); value.orderOut(nil)
     }
 
     private func createControlBubble() {
@@ -457,7 +817,7 @@ final class OverlayController: NSObject, NSApplicationDelegate {
         value.isOpaque = false; value.backgroundColor = .clear; value.level = .floating
         value.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         let effect = liquidGlassEffect(frame: NSRect(origin: .zero, size: frame.size), radius: 18)
-        let button = islandButton("chevron.up", #selector(toggleControls), "캐릭터 컨트롤 열기")
+        let button = islandButton("message", #selector(toggleChat), "채팅 열기")
         controlsToggleButton = button
         button.frame = effect.bounds.insetBy(dx: 3, dy: 3); button.autoresizingMask = [.width, .height]
         effect.addSubview(button); value.contentView = effect; value.orderFrontRegardless(); controlBubble = value
@@ -478,11 +838,11 @@ final class OverlayController: NSObject, NSApplicationDelegate {
                               tint: NSColor = .white) -> NSButton {
         let image = NSImage(systemSymbolName: symbol, accessibilityDescription: tooltip)?
             .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 14, weight: .medium))
-        let button = NSButton(image: image ?? NSImage(), target: self, action: action)
+        let button = ConversationActionButton(image: image ?? NSImage(), target: self, action: action)
         button.toolTip = tooltip; button.isBordered = false; button.contentTintColor = tint
-        button.wantsLayer = true; button.layer?.cornerRadius = 7; button.layer?.borderWidth = 1
-        button.layer?.borderColor = NSColor.white.withAlphaComponent(0.26).cgColor
-        button.layer?.backgroundColor = NSColor(calibratedRed: 0.08, green: 0.14, blue: 0.22, alpha: 0.47).cgColor
+        button.wantsLayer = true; button.layer?.cornerRadius = 7; button.layer?.borderWidth = 0
+        button.layer?.backgroundColor = NSColor.clear.cgColor
+        button.setAccessibilityLabel(tooltip)
         button.widthAnchor.constraint(equalToConstant: 30).isActive = true
         button.heightAnchor.constraint(equalToConstant: 30).isActive = true
         return button
@@ -508,7 +868,35 @@ final class OverlayController: NSObject, NSApplicationDelegate {
         return button
     }
 
-    @objc private func didMove() { guard let window else { return }; UserDefaults.standard.set(window.frame.origin.x, forKey: "overlayX"); UserDefaults.standard.set(window.frame.origin.y, forKey: "overlayY"); positionPanel() }
+    @objc private func didMove() { layoutQuickChat() }
+    private func savePlacement() {
+        guard let window else { return }
+        UserDefaults.standard.set(window.frame.minX, forKey: "overlayX")
+        UserDefaults.standard.set(window.frame.minY, forKey: "overlayY")
+    }
+    private func cancelRecovery() {
+        recoveryTimer?.invalidate(); recoveryTimer = nil
+        (window as? InteractiveOverlayWindow)?.preservesResizeAnchor = false
+    }
+    private func recoverAfterDrag() {
+        guard let window, let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) }) ?? window.screen ?? NSScreen.main else { return }
+        cancelRecovery()
+        let start = window.frame.origin
+        let target = OverlayDragGeometry.recoveredOrigin(window: window.frame, body: bodyFrameOnScreen(), workArea: screen.visibleFrame)
+        guard hypot(target.x-start.x,target.y-start.y)>0.5 else { savePlacement(); return }
+        (window as? InteractiveOverlayWindow)?.preservesResizeAnchor = true
+        if reducedMotion || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            window.setFrameOrigin(target); cancelRecovery(); savePlacement(); return
+        }
+        let began = CFAbsoluteTimeGetCurrent()
+        let animation = Timer(timeInterval: 1.0/60.0, repeats: true) { [weak self, weak window] tick in
+            guard let self, let window else { tick.invalidate(); return }
+            let t = (CFAbsoluteTimeGetCurrent()-began)/0.28, f = OverlayDragGeometry.progress(t)
+            window.setFrameOrigin(NSPoint(x: start.x+(target.x-start.x)*f, y: start.y+(target.y-start.y)*f))
+            if t >= 1 { self.cancelRecovery(); self.savePlacement() }
+        }
+        recoveryTimer = animation; RunLoop.main.add(animation, forMode: .common)
+    }
     private func positionPanel() {
         guard let window, let panel, let screen = window.screen ?? NSScreen.main else { return }
         let inset: CGFloat = 14
@@ -518,39 +906,109 @@ final class OverlayController: NSObject, NSApplicationDelegate {
                     screen.visibleFrame.maxY - panel.frame.height - 8)
         panel.setFrameOrigin(NSPoint(x: x, y: y))
         controlBubble?.setFrameOrigin(NSPoint(x: panel.frame.maxX - 36, y: panel.frame.minY - 42))
+        layoutQuickChat()
     }
-    private func applyScale(_ value: CGFloat) { guard let window else { return }; scale = min(max(value, 0.65), 1.35); let c = NSPoint(x: window.frame.midX, y: window.frame.midY), s = NSSize(width: baseSize.width * scale, height: baseSize.height * scale); window.setFrame(NSRect(x: c.x-s.width/2, y: c.y-s.height/2, width: s.width, height: s.height), display: true, animate: true); UserDefaults.standard.set(Double(scale), forKey: "overlayScale"); positionPanel() }
-    private func rotateCharacter(horizontalDelta: CGFloat) { characterYaw = min(max(characterYaw + horizontalDelta * 0.35, -75), 75); UserDefaults.standard.set(Double(characterYaw), forKey: "overlayYaw"); controlWriter.publish(yaw: Float(characterYaw)) }
+    private func zoomFromScroll(delta: CGFloat, precise: Bool, inverted: Bool) {
+        let sensitivity: CGFloat = precise ? 0.003 : 0.045
+        let amount = delta * (inverted ? -1 : 1) * sensitivity
+        applyScale(scale * exp(min(max(amount, -0.2), 0.2)))
+    }
+    private func applyScale(_ value: CGFloat) {
+        guard let window, (window as? InteractiveOverlayWindow)?.isPointerDragging != true else { return }
+        cancelRecovery()
+        let body = bodyFrameOnScreen()
+        let chatOnRight = (chatPanel?.frame.midX ?? body.maxX) >= body.midX
+        (window as? InteractiveOverlayWindow)?.preservesResizeAnchor = true
+        defer { (window as? InteractiveOverlayWindow)?.preservesResizeAnchor = false }
+        scale = min(max(value, 0.65), 1.35)
+        let size = NSSize(width: baseSize.width * scale, height: baseSize.height * scale)
+        let localCenter = NSPoint(x: horizontalContentInset + (size.width-horizontalContentInset*2)*bodyBounds.midX,
+                                  y: verticalContentInset + (size.height-verticalContentInset*2)*bodyBounds.midY)
+        var target = NSRect(x: body.midX-localCenter.x, y: body.midY-localCenter.y, width: size.width, height: size.height)
+        if let chatPanel, chatPanel.isVisible, let screen = window.screen ?? NSScreen.main {
+            let resizedBody = NSRect(x: target.minX+horizontalContentInset+(size.width-horizontalContentInset*2)*bodyBounds.minX,
+                                     y: body.minY, width: (size.width-horizontalContentInset*2)*bodyBounds.width, height: body.height)
+            target.origin.x += ConversationZoomGeometry.horizontalShift(body: resizedBody, workArea: screen.visibleFrame, chatWidth: chatPanel.frame.width, chatOnRight: chatOnRight)
+        }
+        window.setFrame(target, display: true, animate: false)
+        UserDefaults.standard.set(Double(scale), forKey: "overlayScale"); positionPanel(); savePlacement()
+    }
+    private func rotateCharacter(horizontalDelta: CGFloat) { characterYaw = min(max(characterYaw - horizontalDelta * 0.35, -75), 75); UserDefaults.standard.set(Double(characterYaw), forKey: "overlayYaw"); controlWriter.publish(yaw: Float(characterYaw)) }
     @objc private func larger() { applyScale(scale + 0.1) }; @objc private func smaller() { applyScale(scale - 0.1) }
     @objc private func toggleClickThrough() { clickThrough.toggle(); window?.ignoresMouseEvents = clickThrough; refreshMenu() }
-    @objc private func toggleAlwaysOnTop() { alwaysOnTop.toggle(); window?.level = alwaysOnTop ? .floating : .normal; panel?.level = alwaysOnTop ? .floating : .normal; refreshMenu() }
-    @objc private func togglePause() { paused.toggle(); refreshMenu() }
-    @objc private func toggleControls() {
-        guard let panel else { return }
-        controlsExpanded.toggle()
-        if controlsExpanded { panel.orderFrontRegardless(); positionPanel() }
-        else { panel.orderOut(nil) }
-        let symbol = controlsExpanded ? "chevron.down" : "chevron.up"
-        controlsToggleButton?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: controlsExpanded ? "캐릭터 컨트롤 닫기" : "캐릭터 컨트롤 열기")
-        controlsToggleButton?.toolTip = controlsExpanded ? "캐릭터 컨트롤 닫기" : "캐릭터 컨트롤 열기"
-        controlBubble?.orderFrontRegardless()
+    @objc private func toggleAlwaysOnTop() {
+        alwaysOnTop.toggle()
+        for value in [window, panel, controlBubble, chatPanel, pickerPanel] { value?.level = alwaysOnTop ? .floating : .normal }
+        pinButton?.contentTintColor = alwaysOnTop ? .systemCyan : .secondaryLabelColor
+        refreshMenu()
     }
+    @objc private func togglePause() {
+        paused.toggle()
+        let title = paused ? "애니메이션 화면 재개" : "애니메이션 화면 일시정지"
+        pauseButton?.image = NSImage(systemSymbolName: paused ? "play" : "pause", accessibilityDescription: title)
+        pauseButton?.toolTip = title
+        refreshMenu()
+    }
+    @objc private func toggleControls() {
+        guard let view = chatHeader else { return }
+        let menu = NSMenu(); menu.autoenablesItems = false
+        for (title, action) in [("캐릭터 선택", #selector(cycleCharacterModel)), ("캐릭터 반응", #selector(reactToCharacter)), ("동작 줄이기", #selector(toggleReducedMotion)), ("항상 위", #selector(toggleAlwaysOnTop)), ("애니메이션 화면 일시정지", #selector(togglePause)), ("정위치 (위치·크기·회전)", #selector(resetPlacement)), ("화면 새로고침", #selector(refreshIsland)), ("가현 종료", #selector(quit))] {
+            let item = NSMenuItem(title: title, action: action, keyEquivalent: ""); item.target = self
+            if action == #selector(toggleAlwaysOnTop) { item.state = alwaysOnTop ? .on : .off }
+            if action == #selector(togglePause) { item.state = paused ? .on : .off }
+            if action == #selector(toggleReducedMotion) { let systemReduced = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion; item.state = reducedMotion || systemReduced ? .on : .off; item.isEnabled = !systemReduced }
+            menu.addItem(item)
+        }
+        menu.popUp(positioning: nil, at: NSPoint(x: view.bounds.width - 64, y: 0), in: view)
+    }
+
     @objc private func refreshIsland() { fittedToCharacter = false; refreshCoreStatus() }
     @objc private func toggleSound() {
-        soundEnabled.toggle(); UserDefaults.standard.set(soundEnabled, forKey: "voiceOutput")
-        if !soundEnabled { speechOutput.stopSpeaking(at: .immediate) }
+        soundEnabled.toggle()
+        speechGeneration += 1
+        if !soundEnabled { serverAudio?.stop(); serverAudio = nil }
         soundButton?.image = NSImage(systemSymbolName: soundEnabled ? "speaker.wave.2" : "speaker.slash", accessibilityDescription: "스피커")
+        soundButton?.setAccessibilityValue(soundEnabled ? "켜짐" : "꺼짐")
     }
     @objc private func toggleMicrophone() {
-        speechInput.toggle(onText: { [weak self] text, final in
-            self?.chatInput?.stringValue = text
-            self?.micButton?.contentTintColor = final ? .systemGreen : .systemOrange
-            if final { self?.speechInput.stop() }
-        }, onError: { [weak self] message in
-            self?.micButton?.contentTintColor = .systemRed
-            self?.appendChat(role: "시스템", text: message)
+        if serverMicrophone.recording {
+            serverMicrophone.stop()
+            micButton?.contentTintColor = .systemOrange
+            return
+        }
+        guard !microphonePending else { return }
+        microphonePending = true
+        speechGeneration += 1
+        serverAudio?.stop()
+        serverMicrophone.start(state: { [weak self] active in
+            self?.micButton?.contentTintColor = active ? .systemCyan : .systemOrange
+            self?.micButton?.toolTip = active ? "마이크 끄기" : "음성 처리 중"
+        }, completion: { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .failure(let error): self.finishMicrophone(error: error)
+            case .success(let wav):
+                self.core.speechData(path: "transcriptions", data: wav, mediaType: "audio/wav") { [weak self] result in
+                    guard let self else { return }
+                    do {
+                        let data = try result.get()
+                        let payload = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+                        let text = (payload?["transcript"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                        self.finishMicrophone(error: nil)
+                        guard !text.isEmpty else { return }
+                        if self.chatPanel == nil { self.createChatPanel() }
+                        self.chatInput?.stringValue = text
+                        self.sendChat()
+                    } catch { self.finishMicrophone(error: error) }
+                }
+            }
         })
-        micButton?.contentTintColor = speechInput.recording ? .secondaryLabelColor : .systemGreen
+    }
+    private func finishMicrophone(error: Error?) {
+        microphonePending = false
+        micButton?.contentTintColor = error == nil ? .systemGreen : .systemRed
+        micButton?.toolTip = "마이크 켜기"
+        if let error { appendChat(role: "시스템", text: error.localizedDescription) }
     }
     @objc private func focusModelPicker() {
         modelPopup?.window?.makeKey(); modelPopup?.performClick(nil)
@@ -559,9 +1017,112 @@ final class OverlayController: NSObject, NSApplicationDelegate {
         animationPopup?.window?.makeKey(); animationPopup?.performClick(nil)
     }
     @objc private func cycleCharacterModel() {
-        selectedCharacter = selectedCharacter == "diana" ? "gahyeon" : "diana"
-        UserDefaults.standard.set(selectedCharacter, forKey: "selectedCharacter")
-        connectionLabel?.stringValue = "모델 선택 · \(selectedCharacter == "diana" ? "다이애나" : "가현")"
+        if let pickerPanel, pickerPanel.isVisible { pickerPanel.orderOut(nil); return }
+        let width = ConversationDesign.number("pickerWidth", 340), height = ConversationDesign.number("pickerHeight", 556)
+        let value = QuickChatPanel(contentRect: NSRect(x: 0, y: 0, width: width, height: height), styleMask: [.borderless], backing: .buffered, defer: false)
+        value.title = "캐릭터 선택"; value.isReleasedWhenClosed = false; value.isOpaque = false; value.backgroundColor = .clear
+        value.level = alwaysOnTop ? .floating : .normal; value.appearance = NSAppearance(named: .darkAqua)
+        value.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]; value.hidesOnDeactivate = false
+        let root = ConversationSurface(frame: NSRect(x: 0, y: 0, width: width, height: height)); root.lines = false
+        let title = label("캐릭터 선택", size: 13, weight: .semibold, color: .white); title.frame = NSRect(x: 16, y: height-32, width: 160, height: 20); root.addSubview(title)
+        let close = islandButton("xmark", #selector(closeCharacterPicker), "닫기"); close.keyEquivalent = "\u{1b}"; close.frame = NSRect(x: width-42, y: height-38, width: 30, height: 30); root.addSubview(close)
+        let labels = ["가현", "재재", "도적", "해적", "격투가", "격투가 (가면 없음)", "아이", "해커"]
+        let chosen = Int(controlWriter.appliedCharacter() ?? manifestModelIndex())
+        let previewData = try? Data(contentsOf: URL(fileURLWithPath: "assets/character-previews/v001/manifest.json"))
+        let previewManifest = previewData.flatMap { try? JSONSerialization.jsonObject(with: $0) } as? [String: Any]
+        let assets = previewManifest?["assets"] as? [[String: Any]] ?? []
+        for (slot, index) in [0,1,2,3,4,6,7].enumerated() {
+            let selected = chosen == index || (index == 4 && chosen == 5)
+            let assetIndex = selected && chosen == 5 ? 5 : index
+            let button = RosterCardButton(frame: NSRect(x: 10+CGFloat(slot%2)*164, y: height-44-CGFloat(slot/2+1)*116-CGFloat(slot/2)*8, width: 156, height: 116))
+            button.title = ""; button.isBordered = false; button.tag = assetIndex; button.target = self; button.action = #selector(selectRosterCard(_:))
+            button.selected = selected; button.lettering = characterLettering(modelIds[index]); button.setAccessibilityLabel(labels[index]); button.toolTip = labels[index]
+            button.isEnabled = controlWriter.appliedCharacter() != nil || installedModel(index)
+            if let asset = assets.first(where: { $0["id"] as? String == modelIds[assetIndex] }), let path = asset["path"] as? String, let image = NSImage(contentsOfFile: path), let b = asset["alphaBounds"] as? [Double] {
+                button.preview = image
+                let h = (b[3]-b[1])*0.58
+                button.source = NSRect(x: b[0], y: image.size.height-b[1]-h, width: b[2]-b[0], height: h)
+            }
+            root.addSubview(button)
+        }
+        if chosen == 4 || chosen == 5 {
+            let variant = NSButton(checkboxWithTitle: "가면 없음", target: self, action: #selector(selectFighterVariant(_:)))
+            variant.state = chosen == 5 ? .on : .off; variant.frame = NSRect(x: 16, y: 8, width: 140, height: 24); root.addSubview(variant)
+        }
+        value.contentView = root; pickerPanel = value
+        let bounds = (window?.screen ?? NSScreen.main)!.visibleFrame.insetBy(dx: 8, dy: 8)
+        let anchor = chatPanel?.frame ?? window!.frame
+        value.setFrameOrigin(NSPoint(x: min(max(anchor.minX, bounds.minX), bounds.maxX-width), y: min(max(anchor.maxY-height, bounds.minY), bounds.maxY-height)))
+        value.makeKeyAndOrderFront(nil)
+    }
+    @objc private func closeCharacterPicker() { pickerPanel?.orderOut(nil) }
+    @objc private func selectRosterCard(_ sender: NSButton) {
+        closeCharacterPicker()
+        guard sender.tag != Int(controlWriter.appliedCharacter() ?? manifestModelIndex()) else { return }
+        let item = NSMenuItem(); item.tag = sender.tag; selectCharacterModel(item)
+    }
+    @objc private func selectFighterVariant(_ sender: NSButton) {
+        closeCharacterPicker(); let item = NSMenuItem(); item.tag = sender.state == .on ? 5 : 4; selectCharacterModel(item)
+    }
+
+    private func characterLettering(_ id: String) -> NSImage? {
+        let key = id == "fighter-unmasked" ? "fighter" : id
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: "assets/character-lettering/v001/manifest.json")),
+              let manifest = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let assets = manifest["assets"] as? [[String: Any]],
+              let asset = assets.first(where: { $0["id"] as? String == key }),
+              let path = asset["path"] as? String,
+              let bounds = asset["alphaBounds"] as? [Double], bounds.count == 4,
+              let original = NSImage(contentsOfFile: path) else { return nil }
+        let source = NSRect(x: bounds[0], y: original.size.height - bounds[3],
+                            width: bounds[2] - bounds[0], height: bounds[3] - bounds[1])
+        let result = NSImage(size: NSSize(width: 144, height: 48))
+        let factor = min(136 / source.width, 40 / source.height)
+        let size = NSSize(width: source.width * factor, height: source.height * factor)
+        result.lockFocus()
+        original.draw(in: NSRect(x: (144 - size.width) / 2, y: (48 - size.height) / 2,
+                                width: size.width, height: size.height), from: source,
+                      operation: .sourceOver, fraction: 1)
+        result.unlockFocus()
+        result.isTemplate = false
+        return result
+    }
+    private let modelIds = ["gahyeon", "zeze", "rogue", "pirate", "fighter", "fighter-unmasked", "child", "hacker"]
+    private func installedModel(_ index: Int) -> Bool {
+        guard modelIds.indices.contains(index),
+              let data = try? Data(contentsOf: URL(fileURLWithPath: "config/character-model-roster.json")),
+              let roster = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let entries = roster["characters"] as? [[String: Any]],
+              let model = entries.first(where: { $0["id"] as? String == modelIds[index] }),
+              let map = model["runtimeMap"] as? String, map.hasPrefix("/Game/") else { return false }
+        return FileManager.default.fileExists(atPath: "unreal/GahyeonDesktopMetaHumanPOC/Content/" + String(map.dropFirst(6)) + ".umap")
+    }
+    private func manifestModelIndex() -> UInt32 {
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: "config/canonical-character-runtime.json")),
+              let manifest = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let mac = manifest["macos"] as? [String: Any], let id = mac["characterModelId"] as? String,
+              let index = modelIds.firstIndex(of: id) else { return 0 }
+        return UInt32(index)
+    }
+    @objc private func selectCharacterModel(_ item: NSMenuItem) {
+        guard modelIds.indices.contains(item.tag) else { return }
+        if controlWriter.appliedCharacter() != nil {
+            if controlWriter.selectCharacter(UInt32(item.tag)) { fittedToCharacter = false }
+            else { appendChat(role: "시스템", text: "캐릭터 런타임에 연결할 수 없습니다.") }
+            return
+        }
+        guard installedModel(item.tag) else { return }
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
+        task.arguments = ["scripts/select_canonical_macos_character.py", modelIds[item.tag]]
+        task.currentDirectoryURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        task.standardOutput = FileHandle.nullDevice; task.standardError = FileHandle.nullDevice
+        task.terminationHandler = { [weak self] process in
+            if process.terminationStatus != 0 { DispatchQueue.main.async {
+                self?.appendChat(role: "시스템", text: "캐릭터 전환에 실패했습니다.")
+            } }
+        }
+        do { try task.run() } catch { appendChat(role: "시스템", text: error.localizedDescription) }
     }
     @objc private func cycleAnimation() {
         let names = ["대기", "걷기", "달리기", "인사"]
@@ -570,49 +1131,107 @@ final class OverlayController: NSObject, NSApplicationDelegate {
         connectionLabel?.stringValue = "애니메이션 선택 · \(names[selectedAnimationIndex])"
     }
     @objc private func toggleChat() {
-        if let chatPanel { chatPanel.isVisible ? chatPanel.orderOut(nil) : chatPanel.orderFrontRegardless(); return }
-        createChatPanel()
+        if chatPanel == nil { createChatPanel(); return }
+        if chatPanel!.isVisible { chatPanel?.orderOut(nil); closeCharacterPicker(); controlBubble?.orderFrontRegardless() }
+        else { layoutQuickChat(); chatPanel?.makeKeyAndOrderFront(nil); controlBubble?.orderOut(nil) }
     }
     private func createChatPanel() {
-        guard let panel else { return }
-        let frame = NSRect(x: panel.frame.minX - 390, y: panel.frame.minY, width: 380, height: 460)
-        let value = NSPanel(contentRect: frame, styleMask: [.titled, .closable, .resizable, .utilityWindow], backing: .buffered, defer: false)
+        let value = QuickChatPanel(contentRect: NSRect(x: 0, y: 0, width: 360, height: 280), styleMask: [.borderless], backing: .buffered, defer: false)
         value.title = "가현 채팅"; value.level = alwaysOnTop ? .floating : .normal; value.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        let root = NSStackView(); root.orientation = .vertical; root.spacing = 10; root.edgeInsets = NSEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
-        let scroll = NSScrollView(); scroll.hasVerticalScroller = true
+        value.hidesOnDeactivate = false; value.isReleasedWhenClosed = false; value.isOpaque = false; value.backgroundColor = .clear; value.hasShadow = true
+        value.appearance = NSAppearance(named: .darkAqua)
+        let root = ConversationSurface(frame: NSRect(x: 0, y: 0, width: 360, height: 280)); root.autoresizingMask = [.width, .height]
+        let header = NSView(frame: NSRect(x: 0, y: 236, width: 360, height: 44)); chatHeader = header; root.addSubview(header)
+        let character = islandButton("person.crop.circle", #selector(cycleCharacterModel), "캐릭터 선택"); character.frame = NSRect(x: 12, y: 7, width: 30, height: 30); header.addSubview(character)
+        let title = label("가현", size: 14, weight: .semibold, color: .white); title.frame = NSRect(x: 50, y: 12, width: 180, height: 22); header.addSubview(title)
+        let more = islandButton("ellipsis", #selector(toggleControls), "더 보기"); more.frame = NSRect(x: 278, y: 7, width: 30, height: 30); header.addSubview(more)
+        let close = islandButton("xmark", #selector(toggleChat), "채팅 닫기"); close.frame = NSRect(x: 318, y: 7, width: 30, height: 30); header.addSubview(close)
+        let scroll = NSScrollView(); scroll.hasVerticalScroller = true; scroll.drawsBackground = false; scroll.scrollerStyle = .overlay
         let history = NSTextView(); history.isEditable = false; history.drawsBackground = false; history.font = .systemFont(ofSize: 13)
-        scroll.documentView = history; chatHistory = history
-        let row = NSStackView(); row.orientation = .horizontal; row.spacing = 8
+        history.isVerticallyResizable = true; history.isHorizontallyResizable = false; history.textContainer?.widthTracksTextView = true
+        history.autoresizingMask = [.width]; history.textColor = .white; history.textContainerInset = NSSize(width: 0, height: 8)
+        scroll.documentView = history; chatHistory = history; chatScroll = scroll; root.addSubview(scroll)
         let input = NSTextField(); input.placeholderString = "가현에게 메시지 보내기"; input.target = self; input.action = #selector(sendChat); chatInput = input
-        let send = NSButton(title: "보내기", target: self, action: #selector(sendChat))
-        row.addArrangedSubview(input); row.addArrangedSubview(send)
-        root.addArrangedSubview(scroll); root.addArrangedSubview(row)
-        scroll.heightAnchor.constraint(greaterThanOrEqualToConstant: 330).isActive = true
-        value.contentView = root; value.orderFrontRegardless(); value.makeKey(); chatPanel = value
-        appendChat(role: "다이애나", text: "대화를 시작해요.")
+        input.frame = NSRect(x: 16, y: 57, width: 286, height: 28); input.isBordered = false; input.drawsBackground = false; input.font = .systemFont(ofSize: 14); input.textColor = .white
+        input.setAccessibilityLabel("가현에게 메시지 보내기"); root.addSubview(input)
+        let send = islandButton("arrow.up", #selector(sendChat), "보내기", tint: NSColor(calibratedRed: 0.51, green: 0.85, blue: 0.86, alpha: 1)); send.frame = NSRect(x: 318, y: 53, width: 30, height: 30); root.addSubview(send)
+        let mic = islandButton("mic.slash", #selector(toggleMicrophone), "마이크 켜기"); mic.frame = NSRect(x: 12, y: 12, width: 30, height: 30); micButton = mic; root.addSubview(mic)
+        let sound = islandButton(soundEnabled ? "speaker.wave.2" : "speaker.slash", #selector(toggleSound), "스피커 켜기 또는 끄기"); sound.frame = NSRect(x: 50, y: 12, width: 30, height: 30); soundButton = sound; root.addSubview(sound)
+        let react = islandButton("sparkles", #selector(reactToCharacter), "캐릭터 반응"); react.frame = NSRect(x: 88, y: 12, width: 30, height: 30); root.addSubview(react)
+        let status = label("", size: 12, weight: .regular, color: .secondaryLabelColor); status.frame = NSRect(x: 130, y: 17, width: 175, height: 20); activityLabel = status; root.addSubview(status)
+        let expand = islandButton("chevron.up", #selector(toggleChatHistory), "대화 펼치기"); expand.frame = NSRect(x: 318, y: 12, width: 30, height: 30); chatHistoryButton = expand; root.addSubview(expand)
+        value.contentView = root; chatPanel = value; layoutQuickChat(); value.orderFrontRegardless(); controlBubble?.orderOut(nil)
     }
+    @objc private func toggleChatHistory() { chatExpanded.toggle(); layoutQuickChat() }
+    private func layoutQuickChat() {
+        guard !quickChatLayoutBusy, let chatPanel, let window, let screen = window.screen ?? NSScreen.main else { return }
+        quickChatLayoutBusy = true; defer { quickChatLayoutBusy = false }
+        let width = ConversationDesign.number("chatWidth", 360), height = ConversationDesign.number(chatExpanded ? "expandedHeight" : "chatHeight", chatExpanded ? 440 : 280)
+        let bounds = screen.visibleFrame.insetBy(dx: 8, dy: 8)
+        let body = bodyFrameOnScreen()
+        // Position dependent surfaces only; moving their owner here fights native dragging and zoom.
+        let right = body.maxX + 12, left = body.minX - 12 - width
+        let preferred = right + width <= bounds.maxX ? right : left >= bounds.minX ? left : right
+        let x = min(max(preferred, bounds.minX), bounds.maxX-width)
+        let bottom = min(max(body.minY + body.height*0.22, bounds.minY), bounds.maxY-height)
+        let target = NSRect(x: x, y: bottom, width: width, height: height)
+        if chatPanel.frame.size != target.size { chatPanel.setFrame(target, display: true) }
+        else if chatPanel.frame.origin != target.origin { chatPanel.setFrameOrigin(target.origin) }
+        if layoutSize != NSSize(width: width, height: height) {
+            layoutSize = NSSize(width: width, height: height)
+        chatHeader?.frame = NSRect(x: 0, y: height-44, width: width, height: 44)
+        chatScroll?.frame = NSRect(x: 16, y: 104, width: width-32, height: height-156)
+        chatHistory?.setFrameSize(NSSize(width: width-32, height: max(height-156, chatHistory?.frame.height ?? 0)))
+        chatPanel.contentView?.needsDisplay = true
+        chatHistoryButton?.image = NSImage(systemSymbolName: chatExpanded ? "chevron.down" : "chevron.up", accessibilityDescription: chatExpanded ? "대화 접기" : "대화 펼치기")
+        chatHistoryButton?.toolTip = chatExpanded ? "대화 접기" : "대화 펼치기"
+        chatHistoryButton?.setAccessibilityLabel(chatExpanded ? "대화 접기" : "대화 펼치기")
+        }
+        let imageFrame = imageView.convert(imageView.bounds, to: nil)
+        let bodyEdge = window.frame.minX + imageFrame.minX + imageFrame.width * bodySide
+        let bubbleHeight = controlBubble?.frame.height ?? 36
+        let bubbleRight = bodyEdge + 12
+        let bubbleX = bubbleRight + 36 <= bounds.maxX ? bubbleRight : body.minX - 48
+        controlBubble?.setFrameOrigin(NSPoint(x: min(max(bubbleX, bounds.minX), bounds.maxX-36), y: min(max(body.midY-bubbleHeight/2, bounds.minY), bounds.maxY-bubbleHeight)))
+        if chatPanel.isVisible { controlBubble?.orderOut(nil) }
+    }
+
     @objc private func sendChat() {
         guard let input = chatInput, !input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        speechGeneration += 1
+        let generation = speechGeneration
+        serverAudio?.stop()
         let message = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines); input.stringValue = ""; input.isEnabled = false
         appendChat(role: "나", text: message)
+        let requestStarted = ProcessInfo.processInfo.systemUptime
         core.send(message: message, characterId: selectedCharacter) { [weak self] result in
             guard let self else { return }; input.isEnabled = true; input.window?.makeFirstResponder(input)
             switch result {
             case .success(let response):
+                fputs("LATENCY_CHAT run=\(response.runId) reply_ms=\((ProcessInfo.processInfo.systemUptime-requestStarted)*1000)\n", stderr)
                 self.appendChat(role: self.selectedCharacter == "diana" ? "다이애나" : "가현", text: response.content)
                 if self.soundEnabled {
-                    let utterance = AVSpeechUtterance(string: response.content)
-                    utterance.voice = AVSpeechSynthesisVoice(language: "ko-KR")
-                    self.speechOutput.speak(utterance)
+                    let playback = DesktopSegmentedSpeech(core: self.core,
+                        current: { [weak self] in self?.soundEnabled == true && self?.speechGeneration == generation },
+                        deliver: { [weak self] player in self?.serverAudio = player },
+                        failure: { [weak self] error in self?.appendChat(role: "시스템", text: "음성 재생 실패: \(error.localizedDescription)") })
+                    self.segmentedSpeech = playback
+                    playback.start(response.content)
                 }
-            case .failure(let error): self.appendChat(role: "시스템", text: "Core 연결 실패: \(error.localizedDescription)")
+            case .failure(let error):
+                let failure = error as NSError
+                let message = failure.domain == NSURLErrorDomain && failure.code == NSURLErrorTimedOut
+                    ? "응답 대기 시간이 초과됐습니다."
+                    : "Core 요청 실패: \(error.localizedDescription)"
+                self.appendChat(role: "시스템", text: message)
             }
         }
     }
     private func appendChat(role: String, text: String) {
         if chatPanel == nil { createChatPanel() }
         guard let history = chatHistory else { return }
-        history.textStorage?.append(NSAttributedString(string: "\(role)\n\(text)\n\n", attributes: [.font: NSFont.systemFont(ofSize: 13)]))
+        history.textStorage?.append(NSAttributedString(string: "\(role)\n\(text)\n\n", attributes: [.font: NSFont.systemFont(ofSize: 13), .foregroundColor: NSColor.white]))
+        layoutQuickChat()
         history.scrollToEndOfDocument(nil)
     }
     @objc private func changeCharacterModel() {
@@ -624,6 +1243,38 @@ final class OverlayController: NSObject, NSApplicationDelegate {
     @objc private func changeAnimation() {
         guard let animationPopup else { return }
         appendChat(role: "시스템", text: "애니메이션 선택: \(animationPopup.titleOfSelectedItem ?? "대기")")
+    }
+    @objc private func reactToCharacter() { reactionStarted = CFAbsoluteTimeGetCurrent(); nextIdleReaction = reactionStarted + 45 }
+    @objc private func toggleReducedMotion() { reducedMotion.toggle(); UserDefaults.standard.set(reducedMotion, forKey: "reducedCharacterMotion") }
+    private func renderMicrophoneState(listening: Bool) {
+        let label = listening ? "마이크 끄기" : "마이크 켜기"
+        guard micButton?.accessibilityLabel() != label else { return }
+        micButton?.image = NSImage(systemSymbolName: listening ? "mic" : "mic.slash", accessibilityDescription: label)
+        micButton?.contentTintColor = listening ? .systemCyan : .white
+        micButton?.setAccessibilityLabel(label)
+        micButton?.toolTip = label
+    }
+    private func updateInteraction() {
+        let now = CFAbsoluteTimeGetCurrent(); if now-lastInteractionTick < 0.05 { return }; lastInteractionTick = now
+        let phase = serverMicrophone.recording ? "듣는 중" : microphonePending ? "음성 처리 중" : chatInput?.isEnabled == false ? "응답 대기" : serverAudio?.isPlaying == true ? "말하는 중" : ""
+        if phase != interactionPhase { interactionPhase = phase; activityLabel?.stringValue = phase }
+        renderMicrophoneState(listening: serverMicrophone.recording)
+        let disabled = paused || reducedMotion || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        if lastBaseYaw.isNaN || lastBaseYaw != characterYaw { lastBaseYaw = characterYaw; publishedReactionYaw = .greatestFiniteMagnitude; reactionStarted = -100; nextIdleReaction = now+45 }
+        if now > nextIdleReaction && phase.isEmpty { reactionStarted = now; nextIdleReaction = now+45 }
+        var offset: Double = 0
+        let age = now-reactionStarted
+        if !disabled {
+            if age >= 0 && age < 1.4 { offset = sin(age/1.4 * .pi*2) * 10 * sin(age/1.4 * .pi) }
+            else if phase == "듣는 중" { offset = 4 }
+            else if phase == "응답 대기" { offset = sin(now*1.6)*1.5 }
+            else if phase == "말하는 중" { offset = sin(now*3.2)*2.5 }
+        }
+        let target = Float(min(max(Double(characterYaw)+offset,-75),75))
+        let eased = disabled || publishedReactionYaw == .greatestFiniteMagnitude ? target : publishedReactionYaw+(target-publishedReactionYaw)*0.22
+        if abs(eased-publishedReactionYaw) > 0.02 || publishedReactionYaw == .greatestFiniteMagnitude {
+            controlWriter.publish(yaw: eased); publishedReactionYaw = eased
+        }
     }
     private func refreshCoreStatus() {
         core.speechStatus { [weak self] result in
@@ -639,10 +1290,10 @@ final class OverlayController: NSObject, NSApplicationDelegate {
     }
     @objc private func toggleVisibility() {
         guard let window else { return }
-        if window.isVisible { window.orderOut(nil); panel?.orderOut(nil); controlBubble?.orderOut(nil) }
+        if window.isVisible { window.orderOut(nil); panel?.orderOut(nil); controlBubble?.orderOut(nil); chatPanel?.orderOut(nil); closeCharacterPicker() }
         else {
             window.orderFrontRegardless()
-            if controlsExpanded { panel?.orderFrontRegardless() } else { controlBubble?.orderFrontRegardless() }
+            chatPanel?.orderFrontRegardless(); controlBubble?.orderOut(nil)
         }
     }
     @objc private func resetPlacement() { guard let screen = NSScreen.main, let window else { return }; UserDefaults.standard.removeObject(forKey: "overlayX"); UserDefaults.standard.removeObject(forKey: "overlayY"); UserDefaults.standard.removeObject(forKey: "overlayYaw"); characterYaw = 0; controlWriter.publish(yaw: 0, reset: true); applyScale(1); window.setFrameOrigin(NSPoint(x: screen.visibleFrame.maxX-window.frame.width-18, y: screen.visibleFrame.minY+18)); positionPanel() }

@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "chatWidth": 360,
+  "chatHeight": 280,
+  "expandedHeight": 440,
+  "pickerWidth": 340,
+  "pickerHeight": 556,
+  "cardWidth": 156,
+  "cardHeight": 116,
+  "gap": 8,
+  "surface": "#242830",
+  "foreground": "#F3F4F6",
+  "muted": "#A7AFBA",
+  "accent": "#83D8DB",
+  "reactionSeconds": 1.4,
+  "reactionDegrees": 10,
+  "idleIntervalSeconds": 45,
+  "cards": [
+    {
+      "id": "gahyeon",
+      "index": 0,
+      "label": "가현"
+    },
+    {
+      "id": "zeze",
+      "index": 1,
+      "label": "재재"
+    },
+    {
+      "id": "rogue",
+      "index": 2,
+      "label": "도적"
+    },
+    {
+      "id": "pirate",
+      "index": 3,
+      "label": "해적"
+    },
+    {
+      "id": "fighter",
+      "index": 4,
+      "label": "격투가"
+    },
+    {
+      "id": "child",
+      "index": 6,
+      "label": "아이"
+    },
+    {
+      "id": "hacker",
+      "index": 7,
+      "label": "해커"
+    }
+  ]
+}

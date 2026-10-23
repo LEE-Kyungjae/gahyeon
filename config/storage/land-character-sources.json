@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "direction": "land-created-characters",
+  "selectedCandidate": "meshy-turquoise-street-style",
+  "status": "source-verified-not-runtime-integrated",
+  "sourceAuthority": "ssh land original assets remain untouched",
+  "fallbackRuntimeManifest": "config/canonical-character-runtime.json",
+  "sources": [
+    {
+      "sshHost": "land",
+      "remotePath": "/mnt/d/CharacterWorkbench/source/Meshy_AI_Turquoise_Street_Styl_0819120547_texture_fbx.zip",
+      "localPath": "artifacts/land-characters/meshy-turquoise/source-fbx.zip",
+      "sha256": "c9ef58d4c94e889390494f498ef41c9057c3dfbe9afe285822d80aed138d9f99",
+      "bytes": 183812957,
+      "status": "verified"
+    },
+    {
+      "sshHost": "land",
+      "remotePath": "/mnt/d/AAACharacterStudio/projects/meshy-turquoise/work/meshy-turquoise-street-style-v002.blend",
+      "localPath": "artifacts/land-characters/meshy-turquoise/working-v002.blend",
+      "sha256": "693bae2f60f3acfd044cdb6d8f451139de7166827a7f71473233830e13f3efb8",
+      "bytes": 125740671,
+      "status": "verified"
+    }
+  ],
+  "extractedFiles": [
+    {
+      "path": "artifacts/land-characters/meshy-turquoise/fbx/Meshy_AI_Turquoise_Street_Styl_0819120547_texture_fbx/Meshy_AI_Turquoise_Street_Styl_0819120547_texture.fbx",
+      "bytes": 112505964
+    },
+    {
+      "path": "artifacts/land-characters/meshy-turquoise/fbx/Meshy_AI_Turquoise_Street_Styl_0819120547_texture_fbx/Meshy_AI_Turquoise_Street_Styl_0819120547_texture.png",
+      "bytes": 56065268
+    },
+    {
+      "path": "artifacts/land-characters/meshy-turquoise/fbx/Meshy_AI_Turquoise_Street_Styl_0819120547_texture_fbx/Meshy_AI_Turquoise_Street_Styl_0819120547_texture_metallic.png",
+      "bytes": 1445404
+    },
+    {
+      "path": "artifacts/land-characters/meshy-turquoise/fbx/Meshy_AI_Turquoise_Street_Styl_0819120547_texture_fbx/Meshy_AI_Turquoise_Street_Styl_0819120547_texture_normal.png",
+      "bytes": 11916372
+    },
+    {
+      "path": "artifacts/land-characters/meshy-turquoise/fbx/Meshy_AI_Turquoise_Street_Styl_0819120547_texture_fbx/Meshy_AI_Turquoise_Street_Styl_0819120547_texture_roughness.png",
+      "bytes": 5134070
+    }
+  ],
+  "requiredBeforeRuntimeSwitch": [
+    "mesh/material/rig inspection",
+    "rigging and skin weights: current armatureCount is zero",
+    "black-white-checker alpha comparison",
+    "animation and performance validation",
+    "user visual acceptance"
+  ],
+  "landWorkspaceEvidence": {
+    "manifest": "/mnt/d/AAACharacterStudio/manifests/meshy-turquoise-v002-workspace.json",
+    "status": "configured-editable-draft",
+    "meshCount": 2,
+    "armatureCount": 0,
+    "packedImages": 4,
+    "productionReady": false
+  }
+}

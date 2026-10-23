@@ -1,0 +1,37 @@
+{
+  "document": {
+    "serviceId": "gahyeon",
+    "ownerSubjectId": "zezestudio:example-user",
+    "sourceType": "text",
+    "displayName": "project",
+    "sourceUri": null,
+    "accessScope": "PRIVATE",
+    "title": "project",
+    "language": "ko",
+    "bodyText": "출시 검증은 오로라 프로젝트의 작업이다.",
+    "metadataJson": "{}"
+  },
+  "ontology": {
+    "schemaVersion": 1,
+    "claims": [
+      {
+        "subject": {
+          "key": "task:release-check",
+          "type": "TASK",
+          "label": "출시 검증",
+          "aliases": []
+        },
+        "relation": "PART_OF",
+        "object": {
+          "key": "project:aurora",
+          "type": "PROJECT",
+          "label": "오로라",
+          "aliases": [
+            "새벽"
+          ]
+        },
+        "evidenceQuote": "출시 검증은 오로라 프로젝트의 작업이다."
+      }
+    ]
+  }
+}

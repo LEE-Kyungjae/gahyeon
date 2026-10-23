@@ -34,7 +34,7 @@ spring:
         options:
           model: ${AGENT_MODEL:${OPENROUTER_MODEL:openrouter/free}}
           temperature: 0.7
-          max-tokens: 500     # 응답 길이 제한으로 비용 절감
+          max-tokens: ${AGENT_MAX_TOKENS:1200}
       api-key: ${AGENT_API_KEY:${OPENROUTER_API_KEY:${OPEN_ROUTER:${OPENAI_API_KEY:}}}}
       base-url: ${AGENT_BASE_URL:${OPENROUTER_BASE_URL:https://openrouter.ai/api}}
   application:
@@ -54,6 +54,8 @@ server:
   shutdown: graceful
 
 gahyeon:
+  ontology:
+    enabled: ${GAHYEON_ONTOLOGY_ENABLED:false}
   jev:
     enabled: ${GAHYEON_JEV_ENABLED:false}
     api-key: ${TYPESAFE_API_KEY:}
@@ -84,6 +86,14 @@ gahyeon:
     read-timeout-millis: ${GAHYEON_CONTENT_SAFETY_READ_TIMEOUT_MILLIS:700}
     failure-cooldown-millis: ${GAHYEON_CONTENT_SAFETY_FAILURE_COOLDOWN_MILLIS:30000}
   agent:
+    skills:
+      enabled: ${GAHYEON_AGENT_SKILLS_ENABLED:false}
+    research:
+      enabled: ${GAHYEON_AGENT_RESEARCH_ENABLED:false}
+    owner-work:
+      enabled: ${GAHYEON_AGENT_OWNER_WORK_ENABLED:false}
+      actor-id: ${GAHYEON_AGENT_OWNER_WORK_ACTOR_ID:0}
+      scope-id: ${GAHYEON_AGENT_OWNER_WORK_SCOPE_ID:0}
     provider-failure-cooldown-millis: ${GAHYEON_AGENT_PROVIDER_FAILURE_COOLDOWN_MILLIS:5000}
     streaming:
       # Enable only after the selected OpenAI-compatible provider/model is verified to never
@@ -223,6 +233,72 @@ gahyeon:
         social-drift-per-hour: 0.050
         curiosity-drift-per-hour: 0.050
         rest-drift-per-hour: 0.032
+      - id: zeze
+        display-name: 재재
+        persona-prompt: prompts/characters/zeze.txt
+        voice-profile: gahyeon.assistant
+        expression-profile: gahyeon.metahuman
+        autonomous-enabled: false
+        initiative-threshold: 0.80
+        initiative-cooldown: 15m
+        social-drift-per-hour: 0.040
+        curiosity-drift-per-hour: 0.040
+        rest-drift-per-hour: 0.030
+      - id: rogue
+        display-name: 도적
+        persona-prompt: prompts/characters/rogue.txt
+        voice-profile: gahyeon.assistant
+        expression-profile: gahyeon.metahuman
+        autonomous-enabled: false
+        initiative-threshold: 0.80
+        initiative-cooldown: 15m
+        social-drift-per-hour: 0.040
+        curiosity-drift-per-hour: 0.040
+        rest-drift-per-hour: 0.030
+      - id: pirate
+        display-name: 해적
+        persona-prompt: prompts/characters/pirate.txt
+        voice-profile: gahyeon.assistant
+        expression-profile: gahyeon.metahuman
+        autonomous-enabled: false
+        initiative-threshold: 0.80
+        initiative-cooldown: 15m
+        social-drift-per-hour: 0.040
+        curiosity-drift-per-hour: 0.040
+        rest-drift-per-hour: 0.030
+      - id: fighter
+        display-name: 격투가
+        persona-prompt: prompts/characters/fighter.txt
+        voice-profile: gahyeon.assistant
+        expression-profile: gahyeon.metahuman
+        autonomous-enabled: false
+        initiative-threshold: 0.80
+        initiative-cooldown: 15m
+        social-drift-per-hour: 0.040
+        curiosity-drift-per-hour: 0.040
+        rest-drift-per-hour: 0.030
+      - id: child
+        display-name: 아이
+        persona-prompt: prompts/characters/child.txt
+        voice-profile: gahyeon.assistant
+        expression-profile: gahyeon.metahuman
+        autonomous-enabled: false
+        initiative-threshold: 0.80
+        initiative-cooldown: 15m
+        social-drift-per-hour: 0.040
+        curiosity-drift-per-hour: 0.040
+        rest-drift-per-hour: 0.030
+      - id: hacker
+        display-name: 해커
+        persona-prompt: prompts/characters/hacker.txt
+        voice-profile: gahyeon.assistant
+        expression-profile: gahyeon.metahuman
+        autonomous-enabled: false
+        initiative-threshold: 0.80
+        initiative-cooldown: 15m
+        social-drift-per-hour: 0.040
+        curiosity-drift-per-hour: 0.040
+        rest-drift-per-hour: 0.030
   world-action:
     execution-tick-millis: ${GAHYEON_WORLD_ACTION_EXECUTION_TICK_MILLIS:250}
     timeout-scan-millis: ${GAHYEON_WORLD_ACTION_TIMEOUT_SCAN_MILLIS:5000}
@@ -296,11 +372,12 @@ tts:
 
 assistant:
   enabled: ${ASSISTANT_ENABLED:false}
-  max-utterance-seconds: ${ASSISTANT_MAX_UTTERANCE_SECONDS:20}
+  max-utterance-seconds: ${ASSISTANT_MAX_UTTERANCE_SECONDS:60}
   silence-millis: ${ASSISTANT_SILENCE_MILLIS:900}
   speak-responses: ${ASSISTANT_SPEAK_RESPONSES:true}
   tts-provider: ${ASSISTANT_TTS_PROVIDER:edge}
-  response-acknowledgement-millis: ${ASSISTANT_RESPONSE_ACKNOWLEDGEMENT_MILLIS:1500}
+  response-acknowledgements-enabled: ${ASSISTANT_RESPONSE_ACKNOWLEDGEMENTS_ENABLED:false}
+  response-acknowledgement-millis: ${ASSISTANT_RESPONSE_ACKNOWLEDGEMENT_MILLIS:-1}
   # The singular value is a backwards-compatible override. Leave it empty to rotate the list.
   response-acknowledgement-text: ${ASSISTANT_RESPONSE_ACKNOWLEDGEMENT_TEXT:}
   response-acknowledgement-texts: ${ASSISTANT_RESPONSE_ACKNOWLEDGEMENT_TEXTS:잠깐만요. 정리해서 답할게요.,알아보고 있어요. 조금만 기다려 주세요.,확인 중이에요. 곧 말씀드릴게요.,생각을 정리하고 있어요. 잠시만요.}
@@ -308,6 +385,8 @@ assistant:
   max-ai-requests-per-minute: ${ASSISTANT_MAX_AI_REQUESTS_PER_MINUTE:12}
   duplicate-transcript-millis: ${ASSISTANT_DUPLICATE_TRANSCRIPT_MILLIS:10000}
   vad:
+    provider: ${ASSISTANT_VAD_PROVIDER:ten}
+    silero-model-path: ${ASSISTANT_VAD_SILERO_MODEL_PATH:}
     enabled: ${ASSISTANT_VAD_ENABLED:true}
     hop-size: ${ASSISTANT_VAD_HOP_SIZE:256}
     threshold: ${ASSISTANT_VAD_THRESHOLD:0.3}

@@ -1,0 +1,111 @@
+{
+  "generator": "built-in imagegen",
+  "style": "ivory Korean calligraphy, transparent alpha",
+  "assets": [
+    {
+      "id": "gahyeon",
+      "path": "assets/character-lettering/v001/gahyeon.png",
+      "sha256": "627dd7ae58f73ef69d300e96701b4981c07f950cd318d787f27c87e5c2469eac",
+      "size": [
+        1774,
+        887
+      ],
+      "alphaBounds": [
+        114,
+        165,
+        1704,
+        863
+      ]
+    },
+    {
+      "id": "zeze",
+      "path": "assets/character-lettering/v001/zeze.png",
+      "sha256": "48ee9e47e6ec2bd8aa474883e490a3a417964263aa72c9bbe14382b7ce2c8278",
+      "size": [
+        2172,
+        724
+      ],
+      "alphaBounds": [
+        548,
+        141,
+        1778,
+        708
+      ]
+    },
+    {
+      "id": "rogue",
+      "path": "assets/character-lettering/v001/rogue.png",
+      "sha256": "d82f4ed5185df3c2bf1f81b222eb0b8c11cd526d04769631d4d9e23d6425ab31",
+      "size": [
+        1774,
+        887
+      ],
+      "alphaBounds": [
+        65,
+        19,
+        1464,
+        857
+      ]
+    },
+    {
+      "id": "pirate",
+      "path": "assets/character-lettering/v001/pirate.png",
+      "sha256": "021a5dd563ce4d5b87861e73d3b9c7c024fdb9506e0d3a5f94b450ef48988d8b",
+      "size": [
+        1774,
+        887
+      ],
+      "alphaBounds": [
+        98,
+        20,
+        1560,
+        804
+      ]
+    },
+    {
+      "id": "fighter",
+      "path": "assets/character-lettering/v001/fighter.png",
+      "sha256": "7d77a3c30a89c420e6cebfcc936665eba5313fee179bd07fda9ee95dff34dc96",
+      "size": [
+        1942,
+        809
+      ],
+      "alphaBounds": [
+        208,
+        19,
+        1918,
+        771
+      ]
+    },
+    {
+      "id": "child",
+      "path": "assets/character-lettering/v001/child.png",
+      "sha256": "b7702972fae555f38da9c30a9ef57e79d56922790ec1ed8e2c9e2395ae5f1e98",
+      "size": [
+        2030,
+        775
+      ],
+      "alphaBounds": [
+        516,
+        77,
+        1541,
+        660
+      ]
+    },
+    {
+      "id": "hacker",
+      "path": "assets/character-lettering/v001/hacker.png",
+      "sha256": "1c4d87937d2f70a74e39b6650957fbcb8d8ad046f614195b32aabd4d9d520438",
+      "size": [
+        1983,
+        793
+      ],
+      "alphaBounds": [
+        483,
+        104,
+        1538,
+        793
+      ]
+    }
+  ]
+}

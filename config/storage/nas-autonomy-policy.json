@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "policyId": "gahyeon-nas-archive-v1",
+  "domains": {"asset-archive": {"requiredGates": ["inventory-and-runtime-protection", "archive-safety-tests", "nas-copy-verify-prune", "restore-and-land-source-verification"], "humanGates": []}},
+  "defaultCanary": {"requiredIdentity": []}
+}

@@ -78,10 +78,12 @@ dependencies {
     // OpenAI API
     implementation platform('org.springframework.ai:spring-ai-bom:1.0.1')
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+    implementation 'org.springframework.ai:spring-ai-mcp'
 
     // HTTP Client
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
     implementation 'net.java.dev.jna:jna:5.17.0'
+    implementation 'com.microsoft.onnxruntime:onnxruntime:1.23.2'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

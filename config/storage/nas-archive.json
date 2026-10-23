@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "mountPoint": "/Users/ze/mnt/dataground-nas",
+  "host": "192.168.2.9",
+  "share": "data",
+  "mountScript": "/Users/ze/work/dataground/scripts/mount_nas_smb.sh",
+  "archiveSubdirectory": "gahyeonbot-archive",
+  "allowedRoots": [
+    "artifacts/gahyeon-ch/models",
+    "artifacts/gahyeon-ch/donor-assets",
+    "unreal/GahyeonStage/Content/Gahyeon/CharacterPipeline",
+    "unreal/GahyeonStage/Content/LivingCharacterPOC",
+    "artifacts/gahyeon-ch/iterations"
+  ],
+  "protectedRoots": [
+    "unreal/GahyeonDesktopMetaHumanPOC",
+    "config",
+    "native",
+    "scripts",
+    "character_pipeline",
+    "artifacts/land-characters"
+  ],
+  "keepGitTracked": true,
+  "keepPatterns": [
+    "artifacts/gahyeon-ch/iterations/*.json",
+    "artifacts/gahyeon-ch/iterations/*.md",
+    "artifacts/gahyeon-ch/iterations/*.txt",
+    "artifacts/gahyeon-ch/iterations/*.csv",
+    "artifacts/gahyeon-ch/iterations/*.log",
+    "artifacts/gahyeon-ch/iterations/*.py",
+    "artifacts/gahyeon-ch/iterations/*.sh"
+  ]
+}

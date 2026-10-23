@@ -15,7 +15,7 @@ class MacOSOverlayCharacterControlsTest(unittest.TestCase):
         self.assertIn("acceptsFirstMouse", swift)
         self.assertIn("InteractiveOverlayWindow", swift)
         self.assertIn("onHorizontalRotationDelta", swift)
-        self.assertIn("characterYaw + horizontalDelta * 0.35", swift)
+        self.assertIn("characterYaw - horizontalDelta * 0.35", swift)
         self.assertIn("정위치 (위치·크기·회전)", swift)
         self.assertIn("controlWriter.publish(yaw: 0, reset: true)", swift)
         self.assertIn("gahyeon_overlay_control_v001", runtime)

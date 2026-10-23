@@ -25,6 +25,8 @@ public class AgentPromptProvider {
     private CharacterRelationshipStore relationships;
     private CharacterAutonomyWorkspaceService workspace;
     private KnowledgeBaseService knowledge;
+    @Autowired(required = false)
+    private com.gahyeonbot.application.knowledge.OntologyRagService ontologyRag;
     private com.gahyeonbot.application.life.CharacterMemoryReranker memoryReranker;
 
     @Autowired(required = false)
@@ -119,14 +121,18 @@ public class AgentPromptProvider {
     private String retrieveKnowledge(String subjectId, String query) {
         if (knowledge == null || query == null || query.isBlank()) return "";
         try {
-            var results = knowledge.search(new KnowledgeBaseService.SearchRequest("gahyeon", subjectId, query, 5));
-            if (results.isEmpty()) return "";
+            var request = new KnowledgeBaseService.SearchRequest("gahyeon", subjectId, query, 5);
+            var retrieval = ontologyRag == null ? null : ontologyRag.search(request);
+            var results = retrieval == null ? knowledge.search(request) : retrieval.results();
+            String coverage = retrieval != null && retrieval.graphTruncated()
+                    ? "\n[지식 검색 범위 제한] 일부 관계가 제외되었다. 결과가 없다는 이유만으로 관계가 없다고 단정하지 않는다.\n" : "";
+            if (results.isEmpty()) return coverage;
             String evidence = results.stream()
                     .map(result -> "- source=%s title=%s score=%.3f\n  %s".formatted(
                             result.sourceId(), result.title(), result.score(), limited(result.content(), 1_200)))
                     .reduce((left, right) -> left + "\n" + right).orElse("");
             return "\n\n[권한 검증된 통합 지식 검색 결과]\n" + limited(evidence, 6_000)
-                    + "\n검색 결과에 없는 사실은 지식베이스에 있다고 단정하지 않는다.";
+                    + "\n검색 결과에 없는 사실은 지식베이스에 있다고 단정하지 않는다." + coverage;
         } catch (RuntimeException unavailable) {
             log.warn("통합 지식 검색 실패, 기존 프롬프트 유지", unavailable);
             return "";

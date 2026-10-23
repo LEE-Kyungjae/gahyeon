@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "profile": "land-jaejae-v2-motion-v001",
+  "mesh": "/Game/Gahyeon/Land/Roster_v001/jaejae_v2/Source/Character",
+  "animations": [
+    {
+      "role": "idle",
+      "asset": "/Game/Gahyeon/Land/Roster_v001/jaejae_v2/Source/Character_Anim",
+      "seconds": 2.5,
+      "sourceMotion": "authored crouch review; not speech facial animation"
+    }
+  ],
+  "source": "artifacts/land-characters/jaejae-v2-20261017/jaejae-v2.glb",
+  "humanApproved": false
+}

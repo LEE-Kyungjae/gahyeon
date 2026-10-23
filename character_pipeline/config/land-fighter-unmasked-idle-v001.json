@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "profile": "land-fighter-unmasked-idle-v001",
+  "mesh": "/Game/Gahyeon/Land/Roster_v001/fighter_unmasked/Source/Character",
+  "animations": [
+    {
+      "role": "idle",
+      "asset": "/Game/Gahyeon/Land/Roster_v001/fighter_unmasked/Source/Character_Anim",
+      "seconds": 15.333333015441895
+    }
+  ],
+  "source": "artifacts/land-characters/land-tripo-20261015/fighter/unmasked-tripo-v1/desktop/fighter-unmasked-tripo-idle-v1.glb",
+  "humanApproved": false
+}

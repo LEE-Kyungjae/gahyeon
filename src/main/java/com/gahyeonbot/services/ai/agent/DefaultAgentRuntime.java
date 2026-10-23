@@ -1,6 +1,8 @@
 package com.gahyeonbot.services.ai.agent;
 
 import com.gahyeonbot.core.identity.ActorId;
+import com.gahyeonbot.services.ai.agent.skills.AgentSkillHarness;
+import com.gahyeonbot.services.ai.agent.skills.AgentSkillHarnessFactory;
 import com.gahyeonbot.core.memory.MemoryRole;
 import com.gahyeonbot.core.memory.MemorySnapshot;
 import com.gahyeonbot.core.memory.MemoryUseCase;
@@ -65,6 +67,9 @@ public class DefaultAgentRuntime implements AgentRuntime {
     private final AgentRuntimeAvailability availability;
     private final ToolOutputArchive toolOutputArchive = new EphemeralToolOutputArchive();
 
+    @Value("${gahyeon.agent.lookup-evidence.enabled:true}")
+    private boolean lookupEvidenceEnabled = true;
+
     @Value("${gahyeon.agent.streaming.tool-text-exclusive-enabled:false}")
     private boolean toolTextExclusiveStreamingEnabled;
     @Value("${spring.ai.openai.base-url:}")
@@ -76,6 +81,9 @@ public class DefaultAgentRuntime implements AgentRuntime {
     @Value("${gahyeon.agent.streaming.verified-model:}")
     private String verifiedStreamingModel;
     private final AtomicBoolean streamingContractHealthy = new AtomicBoolean(true);
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private AgentSkillHarnessFactory skillHarnessFactory;
 
     @Override
     public boolean isReady() {
@@ -216,14 +224,21 @@ public class DefaultAgentRuntime implements AgentRuntime {
             AgentStreamObserver streamObserver,
             AgentExecutionControl control) {
         List<String> usedTools = new ArrayList<>();
+        AgentLookupEvidence lookup = new AgentLookupEvidence(lookupEvidenceEnabled ? request.message() : "");
         try {
             MemorySnapshot memory = loadMemory(request.actorId());
             List<Message> messages = initialMessages(request, memory, backgroundResult);
+            boolean voice = request.modality() == AgentModality.VOICE;
+            if (voice) messages.add(1, new SystemMessage(VoiceReplyQuality.GUIDANCE));
+            int voiceQualityRetries = 0;
             ToolCallback[] callbacks = MethodToolCallbackProvider.builder()
                     .toolObjects(weatherTools, gitHubKnowledgeTools, paperKnowledgeTools,
                             knowledgeFreshnessTools, newsKnowledgeTools)
                     .build()
                     .getToolCallbacks();
+            AgentSkillHarness skillHarness = skillHarnessFactory == null ? null
+                    : skillHarnessFactory.openForRun(run, request, callbacks, toolPolicy);
+            if (skillHarness != null) messages.add(1, new SystemMessage(skillHarness.guidance()));
             Map<String, ToolCallback> callbackByName = new LinkedHashMap<>();
             for (ToolCallback callback : callbacks) {
                 callbackByName.put(callback.getToolDefinition().name(), callback);
@@ -237,6 +252,20 @@ public class DefaultAgentRuntime implements AgentRuntime {
 
             while (true) {
                 ensureNotCancelled(streamObserver, control);
+                if (skillHarness != null) {
+                    callbacks = skillHarness.callbacks();
+                    callbackByName.clear();
+                    for (ToolCallback callback : callbacks) {
+                        callbackByName.put(callback.getToolDefinition().name(), callback);
+                    }
+                    options = DefaultToolCallingChatOptions.builder().toolCallbacks(callbacks)
+                            .internalToolExecutionEnabled(false).build();
+                }
+                for (ToolCallback callback : callbacks) {
+                    String name = callback.getToolDefinition().name();
+                    ToolDecision decision = skillHarness == null ? toolPolicy.decide(name) : skillHarness.decision(name);
+                    if (decision == ToolDecision.ALLOW) lookup.allow(name);
+                }
                 AgentRun stepped = ledger.advanceStep(
                         run.getId(), AgentEventType.MODEL_CALL_STARTED, null);
                 if (!availability.tryAcquireProviderCall()) {
@@ -254,7 +283,7 @@ public class DefaultAgentRuntime implements AgentRuntime {
                                     verifiedStreamingBaseUrl,
                                     verifiedStreamingModel)
                                     && streamingContractHealthy.get())
-                            .call(new Prompt(messages, options), streamObserver);
+                            .call(new Prompt(messages, options), skillHarness == null && !lookup.required() && !voice ? streamObserver : null);
                 } catch (ToolStreamingContractViolationException violation) {
                     availability.recordProviderSuccess();
                     streamingContractHealthy.set(false);
@@ -284,6 +313,19 @@ public class DefaultAgentRuntime implements AgentRuntime {
 
                 if (!assistant.hasToolCalls()) {
                     String content = sanitizeFinalResponse(assistant.getText());
+                    if (voice) {
+                        content = VoiceReplyQuality.clean(content);
+                        String defect = VoiceReplyQuality.failure(content, response.getResult().getMetadata().getFinishReason());
+                        if (!defect.isBlank()) {
+                            meterRegistry.counter("gahyeonbot.agent.voice.reply_defects", "reason", defect).increment();
+                            if (voiceQualityRetries++ == 0 && stepped.getCurrentStep() < request.maxSteps()) {
+                                messages.add(new SystemMessage("[응답 교정] 이전 출력은 " + defect
+                                        + " 문제로 재생하지 않았다. 같은 질문에 다시 답하되, 진행 안내 없이 짧고 완결된 한국어로 답해. 사용자에게 질문을 반복하게 하지 마."));
+                                continue;
+                            }
+                            content = "응답을 완성하지 못했어.";
+                        }
+                    }
                     if (content.isBlank()
                             && emptyFinalResponseRetries < EMPTY_FINAL_RESPONSE_RETRY_LIMIT
                             && stepped.getCurrentStep() < request.maxSteps()) {
@@ -302,9 +344,36 @@ public class DefaultAgentRuntime implements AgentRuntime {
                         log.error("빈 최종 응답 교정 실패; 안전 응답 사용 run={}", run.getId());
                         content = EMPTY_FINAL_RESPONSE_FALLBACK;
                     }
+                    if (skillHarness != null && !skillHarness.missingEvidence().isEmpty()) {
+                        if (stepped.getCurrentStep() >= request.maxSteps()) {
+                            throw new IllegalStateException("Required skill evidence missing at step limit");
+                        }
+                        messages.add(new UserMessage("완료에 필요한 도구 근거가 없습니다: "
+                                + skillHarness.missingEvidence() + ". 허용된 도구로 확인하세요."));
+                        continue;
+                    }
+                    var assessment = lookup.assess(request.maxSteps() - stepped.getCurrentStep());
+                    if (assessment.retryToolSelection()) {
+                        messages.add(new SystemMessage(lookup.correction()));
+                        continue;
+                    }
+                    if (lookup.required() && assessment.outcome() != AgentTaskEvidencePolicy.Outcome.EVIDENCE_AVAILABLE) {
+                        content = lookup.fallback(assessment.outcome());
+                    }
                     String finalContent = content;
                     boolean committed = control.commitIfActive(() -> {
                         ensureNotCancelled(streamObserver, control);
+                        if (skillHarness != null) skillHarness.verifyCompletion();
+                        if (lookup.required()) {
+                            ledger.appendToolEvent(run.getId(), AgentEventType.TASK_EVIDENCE_ASSESSED, null,
+                                    "intent=" + lookup.intent() + ",outcome=" + assessment.outcome());
+                            meterRegistry.counter("gahyeonbot.agent.task.evidence",
+                                    "intent", lookup.intent(), "outcome", assessment.outcome().name()).increment();
+                        }
+                        if ((lookup.required() || voice) && streamObserver != null && skillHarness == null) {
+                            ensureNotCancelled(streamObserver, control);
+                            streamObserver.onTextDelta(finalContent);
+                        }
                         ledger.succeed(run.getId(), finalContent);
                         if (usesSharedActorMemory(request.sessionKey())) {
                             memoryUseCase.remember(request.actorId(), request.message(), finalContent);
@@ -316,6 +385,10 @@ public class DefaultAgentRuntime implements AgentRuntime {
                     return new AgentResult(run.getId(), finalContent, usedTools, duration);
                 }
 
+                if (skillHarness != null && assistant.getToolCalls().size() > 1
+                        && assistant.getToolCalls().stream().anyMatch(call -> AgentSkillHarness.SELECT_TOOL.equals(call.name()))) {
+                    throw new IllegalStateException("Skill selection must be a separate model step");
+                }
                 List<ToolResponseMessage.ToolResponse> toolResponses = new ArrayList<>();
                 for (AssistantMessage.ToolCall toolCall : assistant.getToolCalls()) {
                     ensureNotCancelled(streamObserver, control);
@@ -324,7 +397,8 @@ public class DefaultAgentRuntime implements AgentRuntime {
                     if (callback == null) {
                         throw new IllegalStateException("등록되지 않은 도구입니다: " + toolCall.name());
                     }
-                    ToolDecision decision = toolPolicy.decide(toolCall.name());
+                    ToolDecision decision = skillHarness == null ? toolPolicy.decide(toolCall.name())
+                            : skillHarness.decision(toolCall.name());
                     ledger.appendToolEvent(run.getId(), AgentEventType.TOOL_CALL_REQUESTED,
                             toolCall.name(), limited(toolCall.arguments()));
                     if (decision == ToolDecision.DENY) {
@@ -352,13 +426,24 @@ public class DefaultAgentRuntime implements AgentRuntime {
                             run.getId(), AgentEventType.TOOL_CALL_STARTED, toolCall.name(), null);
                     String toolResult;
                     try {
+                        if (skillHarness != null) skillHarness.beforeCall(toolCall.name());
                         toolResult = callback.call(toolCall.arguments());
                     } catch (Exception toolFailure) {
+                        if (lookup.required() && !cancelled(streamObserver, control)) {
+                            lookup.completed(toolCall.name(), null);
+                            var failedAssessment = lookup.assess(0);
+                            ledger.appendToolEvent(run.getId(), AgentEventType.TASK_EVIDENCE_ASSESSED, null,
+                                    "intent=" + lookup.intent() + ",outcome=" + failedAssessment.outcome());
+                            meterRegistry.counter("gahyeonbot.agent.task.evidence",
+                                    "intent", lookup.intent(), "outcome", failedAssessment.outcome().name()).increment();
+                        }
                         ledger.appendToolEvent(run.getId(), AgentEventType.TOOL_CALL_FAILED,
                                 toolCall.name(), limited(toolFailure.getMessage()));
                         throw toolFailure;
                     }
                     ensureNotCancelled(streamObserver, control);
+                    if (skillHarness != null) skillHarness.completed(toolCall.name(), toolResult);
+                    lookup.completed(toolCall.name(), toolResult);
                     var compressed = RecoverableToolOutputCompressor.compress(
                             toolCall.name(), toolResult, toolOutputArchive);
                     ledger.appendToolEvent(run.getId(), AgentEventType.TOOL_CALL_COMPLETED,

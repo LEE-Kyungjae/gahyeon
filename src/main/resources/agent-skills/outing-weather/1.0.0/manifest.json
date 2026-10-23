@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "status": "released",
+  "id": "outing-weather",
+  "version": "1.0.0",
+  "problem": "외출이나 가족과의 나들이를 앞두고 날씨 때문에 준비를 바꿔야 할지 판단하기 어렵다.",
+  "whenToUse": "사용자가 외출 준비를 날씨와 함께 검토해 달라고 요청하고 장소와 날짜가 정해져 있을 때. 단순 현재 기온 질문에는 불필요하다.",
+  "allowedTools": ["get_supported_weather_locations", "get_weather_forecast"],
+  "requiredEvidenceTools": ["get_weather_forecast"],
+  "maxToolCalls": 4,
+  "completionCriteria": [
+    "사용자가 요청한 장소와 날짜의 예보를 확인한다.",
+    "준비에 영향을 주는 확인된 조건과 모르는 조건을 구분해 답한다.",
+    "예보 조회만으로 예약, 일정 변경, 알림 설정을 했다고 말하지 않는다."
+  ]
+}

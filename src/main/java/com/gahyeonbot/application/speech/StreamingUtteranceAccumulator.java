@@ -63,9 +63,12 @@ public final class StreamingUtteranceAccumulator implements AutoCloseable {
                 && captured.size() >= policy.minimumCapturedBytes()
                 && speechMillis >= policy.minimumSpeechMillis();
         boolean maximumLength = captured.size() >= policy.maximumCapturedBytes();
-        if (!valid || (nowMillis - lastVoiceAt < requiredSilence && !maximumLength)) {
+        boolean silenceElapsed = nowMillis - lastVoiceAt >= requiredSilence;
+        if (!valid) {
+            if (speechStarted && (silenceElapsed || maximumLength)) reset(nowMillis);
             return Optional.empty();
         }
+        if (!silenceElapsed && !maximumLength) return Optional.empty();
 
         byte[] pcm = captured.toByteArray();
         long capturedMillis = pcm.length * 1_000L / policy.bytesPerSecond();

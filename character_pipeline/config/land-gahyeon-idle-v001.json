@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "profile": "land-gahyeon-idle-v001",
+  "mesh": "/Game/Gahyeon/Land/Gahyeon/v002/Source/Gahyeon_Land_Idle_v001",
+  "animations": [
+    {
+      "role": "idle",
+      "asset": "/Game/Gahyeon/Land/Gahyeon/v002/Source/Gahyeon_Land_Idle_v001_Anim",
+      "seconds": 15.333333015441895
+    }
+  ],
+  "source": "land-gahyeon-tripo-idle-v3.glb",
+  "humanApproved": false
+}
