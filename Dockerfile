@@ -4,7 +4,7 @@ FROM eclipse-temurin:21-jre-jammy
 # TTS runtime deps:
 # - python3 + pip: run kss splitter + edge-tts CLI
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 python3-pip ca-certificates \
+  && apt-get install -y --no-install-recommends python3 python3-pip ca-certificates openssh-client \
   && rm -rf /var/lib/apt/lists/*
 
 # Python deps for sentence splitting + Edge TTS synthesis.

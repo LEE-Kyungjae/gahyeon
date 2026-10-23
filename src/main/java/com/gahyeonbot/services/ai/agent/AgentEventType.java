@@ -1,6 +1,8 @@
 package com.gahyeonbot.services.ai.agent;
 
 public enum AgentEventType {
+    SKILL_EXECUTION_RECORDED,
+    TASK_EVIDENCE_ASSESSED,
     RUN_CREATED,
     RUN_STARTED,
     RUN_RESUMED,

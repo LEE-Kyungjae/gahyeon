@@ -1,0 +1,42 @@
+{
+  "generator": "built-in imagegen",
+  "recordType": "Normalized generation brief; not a verbatim tool-call transcript",
+  "transparent_background": true,
+  "prompts": [
+    {
+      "id": "gahyeon",
+      "text": "가현",
+      "prompt": "Create a clean, readable Korean brush-pen handwritten calligraphy image containing only the exact text \"가현\". Ivory-white lettering, elegant strokes, true transparent alpha background. No other words, decoration, shadow or background."
+    },
+    {
+      "id": "zeze",
+      "text": "재재",
+      "prompt": "Create a clean, readable Korean brush-pen handwritten calligraphy image containing only the exact text \"재재\". Ivory-white lettering, elegant strokes, true transparent alpha background. No other words, decoration, shadow or background."
+    },
+    {
+      "id": "rogue",
+      "text": "도적",
+      "prompt": "Create a clean, readable Korean brush-pen handwritten calligraphy image containing only the exact text \"도적\". Ivory-white lettering, elegant strokes, true transparent alpha background. No other words, decoration, shadow or background."
+    },
+    {
+      "id": "pirate",
+      "text": "해적",
+      "prompt": "Create a clean, readable Korean brush-pen handwritten calligraphy image containing only the exact text \"해적\". Ivory-white lettering, elegant strokes, true transparent alpha background. No other words, decoration, shadow or background."
+    },
+    {
+      "id": "fighter",
+      "text": "격투가",
+      "prompt": "Create a clean, readable Korean brush-pen handwritten calligraphy image containing only the exact text \"격투가\". Ivory-white lettering, elegant strokes, true transparent alpha background. No other words, decoration, shadow or background."
+    },
+    {
+      "id": "child",
+      "text": "아이",
+      "prompt": "Create a clean, readable Korean brush-pen handwritten calligraphy image containing only the exact text \"아이\". Ivory-white lettering, elegant strokes, true transparent alpha background. No other words, decoration, shadow or background."
+    },
+    {
+      "id": "hacker",
+      "text": "해커",
+      "prompt": "Create a clean, readable Korean brush-pen handwritten calligraphy image containing only the exact text \"해커\". Ivory-white lettering, elegant strokes, true transparent alpha background. No other words, decoration, shadow or background."
+    }
+  ]
+}

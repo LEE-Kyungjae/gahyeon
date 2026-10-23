@@ -1,0 +1,93 @@
+{
+  "source": "Verified canonical Unreal alpha frames, unchanged original files",
+  "assets": [
+    {
+      "id": "gahyeon",
+      "path": "assets/character-previews/v001/gahyeon.png",
+      "alphaBounds": [
+        747,
+        287,
+        957,
+        1060
+      ],
+      "sha256": "b621cf999d575cbdc3f5600dfb00922d84e6d4b1e54d55f92f1f69390a51c573"
+    },
+    {
+      "id": "zeze",
+      "path": "assets/character-previews/v001/zeze.png",
+      "alphaBounds": [
+        651,
+        211,
+        1102,
+        1035
+      ],
+      "sha256": "d229e6dbfd5a3f82bb39e2d3d0fcb9c3a58513774e33ac023ef77310e71b1161"
+    },
+    {
+      "id": "rogue",
+      "path": "assets/character-previews/v001/rogue.png",
+      "alphaBounds": [
+        746,
+        274,
+        951,
+        1050
+      ],
+      "sha256": "edd3d25ccb3240ef627128b1e97eddc84aeba89050b85a9bbe26801631d08b11"
+    },
+    {
+      "id": "pirate",
+      "path": "assets/character-previews/v001/pirate.png",
+      "alphaBounds": [
+        699,
+        278,
+        989,
+        1061
+      ],
+      "sha256": "ba59e82dee50f34786ea3095a203719504cffb1174cb25aff042bd2fe06aebcb"
+    },
+    {
+      "id": "fighter",
+      "path": "assets/character-previews/v001/fighter.png",
+      "alphaBounds": [
+        695,
+        179,
+        993,
+        1014
+      ],
+      "sha256": "93426fa743c60f675ab47ca92d8bbc11135b9bdd7f3f925bd9b53ad4bdcda12a"
+    },
+    {
+      "id": "fighter-unmasked",
+      "path": "assets/character-previews/v001/fighter-unmasked.png",
+      "alphaBounds": [
+        701,
+        259,
+        978,
+        1044
+      ],
+      "sha256": "0a22a6841e613a9e2ae5aa2f75b73086928fb5098d8007a3db062eb556536d70"
+    },
+    {
+      "id": "child",
+      "path": "assets/character-previews/v001/child.png",
+      "alphaBounds": [
+        735,
+        266,
+        959,
+        1047
+      ],
+      "sha256": "fb87cdf22c930b40dbe1e87d2d93cac2905999b6807a5a2809452fba18efc6b6"
+    },
+    {
+      "id": "hacker",
+      "path": "assets/character-previews/v001/hacker.png",
+      "alphaBounds": [
+        722,
+        282,
+        969,
+        1061
+      ],
+      "sha256": "e364cbfb8da1635346228baa8e2628ca86bee55f9b8fd73f742be047e76cea0b"
+    }
+  ]
+}

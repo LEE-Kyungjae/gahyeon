@@ -52,10 +52,14 @@ class CanonicalMacosRuntimeTest(unittest.TestCase):
         self.assertEqual("unreal", value["runtime"])
         self.assertIn("electron", value["retiredRuntimes"])
         self.assertEqual("ready", value["status"])
-        self.assertEqual(
-            "/Game/Gahyeon/Character2/Diana/v398/Runtime/L_DianaMacRuntimeOriginalMaterialSafeFrame_v398",
-            value["macos"]["runtimeMap"],
-        )
+        content = (ROOT / value["macos"]["project"]).parent / "Content"
+        for key, suffix in (("runtimeMap", ".umap"), ("characterAsset", ".uasset")):
+            asset = value["macos"][key]
+            self.assertTrue(asset.startswith("/Game/"))
+            self.assertTrue((content / (asset.removeprefix("/Game/") + suffix)).is_file())
+        profile = json.loads((ROOT / value["macos"]["animationProfile"]).read_text())
+        self.assertEqual(value["macos"]["characterAsset"], profile["mesh"])
+        self.assertTrue(profile["animations"])
         self.assertEqual("unreal-macos-direct-alpha-shared-memory", value["macos"]["launchMode"])
 
     def test_electron_service_commands_fail_closed(self):
@@ -73,7 +77,8 @@ class CanonicalMacosRuntimeTest(unittest.TestCase):
         sys.path.insert(0, str(ROOT / "scripts"))
         from launch_canonical_macos_runtime import build_command, load_manifest
 
-        command = build_command(load_manifest())
+        manifest = load_manifest()
+        command = build_command(manifest)
         self.assertIn("-game", command)
         self.assertIn("-ForceRes", command)
         self.assertIn("-ResX=1600", command)
@@ -84,10 +89,7 @@ class CanonicalMacosRuntimeTest(unittest.TestCase):
         self.assertTrue(any("r.AntiAliasingMethod 1" in item for item in command))
         self.assertTrue(any("r.ExposureOffset 0.5" in item for item in command))
         self.assertTrue(any("r.TextureStreaming 0" in item for item in command))
-        self.assertIn(
-            "/Game/Gahyeon/Character2/Diana/v398/Runtime/L_DianaMacRuntimeOriginalMaterialSafeFrame_v398",
-            command,
-        )
+        self.assertEqual(manifest["macos"]["runtimeMap"], command[2])
 
     def test_native_overlay_keeps_full_body_drag_and_utility_controls(self):
         source = (ROOT / "native/macos/GahyeonUnrealOverlay/main.swift").read_text()
@@ -112,8 +114,8 @@ class CanonicalMacosRuntimeTest(unittest.TestCase):
         self.assertIn("@objc private func toggleChat()", source)
         self.assertIn("@objc private func sendChat()", source)
         self.assertIn("@objc private func changeCharacterModel()", source)
-        self.assertIn("let grid = NSGridView(views:", source)
-        self.assertIn("for row in 0..<3", source)
+        # The former nine-button grid was replaced by the conversation panel.
+        # Native action/layout checks run in the macOS AX and Windows parity harnesses.
         self.assertIn("effect.material = .underWindowBackground", source)
         self.assertNotIn("effect.alphaValue", source)
         self.assertIn("window.frame.maxX - panel.frame.width - inset", source)

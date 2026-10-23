@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "status": "released",
+  "id": "owner-workspace",
+  "version": "1.0.0",
+  "problem": "본인이 Mac 또는 land의 지정 작업 공간에서 파일 작업이나 테스트를 요청한다.",
+  "whenToUse": "본인이 Mac 또는 land의 지정 작업 공간에서 파일 작업이나 테스트를 요청한다.",
+  "allowedTools": [
+    "owner_workspace_task"
+  ],
+  "requiredEvidenceTools": [
+    "owner_workspace_task"
+  ],
+  "maxToolCalls": 8,
+  "completionCriteria": [
+    "실제 도구 결과의 한계와 실패를 숨기지 않고 요청에 답한다.",
+    "출처 또는 실행 결과를 근거로 제시한다."
+  ]
+}

@@ -18,9 +18,18 @@
 #include "Async/ParallelFor.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
+#include "Kismet/GameplayStatics.h"
+#include "Misc/PackageName.h"
 
 namespace
 {
+#if PLATFORM_WINDOWS
+constexpr const TCHAR* FrameRegionName = TEXT("{36cb1d68-2643-421d-85b1-61fccfda0401}");
+constexpr const TCHAR* ControlRegionName = TEXT("{36cb1d68-2643-421d-85b1-61fccfda0402}");
+#else
+constexpr const TCHAR* FrameRegionName = TEXT("gahyeon_rgba_v003");
+constexpr const TCHAR* ControlRegionName = TEXT("gahyeon_overlay_control_v001");
+#endif
 constexpr uint32 FrameMagic = 0x47485247; // GHRG
 constexpr uint32 FrameVersion = 1;
 constexpr int32 FrameWidth = 1600;
@@ -60,7 +69,11 @@ struct alignas(64) FSharedOverlayControl
     uint32 Reserved0 = 0;
     volatile uint64 Sequence = 0;
     volatile uint64 ResetSequence = 0;
-    uint8 Reserved[32] = {};
+    volatile uint32 RequestedCharacter = 0;
+    volatile uint32 AppliedCharacter = 0;
+    volatile uint32 CharacterError = 0;
+    uint32 CharacterSelectionCapability = 0x524F5354; // ROST, read-only to overlays
+    uint8 Reserved[16] = {};
 };
 static_assert(sizeof(FSharedOverlayControl) == ControlBytes);
 }
@@ -70,7 +83,7 @@ class FGahyeonDesktopMetaHumanPOCModule final : public IModuleInterface
 public:
     virtual void StartupModule() override
     {
-#if PLATFORM_MAC
+#if PLATFORM_MAC || PLATFORM_WINDOWS
         StartGahyeonMacIOSurfaceBridge();
         const bool bEnableCPUFallback = FParse::Param(FCommandLine::Get(), TEXT("GahyeonCPUAlphaFallback"));
         bEnableLookingGlassQuilt = FParse::Param(
@@ -104,7 +117,7 @@ public:
             return;
         }
         SharedRegion = FPlatformMemory::MapNamedSharedMemoryRegion(
-            TEXT("gahyeon_rgba_v003"), true,
+            FrameRegionName, true,
             FPlatformMemory::ESharedMemoryAccess::Read | FPlatformMemory::ESharedMemoryAccess::Write,
             RegionBytes);
         if (SharedRegion)
@@ -118,7 +131,7 @@ public:
             }
         }
         ControlRegion = FPlatformMemory::MapNamedSharedMemoryRegion(
-            TEXT("gahyeon_overlay_control_v001"), true,
+            ControlRegionName, true,
             FPlatformMemory::ESharedMemoryAccess::Read | FPlatformMemory::ESharedMemoryAccess::Write,
             ControlBytes);
         if (ControlRegion)
@@ -132,7 +145,7 @@ public:
 
     virtual void ShutdownModule() override
     {
-#if PLATFORM_MAC
+#if PLATFORM_MAC || PLATFORM_WINDOWS
         if (LookingGlassCamera.IsValid())
         {
             LookingGlassCamera->SetActorLocation(OriginalCameraLocation);
@@ -178,7 +191,7 @@ public:
 private:
     bool Tick(float DeltaSeconds)
     {
-#if PLATFORM_MAC
+#if PLATFORM_MAC || PLATFORM_WINDOWS
         ApplyOverlayControl();
         if (bEnableLookingGlassQuilt && !FrameGrabber)
         {
@@ -397,6 +410,39 @@ private:
         return true;
     }
 
+    void ApplyCharacterSelection(FSharedOverlayControl* Control)
+    {
+        static const TCHAR* Maps[] = {
+            TEXT("/Game/Gahyeon/Land/Gahyeon/v006/Runtime/L_GahyeonLandMac_v006"),
+            TEXT("/Game/Gahyeon/Land/Jaejae/Idle_v004/L_Character"),
+            TEXT("/Game/Gahyeon/Land/Roster_v003/rogue/L_Character"),
+            TEXT("/Game/Gahyeon/Land/Roster_v003/pirate/L_Character"),
+            TEXT("/Game/Gahyeon/Land/Roster_v003/fighter/L_Character"),
+            TEXT("/Game/Gahyeon/Land/Roster_v003/fighter_unmasked/L_Character"),
+            TEXT("/Game/Gahyeon/Land/Roster_v003/child/L_Character"),
+            TEXT("/Game/Gahyeon/Land/Roster_v003/hacker/L_Character")
+        };
+        const uint32 Requested = Control->RequestedCharacter;
+        if (Requested >= UE_ARRAY_COUNT(Maps)) { Control->CharacterError = 1; return; }
+        UWorld* World = GEngine->GameViewport->GetWorld();
+        if (!World) return;
+        const FString Target(Maps[Requested]);
+        if (World->GetOutermost()->GetName() == Target)
+        {
+            Control->AppliedCharacter = Requested;
+            Control->CharacterError = 0;
+            PendingCharacterMap.Empty();
+            return;
+        }
+        if (!PendingCharacterMap.IsEmpty()) return;
+        if (Requested == Control->AppliedCharacter) return;
+        if (!FPackageName::DoesPackageExist(Target)) { Control->CharacterError = 2; return; }
+        Control->CharacterError = 0;
+        PendingCharacterMap = Target;
+        InitialCharacterYaw.Reset();
+        UGameplayStatics::OpenLevel(World, FName(*Target));
+    }
+
     void ApplyOverlayControl()
     {
         if (!ControlRegion || !GEngine || !GEngine->GameViewport)
@@ -404,7 +450,9 @@ private:
             return;
         }
         auto* Control = static_cast<FSharedOverlayControl*>(ControlRegion->GetAddress());
-        if (Control->Magic != ControlMagic || Control->Sequence == LastControlSequence)
+        if (Control->Magic != ControlMagic) return;
+        ApplyCharacterSelection(Control);
+        if (Control->Sequence == LastControlSequence)
         {
             return;
         }
@@ -497,6 +545,7 @@ private:
     static constexpr float LookingGlassAnimationFPS = 12.0f;
     float LookingGlassViewConeDegrees = 54.0f;
     float LookingGlassDepthScale = 0.45f;
+    FString PendingCharacterMap;
     uint64 LastControlSequence = 0;
     uint32 CurrentViewIndex = 0;
     uint32 PendingViewIndex = 0;

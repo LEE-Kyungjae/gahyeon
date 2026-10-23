@@ -8,12 +8,34 @@
   "macos": {
     "engineRoot": "/Users/Shared/Epic Games/UE_5.8",
     "project": "unreal/GahyeonDesktopMetaHumanPOC/GahyeonDesktopMetaHumanPOC.uproject",
-    "runtimeMap": "/Game/Gahyeon/Character2/Diana/v398/Runtime/L_DianaMacRuntimeOriginalMaterialSafeFrame_v398",
+    "runtimeMap": "/Game/Gahyeon/Land/Gahyeon/v006/Runtime/L_GahyeonLandMac_v006",
     "launchMode": "unreal-macos-direct-alpha-shared-memory",
     "packagedApp": false,
-    "renderQuality": "v398-original-v002-materials-lod0-1600x1258-cpu-direct-alpha-stable",
-    "characterAsset": "/Game/Gahyeon/Character2/Diana/v024/Source/SK_Diana_CM_v024",
-    "animationProfile": "character_pipeline/config/diana-component-space-animation-v375.json"
+    "renderQuality": "land-source-4k-pbr-focus-disabled-v005",
+    "characterAsset": "/Game/Gahyeon/Land/Gahyeon/v002/Source/Gahyeon_Land_Idle_v001",
+    "animationProfile": "character_pipeline/config/land-gahyeon-idle-v001.json",
+    "rendererWindow": "offscreen",
+    "characterModelId": "gahyeon"
   },
-  "blockers": []
+  "blockers": [],
+  "visualReview": {
+    "status": "candidate",
+    "humanApproved": false,
+    "fallbackManifest": "artifacts/land-characters/macos-gahyeon-v001/diana-fallback-manifest.json",
+    "request": "2026-10-15 user requested connection of imported Gahyeon"
+  },
+  "windows": {
+    "status": "ready",
+    "engineRoot": "C:\\Program Files\\Epic Games\\UE_5.8",
+    "runtimeRoot": "C:\\GahyeonRuntime\\roster-20261016",
+    "project": "GahyeonDesktopMetaHumanPOC/GahyeonDesktopMetaHumanPOC.uproject",
+    "runtimeMap": "/Game/Gahyeon/Land/Gahyeon/v006/Runtime/L_GahyeonLandMac_v006",
+    "characterAsset": "/Game/Gahyeon/Land/Gahyeon/v002/Source/Gahyeon_Land_Idle_v001",
+    "animationProfile": "character_pipeline/config/land-gahyeon-idle-v001.json",
+    "launchMode": "unreal-windows-layered-shared-memory",
+    "rendererWindow": "offscreen",
+    "packagedApp": false,
+    "visualReview": "candidate",
+    "roster": "character-model-roster.json"
+  }
 }

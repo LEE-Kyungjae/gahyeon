@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "profile": "land-jaejae-v2-motion-v003",
+  "mesh": "/Game/Gahyeon/Land/Roster_v001/jaejae_v2/Source/Character",
+  "animations": [
+    {
+      "role": "idle",
+      "asset": "/Game/Gahyeon/Land/Jaejae/Idle_v003/AS_StandingBreath",
+      "seconds": 2.5,
+      "playRate": 0.625,
+      "cycleSeconds": 4.0,
+      "sourceMotion": "standing breath, lower body fixed"
+    },
+    {
+      "role": "crouch-review",
+      "asset": "/Game/Gahyeon/Land/Roster_v001/jaejae_v2/Source/Character_Anim",
+      "seconds": 2.5,
+      "autoPlay": false
+    }
+  ],
+  "source": "artifacts/land-characters/jaejae-v2-20261017/jaejae-v2.glb",
+  "humanApproved": false,
+  "fallbackMap": "/Game/Gahyeon/Land/Roster_v003/jaejae_v2/L_Character"
+}

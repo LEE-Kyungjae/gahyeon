@@ -47,6 +47,8 @@ LATIN_TEXT = re.compile(r"[A-Za-z]")
 MARKUP_TAG = re.compile(r"<[^>]*>")
 UNSPEAKABLE_TEXT = re.compile(r"[^0-9A-Za-z가-힣\s.,?!'’-]")
 TECH_PRONUNCIATIONS = {
+    "lme": "엘엠이",
+    "usd": "유에스디",
     "openai": "오픈에이아이",
     "github": "깃허브",
     "api": "에이피아이",
@@ -78,12 +80,81 @@ class SynthesisRequest(BaseModel):
     format: str = "wav"
 
 
+# This is speech-only text normalization, not a replacement Korean G2P.
+_SINO_DIGITS = "영일이삼사오육칠팔구"
+_AMOUNT = r"(?<![\w.,])([+-]?(?:[1-9]\d{0,2}(?:,\d{3})+|0|[1-9]\d*)(?:\.\d+)?)"
+_SPOKEN_UNITS = {"USD/ton": "달러 퍼 톤", "USD/t": "달러 퍼 톤", "USD": "달러",
+                 "kg": "킬로그램", "km": "킬로미터", "%": "퍼센트", "달러": "달러", "원": "원", "톤": "톤"}
+
+
+def korean_sino_number(value: str) -> str:
+    sign = "마이너스 " if value.startswith("-") else "플러스 " if value.startswith("+") else ""
+    unsigned = value.lstrip("+-").replace(",", "")
+    integer, dot, fraction = unsigned.partition(".")
+    if len(integer) > 15:
+        raise ValueError("Numeric reading exceeds supported range")
+    number = int(integer)
+    groups = []
+    for large in ("", "만", "억", "조"):
+        group = number % 10000; number //= 10000
+        if not group:
+            continue
+        syllables = []
+        for power, unit in ((3, "천"), (2, "백"), (1, "십"), (0, "")):
+            digit = group // (10 ** power) % 10
+            if digit:
+                syllables.append(("" if digit == 1 and power else _SINO_DIGITS[digit]) + unit)
+        groups.insert(0, "".join(syllables) + large)
+    spoken = " ".join(groups) or "영"
+    if dot:
+        spoken += " 점 " + "".join(_SINO_DIGITS[int(d)] for d in fraction)
+    return sign + spoken
+
+
+def normalize_korean_speech_text(text: str) -> str:
+    """Normalize only unambiguous dates and quantities; leave ordinary Korean and IDs intact."""
+    def date_reading(match):
+        import datetime
+        year, month, day = map(int, match.groups())
+        try:
+            datetime.date(year, month, day)
+        except ValueError:
+            return match.group(0)
+        month_reading = {6: "유", 10: "시"}.get(month, korean_sino_number(str(month)))
+        return f"{korean_sino_number(str(year))}년 {month_reading}월 {korean_sino_number(str(day))}일"
+    text = re.sub(r"(?<![\w-])(\d{4})-(\d{2})-(\d{2})(?![\w-])", date_reading, text)
+    text = re.sub(r"(?<!\w)(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일", date_reading, text)
+    units = "|".join(re.escape(unit) for unit in sorted(_SPOKEN_UNITS, key=len, reverse=True))
+    def quantity_reading(match):
+        try:
+            return korean_sino_number(match.group(1)) + " " + _SPOKEN_UNITS[match.group(2)]
+        except ValueError:
+            return match.group(0)
+    return re.sub(_AMOUNT + r"\s*(" + units + r")(?![A-Za-z])", quantity_reading, text)
+
+
+KOREAN_PRONUNCIATION_PROFILE = os.getenv("PIPER_KOREAN_PRONUNCIATION_PROFILE", "standard")
+# Explicit opt-in candidate: same eSpeak inventory; do not rewrite arbitrary Korean.
+_KOREAN_READING_CANDIDATE = {"국물이": "궁무리", "읽는": "잉는", "신라": "실라"}
+
+
+def apply_korean_pronunciation_profile(text: str, profile: str) -> str:
+    if profile == "standard":
+        return text
+    if profile != "candidate-v1":
+        raise ValueError("Unknown Korean pronunciation profile")
+    return re.sub(r"(?<![가-힣A-Za-z])(?:국물이|읽는|신라)(?![가-힣A-Za-z])",
+                  lambda match: _KOREAN_READING_CANDIDATE[match.group(0)], text)
+
+
 def prepare_synthesis_text(text: str) -> tuple[str, str]:
     text = re.sub(r"\s+", " ", MARKUP_TAG.sub(" ", text)).strip()
     if not text:
         return "", "markup-stripped"
+    original_text = text
+    text = apply_korean_pronunciation_profile(normalize_korean_speech_text(text), KOREAN_PRONUNCIATION_PROFILE)
     if not LATIN_TEXT.search(text):
-        return text, "original"
+        return text, "korean-normalized" if text != original_text else "original"
     prepared = text
     for source, pronunciation in TECH_PRONUNCIATIONS.items():
         prepared = re.sub(rf"(?i)\b{re.escape(source)}\b", pronunciation, prepared)

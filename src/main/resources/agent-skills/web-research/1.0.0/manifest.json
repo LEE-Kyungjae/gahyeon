@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "status": "released",
+  "id": "web-research",
+  "version": "1.0.0",
+  "problem": "웹에서 최신 정보나 공식 자료를 출처와 함께 확인해야 한다.",
+  "whenToUse": "웹에서 최신 정보나 공식 자료를 출처와 함께 확인해야 한다.",
+  "allowedTools": [
+    "research_search",
+    "research_read",
+    "research_verify"
+  ],
+  "requiredEvidenceTools": [
+    "research_read",
+    "research_verify"
+  ],
+  "maxToolCalls": 10,
+  "completionCriteria": [
+    "실제 도구 결과의 한계와 실패를 숨기지 않고 요청에 답한다.",
+    "출처 또는 실행 결과를 근거로 제시한다."
+  ]
+}

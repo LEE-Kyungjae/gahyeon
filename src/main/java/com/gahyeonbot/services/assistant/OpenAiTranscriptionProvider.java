@@ -32,6 +32,7 @@ public class OpenAiTranscriptionProvider implements SpeechToTextProvider {
     @Override
     public String transcribe(byte[] wavAudio) {
         if (!isReady()) throw new IllegalStateException("STT가 설정되지 않았습니다.");
+        if (com.gahyeonbot.application.speech.PcmInputSilence.isDigitalSilence(wavAudio)) return "";
 
         var p = properties.getStt();
         try {

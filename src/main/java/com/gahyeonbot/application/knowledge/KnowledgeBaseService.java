@@ -48,7 +48,7 @@ public class KnowledgeBaseService {
         String existing = jdbc.query("""
                 select d.id from knowledge_documents d join knowledge_sources s on s.id = d.source_id
                 where s.service_id = ? and s.lifecycle_status = 'ACTIVE' and d.content_sha256 = ?
-                  and ((? is null and s.owner_subject_id is null) or s.owner_subject_id = ?)
+                  and ((cast(? as varchar) is null and s.owner_subject_id is null) or s.owner_subject_id = ?)
                   and d.deleted_at is null fetch first 1 row only
                 """, rs -> rs.next() ? rs.getString(1) : null,
                 request.serviceId(), digest, request.ownerSubjectId(), request.ownerSubjectId());

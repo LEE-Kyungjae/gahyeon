@@ -13,11 +13,12 @@ import java.util.List;
 @ConfigurationProperties(prefix = "assistant")
 public class AssistantProperties {
     private boolean enabled;
-    private int maxUtteranceSeconds = 20;
+    private int maxUtteranceSeconds = 60;
     private long silenceMillis = 900;
     private boolean speakResponses = true;
     private String ttsProvider = "edge";
-    private long responseAcknowledgementMillis = 1_500;
+    private boolean responseAcknowledgementsEnabled = false;
+    private long responseAcknowledgementMillis = -1;
     /** Legacy single-message override. Empty means use the rotating list. */
     private String responseAcknowledgementText = "";
     private List<String> responseAcknowledgementTexts = List.of(
@@ -68,6 +69,8 @@ public class AssistantProperties {
     @Setter
     public static class Vad {
         private boolean enabled = true;
+        private String provider = "ten";
+        private String sileroModelPath = "";
         private int hopSize = 256;
         private float threshold = 0.5f;
         private long minSpeechMillis = 300;

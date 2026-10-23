@@ -7,6 +7,9 @@ import java.util.Locale;
 
 @Component
 final class VoiceAssistantExpressionPolicy {
+    @org.springframework.beans.factory.annotation.Value("${assistant.expressive-responses-enabled:true}")
+    private boolean expressiveResponsesEnabled = true;
+
     private com.gahyeonbot.adapters.jev.JevExpressionModel semanticModel;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
@@ -15,6 +18,7 @@ final class VoiceAssistantExpressionPolicy {
     }
 
     VoiceExpression plan(String transcript) {
+        if (!expressiveResponsesEnabled) return VoiceExpression.NATURAL;
         String normalized = transcript == null ? "" : transcript.trim().toLowerCase(Locale.ROOT);
         if (semanticModel != null && !normalized.isBlank()) {
             var modeled = semanticModel.plan(new com.gahyeonbot.application.speech.ConversationExpressionModelRequest(
@@ -31,7 +35,7 @@ final class VoiceAssistantExpressionPolicy {
         if (containsAny(normalized, "걱정", "불안", "괜찮아?", "괜찮나요", "무서워")) {
             return new VoiceExpression("concerned", 0.38, "respond_with_attentive_concern");
         }
-        if (containsAny(normalized, "영어", "영문", "english", "발음")) {
+        if (containsAny(normalized, "영어", "영문", "english")) {
             return new VoiceExpression("natural", 0.34, "speak_with_clear_english_pronunciation");
         }
         return VoiceExpression.NATURAL;

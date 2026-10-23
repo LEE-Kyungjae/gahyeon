@@ -690,6 +690,506 @@
       "testMethod": "test_selects_language_for_english_and_code_switched_text",
       "productionSignal": "Language class, style, character-count buckets, model attestation, latency, and outcome without text or audio.",
       "rollbackTrigger": "English-dominant text is synthesized in Korean mode, Korean text unexpectedly switches language, or speaker identity attestation changes."
+    },
+    {
+      "id": "voice-progress-unsupported-work-claims-20261003",
+      "domain": "agent",
+      "incident": "2026-10-03 production voice turns used no tools but timed fixed acknowledgements included investigation and preparation claims. Unresolved; linked characterization test reproduces current behavior.",
+      "invariant": "Progress must be grounded in actual work; remove unsupported canned claims.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceIncidentCharacterizationTest.java",
+      "testMethod": "configuredProgressSpeechIsAdmittedWithoutToolExecutionEvidence",
+      "productionSignal": "Aggregate acknowledgement count, actual tool use count, synthesis outcome and connection error class without raw conversation or identifiers.",
+      "rollbackTrigger": "Unsupported work claims or any missing final answer audio. Rollback requires explicit authorization."
+    },
+    {
+      "id": "voice-answer-qwen-tunnel-refused-20261003",
+      "domain": "tts",
+      "incident": "2026-10-03 10:40:52 and 10:43:57 UTC: final answer synthesis failed with Connection refused; Qwen tunnel failed since Oct 1. Unresolved; characterization test reproduces exception propagation, not network restoration.",
+      "invariant": "Answer speech must complete or expose delivery failure; health must distinguish reachable synthesis from enabled configuration.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceIncidentCharacterizationTest.java",
+      "testMethod": "expressiveConnectionFailurePropagatesWithoutStandardAudioFallback",
+      "productionSignal": "Aggregate acknowledgement count, actual tool use count, synthesis outcome and connection error class without raw conversation or identifiers.",
+      "rollbackTrigger": "Unsupported work claims or any missing final answer audio. Rollback requires explicit authorization."
+    },
+    {
+      "id": "discord-explicit-piper-neutral-routing",
+      "domain": "tts",
+      "incident": "2026-10-03 Qwen tunnel connection refused prevented final answer audio; simply disabling Qwen still rejects planned non-natural expressions. User selected existing Piper.",
+      "invariant": "Explicit Piper selection disables expressive planning so every answer can use standard synthesis without silently substituting expressive voices in normal mode.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoicePiperSelectionTest.java",
+      "testMethod": "explicitPiperSelectionRoutesEveryExpressionToStandardSpeech",
+      "productionSignal": "Selected provider, synthesis completion count and audio bytes without conversation text.",
+      "rollbackTrigger": "Any final answer is dropped due to expressive style while explicit Piper mode is selected."
+    },
+    {
+      "id": "stt-short-affirmation-held",
+      "domain": "stt",
+      "incident": "Production Discord RequestGuard holds correctly recognized one-syllable Korean replies and prefixes them to the next request. Reproduced using production defaults; no raw user recording assumed.",
+      "invariant": "Standalone 네/예/응 replies must reach conversation admission without being concatenated to a later request.",
+      "testFile": "src/test/java/com/gahyeonbot/application/speech/VoiceUnderstandingRegressionTest.java",
+      "testMethod": "completeShortAnswersAreDeliveredWithoutContaminatingNextRequest",
+      "productionSignal": "Audio duration and admission reason counts without transcript, user ID or audio.",
+      "rollbackTrigger": "Any valid reply or next utterance is lost or contaminated by rejected audio.",
+      "status": "validated-locally-not-deployed",
+      "coverageKind": "regression-invariant"
+    },
+    {
+      "id": "stt-expired-invalid-audio-contamination",
+      "domain": "stt",
+      "incident": "Production audio accumulator retains a sub-minimum speech burst after the silence deadline, then includes it in the next utterance.",
+      "invariant": "An expired rejected fragment must not contribute PCM or speech duration to the next utterance.",
+      "testFile": "src/test/java/com/gahyeonbot/application/speech/VoiceUnderstandingRegressionTest.java",
+      "testMethod": "expiredShortBurstCannotContaminateFollowingUtterance",
+      "productionSignal": "Audio duration and admission reason counts without transcript, user ID or audio.",
+      "rollbackTrigger": "Any valid reply or next utterance is lost or contaminated by rejected audio.",
+      "status": "validated-locally-not-deployed",
+      "coverageKind": "regression-invariant"
+    },
+    {
+      "id": "stt-saturated-invalid-buffer-drops-next-turn",
+      "domain": "stt",
+      "incident": "Production audio accumulator can stay full after an invalid burst and discard the next valid spoken audio.",
+      "invariant": "A full rejected buffer must reset so subsequent valid speech is retained.",
+      "testFile": "src/test/java/com/gahyeonbot/application/speech/VoiceUnderstandingRegressionTest.java",
+      "testMethod": "fullInvalidBufferReleasesCapacityForNextSpokenAudio",
+      "productionSignal": "Audio duration and admission reason counts without transcript, user ID or audio.",
+      "rollbackTrigger": "Any valid reply or next utterance is lost or contaminated by rejected audio.",
+      "status": "validated-locally-not-deployed",
+      "coverageKind": "regression-invariant"
+    },
+    {
+      "id": "stt-exact-digital-silence-hallucination",
+      "domain": "stt",
+      "incident": "Controlled production Whisper requests for one and three seconds of zero PCM returned 감사합니다 and unrelated closing phrases on 2026-10-07 KST. User also reports unsolicited 감사합니다 attributed to their Discord speech; their original audio is unavailable, so the exact user incident is not claimed reproduced.",
+      "invariant": "Exact digital silence produces no words; even a one-unit PCM speech sample must not be suppressed by this guard.",
+      "testFile": "src/test/java/com/gahyeonbot/services/assistant/OpenAiTranscriptionSilenceTest.java",
+      "testMethod": "coreServiceRejectsExactSilenceWithoutCallingPrimaryOrFallback",
+      "productionSignal": "Exact-silence rejection and provider-call counts without raw audio or text.",
+      "rollbackTrigger": "Silent audio becomes a user utterance or nonzero quiet speech is suppressed.",
+      "status": "validated-locally-not-deployed"
+    },
+    {
+      "id": "stt-vad-nonspeech-admission",
+      "domain": "stt",
+      "incident": "User reports unsolicited 감사합니다 attributed to their speech while not speaking; controlled synthetic noise can pass the TEN 0.30 segmentation configuration. Actual incident audio is unavailable.",
+      "invariant": "Candidate Silero VAD must reject deterministic non-speech without losing a quiet short Korean acknowledgment under identical admission settings.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/speech/SileroVadAdmissionTest.java",
+      "testMethod": "nonSpeechDoesNotReachTranscriptionWithShortReplyCandidateSettings",
+      "productionSignal": "VAD provider/model identity, detected/captured durations and admission counts without raw audio or transcripts.",
+      "rollbackTrigger": "Non-speech reaches STT, valid quiet short replies are lost, or CPU/latency regresses in an authorized rollout.",
+      "status": "candidate-only-not-deployed",
+      "companionTestMethod": "preservesQuietKoreanYesWithTheSameSettings"
+    },
+    {
+      "id": "stt-user-feedback-evidence-gates",
+      "domain": "stt",
+      "incident": "2026-10-03 stored voice inputs included unconfirmed suspicious recognitions, with no retained original audio or verified reference transcript. Successful conversation status must not become correction ground truth.",
+      "invariant": "Only explicit owner labels can activate an exact, user/server/pipeline-scoped rule after three training observations and two prospectively captured validation observations; unlabelled history never self-labels.",
+      "testFile": "src/test/java/com/gahyeonbot/application/speech/SttLearningServiceTest.java",
+      "testMethod": "requiresThreeLabelsAndTwoFutureHoldoutsBeforeApplying",
+      "productionSignal": "Decision state, opaque observation identifier, aggregate explicit label/conflict counts and failure class without utterances, audio or account identifiers.",
+      "rollbackTrigger": "An unverified or cross-user correction is applied, validation reuses historical training observations, or an explicit conflict fails to disable its rule."
+    },
+    {
+      "id": "macos-core-api-prefix-and-auth",
+      "domain": "agent",
+      "incident": "2026-10-15 macOS chat used an offline localhost endpoint; URL resolution dropped /api and omitted the deployment bearer credential.",
+      "invariant": "The macOS Core request preserves the configured /api prefix and sends the configured bearer token without logging it.",
+      "testFile": "scripts/test_macos_core_connection.py",
+      "testMethod": "test_request_preserves_api_prefix_and_authenticates",
+      "productionSignal": "HTTP status and endpoint category only; no credentials or conversation content.",
+      "rollbackTrigger": "A configured Core URL loses /api, an authenticated request returns 401, or credentials enter logs."
+    },
+    {
+      "id": "macos-native-server-speech-routing",
+      "domain": "tts",
+      "incident": "2026-10-15 native macOS buttons used Apple speech despite server STT and Piper readiness.",
+      "invariant": "Native speech requests send WAV input to the configured authenticated server transcription endpoint and request server synthesis through the same API prefix.",
+      "testFile": "scripts/test_macos_server_speech.py",
+      "testMethod": "test_native_client_posts_wav_and_synthesis_with_auth",
+      "productionSignal": "Endpoint category, HTTP outcome, latency, audio byte count; no token or speech content.",
+      "rollbackTrigger": "A speech request omits the API prefix or bearer token, or silently substitutes local speech."
+    },
+    {
+      "id": "discord-news-tool-omission",
+      "domain": "agent",
+      "incident": "2026-10-15 17:55 KST news request ended without lookup. Inspection of the deployed bot.jar on 2026-10-16 confirmed NewsKnowledgeTools absent; local source had the tool, so deployed omission cannot be attributed solely to model routing.",
+      "invariant": "A missing deployed news capability is blocked; an installed authorized news tool requires an attempt. Evidence availability alone does not establish semantic task fulfillment.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentTaskEvidencePolicyTest.java",
+      "testMethod": "deployedMissingNewsCapabilityIsBlockedRatherThanSuccessful",
+      "productionSignal": "Capability availability and typed task evidence outcome without conversation text; policy currently isolated and not wired into production.",
+      "rollbackTrigger": "Marking an unfulfilled or unverified request as task-complete, or suppressing a known language-quality failure."
+    },
+    {
+      "id": "discord-capability-gap-not-success",
+      "domain": "agent",
+      "incident": "2026-10-15 server and copper-price requests were SUCCEEDED although the requested evidence was not obtained.",
+      "invariant": "Missing server or market authority is a capability blocker, not fulfilled user work.",
+      "testFile": "scripts/test_agent_task_outcome.py",
+      "testMethod": "test_server_and_market_missing_authority_are_not_success",
+      "productionSignal": "Intent, capability IDs, tool attempt/result counts, and evaluation verdict; evaluator currently offline and not deployed.",
+      "rollbackTrigger": "Marking an unfulfilled or unverified request as task-complete, or suppressing a known language-quality failure."
+    },
+    {
+      "id": "discord-korean-style-contamination",
+      "domain": "agent",
+      "incident": "2026-10-15 coding capability answer included Chinese phrases inside Korean prose.",
+      "invariant": "Known mixed-language corruption must fail answer quality review.",
+      "testFile": "scripts/test_agent_task_outcome.py",
+      "testMethod": "test_confirmed_mixed_korean_answer_is_rejected",
+      "productionSignal": "Intent, capability IDs, tool attempt/result counts, and evaluation verdict; evaluator currently offline and not deployed.",
+      "rollbackTrigger": "Marking an unfulfilled or unverified request as task-complete, or suppressing a known language-quality failure."
+    },
+    {
+      "domain": "agent",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentLookupRuntimeTest.java",
+      "productionSignal": "TASK_EVIDENCE_ASSESSED event and bounded intent/outcome metric without user text or identifiers; source integration pending deployment.",
+      "rollbackTrigger": "Evidence-free completion is claimed, correction exceeds one attempt, cancelled output is emitted, or corrective drafts are spoken.",
+      "id": "agent-news-runtime-evidence-routing",
+      "testMethod": "correctsNewsOmissionOnceAndStreamsOnlyVerifiedFinalAnswer",
+      "incident": "2026-10-15 17:55 KST news request had no lookup; deployed JAR lacked the local news tool.",
+      "invariant": "When authorized news capability is installed, omission gets one bounded correction; only the checked final answer is emitted."
+    },
+    {
+      "domain": "agent",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentLookupRuntimeTest.java",
+      "productionSignal": "TASK_EVIDENCE_ASSESSED event and bounded intent/outcome metric without user text or identifiers; source integration pending deployment.",
+      "rollbackTrigger": "Evidence-free completion is claimed, correction exceeds one attempt, cancelled output is emitted, or corrective drafts are spoken.",
+      "id": "agent-news-empty-result-contract",
+      "testMethod": "emptyNewsIsNotMistakenForEvidence",
+      "incident": "Integration replay exposed Spring JSON string encoding of successful and empty news results.",
+      "invariant": "Decode actual callback transport before distinguishing NO_DATA from TOOL_FAILED and EVIDENCE_AVAILABLE."
+    },
+    {
+      "domain": "agent",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentLookupRuntimeTest.java",
+      "productionSignal": "TASK_EVIDENCE_ASSESSED event and bounded intent/outcome metric without user text or identifiers; source integration pending deployment.",
+      "rollbackTrigger": "Evidence-free completion is claimed, correction exceeds one attempt, cancelled output is emitted, or corrective drafts are spoken.",
+      "id": "agent-lookup-cancellation",
+      "testMethod": "cancellationDuringCorrectionPublishesNothing",
+      "incident": "Lookup corrections introduce additional model calls after a draft response.",
+      "invariant": "Superseded lookup correction must publish and commit nothing."
+    },
+    {
+      "domain": "agent",
+      "productionSignal": "Voice reply defect reason, retry count and aggregate utterance duration without raw transcript, audio or user identifiers. Local fixes not yet validated on live traffic.",
+      "rollbackTrigger": "A complete correction is delayed, narration reappears without opt-in, a cancelled or rejected draft is spoken, or a repair exceeds one model retry.",
+      "id": "voice-feedback-truncation",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentLookupRuntimeTest.java",
+      "testMethod": "regeneratesLengthLimitedVoiceReplyBeforeSpeaking",
+      "incident": "2026-10-16 voice feedback contained several mid-sentence assistant replies.",
+      "invariant": "Length-limited voice output is regenerated once before any speech emission."
+    },
+    {
+      "domain": "agent",
+      "productionSignal": "Voice reply defect reason, retry count and aggregate utterance duration without raw transcript, audio or user identifiers. Local fixes not yet validated on live traffic.",
+      "rollbackTrigger": "A complete correction is delayed, narration reappears without opt-in, a cancelled or rejected draft is spoken, or a repair exceeds one model retry.",
+      "id": "voice-feedback-preamble",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentLookupRuntimeTest.java",
+      "testMethod": "suppressesUnwantedSpokenPreambleWithoutRepeatingTheUserQuestion",
+      "incident": "User explicitly rejected repeated spoken process announcements.",
+      "invariant": "Known process preambles are removed without altering substantive content; voice modality and corrections reach the model."
+    },
+    {
+      "domain": "agent",
+      "productionSignal": "Voice reply defect reason, retry count and aggregate utterance duration without raw transcript, audio or user identifiers. Local fixes not yet validated on live traffic.",
+      "rollbackTrigger": "A complete correction is delayed, narration reappears without opt-in, a cancelled or rejected draft is spoken, or a repair exceeds one model retry.",
+      "id": "voice-feedback-20second-cutoff",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceFeedbackRegressionTest.java",
+      "testMethod": "twentySecondsOfContinuousSpeechIsNotSubmittedMidSentence",
+      "incident": "Four of 24 STT records had exactly 20000ms audio while the user reported premature turn endings.",
+      "invariant": "The default capture budget permits continuous 24-second speech and submits after end silence, with a finite 60-second cap."
+    },
+    {
+      "domain": "agent",
+      "productionSignal": "Voice reply defect reason, retry count and aggregate utterance duration without raw transcript, audio or user identifiers. Local fixes not yet validated on live traffic.",
+      "rollbackTrigger": "A complete correction is delayed, narration reappears without opt-in, a cancelled or rejected draft is spoken, or a repair exceeds one model retry.",
+      "id": "voice-feedback-continuation",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceFeedbackRegressionTest.java",
+      "testMethod": "unfinishedFeedbackWaitsAndSurvivesTranscriptionLatency",
+      "incident": "The assistant answered before the user finished explicit trailing clauses such as 어떻게 해야 되냐면.",
+      "invariant": "Explicit unfinished connectives wait for the next transcript; complete corrections remain immediate."
+    },
+    {
+      "domain": "agent",
+      "productionSignal": "Voice reply defect reason, retry count and aggregate utterance duration without raw transcript, audio or user identifiers. Local fixes not yet validated on live traffic.",
+      "rollbackTrigger": "A complete correction is delayed, narration reappears without opt-in, a cancelled or rejected draft is spoken, or a repair exceeds one model retry.",
+      "id": "voice-feedback-korean-pronunciation",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceFeedbackRegressionTest.java",
+      "testMethod": "koreanPronunciationFeedbackDoesNotRequestEnglishDelivery",
+      "incident": "Korean pronunciation feedback was handled as a general explanation; code selected English pronunciation for any 발음 mention.",
+      "invariant": "Korean pronunciation feedback must not select English delivery merely because it includes 발음."
+    },
+    {
+      "domain": "agent",
+      "productionSignal": "Voice reply defect reason, retry count and aggregate utterance duration without raw transcript, audio or user identifiers. Local fixes not yet validated on live traffic.",
+      "rollbackTrigger": "A complete correction is delayed, narration reappears without opt-in, a cancelled or rejected draft is spoken, or a repair exceeds one model retry.",
+      "id": "voice-feedback-progress-opt-in",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/discord/voice/VoiceFeedbackRegressionTest.java",
+      "testMethod": "legacyAcknowledgementDelayDoesNotReenableUnwantedSpeech",
+      "incident": "Production retains a 1500ms spoken acknowledgement delay despite explicit user objection.",
+      "invariant": "Progress speech requires a separate explicit enabled flag; legacy timing settings alone cannot enable it."
+    },
+    {
+      "domain": "agent",
+      "productionSignal": "Voice reply defect reason, retry count and aggregate utterance duration without raw transcript, audio or user identifiers. Local fixes not yet validated on live traffic.",
+      "rollbackTrigger": "A complete correction is delayed, narration reappears without opt-in, a cancelled or rejected draft is spoken, or a repair exceeds one model retry.",
+      "id": "voice-feedback-free-router-classifier",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/AgentLookupRuntimeTest.java",
+      "testMethod": "moderationClassifierIsNotSpokenAsAConversationReply",
+      "incident": "Live provider replay routed a correction to nvidia/nemotron-3.5-content-safety:free and returned User Safety / Response Safety labels.",
+      "invariant": "Classifier labels cannot be delivered as a conversational response; repair is bounded."
+    },
+    {
+      "id": "web-research-injection-authority-separation",
+      "domain": "agent",
+      "incident": "Preventive control requested 2026-10-16: retrieved pages may carry instructions to execute remote work.",
+      "invariant": "Web retrieval never changes message role, selected skill, owner identity or remote execution authority.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/ResearchWorkRuntimeTest.java",
+      "testMethod": "actualRuntimeRejectsInjectedRemoteCallBeforeTransport",
+      "productionSignal": "Existing tool event name/outcome and output hash; aggregate failure counts only, without page body, query, file content, account ID or credentials.",
+      "rollbackTrigger": "Any unauthorized tool execution, outside-workspace access, duplicate mutation, unverified citation accepted, or failure reported as success; disable the affected feature flag and retain hashed evidence."
+    },
+    {
+      "id": "web-research-source-provenance",
+      "domain": "agent",
+      "incident": "Preventive control requested 2026-10-16: SEO ranking, copied articles and impersonated domains can mislead answers.",
+      "invariant": "Unread or fabricated quotations fail verification; reputation is matched to actual hosts, duplicates and unknown dates never become independent fresh evidence.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/work/TrustedResearchWorkTest.java",
+      "testMethod": "copiesAndMissingDatesCannotBecomeIndependentFreshEvidence",
+      "productionSignal": "Existing tool event name/outcome and output hash; aggregate failure counts only, without page body, query, file content, account ID or credentials.",
+      "rollbackTrigger": "Any unauthorized tool execution, outside-workspace access, duplicate mutation, unverified citation accepted, or failure reported as success; disable the affected feature flag and retain hashed evidence."
+    },
+    {
+      "id": "owner-worker-identity-scope",
+      "domain": "agent",
+      "incident": "Preventive coverage for the newly requested owner-only Mac/land capability.",
+      "invariant": "Only the configured internal owner and scope receive remote tools; execution waits for exact argument approval.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/ResearchWorkRuntimeTest.java",
+      "testMethod": "actualRuntimeRequiresApprovalAndWrongAccountCannotSelectWorkSkill",
+      "productionSignal": "Existing tool event name/outcome and output hash; aggregate failure counts only, without page body, query, file content, account ID or credentials.",
+      "rollbackTrigger": "Any unauthorized tool execution, outside-workspace access, duplicate mutation, unverified citation accepted, or failure reported as success; disable the affected feature flag and retain hashed evidence."
+    },
+    {
+      "id": "owner-worker-filesystem-isolation",
+      "domain": "agent",
+      "incident": "Preventive coverage for fixed-workspace remote tasks.",
+      "invariant": "Traversal, symlinks, hardlinks and protected filenames cannot expose files outside the approved workspace.",
+      "testFile": "scripts/owner_work/test_worker.py",
+      "testMethod": "test_path_escape_symlink_hardlink_and_secrets_are_blocked",
+      "productionSignal": "Existing tool event name/outcome and output hash; aggregate failure counts only, without page body, query, file content, account ID or credentials.",
+      "rollbackTrigger": "Any unauthorized tool execution, outside-workspace access, duplicate mutation, unverified citation accepted, or failure reported as success; disable the affected feature flag and retain hashed evidence."
+    },
+    {
+      "id": "owner-worker-idempotent-write",
+      "domain": "agent",
+      "incident": "Preventive coverage for connection loss and repeated model tool calls.",
+      "invariant": "Repeated identical job IDs replay the saved result; changed content or stale file hashes never overwrite silently.",
+      "testFile": "scripts/owner_work/test_worker.py",
+      "testMethod": "test_write_read_hash_conflict_and_replay",
+      "productionSignal": "Existing tool event name/outcome and output hash; aggregate failure counts only, without page body, query, file content, account ID or credentials.",
+      "rollbackTrigger": "Any unauthorized tool execution, outside-workspace access, duplicate mutation, unverified citation accepted, or failure reported as success; disable the affected feature flag and retain hashed evidence."
+    },
+    {
+      "id": "web-research-egress-bound-to-user-request",
+      "domain": "agent",
+      "incident": "Preventive coverage for indirect injection that tries to transmit private context through a search query or a constructed URL.",
+      "invariant": "Search outbound data is frozen to the original user request; reads cannot add destinations or query parameters after seeing external content.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/work/TrustedResearchWorkTest.java",
+      "testMethod": "pageCannotExfiltrateThroughChangedQueryOrConstructedUrl",
+      "productionSignal": "Tool outcome/rejection class and output digest without raw query, URL parameters or private context.",
+      "rollbackTrigger": "A model/page-supplied changed query or unapproved URL reaches the network. Disable research and retain privacy-safe evidence."
+    },
+    {
+      "id": "macos-core-foreign-port-collision",
+      "domain": "agent",
+      "incident": "2026-10-17 16:30 KST QA: Docker occupied macOS port 18080; the launcher accepted a TCP listener as Core and requests reset before any qualifying conversation.",
+      "invariant": "Default macOS connections use an owned SSH tunnel, verify the authenticated Core response schema, and never treat an unrelated local listener as Core.",
+      "testFile": "scripts/test_macos_core_tunnel.py",
+      "testMethod": "test_occupied_port_is_not_treated_as_authenticated_core",
+      "productionSignal": "Connection result, owned tunnel port and response schema outcome without bearer tokens or user text.",
+      "rollbackTrigger": "An unrelated listener is reused, credentials appear in subprocess arguments or logs, or verified Core connectivity regresses."
+    },
+    {
+      "id": "desktop-cold-start-roundtrip-readiness",
+      "domain": "stt",
+      "incident": "2026-10-17 desktop synthetic QA: initial 1.84-second greeting took 20.509 seconds to transcribe and changed Gahyeon to Dahyeon; the short conversation took 26.991 seconds and contained Korean typos. Warm repetition improved, which does not validate the initial-request path.",
+      "invariant": "Controlled smoke QA evaluates each request, flags STT above 5 seconds and short chat above 10 seconds, preserves the fixture name, and never lets a warm success erase the first failure.",
+      "testFile": "scripts/test_desktop_service_smoke.py",
+      "testMethod": "test_warm_success_cannot_hide_slow_inaccurate_first_request",
+      "productionSignal": "Cold/warm request latency, controlled-fixture entity match, request count and outcome without recording user conversations.",
+      "rollbackTrigger": "First-request latency or controlled-fixture entity preservation regresses; no production promotion until cold-start behavior is validated.",
+      "resolution": "open-runtime-quality-issue; detection covered, inference/provider unchanged"
+    },
+    {
+      "id": "desktop-disconnected-tunnel-and-frozen-renderer",
+      "domain": "agent",
+      "incident": "2026-10-17 22:21-23:31 KST: the Mac SSH forwarding listener disappeared, land accepted TCP but sent no SSH banner, and Unreal producer sequence remained 158872. Metal worker waited in GPU resource allocation while GameThread and RenderThread waited on tasks.",
+      "invariant": "Desktop QA must independently detect an unreachable Core transport and a non-advancing renderer; an alive process or UI is not a healthy service.",
+      "testFile": "scripts/test_desktop_service_smoke.py",
+      "testMethod": "test_dead_tunnel_and_stalled_renderer_are_separate_failures",
+      "productionSignal": "Endpoint connection outcome, renderer process alive flag, sampled frame sequence deltas and observation timestamps without credentials or conversation text.",
+      "rollbackTrigger": "Any validation marks a missing authenticated endpoint or frozen producer healthy. Renderer restart or endpoint migration requires separate operational authority; diagnosis does not claim restored service."
+    },
+    {
+      "id": "desktop-public-research-without-discord-scope",
+      "domain": "agent",
+      "incident": "2026-10-18 Mac native chat LME copper lookup reached production run 00379190-a393-426e-9b80-d46a8fc288bb but returned unavailable tools with zero tool calls. Disabled skills/research and a null desktop toolScope prevent research availability.",
+      "invariant": "When research and skill harness are enabled, authenticated desktop requests without a Discord scope receive actor-bound public search/read/verify tools, but no owner workspace capability.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/work/DesktopResearchAvailabilityTest.java",
+      "testMethod": "desktopWithoutDiscordScopeCanResearchButCannotUseOwnerWork",
+      "productionSignal": "Client source, research enabled flag, skill enabled flag, exposed research tool count, called tool names, final outcome and duration; no raw message or identity.",
+      "rollbackTrigger": "Public research is unavailable for scope-less desktop requests, another actor can reuse the binding, or owner workspace tools become available without explicit scope."
+    },
+    {
+      "id": "desktop-research-request-timeout",
+      "domain": "agent",
+      "incident": "2026-10-18 native Mac LME QA timed out at 20 seconds while research_search and research_read continued server-side.",
+      "invariant": "Multi-step conversation POST has a bounded 180-second wait; speech health GET remains 20 seconds.",
+      "testFile": "scripts/test_macos_chat_timeout.py",
+      "testMethod": "test_research_wait_budget_does_not_change_health_checks",
+      "productionSignal": "Endpoint category, elapsed milliseconds and timeout outcome, without content.",
+      "rollbackTrigger": "Conversation budget returns to health-check budget or health checks inherit the long conversation timeout."
+    },
+    {
+      "id": "research-unavailable-source-recovery",
+      "domain": "agent",
+      "incident": "2026-10-18 LME QA source read threw Source unavailable and aborted the full conversation despite earlier usable sources.",
+      "invariant": "Unavailable public pages yield no evidence and allow another discovered source; SSRF/security rejection and citation checks remain enforced.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/work/ResearchUnavailableSourceTest.java",
+      "testMethod": "unavailablePageDoesNotDiscardOtherEvidenceOrRelaxSecurity",
+      "productionSignal": "Read outcome code, citation outcome and final request status, without URLs or content.",
+      "rollbackTrigger": "Source availability failure aborts the conversation or unread sources satisfy evidence checks."
+    },
+    {
+      "id": "copper-daily-price-evidence-intent",
+      "domain": "agent",
+      "incident": "2026-10-18 exact Mac QA phrase 구리 일간가격 did not match the market lookup guard that only matched 구리 가격.",
+      "invariant": "Copper daily price lookup requires verified read-source evidence; discovery snippets do not suffice.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/CopperDailyLookupEvidenceTest.java",
+      "testMethod": "copperDailyPriceRequiresReadAndVerifiedEvidence",
+      "productionSignal": "Lookup intent and evidence outcome without query text.",
+      "rollbackTrigger": "Copper daily price returns without market evidence checks."
+    },
+    {
+      "id": "mac-production-core-not-land-dev",
+      "domain": "agent",
+      "incident": "2026-10-18 native Mac chat used a dead land development tunnel although the existing zeze production desktop API was healthy.",
+      "invariant": "Production launcher connects to authenticated zeze service; land must be explicitly selected, and explicit QA endpoints never read production credentials.",
+      "testFile": "scripts/test_macos_production_core.py",
+      "testMethod": "test_production_uses_zeze_and_never_places_credential_in_ssh_or_state",
+      "productionSignal": "Target label, authenticated status and tunnel liveness; no credentials or raw conversation.",
+      "rollbackTrigger": "Production selects land implicitly, silently changes an explicit target, or places a credential in SSH arguments/state files."
+    },
+    {
+      "id": "copper-source-discovery-no-repeat-search",
+      "domain": "agent",
+      "incident": "2026-10-18 live desktop copper QA repeated identical frozen searches and exhausted its evidence budget after 107464ms.",
+      "invariant": "Original copper lookup intent discovers fixed exchange and dated market tables; pages remain untrusted until read and cited; repeated search is explicitly a no-op.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/work/CopperSourceDiscoveryTest.java",
+      "testMethod": "originalCopperIntentDiscoversDatedTableWithoutTrustingSearchRankOrModelQuery",
+      "productionSignal": "Discovery mode, repeated search count, source read and citation counts without query contents.",
+      "rollbackTrigger": "Model-supplied query changes outbound data or discovery seeds are treated as verified prices."
+    },
+    {
+      "id": "market-failure-not-news-message",
+      "domain": "agent",
+      "incident": "2026-10-18 copper price lookup ended with a misleading news lookup failure sentence.",
+      "invariant": "Failed market lookup identifies missing price evidence, not an unrelated news failure.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/MarketFailureMessageTest.java",
+      "testMethod": "failedPriceLookupDoesNotClaimNewsWasRequested",
+      "productionSignal": "Lookup intent and fallback category.",
+      "rollbackTrigger": "Market lookup emits a news-only failure message."
+    },
+    {
+      "id": "research-invalid-skill-version-recovery",
+      "domain": "agent",
+      "incident": "2026-10-18 desktop copper live QA returned HTTP 500 when the provider selected an unknown skill version.",
+      "invariant": "Unknown/unavailable selection returns only permitted released choices and grants nothing until an explicit valid selection.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/work/ResearchSkillSelectionRecoveryTest.java",
+      "testMethod": "unknownVersionReturnsChoicesWithoutGrantingOrSelectingAnything",
+      "productionSignal": "Invalid-selection outcome and valid retry count, without query text.",
+      "rollbackTrigger": "Unknown version aborts the conversation, silently activates a skill, or exposes unauthorized skill choices."
+    },
+    {
+      "id": "lme-chat-incomplete-answer-acceptance",
+      "domain": "agent",
+      "incident": "2026-10-18 native Mac QA with a 1200-token output budget ended mid-table; local QA with 4096 completed the same request in 63751ms. Provider finish reason was not recorded. 2026-10-18 latency QA also produced a12.9s reply missing the3-month delta and misstating prior-day change; offline acceptance rejected it. Speed alone is not a passing response.",
+      "invariant": "QA must reject an incomplete price answer, wrong date or missing source; candidate research configuration preserves the verified output budget.",
+      "testFile": "scripts/test_lme_chat_answer.py",
+      "testMethod": "test_truncated_price_answer_is_not_success",
+      "productionSignal": "Completion reason, answer completeness outcome and response latency without conversation text.",
+      "rollbackTrigger": "Final answer lacks either price, date, unit or source. Generic runtime truncation recovery remains unimplemented pending CRITICAL-impact decision."
+    },
+    {
+      "id": "mac-long-reply-piper-segments",
+      "domain": "tts",
+      "incident": "2026-10-18 full LME answer sent as one native synthesis request exceeded Piper 500 characters, returned 413; Edge fallback returned 403 and desktop received HTTP500.",
+      "invariant": "Native reply speech is bounded to short segments, preserves decimal numbers, strips URLs, starts first segment before all synthesis completes, and prefetches only one next segment.",
+      "testFile": "scripts/test_macos_segmented_speech.py",
+      "testMethod": "test_long_answer_is_bounded_without_reading_urls_or_splitting_decimal",
+      "productionSignal": "Segment count, first-play latency, synthesis status without text or audio.",
+      "rollbackTrigger": "Any segment exceeds provider limits, order changes, or cancelled generation starts new playback."
+    },
+    {
+      "id": "latency-stage-observation-not-aggregate-only",
+      "domain": "agent",
+      "incident": "2026-10-18 LME native reply took104.6s; ledger separates100.9s model calls and2.9s tools, while incomplete observation must not count as success.",
+      "invariant": "Latency report pairs matching model/tool starts and completions and flags incomplete traces; local diagnostic exports no payloads.",
+      "testFile": "scripts/test_agent_latency_summary.py",
+      "testMethod": "test_pairs_steps_and_does_not_mark_incomplete_runs_complete",
+      "productionSignal": "Model/tool duration and incomplete trace counts; no raw conversation.",
+      "rollbackTrigger": "Unfinished run is reported complete or model latency is attributed to source fetching."
+    },
+    {
+      "id": "stt-primary-unavailable-fallback-latency",
+      "domain": "stt",
+      "incident": "2026-10-18 synthetic desktop voice probes: configured large-v3-turbo primary failed, sensevoice-small-int8 fallback completed3/3 requests;2/3 transcripts had lexical errors.",
+      "invariant": "Primary connection failure is observable and permitted fallback still executes; fallback speed must not be labeled primary model performance.",
+      "testFile": "src/test/java/com/gahyeonbot/services/assistant/OpenAiTranscriptionSilenceTest.java",
+      "testMethod": "quietSpeechKeepsExistingProviderFailureFallback",
+      "productionSignal": "Provider primary/fallback label, failure type,elapsedMs and qualifying sample count.",
+      "rollbackTrigger": "Fallback is hidden in quality reports, both providers fail, or measured transcription accuracy regresses."
+    },
+    {
+      "id": "copper-route-no-unrelated-tool-roundtrips",
+      "domain": "agent",
+      "incident": "2026-10-18 LME native QA spent100.9s in8model calls and selected repeated search plus unrelated personalized news. A local optimization that removed completed search from callbacks caused HTTP500 when the model retried the historical tool; that removal was reverted.",
+      "invariant": "Original LME copper price intent selects the existing authorized research skill and excludes unrelated tools; read and verify remain required. Previously advertised research tools stay registered so provider retries do not produce HTTP500.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/work/CopperResearchRoutingTest.java",
+      "testMethod": "copperSelectsResearchAuthorityWithoutRemovingPreviouslyAdvertisedTools",
+      "productionSignal": "Model call count, source read/verify counts, repeated search count and final evidence outcome.",
+      "rollbackTrigger": "Research selection grants new authority, skips required evidence, changes a resumed selection or routes unrelated intents."
+    },
+    {
+      "id": "research-citation-mismatch-recoverable-without-evidence",
+      "domain": "agent",
+      "incident": "2026-10-18 repeated native LME latency probe ended after41.8s with HTTP500 from a nonmatching source quote.",
+      "invariant": "Mismatched or unread-source citations return a recoverable negative result, never checked citations; failed read/verify outcomes cannot satisfy skill completion evidence.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/work/ResearchCitationRecoveryTest.java",
+      "testMethod": "invalidQuoteIsRecoverableButNeverSatisfiesEvidence",
+      "productionSignal": "Citation mismatch count, retry count, final evidence result and total latency without quotes.",
+      "rollbackTrigger": "A mismatched quote is accepted as evidence or the same recoverable mismatch aborts the conversation."
+    },
+    {
+      "id": "piper-korean-speech-normalization-contract",
+      "domain": "tts",
+      "incident": "2026-10-19 inspection of active Piper1.6.0 espeak-ko front end found no explicit financial/date/unit normalization and differing phonemes for Korean pronunciation spellings. Audited current model phoneme inventory before changes.",
+      "invariant": "Keep display text and model phoneme map intact; normalize explicit quantities and valid dates deterministically without an LLM. Korean exception dictionary is opt-in, token-bounded and does not rewrite compounds or training labels.",
+      "testFile": "scripts/test_piper_pronunciation.py",
+      "testMethod": "test_price_date_units_preserve_values_without_an_llm",
+      "productionSignal": "Normalization mode, latency and model/config/profile identity without original text.",
+      "rollbackTrigger": "Numeric value or sign changes, dates/identifiers are corrupted, unsupported phonemes appear, or subjective pronunciation degrades."
+    },
+    {
+      "id": "lme-discord-undeployed-research-20261020",
+      "domain": "agent",
+      "incident": "2026-10-20 11:51:40–11:52:56 UTC: three Discord LME requests ended without tool calls; production JAR lacks WebResearchTools and AgentSkillHarnessFactory. Runtime failure remains unresolved until authorized deployment.",
+      "invariant": "LME original intent must select available research tools and require evidence; feature-off must not be mistaken for production research readiness.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/skills/AgentSkillHarnessFactoryTest.java",
+      "testMethod": "disabledHarnessDoesNotReadJournalOrDiscoverRemoteTools",
+      "productionSignal": "Deployed class/configuration presence, qualifying research request count, tool-call count, evidence completion without raw transcript.",
+      "rollbackTrigger": "Research candidate yields unsupported prices or claims search completion without verified evidence."
     }
   ]
 }

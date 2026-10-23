@@ -1,0 +1,20 @@
+# Mount this directory read-only at /app/owner-work in the Gahyeon container.
+# Keys must be dedicated to forced-command workers, never ordinary admin keys.
+Host gahyeon-mac-worker
+    HostName 192.168.2.15
+    User ze
+    Port 2222
+    IdentityFile /app/owner-work/mac_key
+Host gahyeon-land-worker
+    HostName 192.168.2.2
+    User ubuntu
+    Port 2222
+    IdentityFile /app/owner-work/land_key
+Host *
+    BatchMode yes
+    IdentitiesOnly yes
+    StrictHostKeyChecking yes
+    UserKnownHostsFile /app/owner-work/known_hosts
+    ForwardAgent no
+    RequestTTY no
+    ConnectTimeout 8

@@ -16,6 +16,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "config/canonical-character-runtime.json"
 OVERLAY_SOURCE = ROOT / "native/macos/GahyeonUnrealOverlay/main.swift"
+OVERLAY_INFO = ROOT / "native/macos/GahyeonUnrealOverlay/Info.plist"
 OVERLAY_BINARY = ROOT / ".build/macos-overlay/GahyeonUnrealOverlay"
 SHARED_MEMORY_NAME = b"/gahyeon_rgba_v003"
 IOSURFACE_MEMORY_NAME = b"/gahyeon_iosurface_v001"
@@ -81,20 +82,23 @@ def build_command(value: dict) -> list[str]:
         str(editor), str(project), runtime_map,
         "-game", "-windowed", "-ForceRes", f"-ResX={width}", f"-ResY={height}", "-NoSplash",
         "-nosourcecontrol", "-nop4",
-        "-GahyeonAutoStartMicrophone", f"-ExecCmds={quality_commands}",
+        f"-ExecCmds={quality_commands}",
     ]
     if looking_glass_mode:
         command.append("-GahyeonLookingGlassQuilt")
     else:
         command.append("-GahyeonCPUAlphaFallback")
+        if os.environ.get("GAHYEON_RENDER_OFFSCREEN", "1") == "1":
+            command.append("-RenderOffscreen")
     return command
 
 
 def build_overlay() -> Path:
     OVERLAY_BINARY.parent.mkdir(parents=True, exist_ok=True)
-    if not OVERLAY_BINARY.is_file() or OVERLAY_BINARY.stat().st_mtime < OVERLAY_SOURCE.stat().st_mtime:
+    if not OVERLAY_BINARY.is_file() or OVERLAY_BINARY.stat().st_mtime < max(OVERLAY_SOURCE.stat().st_mtime, OVERLAY_INFO.stat().st_mtime):
         subprocess.run(
-            ["swiftc", "-swift-version", "5", str(OVERLAY_SOURCE), "-o", str(OVERLAY_BINARY)],
+            ["swiftc", "-swift-version", "5", str(OVERLAY_SOURCE), "-o", str(OVERLAY_BINARY),
+             "-Xlinker", "-sectcreate", "-Xlinker", "__TEXT", "-Xlinker", "__info_plist", "-Xlinker", str(OVERLAY_INFO)],
             cwd=ROOT,
             check=True,
         )

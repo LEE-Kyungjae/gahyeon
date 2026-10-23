@@ -1,0 +1,59 @@
+STT feedback loop (2026-10-11)
+
+Scope
+The synchronous Discord VOICE ConversationUseCase path records post-guard utterances
+(fragments may already be merged), original/effective text, request identity and explicit
+user labels. It does not record audio or infer reference transcripts from model answers.
+Historical unlabelled transcripts are not imported as training truth. Other clients,
+text chat and streaming conversation paths are unchanged.
+
+Usage after deployment and migration V43
+/stt-feedback action:recent (Korean command name: /음성정정) shows the caller's last
+five records privately. Copy a record ID and submit:
+/stt-feedback action:correct record:<ID> expected:<what you actually said>
+To confirm a correct original, supply the original text as expected.
+/stt-feedback action:disable record:<ID> blocks its mapping immediately.
+/stt-feedback action:clear deletes this user's STT learning records and rules in this
+server. It does not delete normal conversation history or disable future collection.
+The next voice utterance is a new observation. Corrections do not re-run an old question.
+
+Automatic state transitions
+COLLECTING: three distinct explicitly reviewed observations must agree on a changed text.
+VALIDATING: two additional explicitly reviewed observations must have been captured
+after validation began. Labelling old observations later is not a prospective holdout.
+ACTIVE: apply only exact whole-utterance matches for the same actor, Discord server,
+and STT pipeline configuration fingerprint. No fuzzy/substring/LLM rewriting.
+BLOCKED: conflicting labels, confirmation that the original was correct, or explicit
+disable prevents further application and automatic reactivation for that rule lifetime.
+Five labels are an activation heuristic, not a claim of statistically proven accuracy.
+Success statuses and repeated unreviewed recognitions are never positive labels.
+
+Isolation and controls
+Actor identity is resolved from the authenticated Discord event, not a command argument.
+Records and feedback cannot cross actors or servers. Pipeline fingerprints include
+primary/fallback models, endpoints, language and hint prompt, not keys or credentials.
+The fingerprint identifies configuration; it is NOT per-request provider attestation.
+Rules/records expire 30 days after rule creation and are purged hourly, including
+blocked rules. Expired rules never apply even before cleanup. New evidence can start
+a new cycle after expiry or explicit clearing. No indefinite raw-audio retention.
+Inputs longer than 512 characters bypass learning. All normal dialogue remains available
+if learning storage fails. Failures log only their class, not text or identifiers.
+
+Configuration
+assistant.stt.learning-enabled=true (default) enables recording and application on
+the Discord voice path. ASSISTANT_STT_LEARNING_ENABLED=false is the global runtime
+switch; restart/redeploy to change it. Feedback and clearing stay available.
+Migration V43 must run before use. No speech model weights or provider are changed.
+
+Validation and operational limits
+Run ./gradlew test --tests 'com.gahyeonbot.application.speech.SttLearning*Test'
+and bash scripts/run_ai_quality_gate.sh.
+Tests cover prospective validation, duplicate/replayed feedback, concurrency, exact
+matching, conflict revocation, persistence, expiry, actor/server/pipeline separation,
+Spring routing selection and fail-open operation. Synthetic test labels are fixtures,
+not corrections for the user's historical suspicious utterances.
+Observe decision=UNCHANGED/APPLIED and error-type counts without raw text logging.
+Real accuracy/false-correction rate requires fresh user-labelled voice turns. No
+qualifying traffic is not production validation. On a false correction, disable the
+rule through feedback; for a broader failure, use the global switch under deployment
+authority. Test results alone do not authorize production release or voice playback claims.

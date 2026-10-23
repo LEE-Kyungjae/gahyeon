@@ -2,7 +2,7 @@ package com.gahyeonbot.adapters.discord.voice;
 
 import com.gahyeonbot.adapters.discord.DiscordIdentityMapper;
 import com.gahyeonbot.adapters.discord.DiscordAudioFileMaterializer;
-import com.gahyeonbot.adapters.speech.TenVadDetector;
+import com.gahyeonbot.adapters.speech.VoiceActivityDetectorFactory;
 import com.gahyeonbot.application.speech.StreamingUtteranceAccumulator;
 import com.gahyeonbot.application.speech.UtteranceSegmentationPolicy;
 import com.gahyeonbot.adapters.discord.audio.GuildMusicManager;
@@ -364,7 +364,8 @@ public class VoiceAssistantService {
                 long revision,
                 AtomicBoolean waitingForAnswer) {
             long delay = properties.getResponseAcknowledgementMillis();
-            if (!properties.isSpeakResponses()
+            if (!properties.isResponseAcknowledgementsEnabled()
+                    || !properties.isSpeakResponses()
                     || !speechSynthesis.isReady(VoiceProfileId.ASSISTANT)
                     || delay < 0
                     || !acknowledgementPolicy.hasMessages(
@@ -503,7 +504,8 @@ public class VoiceAssistantService {
                     16_000);
             this.accumulator = new StreamingUtteranceAccumulator(
                     policy,
-                    vad.isEnabled() ? new TenVadDetector(vad.getHopSize(), vad.getThreshold()) : null,
+                    vad.isEnabled() ? VoiceActivityDetectorFactory.create(vad.getProvider(),
+                            vad.getHopSize(), vad.getThreshold(), vad.getSileroModelPath()) : null,
                     System.currentTimeMillis());
         }
 
@@ -522,8 +524,17 @@ public class VoiceAssistantService {
 
         private synchronized String mergeOrHold(String transcript, long now) {
             String clean = transcript == null ? "" : transcript.trim();
+            String spokenWord = clean.replaceAll("[^\\p{L}\\p{N}]", "");
+            if (java.util.Set.of("네", "예", "응").contains(spokenWord)) {
+                pendingFragment = "";
+                pendingFragmentAt = 0;
+                return clean;
+            }
             if (!pendingFragment.isBlank()) {
-                if (now - pendingFragmentAt <= properties.getFragmentMergeMillis()) {
+                long mergeWindow = VoiceContinuationPolicy.unfinished(pendingFragment)
+                        ? Math.max(30_000, properties.getFragmentMergeMillis())
+                        : properties.getFragmentMergeMillis();
+                if (now - pendingFragmentAt <= mergeWindow) {
                     clean = pendingFragment + " " + clean;
                 }
                 pendingFragment = "";
@@ -532,7 +543,8 @@ public class VoiceAssistantService {
             long meaningfulCharacters = clean.codePoints()
                     .filter(Character::isLetterOrDigit)
                     .count();
-            if (meaningfulCharacters < properties.getMinTranscriptCharacters()) {
+            if (meaningfulCharacters < properties.getMinTranscriptCharacters()
+                    || VoiceContinuationPolicy.unfinished(clean)) {
                 pendingFragment = clean;
                 pendingFragmentAt = now;
                 return null;
