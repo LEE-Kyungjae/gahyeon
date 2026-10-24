@@ -100,6 +100,17 @@ public class DesktopConversationController {
         }
     }
 
+    @org.springframework.web.bind.annotation.ExceptionHandler(
+            com.gahyeonbot.core.conversation.ConversationRejectedException.class)
+    public ResponseEntity<Map<String, String>> rejected(
+            com.gahyeonbot.core.conversation.ConversationRejectedException rejection) {
+        boolean limited = rejection.reason()
+                == com.gahyeonbot.core.conversation.ConversationRejectedException.Reason.RATE_LIMITED;
+        return ResponseEntity.status(limited ? 429 : 422).body(Map.of(
+                "code", rejection.reason().name(),
+                "message", limited ? "요청 한도를 초과했습니다." : "요청을 처리할 수 없습니다."));
+    }
+
     @DeleteMapping("/{sessionId}/active")
     public ResponseEntity<Void> cancel(
             @PathVariable @Size(max = ConversationSessionId.MAXIMUM_EXTERNAL_ID_CHARACTERS)

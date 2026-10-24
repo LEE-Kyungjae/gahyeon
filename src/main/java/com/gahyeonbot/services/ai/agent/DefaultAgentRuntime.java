@@ -41,8 +41,6 @@ public class DefaultAgentRuntime implements AgentRuntime {
     private static final int REPEATED_TOOL_CALL_LIMIT = 3;
     private static final int MAX_EVENT_PAYLOAD = 4_000;
     private static final int EMPTY_FINAL_RESPONSE_RETRY_LIMIT = 1;
-    private static final String EMPTY_FINAL_RESPONSE_FALLBACK =
-            "답변을 정리하는 중 문제가 생겼어요. 같은 질문을 한 번만 다시 말해 주세요.";
     private static final java.util.regex.Pattern TOOL_ARGUMENT_ONLY_JSON = java.util.regex.Pattern.compile(
             "(?s)^\\{\\s*\\\"(?:query|arxivId|city|repoFullName)\\\"\\s*:\\s*\\\"(?:[^\\\"\\\\]|\\\\.)*\\\"\\s*}$");
     private static final java.util.regex.Pattern PLAINTEXT_REASONING_PREAMBLE =
@@ -341,8 +339,8 @@ public class DefaultAgentRuntime implements AgentRuntime {
                     }
                     if (content.isBlank()) {
                         meterRegistry.counter("gahyeonbot.agent.empty_final_response.fallbacks").increment();
-                        log.error("빈 최종 응답 교정 실패; 안전 응답 사용 run={}", run.getId());
-                        content = EMPTY_FINAL_RESPONSE_FALLBACK;
+                        log.error("빈 최종 응답 교정 실패; 실행 실패 처리 run={}", run.getId());
+                        throw new IllegalStateException("Model returned no usable final answer after bounded correction");
                     }
                     if (skillHarness != null && !skillHarness.missingEvidence().isEmpty()) {
                         if (stepped.getCurrentStep() >= request.maxSteps()) {

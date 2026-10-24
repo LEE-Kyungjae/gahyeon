@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "status": "local-validated-not-deployed",
+  "approvedScope": [
+    "Desktop admission error mapping",
+    "Empty final reply must not record success"
+  ],
+  "changes": {
+    "admission": {
+      "unsafeInputHttpStatus": 422,
+      "rateLimitedHttpStatus": 429,
+      "exceptionDetailsExposed": false,
+      "existingFilterPreserved": true
+    },
+    "emptyFinalReply": {
+      "correctionRetryLimit": 1,
+      "terminalOutcome": "AGENT_EXECUTION_FAILED",
+      "successRecorded": false,
+      "memoryWritten": false
+    }
+  },
+  "validation": {
+    "focusedTests": "passed: DesktopAdmissionHttpTest, DesktopConversationControllerTest, DefaultAgentRuntimeCancellationTest",
+    "aiQualityGate": "passed",
+    "diffCheck": "passed",
+    "gitnexusUnstagedRisk": "medium",
+    "gitnexusAffectedFlows": 4,
+    "note": "GitNexus does not include untracked new test files; reviewed those separately."
+  },
+  "remaining": [
+    "Quoted malicious email is still rejected; safe summarization not implemented",
+    "Actual research retrieval success and latency remain unverified",
+    "New tools, MCP bindings and office artifact workers not implemented in this repair",
+    "No production deployment or production validation performed"
+  ],
+  "evidenceLogs": [
+    "/tmp/gahyeon-capability-repair-tests.log",
+    "/tmp/gahyeon-capability-repair-gate.log"
+  ]
+}

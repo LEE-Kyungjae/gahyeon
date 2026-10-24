@@ -133,12 +133,15 @@ class DefaultAgentRuntimeCancellationTest {
                 mock(AgentApprovalService.class), new ToolPolicy(),
                 new WeatherTools(mock(WeatherService.class)));
 
-        AgentResult result = runtime.execute(request("empty-final-fallback"));
-
-        assertThat(result.content()).isEqualTo(
-                "답변을 정리하는 중 문제가 생겼어요. 같은 질문을 한 번만 다시 말해 주세요.");
+        // The previous safe-message fallback incorrectly recorded a successful task.
+        assertThatThrownBy(() -> runtime.execute(request("empty-final-fallback")))
+                .isInstanceOf(AgentExecutionException.class)
+                .satisfies(failure -> assertThat(((AgentExecutionException) failure).getErrorCode())
+                        .isEqualTo("AGENT_EXECUTION_FAILED"));
         verify(model, times(2)).call(any(Prompt.class));
-        verify(ledger).succeed("run-empty-final-fallback", result.content());
+        verify(ledger).fail(eq("run-empty-final-fallback"), eq("AGENT_EXECUTION_FAILED"), any());
+        verify(ledger, never()).succeed(any(), any());
+        verify(memory, never()).remember(any(), any(), any());
     }
 
     @Test
