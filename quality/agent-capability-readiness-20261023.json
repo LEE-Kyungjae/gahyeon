@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "assessment": "not-ready-for-general-purpose-production-agent",
+  "localSourceCommit": "8b931be",
+  "productionSourceCommit": null,
+  "productionImage": "ghcr.io/lee-kyungjae/gahyeonbot@sha256:c73db988d7aad663618afda386d31e2f06e08ae4ce49e55e9be0a0f5bc39b60d",
+  "deploymentRevision": "105",
+  "evidenceWindow": {
+    "start": "2026-10-23T13:48:12.496931+00:00",
+    "end": "2026-10-23T13:51:19.174931+00:00",
+    "endPrecision": "conservative upper bound from sequential timings"
+  },
+  "syntheticRequests": 8,
+  "organicTrafficValidated": false,
+  "productionValidated": false,
+  "localTests": {
+    "tests": 219,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1,
+    "forcedRerun": true
+  },
+  "voiceValidation": "Readiness flags only; no end-to-end STT/TTS measurement in this run",
+  "limits": [
+    "One sample per case; no percentile or failure-rate inference",
+    "Production source commit not independently attested",
+    "Acceptance monitor tests do not fix runtime defects",
+    "HTTP 200 does not prove tool execution or work completion"
+  ],
+  "results": [
+    {
+      "id": "conversation",
+      "status": "failed",
+      "httpStatus": 200,
+      "elapsedSeconds": 38.673
+    },
+    {
+      "id": "analysis",
+      "status": "passed-arithmetic-only",
+      "httpStatus": 200,
+      "elapsedSeconds": 10.778
+    },
+    {
+      "id": "missing-data",
+      "status": "failed",
+      "httpStatus": 200,
+      "elapsedSeconds": 13.109
+    },
+    {
+      "id": "document",
+      "status": "unsupported",
+      "httpStatus": 200,
+      "elapsedSeconds": 4.12
+    },
+    {
+      "id": "spreadsheet",
+      "status": "unsupported",
+      "httpStatus": 200,
+      "elapsedSeconds": 24.145
+    },
+    {
+      "id": "mail-fixture",
+      "status": "failed",
+      "httpStatus": 500,
+      "elapsedSeconds": 0.022
+    },
+    {
+      "id": "mail-connection",
+      "status": "unsupported",
+      "httpStatus": 200,
+      "elapsedSeconds": 5.494
+    },
+    {
+      "id": "research",
+      "status": "failed",
+      "httpStatus": 200,
+      "elapsedSeconds": 80.337
+    }
+  ],
+  "skills": {
+    "acquiredReferences": 21,
+    "runtimeReleasedSkillDefinitions": 3,
+    "newRuntimeActivations": 0
+  },
+  "rawSyntheticEvidence": "artifacts/agent-capability-qa-20261023/live-results.json",
+  "qualityGate": "passed",
+  "newAcceptanceMonitorTests": 4,
+  "runtimeDefectsFixed": 0
+}

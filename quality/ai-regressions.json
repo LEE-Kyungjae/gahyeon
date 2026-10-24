@@ -1190,6 +1190,74 @@
       "testMethod": "disabledHarnessDoesNotReadJournalOrDiscoverRemoteTools",
       "productionSignal": "Deployed class/configuration presence, qualifying research request count, tool-call count, evidence completion without raw transcript.",
       "rollbackTrigger": "Research candidate yields unsupported prices or claims search completion without verified evidence."
+    },
+    {
+      "id": "capability-20261023-conversation",
+      "domain": "agent",
+      "incident": "Conversation returned four sentences and Chinese characters for a two-sentence Korean request.",
+      "invariant": "Korean two-sentence requests preserve language and sentence constraint.",
+      "testFile": "scripts/test_agent_capability_acceptance.py",
+      "testMethod": "test_conversation_rejects_wrong_language_and_sentence_count",
+      "productionSignal": "Case category, HTTP status, elapsed time bucket, violation codes and tool-evidence presence; no user content or account identifiers.",
+      "rollbackTrigger": "Block promotion if this invariant fails in qualifying synthetic traffic; rollback requires separate authority.",
+      "status": "open",
+      "coverage": "acceptance-monitor-only; runtime repair outstanding",
+      "evidenceWindow": {
+        "start": "2026-10-23T13:48:12.496931+00:00",
+        "end": "2026-10-23T13:51:19.174931+00:00",
+        "endPrecision": "conservative upper bound from sequential timings"
+      }
+    },
+    {
+      "id": "capability-20261023-missing-data",
+      "domain": "agent",
+      "incident": "Missing/duplicate CSV answer stopped mid-table without alternative totals.",
+      "invariant": "Analysis explicitly distinguishes missingness and duplicate assumptions with both totals.",
+      "testFile": "scripts/test_agent_capability_acceptance.py",
+      "testMethod": "test_analysis_requires_both_duplicate_assumptions",
+      "productionSignal": "Case category, HTTP status, elapsed time bucket, violation codes and tool-evidence presence; no user content or account identifiers.",
+      "rollbackTrigger": "Block promotion if this invariant fails in qualifying synthetic traffic; rollback requires separate authority.",
+      "status": "open",
+      "coverage": "acceptance-monitor-only; runtime repair outstanding",
+      "evidenceWindow": {
+        "start": "2026-10-23T13:48:12.496931+00:00",
+        "end": "2026-10-23T13:51:19.174931+00:00",
+        "endPrecision": "conservative upper bound from sequential timings"
+      }
+    },
+    {
+      "id": "capability-20261023-mail-fixture",
+      "domain": "agent",
+      "incident": "Quoted malicious mail content caused admission rejection to surface as HTTP 500.",
+      "invariant": "Untrusted quoted instructions are not executed; safe summarization or a typed non-500 rejection is returned.",
+      "testFile": "src/test/java/com/gahyeonbot/adapters/desktop/DesktopAdmissionHttpTest.java",
+      "testMethod": "unsafeInputReturnsTyped422WithoutLeakingExceptionDetails",
+      "productionSignal": "Case category, HTTP status, elapsed time bucket, violation codes and tool-evidence presence; no user content or account identifiers.",
+      "rollbackTrigger": "Block promotion if this invariant fails in qualifying synthetic traffic; rollback requires separate authority.",
+      "status": "partial-fix-local-verified-not-deployed",
+      "coverage": "MVC tests verify typed 422/429, exception detail redaction and generation cleanup; safe quoted-mail summarization remains unresolved",
+      "evidenceWindow": {
+        "start": "2026-10-23T13:48:12.496931+00:00",
+        "end": "2026-10-23T13:51:19.174931+00:00",
+        "endPrecision": "conservative upper bound from sequential timings"
+      }
+    },
+    {
+      "id": "capability-20261023-research",
+      "domain": "agent",
+      "incident": "OpenSSH documentation request returned generic failure after 80 seconds with HTTP 200.",
+      "invariant": "Research provides source-backed completion or explicit machine-readable failure; fallback text is not success.",
+      "testFile": "src/test/java/com/gahyeonbot/services/ai/agent/DefaultAgentRuntimeCancellationTest.java",
+      "testMethod": "returnsSafeMessageWhenTheCorrectionRetryIsAlsoEmpty",
+      "productionSignal": "Case category, HTTP status, elapsed time bucket, violation codes and tool-evidence presence; no user content or account identifiers.",
+      "rollbackTrigger": "Block promotion if this invariant fails in qualifying synthetic traffic; rollback requires separate authority.",
+      "status": "partial-fix-local-verified-not-deployed",
+      "coverage": "Empty final response after one correction fails ledger and cannot record success or memory. Actual source retrieval and production latency remain unresolved.",
+      "evidenceWindow": {
+        "start": "2026-10-23T13:48:12.496931+00:00",
+        "end": "2026-10-23T13:51:19.174931+00:00",
+        "endPrecision": "conservative upper bound from sequential timings"
+      }
     }
   ]
 }
