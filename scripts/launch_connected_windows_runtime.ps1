@@ -13,7 +13,7 @@ $Editor = Join-Path $EngineRoot 'Engine\Binaries\Win64\UnrealEditor.exe'
 $Module = Join-Path $RuntimeRoot 'GahyeonDesktopMetaHumanPOC\Binaries\Win64\UnrealEditor-GahyeonDesktopMetaHumanPOC.dll'
 foreach ($File in @($Project,$Overlay,$Editor,$Module)) { if (-not (Test-Path -LiteralPath $File)) { throw "Missing runtime file: $File" } }
 $env:GAHYEON_CORE_URL = 'http://127.0.0.1:18080/api'
-$env:GAHYEON_CLIENT_TOKEN = (& wsl.exe -d Ubuntu-24.04-D -- cat /home/ubuntu/.config/gahyeon/client-token).Trim()
+$env:GAHYEON_CLIENT_TOKEN = (& wsl.exe -d Ubuntu-24.04 -- cat /home/ubuntu/.config/gahyeon/client-token).Trim()
 if (-not $env:GAHYEON_CLIENT_TOKEN) { throw 'Missing Core client credential' }
 $Status = Invoke-RestMethod -Uri ($env:GAHYEON_CORE_URL + '/gahyeon/desktop/speech/status') -Headers @{ Authorization = 'Bearer ' + $env:GAHYEON_CLIENT_TOKEN }
 $Arguments = @('"' + $Project + '"',$Platform.runtimeMap,'-game','-windowed','-ForceRes','-ResX=1600','-ResY=1258','-RenderOffscreen','-NoSplash','-nosourcecontrol','-GahyeonCPUAlphaFallback','-ExecCmds="r.MotionBlurQuality 0,r.DefaultFeature.MotionBlur 0,r.ScreenPercentage 100,r.AntiAliasingMethod 1,r.TextureStreaming 0,r.PostProcessing.PropagateAlpha 1,r.ExposureOffset 0.5"','-abslog="' + (Join-Path $RuntimeRoot 'runtime.log') + '"')
