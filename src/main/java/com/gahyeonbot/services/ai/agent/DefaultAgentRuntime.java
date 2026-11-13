@@ -1,17 +1,13 @@
 package com.gahyeonbot.services.ai.agent;
 
 import com.gahyeonbot.core.identity.ActorId;
-import com.gahyeonbot.core.memory.MemoryRole;
 import com.gahyeonbot.core.memory.MemorySnapshot;
 import com.gahyeonbot.core.memory.MemoryUseCase;
-import com.gahyeonbot.core.tool.ToolDecision;
 import com.gahyeonbot.core.tool.ToolPolicy;
-import com.gahyeonbot.application.life.CharacterConversationContext;
 import com.gahyeonbot.entity.AgentRun;
 import com.gahyeonbot.repository.AgentRunRepository;
 import com.gahyeonbot.services.ai.*;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.*;
@@ -26,10 +22,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.gahyeonbot.services.ai.agent.AgentCancellation.cancelled;
+import static com.gahyeonbot.services.ai.agent.AgentCancellation.ensureNotCancelled;
+import static com.gahyeonbot.services.ai.agent.AgentEventPayloads.limited;
 
 @Service
 @ConditionalOnProperty(name = "spring.ai.model.chat", havingValue = "openai")
@@ -37,7 +35,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class DefaultAgentRuntime implements AgentRuntime {
     private static final int REPEATED_TOOL_CALL_LIMIT = 3;
-    private static final int MAX_EVENT_PAYLOAD = 4_000;
     private static final int EMPTY_FINAL_RESPONSE_RETRY_LIMIT = 1;
     private static final String EMPTY_FINAL_RESPONSE_FALLBACK =
             "답변을 정리하는 중 문제가 생겼어요. 같은 질문을 한 번만 다시 말해 주세요.";
@@ -207,9 +204,11 @@ public class DefaultAgentRuntime implements AgentRuntime {
             AgentStreamObserver streamObserver,
             AgentExecutionControl control) {
         List<String> usedTools = new ArrayList<>();
+        AgentRunMetrics metrics = new AgentRunMetrics(meterRegistry);
         try {
             MemorySnapshot memory = loadMemory(request.actorId());
-            List<Message> messages = initialMessages(request, memory, backgroundResult);
+            List<Message> messages = new AgentConversationPrompt(promptProvider)
+                    .initialMessages(request, memory, backgroundResult);
             ToolCallback[] callbacks = MethodToolCallbackProvider.builder()
                     .toolObjects(weatherTools, gitHubKnowledgeTools, paperKnowledgeTools, knowledgeFreshnessTools)
                     .build()
@@ -222,7 +221,9 @@ public class DefaultAgentRuntime implements AgentRuntime {
                     .toolCallbacks(callbacks)
                     .internalToolExecutionEnabled(false)
                     .build();
-            AgentLoopGuard loopGuard = new AgentLoopGuard(REPEATED_TOOL_CALL_LIMIT);
+            AgentToolCallExecutor toolCallExecutor = new AgentToolCallExecutor(
+                    ledger, toolPolicy, approvalService, callbackByName,
+                    new AgentLoopGuard(REPEATED_TOOL_CALL_LIMIT));
             int emptyFinalResponseRetries = 0;
 
             while (true) {
@@ -302,59 +303,12 @@ public class DefaultAgentRuntime implements AgentRuntime {
                     });
                     if (!committed) throw new AgentStreamCancelledException();
                     Duration duration = Duration.ofNanos(System.nanoTime() - startedNanos);
-                    recordMetrics(request.modality(), "succeeded", duration);
+                    metrics.record(request.modality(), "succeeded", duration);
                     return new AgentResult(run.getId(), finalContent, usedTools, duration);
                 }
 
-                List<ToolResponseMessage.ToolResponse> toolResponses = new ArrayList<>();
-                for (AssistantMessage.ToolCall toolCall : assistant.getToolCalls()) {
-                    ensureNotCancelled(streamObserver, control);
-                    loopGuard.recordToolCall(toolCall.name(), toolCall.arguments());
-                    ToolCallback callback = callbackByName.get(toolCall.name());
-                    if (callback == null) {
-                        throw new IllegalStateException("등록되지 않은 도구입니다: " + toolCall.name());
-                    }
-                    ToolDecision decision = toolPolicy.decide(toolCall.name());
-                    ledger.appendToolEvent(run.getId(), AgentEventType.TOOL_CALL_REQUESTED,
-                            toolCall.name(), limited(toolCall.arguments()));
-                    if (decision == ToolDecision.DENY) {
-                        throw new IllegalStateException("정책상 허용되지 않은 도구입니다: " + toolCall.name());
-                    }
-                    if (decision == ToolDecision.REQUIRE_APPROVAL) {
-                        if (approvalService.consumeIfApproved(
-                                run.getId(), toolCall.name(), toolCall.arguments())) {
-                            ledger.appendToolEvent(run.getId(), AgentEventType.APPROVAL_CONSUMED,
-                                    toolCall.name(), limited(toolCall.arguments()));
-                        } else {
-                            var approval = approvalService.request(
-                                    run.getId(), toolCall.name(), toolCall.arguments());
-                            ledger.transition(run.getId(), AgentRunStatus.WAITING_APPROVAL,
-                                    AgentEventType.APPROVAL_REQUESTED, approval.getId());
-                            throw new AgentApprovalRequiredException(
-                                    run.getId(), toolCall.name(), toolCall.arguments());
-                        }
-                    }
-
-                    if (!control.tryStartSideEffect()) {
-                        throw new AgentStreamCancelledException();
-                    }
-                    ledger.appendToolEvent(
-                            run.getId(), AgentEventType.TOOL_CALL_STARTED, toolCall.name(), null);
-                    String toolResult;
-                    try {
-                        toolResult = callback.call(toolCall.arguments());
-                    } catch (Exception toolFailure) {
-                        ledger.appendToolEvent(run.getId(), AgentEventType.TOOL_CALL_FAILED,
-                                toolCall.name(), limited(toolFailure.getMessage()));
-                        throw toolFailure;
-                    }
-                    ensureNotCancelled(streamObserver, control);
-                    ledger.appendToolEvent(run.getId(), AgentEventType.TOOL_CALL_COMPLETED,
-                            toolCall.name(), limited(toolResult));
-                    usedTools.add(toolCall.name());
-                    toolResponses.add(new ToolResponseMessage.ToolResponse(
-                            toolCall.id(), toolCall.name(), toolResult));
-                }
+                List<ToolResponseMessage.ToolResponse> toolResponses = toolCallExecutor.executeAll(
+                        run.getId(), assistant.getToolCalls(), streamObserver, control, usedTools);
                 messages.add(new ToolResponseMessage(toolResponses));
 
                 if (stepped.getCurrentStep() >= request.maxSteps()) {
@@ -364,18 +318,18 @@ public class DefaultAgentRuntime implements AgentRuntime {
         } catch (AgentApprovalRequiredException approval) {
             if (cancelled(streamObserver, control)) {
                 cancelRun(run.getId(), request.actorId(), "client_generation_changed");
-                recordMetrics(request.modality(), "cancelled",
+                metrics.record(request.modality(), "cancelled",
                         Duration.ofNanos(System.nanoTime() - startedNanos));
                 throw new AgentStreamCancelledException(approval);
             }
-            recordMetrics(request.modality(), "waiting_approval",
+            metrics.record(request.modality(), "waiting_approval",
                     Duration.ofNanos(System.nanoTime() - startedNanos));
             throw approval;
         } catch (Exception failure) {
             if (cancelled(streamObserver, control)) {
                 cancelRun(run.getId(), request.actorId(), "client_generation_changed");
                 Duration duration = Duration.ofNanos(System.nanoTime() - startedNanos);
-                recordMetrics(request.modality(), "cancelled", duration);
+                metrics.record(request.modality(), "cancelled", duration);
                 if (failure instanceof AgentStreamCancelledException cancelled) throw cancelled;
                 throw new AgentStreamCancelledException(failure);
             }
@@ -388,24 +342,10 @@ public class DefaultAgentRuntime implements AgentRuntime {
                 log.error("에이전트 실패 원장 기록 실패 run={}", run.getId(), ledgerFailure);
             }
             Duration duration = Duration.ofNanos(System.nanoTime() - startedNanos);
-            recordMetrics(request.modality(), "failed", duration);
+            metrics.record(request.modality(), "failed", duration);
             throw new AgentExecutionException(
                     run.getId(), errorCode, "에이전트 실행에 실패했습니다.", failure);
         }
-    }
-
-    private void ensureNotCancelled(
-            AgentStreamObserver observer,
-            AgentExecutionControl control) {
-        if (cancelled(observer, control)) throw new AgentStreamCancelledException();
-    }
-
-    private boolean cancelled(
-            AgentStreamObserver observer,
-            AgentExecutionControl control) {
-        return control.isCancelled()
-                || observer != null
-                && (observer.isCancelled() || Thread.currentThread().isInterrupted());
     }
 
     private void cancelRun(String runId, ActorId actorId, String reason) {
@@ -425,126 +365,15 @@ public class DefaultAgentRuntime implements AgentRuntime {
         }
     }
 
-    private List<Message> initialMessages(
-            AgentRequest request,
-            MemorySnapshot memory,
-            String backgroundResult) {
-        List<Message> messages = new ArrayList<>();
-        messages.add(new SystemMessage(promptProvider.systemPrompt(memory.summary(), request.sessionKey())));
-        if (usesSharedActorMemory(request.sessionKey())) {
-            memory.recentMessages().forEach(message -> messages.add(
-                    message.role() == MemoryRole.USER
-                            ? new UserMessage(message.content())
-                            : new AssistantMessage(message.content())));
-        }
-        messages.add(new UserMessage("""
-                [modality]
-                %s
-
-                [응답 매체 지침]
-                %s
-
-                [현재 시각]
-                %s
-
-                [현재 질문]
-                %s
-                """.formatted(
-                request.modality(),
-                modalityGuidance(request.modality()),
-                ZonedDateTime.now(ZoneId.of("Asia/Seoul")),
-                request.message())));
-        if (backgroundResult != null && !backgroundResult.isBlank()) {
-            messages.add(new UserMessage("""
-                    [백그라운드 작업 완료 결과]
-                    %s
-
-                    위 결과를 반영해 원래 요청에 대한 최종 답변을 작성해.
-                    """.formatted(backgroundResult)));
-        }
-        return messages;
-    }
-
     static String modalityGuidance(AgentModality modality) {
-        return switch (modality) {
-            case VOICE -> """
-                    음성으로 듣기 편한 문장으로 답한다. 기본은 핵심부터 2~4문장으로 말하되,
-                    사용자가 설명·비교·방법·논문 내용을 요구하면 이해에 필요한 만큼 충분히 설명한다.
-                    기본 응답 언어는 한국어다. 사용자가 영어 또는 다른 언어로 답해 달라고 명시한 경우에만
-                    해당 언어로 답하며, 영문 고유명사와 기술 용어는 원래 철자를 유지한다.
-                    마크다운, 이모지, URL 낭독, 표, 장식용 특수문자는 사용하지 않는다.
-                    """;
-            case TEXT -> """
-                    텍스트로 읽기 좋은 답변을 작성한다. 단순 질문은 짧게, 기술·논문·분석 질문은
-                    결론과 근거가 빠지지 않도록 필요한 만큼 자세히 답한다. 길이를 캐릭터성 때문에 줄이지 않는다.
-                    """;
-            case SYSTEM -> "업무 목적과 전달 대상에 맞춰 간결성과 완전성을 조절한다.";
-        };
+        return AgentConversationPrompt.modalityGuidance(modality);
     }
 
     static boolean usesSharedActorMemory(String sessionKey) {
-        return CharacterConversationContext.fromScopedSessionKey(sessionKey).isEmpty();
-    }
-
-    private void recordMetrics(AgentModality modality, String status, Duration duration) {
-        meterRegistry.counter("gahyeonbot.agent.runs",
-                "modality", modality.name().toLowerCase(Locale.ROOT),
-                "status", status).increment();
-        Timer.builder("gahyeonbot.agent.run.duration")
-                .tag("modality", modality.name().toLowerCase(Locale.ROOT))
-                .tag("status", status)
-                .register(meterRegistry)
-                .record(duration);
-    }
-
-    private static String limited(String value) {
-        if (value == null) return null;
-        return value.length() <= MAX_EVENT_PAYLOAD
-                ? value
-                : value.substring(0, MAX_EVENT_PAYLOAD) + "...[truncated]";
+        return AgentConversationPrompt.usesSharedActorMemory(sessionKey);
     }
 
     static String sanitizeFinalResponse(String value) {
-        if (value == null || value.isBlank()) return "";
-        String content = value.trim();
-        String lowerContent = content.toLowerCase(Locale.ROOT);
-        int responseStart = lowerContent.lastIndexOf("<response>");
-        if (responseStart >= 0) {
-            String explicitResponse = content.substring(responseStart + "<response>".length())
-                    .replaceFirst("(?is)\\s*(?:</response>|response>)\\s*$", "")
-                    .trim();
-            if (!explicitResponse.isBlank()) content = explicitResponse;
-        }
-        int thinkingEnd = content.toLowerCase(Locale.ROOT).lastIndexOf("</think>");
-        if (thinkingEnd >= 0) {
-            String finalAnswer = content.substring(thinkingEnd + "</think>".length()).trim();
-            if (!finalAnswer.isBlank()) content = finalAnswer;
-        }
-        content = content
-                .replaceAll("(?is)<think>.*?</think>", "")
-                .replaceAll("(?is)</?think>", "")
-                .replaceAll("(?is)<thought>.*?(?:</thought>|thought>)", "")
-                .replaceAll("(?is)</?thought>", "")
-                .replaceAll("(?is)</?response>", "")
-                .replaceAll("(?i)(?:<pad>|<unk>|<s>|</s>)+", "")
-                .trim();
-        String lower = content.toLowerCase(Locale.ROOT);
-        for (String marker : List.of(
-                "\nfinal answer:", "\nfinal response:",
-                "\n최종 답변:", "\n최종 응답:")) {
-            int markerIndex = lower.lastIndexOf(marker);
-            if (markerIndex >= 0) {
-                String finalAnswer = content.substring(markerIndex + marker.length()).trim();
-                if (!finalAnswer.isBlank()) return finalAnswer;
-            }
-        }
-        if (lower.startsWith("here's a thinking process:")
-                || lower.startsWith("here is a thinking process:")
-                || lower.startsWith("thinking process:")
-                || lower.startsWith("analysis:")
-                || lower.startsWith("<thought>")) {
-            return "";
-        }
-        return content;
+        return AgentFinalResponseSanitizer.sanitize(value);
     }
 }
