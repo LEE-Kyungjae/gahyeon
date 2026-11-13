@@ -57,13 +57,22 @@ jobs:
 
           namespace=gahyeonbot
           deployment=gahyeonbot
+          # Only the Core container receives the release image. Sidecars such as
+          # edge-tts stay pinned on purpose (see quality/ai-regressions.json), so
+          # requiring every container to match the release tag never converges.
+          core_container=gahyeonbot
 
           if [ -n "$EXPECTED_IMAGE_TAG" ]; then
             for attempt in $(seq 1 60); do
               images="$(kubectl -n "$namespace" get deployment "$deployment" \
                 -o jsonpath='{range .spec.template.spec.containers[*]}{.name}={.image}{"\n"}{end}')"
-              mismatched="$(printf '%s\n' "$images" | grep -Fv ":$EXPECTED_IMAGE_TAG" || true)"
-              if [ -z "$mismatched" ]; then
+              core_image="$(printf '%s\n' "$images" | sed -n "s/^${core_container}=//p")"
+              if [ -z "$core_image" ]; then
+                printf 'Container %s not found in deployment %s. Current images:\n%s\n' \
+                  "$core_container" "$deployment" "$images" >&2
+                exit 1
+              fi
+              if [ "${core_image##*:}" = "$EXPECTED_IMAGE_TAG" ]; then
                 break
               fi
               printf 'Waiting for %s (%s/60). Current images:\n%s\n' \
