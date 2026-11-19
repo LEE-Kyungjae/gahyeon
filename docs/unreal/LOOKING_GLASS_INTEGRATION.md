@@ -1,14 +1,15 @@
 # Looking Glass Go 통합 계획
 
-Looking Glass Go는 별도 Gahyeon 인스턴스가 아니라 Desktop/Unreal Stage와 같은 session,
-World State, speech sequence를 구독하는 선택형 display renderer다.
+Looking Glass Go는 Gahyeon의 주요 배포 표면이다. 별도 Gahyeon 인스턴스가 아니라
+Desktop/Unreal Stage와 같은 session, World State, speech sequence를 구독한다. 일반 모니터는
+제작·진단·장치 복구 fallback이며 production acceptance를 대신하지 않는다.
 
 ## 도구별 판단
 
 | 도구 | Gahyeon에서의 역할 | 지금 도입 여부 |
 |---|---|---|
-| Looking Glass Bridge | 장치 탐색·calibration·출력 연결 | 실제 Go 검증 머신에 필수, 일반 실행에는 불필요 |
-| Unreal Plugin 2.1.1 | UE 5.6 scene의 실시간/적응형/정적 quilt 출력 | prototype 대상으로 확정, 배포 기본 비활성 |
+| Looking Glass Bridge | 장치 탐색·calibration·출력 연결 | 제작 fallback에는 불필요, production에 필수 |
+| Unreal Plugin | UE 5.8 scene의 실시간/적응형/정적 quilt 출력 | 5.8 포팅·실기 검증이 필수 release gate |
 | Model Viewer | G1~G5 FBX/GLB의 깊이·실루엣 빠른 육안 검수 | 제작 QA 보조로 권장 |
 | Blender Add-on | blockout/animation의 holographic preview와 pre-render | 선택형 authoring QA |
 | Looking Glass Studio | quilt/image/video 재생과 장치 콘텐츠 관리 | 데모·납품 검수용 |
@@ -17,7 +18,7 @@ World State, speech sequence를 구독하는 선택형 display renderer다.
 
 ## 현재 제한
 
-공식 저장소 최신 release 2.1.1은 UE 5.6 지원을 명시한다. 소스에는 `Realtime`,
+확인된 공식 release 2.1.1은 UE 5.6 지원만 명시하며 UE 5.8 호환 근거는 아니다. 소스에는 `Realtime`,
 `RealtimeAdaptive`, `NonRealtime` 성능 모드가 있고, 런타임 기본 경로는 매 frame quilt를
 렌더링해 Bridge에 DirectX texture로 전달한다. 기본 quilt 설정은 11×6, 즉 66 view다.
 그러나 README는 현재 플러그인을 실시간 콘텐츠 생성용으로 의도하지 않았다고 명시하고 plugin
@@ -26,7 +27,7 @@ descriptor는 Win64만 허용한다. 따라서 **실시간 구현은 존재하�
 
 ## 활성화 순서
 
-1. Win64 UE 5.6 제작 머신에 Bridge 2.5.1 이상과 Plugin 2.1.1을 설치한다.
+1. Win64 UE 5.8 제작 머신에 Bridge 2.5.1 이상과 UE 5.8에서 compile/load가 확인된 Plugin을 설치한다.
 2. 별도 prototype map에서 Go 장치 탐색과 calibration을 확인한다.
 3. 동일 Stage World snapshot을 perspective camera와 Looking Glass capture가 동시에 소비한다.
 4. Bridge/Go를 끈 상태에서 일반 renderer와 Core health가 유지되는지 확인한다.
@@ -35,8 +36,8 @@ descriptor는 Win64만 허용한다. 따라서 **실시간 구현은 존재하�
    profile을 분리 기록한다.
 6. VAD→Listening, barge-in→audio stop, audio→viseme 기존 latency budget이 악화되지 않는지
    확인한다.
-7. 합격할 때만 opt-in 배포 profile에 Plugin을 추가한다. prototype build에서는 즉시 시험할 수
-   있지만 기본 Desktop profile에는 넣지 않는다.
+7. 합격한 plugin/profile을 production 배포 profile에 고정한다. prototype build에서는 즉시
+   시험할 수 있지만 일반 monitor profile은 개발·복구 fallback으로만 유지한다.
 
 공식 prebuilt archive는 release URL, byte size, SHA-256과 내부 Win64 module descriptor까지
 검증한 뒤 `Plugins/LookingGlass`에 원자적으로 설치한다. 기존 plugin 디렉터리는 자동으로
@@ -64,14 +65,14 @@ prototype이 실패해도 일반 Stage project descriptor를 수정하거나 복
 python3 scripts/verify_looking_glass_unreal_profile.py
 ```
 
-Windows 제작 머신에서는 설치 뒤 다음 gate가 UE 5.6 Development Editor build와 전체 Gahyeon
+Windows 제작 머신에서는 설치 뒤 다음 gate가 UE 5.8 Development Editor build와 전체 Gahyeon
 Automation을 실행하고, plugin이 실제 활성화되어 `LookingGlassRuntime` module을 제공하는지도
 별도 Automation test로 확인한다. 이 명령의 `-NullRHI` 단계는 compile/plugin-load 증거이며
 실제 Go 출력 성능 증거를 대신하지 않는다.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/run_looking_glass_windows_gate.ps1 `
-  -UnrealRoot "C:\Program Files\Epic Games\UE_5.6"
+  -UnrealRoot "C:\Program Files\Epic Games\UE_5.8"
 ```
 
 기계 검증은 다음 lock contract가 담당한다.
@@ -136,8 +137,8 @@ Bridge/운영자가 metadata에 SHA-256으로 별도 기록하며 plugin 2.1.1 �
 시작해야 서로 다른 실행의 표본이 섞이지 않는다. 각 JSON 옆에는
 `<profile>--<scenario>--quilt.png`가 생성되며 이 파일이 없거나 변조되면 이후 gate가 실패한다.
 
-현재 저장소는 이 source/contract 경계까지 제공한다. 실제 합격을 주장하려면 Win64 UE 5.6,
-고정 plugin 2.1.1, Bridge 2.5.1 이상, 실제 Looking Glass Go와 scene에 배치된 active
+현재 저장소는 이 source/contract 경계까지 제공한다. 실제 합격을 주장하려면 Win64 UE 5.8,
+5.8에서 검증된 plugin build, Bridge 2.5.1 이상, 실제 Looking Glass Go와 scene에 배치된 active
 `ALookingGlassCapture`가 필요하다. macOS의 정적 검사나 `-NullRHI` Automation은 이 실기기
 증거를 대신할 수 없다.
 

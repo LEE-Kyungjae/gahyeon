@@ -15,7 +15,8 @@ public:
     explicit SpeechPlaybackCoordinator(
         RealtimeCharacterCoordinator& character,
         std::size_t queueCapacity = 16,
-        LipSyncRuntime* lipSync = nullptr);
+        LipSyncRuntime* lipSync = nullptr,
+        EmotionRuntime* speechExpression = nullptr);
 
     std::optional<std::string> SetGeneration(Generation generation);
     SpeechEnqueueResult Prepared(PreparedSpeech speech);
@@ -39,6 +40,7 @@ private:
     std::optional<PreparedSpeech> active_;
     bool playing_ = false;
     LipSyncRuntime* lipSync_ = nullptr;
+    EmotionRuntime* speechExpression_ = nullptr;
 };
 
 } // namespace Gahyeon

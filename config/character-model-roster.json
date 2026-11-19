@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "runtime": "unreal",
+  "selectionCapability": "0x524F5354",
+  "conversationCharacter": "gahyeon",
+  "characters": [
+    {
+      "index": 0,
+      "id": "gahyeon",
+      "label": "가현",
+      "source": "artifacts/land-characters/land-tripo-20261015/gahyeon/tripo-v1/desktop/gahyeon-tripo-idle-v3.glb",
+      "sourceSha256": "0ec731c810ba9b94f384be6e8b8456dde48da497ba2f92a48dd03a1b849358a3",
+      "runtimeMap": "/Game/Gahyeon/Land/Gahyeon/v006/Runtime/L_GahyeonLandMac_v006",
+      "status": "existing-canonical",
+      "visualApproved": false,
+      "characterAsset": "/Game/Gahyeon/Land/Gahyeon/v002/Source/Gahyeon_Land_Idle_v001",
+      "animationProfile": "character_pipeline/config/land-gahyeon-idle-v001.json"
+    },
+    {
+      "index": 1,
+      "id": "zeze",
+      "label": "재재",
+      "source": "artifacts/land-characters/jaejae-v2-20261017/jaejae-v2.glb",
+      "sourceSha256": "cfa77d07146aade375919fafc253c6962956f8f5466fbe55a6cd86ac49c0304c",
+      "runtimeMap": "/Game/Gahyeon/Land/Jaejae/Idle_v004/L_Character",
+      "status": "candidate",
+      "visualApproved": false,
+      "characterAsset": "/Game/Gahyeon/Land/Roster_v001/jaejae_v2/Source/Character",
+      "animationProfile": "character_pipeline/config/land-jaejae-v2-motion-v004.json",
+      "modelVersion": "jaejae-v2"
+    },
+    {
+      "index": 2,
+      "id": "rogue",
+      "label": "도적",
+      "source": "artifacts/land-characters/land-tripo-20261015/rogue/tripo-v1/desktop/rogue-tripo-idle-v1.glb",
+      "sourceSha256": "0f87988543a86631f9bd942a384280b996efaa74e4d4914dcab0df4fc385a494",
+      "runtimeMap": "/Game/Gahyeon/Land/Roster_v003/rogue/L_Character",
+      "status": "candidate",
+      "visualApproved": false,
+      "characterAsset": "/Game/Gahyeon/Land/Roster_v001/rogue/Source/Character",
+      "animationProfile": "character_pipeline/config/land-rogue-idle-v001.json"
+    },
+    {
+      "index": 3,
+      "id": "pirate",
+      "label": "해적",
+      "source": "artifacts/land-characters/land-tripo-20261015/pirate/tripo-v1/desktop/pirate-tripo-idle-v1.glb",
+      "sourceSha256": "20b8ac485b62307300f83e6a45c389a324813ba815e258ef61449875cc06caf5",
+      "runtimeMap": "/Game/Gahyeon/Land/Roster_v003/pirate/L_Character",
+      "status": "candidate",
+      "visualApproved": false,
+      "characterAsset": "/Game/Gahyeon/Land/Roster_v001/pirate/Source/Character",
+      "animationProfile": "character_pipeline/config/land-pirate-idle-v001.json"
+    },
+    {
+      "index": 4,
+      "id": "fighter",
+      "label": "격투가",
+      "source": "artifacts/land-characters/land-tripo-20261015/fighter/tripo-v1/desktop/fighter-tripo-idle-v1.glb",
+      "sourceSha256": "55b7425299e1c9ef4adcfb8f5a1255118326cce55ca8cff362b931851a81bc27",
+      "runtimeMap": "/Game/Gahyeon/Land/Roster_v003/fighter/L_Character",
+      "status": "candidate",
+      "visualApproved": false,
+      "characterAsset": "/Game/Gahyeon/Land/Roster_v001/fighter/Source/Character",
+      "animationProfile": "character_pipeline/config/land-fighter-idle-v001.json"
+    },
+    {
+      "index": 5,
+      "id": "fighter-unmasked",
+      "label": "격투가 (가면 없음)",
+      "source": "artifacts/land-characters/land-tripo-20261015/fighter/unmasked-tripo-v1/desktop/fighter-unmasked-tripo-idle-v1.glb",
+      "sourceSha256": "1cedc108b472f7a4716e7d1762b0af7fda554d869b22bcd3f9a07cf9f19ae636",
+      "runtimeMap": "/Game/Gahyeon/Land/Roster_v003/fighter_unmasked/L_Character",
+      "status": "candidate",
+      "visualApproved": false,
+      "characterAsset": "/Game/Gahyeon/Land/Roster_v001/fighter_unmasked/Source/Character",
+      "animationProfile": "character_pipeline/config/land-fighter-unmasked-idle-v001.json"
+    },
+    {
+      "index": 6,
+      "id": "child",
+      "label": "아이",
+      "source": "artifacts/land-characters/land-tripo-20261015/child/tripo-v1/desktop/child-tripo-idle-v1.glb",
+      "sourceSha256": "d82a6b85b3956e750265cf21ad013a62497bab36f5a5cdabb4a63b150d471a56",
+      "runtimeMap": "/Game/Gahyeon/Land/Roster_v003/child/L_Character",
+      "status": "candidate",
+      "visualApproved": false,
+      "characterAsset": "/Game/Gahyeon/Land/Roster_v001/child/Source/Character",
+      "animationProfile": "character_pipeline/config/land-child-idle-v001.json"
+    },
+    {
+      "index": 7,
+      "id": "hacker",
+      "label": "해커",
+      "source": "artifacts/land-characters/land-tripo-20261015/hacker/tripo-v1/desktop/hacker-tripo-idle-v1.glb",
+      "sourceSha256": "8a33cf92b9aa09190d8016bacf8431a51467a9f1512c8c0527a0cac122c15473",
+      "runtimeMap": "/Game/Gahyeon/Land/Roster_v003/hacker/L_Character",
+      "status": "candidate",
+      "visualApproved": false,
+      "characterAsset": "/Game/Gahyeon/Land/Roster_v001/hacker/Source/Character",
+      "animationProfile": "character_pipeline/config/land-hacker-idle-v001.json"
+    }
+  ]
+}

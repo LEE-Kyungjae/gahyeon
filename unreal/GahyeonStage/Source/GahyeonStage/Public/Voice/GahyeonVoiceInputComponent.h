@@ -118,6 +118,15 @@ public:
     FString GetLastCaptureError() const { return LastCaptureError; }
 
 private:
+    struct FAudioCaptureDeleter
+    {
+        void operator()(Audio::FAudioCapture* Value) const;
+    };
+    struct FVoiceHttpStateDeleter
+    {
+        void operator()(FGahyeonVoiceHttpState* Value) const;
+    };
+
     void RefreshRuntime();
     void InvalidateWorkFromPreviousRuntime();
     void DrainCompletedBatchStt();
@@ -132,8 +141,8 @@ private:
     TSharedPtr<FGahyeonBatchSttAudioSink, ESPMode::ThreadSafe> BatchSttAudioSink;
     TSharedPtr<FGahyeonStreamingSttAudioSink, ESPMode::ThreadSafe> NetworkSttAudioSink;
     TSharedPtr<FGahyeonStreamingSttWebSocketClient, ESPMode::ThreadSafe> StreamingSttClient;
-    TUniquePtr<Audio::FAudioCapture> AudioCapture;
-    TUniquePtr<FGahyeonVoiceHttpState> VoiceHttpState;
+    TUniquePtr<Audio::FAudioCapture, FAudioCaptureDeleter> AudioCapture;
+    TUniquePtr<FGahyeonVoiceHttpState, FVoiceHttpStateDeleter> VoiceHttpState;
 
     UPROPERTY(EditAnywhere, Category = "Gahyeon|Voice|Capture")
     bool bStartCaptureOnBeginPlay = false;

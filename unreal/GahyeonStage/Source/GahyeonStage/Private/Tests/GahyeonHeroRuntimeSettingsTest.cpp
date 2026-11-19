@@ -1,8 +1,10 @@
 #include "Misc/AutomationTest.h"
 
 #include "Character/GahyeonCharacterPawn.h"
+#include "Character/GahyeonHeroRuntimeSettings.h"
 #include "Character/GahyeonStageGameMode.h"
 #include "HAL/PlatformMisc.h"
+#include "Misc/PackageName.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -27,6 +29,30 @@ bool FGahyeonHeroRuntimeSettingsTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("generic Actor cannot replace the Hero pawn"),
         AGahyeonStageGameMode::ResolveHeroPawnClass(WrongBase, Error) != nullptr);
     TestFalse(TEXT("wrong base reports a reason"), Error.IsEmpty());
+
+    TestTrue(TEXT("generic Actor is a valid external visual boundary"),
+        AGahyeonCharacterPawn::ResolveVisualActorClass(WrongBase, Error) != nullptr);
+    TestTrue(TEXT("valid external visual class has no error"), Error.IsEmpty());
+    TestFalse(TEXT("a non-Actor class cannot become the visual"),
+        AGahyeonCharacterPawn::ResolveVisualActorClass(
+            FSoftClassPath(TEXT("/Script/CoreUObject.Object")), Error) != nullptr);
+    TestFalse(TEXT("invalid external visual class reports a reason"), Error.IsEmpty());
+
+    const UGahyeonHeroRuntimeSettings* Settings =
+        GetDefault<UGahyeonHeroRuntimeSettings>();
+    TestNotNull(TEXT("project Hero runtime settings are available"), Settings);
+    if (Settings != nullptr && Settings->bRequireVisualActor)
+    {
+        FString VisualError;
+        const TSubclassOf<AActor> Visual =
+            AGahyeonCharacterPawn::ResolveVisualActorClass(
+                Settings->VisualActorClass, VisualError);
+        TestTrue(TEXT("required configured MetaHuman visual class loads"), Visual != nullptr);
+        if (!VisualError.IsEmpty()) AddError(VisualError);
+    }
+    TestTrue(TEXT("dedicated Desktop runtime map exists"),
+        FPackageName::DoesPackageExist(
+            TEXT("/Game/Gahyeon/DesktopRuntime/v091/L_GahyeonDesktopRuntime_v091")));
 
     const FString HeroGate = FPlatformMisc::GetEnvironmentVariable(TEXT("GAHYEON_HERO_MANIFEST"));
     const FSoftClassPath InstalledHero(

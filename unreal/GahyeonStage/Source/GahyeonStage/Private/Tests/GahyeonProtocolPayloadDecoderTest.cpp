@@ -44,6 +44,9 @@ bool FGahyeonDurablePayloadDecoderTest::RunTest(const FString& Parameters)
         {TEXT("speech.prepared"), TEXT("ephemeral"), TEXT(R"({
             "generation":13,"utteranceId":"audio-13-0","utteranceIndex":0,
             "segmentIndex":0,"segmentCount":1,"finalSegment":true,
+            "voiceProfile":"gahyeon.assistant",
+            "voiceExpression":{"style":"surprised","intensity":0.8,
+                "communicativeIntent":"react_to_surprise"},
             "audio":{"url":"/api/speech/audio-13-0","mimeType":"audio/wav"},
             "visemes":[{"semantic":"aa","atMs":0,"durationMs":90,"weight":1.0}]})")},
         {TEXT("speech.sequence.ended"), TEXT("ephemeral"),
@@ -88,6 +91,11 @@ bool FGahyeonDurablePayloadDecoderTest::RunTest(const FString& Parameters)
                 FString(TEXT("/api/speech/audio-13-0")));
             TestEqual(TEXT("viseme timeline survives decoding"),
                 static_cast<int32>(Message.Visemes.size()), 1);
+            TestEqual(TEXT("voice expression style survives decoding"),
+                FString(UTF8_TO_TCHAR(Message.Semantic.c_str())),
+                FString(TEXT("surprised")));
+            TestEqual(TEXT("voice expression intensity survives decoding"),
+                Message.Intensity, 0.8);
         }
         if (Envelope.Type == TEXT("character.state.target"))
         {
@@ -108,6 +116,26 @@ bool FGahyeonDurablePayloadDecoderTest::RunTest(const FString& Parameters)
     Gahyeon::ProtocolMessage Message;
     FString Error;
     TestTrue(TEXT("unknown payload fields fail closed"),
+        FGahyeonProtocolPayloadDecoder::Decode(Invalid, Message, Error)
+                == EGahyeonPayloadDecodeStatus::Invalid);
+
+    Invalid.Type = TEXT("speech.prepared");
+    Invalid.PayloadJson = TEXT(R"({
+        "generation":13,"utteranceId":"audio-13-0","utteranceIndex":0,
+        "segmentIndex":0,"segmentCount":1,"finalSegment":true,
+        "voiceExpression":{"style":"fake_cute","intensity":0.8,
+            "communicativeIntent":"playful_tease"},
+        "audio":{"url":"/api/gahyeon/unreal/speech/stream/audio-13-0","mimeType":"audio/pcm"},
+        "visemes":[]})");
+    TestTrue(TEXT("fake cute streaming expression decodes"),
+        FGahyeonProtocolPayloadDecoder::Decode(Invalid, Message, Error)
+            == EGahyeonPayloadDecodeStatus::Decoded);
+    TestEqual(TEXT("streaming PCM MIME survives decoding"),
+        FString(UTF8_TO_TCHAR(Message.MimeType.c_str())),
+        FString(TEXT("audio/pcm")));
+
+    Invalid.PayloadJson.ReplaceInline(TEXT("fake_cute"), TEXT("unsupported_voice_style"));
+    TestTrue(TEXT("unknown speech expression fails closed"),
         FGahyeonProtocolPayloadDecoder::Decode(Invalid, Message, Error)
             == EGahyeonPayloadDecodeStatus::Invalid);
 

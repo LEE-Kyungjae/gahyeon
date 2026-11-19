@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "status": "evaluated-not-enabled",
-  "role": "optional-display-renderer",
+  "status": "primary-release-gated",
+  "role": "primary-deployment-surface",
   "upstream": {
     "repository": "https://github.com/Looking-Glass/Looking-Glass-Unreal-Plugin",
     "release": "2.1.1",
@@ -15,7 +15,7 @@
     }
   },
   "compatibility": {
-    "unrealEngine": "5.6",
+    "unrealEngine": "5.8",
     "platforms": ["Win64"],
     "minimumBridge": "2.5.1",
     "realtimeModeImplemented": true,
@@ -24,6 +24,8 @@
   },
   "policy": {
     "enabledByDefault": false,
+    "requiredForProductionRelease": true,
+    "monitorIsDevelopmentAndRecoveryFallback": true,
     "coreDependencyAllowed": false,
     "desktopDependencyAllowed": false,
     "headlessDependencyAllowed": false,
@@ -32,9 +34,9 @@
     "separateCognitionOrVoicePipelineAllowed": false
   },
   "adoptionGates": [
-    "UE 5.6 Development Editor plugin build succeeds on Win64",
+    "UE 5.8 Development Editor plugin build succeeds on Win64",
     "Looking Glass Go is discovered through Bridge without changing Core health",
-    "desktop perspective renderer stays functional while Bridge and Go are absent",
+    "monitor fallback stays functional for development and device recovery",
     "device render cost and frame pacing are measured on the target GPU",
     "Reflex and audio playback latency budgets stay within their existing limits"
   ],

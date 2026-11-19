@@ -17,7 +17,7 @@ Gahyeon::WorldActionCompletion ToRuntimeCompletion(
 {
     return {
         .ActionId = ToUtf8(Source.ActionId),
-        .ExpectedRevision = Source.ExpectedRevision,
+        .ExpectedRevision = static_cast<Gahyeon::Generation>(Source.ExpectedRevision),
         .Outcome = ToUtf8(Source.Outcome),
         .Reason = ToUtf8(Source.Reason),
         .FinalPosition = {

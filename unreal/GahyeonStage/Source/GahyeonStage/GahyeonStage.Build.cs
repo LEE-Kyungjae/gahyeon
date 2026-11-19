@@ -19,6 +19,7 @@ public class GahyeonStage : ModuleRules
         {
             "AIModule",
             "AudioCaptureCore",
+            "ControlRig",
             "EnhancedInput",
             "HTTP",
             "Json",

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "runtime": "unreal",
+  "status": "ready",
+  "retiredRuntimes": [
+    "electron"
+  ],
+  "macos": {
+    "engineRoot": "/Users/Shared/Epic Games/UE_5.8",
+    "project": "unreal/GahyeonDesktopMetaHumanPOC/GahyeonDesktopMetaHumanPOC.uproject",
+    "runtimeMap": "/Game/Gahyeon/Land/Gahyeon/v006/Runtime/L_GahyeonLandMac_v006",
+    "launchMode": "unreal-macos-direct-alpha-shared-memory",
+    "packagedApp": false,
+    "renderQuality": "land-source-4k-pbr-focus-disabled-v005",
+    "characterAsset": "/Game/Gahyeon/Land/Gahyeon/v002/Source/Gahyeon_Land_Idle_v001",
+    "animationProfile": "character_pipeline/config/land-gahyeon-idle-v001.json",
+    "rendererWindow": "offscreen",
+    "characterModelId": "gahyeon"
+  },
+  "blockers": [],
+  "visualReview": {
+    "status": "candidate",
+    "humanApproved": false,
+    "fallbackManifest": "artifacts/land-characters/macos-gahyeon-v001/diana-fallback-manifest.json",
+    "request": "2026-10-15 user requested connection of imported Gahyeon"
+  },
+  "windows": {
+    "status": "ready",
+    "engineRoot": "C:\\Program Files\\Epic Games\\UE_5.8",
+    "runtimeRoot": "C:\\GahyeonRuntime\\roster-20261016",
+    "project": "GahyeonDesktopMetaHumanPOC/GahyeonDesktopMetaHumanPOC.uproject",
+    "runtimeMap": "/Game/Gahyeon/Land/Gahyeon/v006/Runtime/L_GahyeonLandMac_v006",
+    "characterAsset": "/Game/Gahyeon/Land/Gahyeon/v002/Source/Gahyeon_Land_Idle_v001",
+    "animationProfile": "character_pipeline/config/land-gahyeon-idle-v001.json",
+    "launchMode": "unreal-windows-layered-shared-memory",
+    "rendererWindow": "offscreen",
+    "packagedApp": false,
+    "visualReview": "candidate",
+    "roster": "character-model-roster.json"
+  }
+}
