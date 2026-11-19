@@ -44,6 +44,18 @@ class HomeWorldContractTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "room differs"):
                 verify(core, unreal)
 
+    def test_unrelated_component_location_is_ignored(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            unreal = Path(temporary) / "Room.cpp"
+            # "FillLight" and "DeskPoint" share the trailing "t".
+            unreal.write_text(
+                'FillLight->SetRelativeLocation(FVector(-180.0, 160.0, 260.0));\n'
+                'DeskPoint->SetRelativeLocation(FVector(700.0, -200.0, 0.0));\n'
+                'DeskPoint->Configure(TEXT("desk"), TEXT("workspace"), {TEXT("work")});',
+                encoding="utf-8")
+            self.assertEqual(
+                parse_unreal(unreal)["desk"], ("workspace", (700.0, -200.0, 0.0), {"work"}))
+
     def test_parsers_reject_empty_sources(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             empty = Path(temporary) / "empty"
