@@ -51,6 +51,12 @@ class LookingGlassMacosRuntimeTest(unittest.TestCase):
         self.assertIn("GAHYEON_LKG_QUILT_REJECTED", encoder)
         self.assertIn("GAHYEON_LKG_ACK_WAIT", encoder)
         self.assertIn("quiltCoverage", encoder)
+        # Go views are 0.5625; crop at that aspect and fill the tile without bars.
+        self.assertIn("LookingGlassViewAspect = 0.5625", iosurface_bridge)
+        self.assertIn("SetLookingGlassCrop(Header, Width, Height)", iosurface_bridge)
+        self.assertNotIn("Width * 0.25", iosurface_bridge)
+        self.assertIn("float2 scale=float2(372.0/cw,682.0/ch)", encoder)
+        self.assertNotIn("dst.write(float4(0,0,0,1),out)", encoder)
 
     def test_one_stop_launcher_uses_canonical_unreal_and_native_bridge(self):
         source = (ROOT / "scripts/launch_looking_glass_macos_runtime.py").read_text()

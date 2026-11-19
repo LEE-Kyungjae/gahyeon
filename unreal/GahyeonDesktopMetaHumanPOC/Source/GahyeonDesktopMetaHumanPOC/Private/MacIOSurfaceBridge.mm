@@ -52,6 +52,24 @@ uint32 ReadbackPixelBytes = 0;
 MTLPixelFormat ReadbackFormat = MTLPixelFormatInvalid;
 id<MTLTexture> ReadbackUpload = nil;
 
+// Looking Glass Go shows every quilt view at the panel aspect (1440x2560).
+// Crop the render to that aspect around the old framing centre so the encoder
+// fills each tile edge to edge instead of letterboxing a 0.74 crop.
+constexpr double LookingGlassViewAspect = 0.5625;
+
+void SetLookingGlassCrop(FIOSurfaceHeader* Header, uint32 Width, uint32 Height)
+{
+    // Previous framing was x 0.25-0.70 and y 0.12-0.89; keep its width and centre.
+    const double CenterX = Width * 0.475, CenterY = Height * 0.505;
+    double CropHeight = FMath::Min(double(Height), FMath::Max(Height * 0.77, Width * 0.45 / LookingGlassViewAspect));
+    const double CropWidth = FMath::Min(double(Width), CropHeight * LookingGlassViewAspect);
+    CropHeight = CropWidth / LookingGlassViewAspect;
+    const double MinX = FMath::Clamp(CenterX - CropWidth * 0.5, 0.0, Width - CropWidth);
+    const double MinY = FMath::Clamp(CenterY - CropHeight * 0.5, 0.0, Height - CropHeight);
+    Header->CropMinX = uint32(MinX); Header->CropMaxX = uint32(MinX + CropWidth);
+    Header->CropMinY = uint32(MinY); Header->CropMaxY = uint32(MinY + CropHeight);
+}
+
 void ReleaseGPU()
 {
     SharedTexture = nil; Pipeline = nil; Queue = nil;
@@ -81,9 +99,9 @@ bool CreateGPU(id<MTLTexture> Source)
     if (!SharedTexture || !Queue || !Pipeline) { UE_LOG(LogTemp, Error, TEXT("Gahyeon IOSurface Metal setup failed: %s"), *FString(Error.localizedDescription)); ReleaseGPU(); return false; }
     auto* Header = static_cast<FIOSurfaceHeader*>(SharedRegion->GetAddress());
     Header->SurfaceID = IOSurfaceGetID(Surface); Header->Width = Width; Header->Height = Height;
-    Header->CropMinX = uint32(Width * 0.25); Header->CropMaxX = uint32(Width * 0.70);
-    Header->CropMinY = uint32(Height * 0.12); Header->CropMaxY = uint32(Height * 0.89);
-    UE_LOG(LogTemp, Display, TEXT("Gahyeon IOSurface ready id=%u size=%ux%u"), Header->SurfaceID, Width, Height);
+    SetLookingGlassCrop(Header, Width, Height);
+    UE_LOG(LogTemp, Display, TEXT("Gahyeon IOSurface ready id=%u size=%ux%u crop=%u,%u-%u,%u"), Header->SurfaceID, Width, Height,
+        Header->CropMinX, Header->CropMinY, Header->CropMaxX, Header->CropMaxY);
     return true;
 }
 
