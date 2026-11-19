@@ -36,6 +36,25 @@ flag disabled, no WebXR polyfill is loaded. With the flag enabled but no device
 or Bridge present, the monitor renderer, conversation, audio, and World State
 continue to operate normally.
 
+## Framing and depth
+
+`@lookingglass/webxr` 0.6 poses every view around a fixed reference-space
+target and places the view origin at `0.5 * targetDiam / tan(fovy / 2)` in
+front of it (about 13 m for the full-body framing). The Desktop stage therefore:
+
+- parents the camera to a rig that follows the character while presenting, so
+  the focal plane stays on her when she walks to another room;
+- derives `targetY` from the active camera preset and narrows `targetDiam` for
+  bust (1.5 m) and face (0.75 m) framing; `targetDiam` is the vertical extent of
+  the focal plane on the portrait Go panel;
+- shifts the fog by the extra camera distance, so the character is not hazed
+  while the far room still fades out;
+- does not pass `numViews` or `tileHeight`: 0.6 takes quilt columns, rows and
+  resolution from the device serial (Go: 11 x 6 views, 4092 px quilt).
+
+View-control updates reallocate the quilt texture, so they are only pushed when
+the camera preset changes, never per frame.
+
 ## Shared-state invariant
 
 Both outputs use the same in-memory Three.js scene and the same reduced

@@ -16,6 +16,10 @@ declare module '@lookingglass/webxr' {
   export class LookingGlassWebXRPolyfill {
     constructor(config?: Partial<LookingGlassViewConfig>)
     isPresenting: boolean
-    update(config: Partial<LookingGlassViewConfig>): void
+  }
+
+  /** The library's global configuration instance (0.6.x exports the instance, not the class). */
+  export const LookingGlassConfig: {
+    updateViewControls(config: Partial<LookingGlassViewConfig>): void
   }
 }
