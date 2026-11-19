@@ -4,6 +4,7 @@ import {
   DirectionalLight,
   Fog,
   GridHelper,
+  Group,
   PerspectiveCamera,
   Scene,
   SRGBColorSpace,
@@ -32,6 +33,11 @@ export class ThreeStage {
   private notifiedWorldActionId?: string
   private readonly worldActionInteraction = new WorldActionInteractionGate()
   private lookingGlassInitialized = false
+  private lookingGlassConfig?: LookingGlassConfigHandle
+  /** Parent of the camera; WebXR composes the Looking Glass pose with it. */
+  private readonly lookingGlassRig = new Group()
+  private lookingGlassPresenting = false
+  private readonly fog?: Fog
   private cameraPreset: CameraPreset = 'full-body'
 
   constructor(
@@ -44,7 +50,8 @@ export class ThreeStage {
     this.currentRoom = initialState.room
     this.navigationTargetRoom = initialState.room
     this.scene.background = options.transparent ? null : new Color('#171924')
-    this.scene.fog = options.transparent ? null : new Fog('#171924', 9, 24)
+    this.fog = options.transparent ? undefined : new Fog('#171924', MONITOR_FOG.near, MONITOR_FOG.far)
+    this.scene.fog = this.fog ?? null
     this.renderer = new WebGLRenderer({ antialias: true, alpha: options.transparent === true })
     if (options.transparent) this.renderer.setClearColor(0x000000, 0)
     this.renderer.outputColorSpace = SRGBColorSpace
@@ -59,7 +66,9 @@ export class ThreeStage {
     key.castShadow = true
     const grid = new GridHelper(24, 24, '#5d596b', '#302f3c')
     grid.position.y = 0.002
-    this.scene.add(ambient, key, this.character.object)
+    this.lookingGlassRig.name = 'looking-glass-rig'
+    this.lookingGlassRig.add(this.camera)
+    this.scene.add(ambient, key, this.lookingGlassRig, this.character.object)
     if (!options.transparent) this.scene.add(grid, this.environment.object)
     this.character.object.position.set(
       initialState.position.x,
@@ -114,7 +123,11 @@ export class ThreeStage {
   }
 
   setCameraPreset(preset: CameraPreset) {
+    if (preset === this.cameraPreset) return
     this.cameraPreset = preset
+    // Each view-control change reallocates the quilt texture, so only push on preset changes.
+    this.lookingGlassConfig?.updateViewControls(lookingGlassFraming(preset))
+    if (this.lookingGlassPresenting) this.applyFog(true)
   }
 
   async enableLookingGlass(buttonHost: HTMLElement) {
@@ -122,7 +135,7 @@ export class ThreeStage {
     this.lookingGlassInitialized = true
     let button: HTMLElement | undefined
     try {
-      const [{ LookingGlassWebXRPolyfill }, { VRButton }] = await Promise.all([
+      const [{ LookingGlassWebXRPolyfill, LookingGlassConfig }, { VRButton }] = await Promise.all([
         import('@lookingglass/webxr'),
         import('three/addons/webxr/VRButton.js'),
       ])
@@ -130,15 +143,16 @@ export class ThreeStage {
       button = VRButton.createButton(this.renderer)
       button.classList.add('looking-glass-xr-button')
       buttonHost.append(button)
+      // Quilt columns, rows and resolution come from the device serial in @lookingglass/webxr 0.6,
+      // so numViews and tileHeight are not passed: they would be ignored.
       new LookingGlassWebXRPolyfill({
-        tileHeight: 512,
-        numViews: 45,
-        targetY: 1.35,
-        targetZ: 0,
-        targetDiam: 3.2,
-        fovy: 14 * Math.PI / 180,
+        ...lookingGlassFraming(this.cameraPreset),
+        trackballX: 0,
+        trackballY: 0,
+        fovy: LOOKING_GLASS_FOVY,
         inlineView: 2,
       })
+      this.lookingGlassConfig = LookingGlassConfig
     }
     catch (error) {
       button?.remove()
@@ -162,6 +176,7 @@ export class ThreeStage {
     const reflexOwnsPresentation = isImmediateActivity(this.state.activity)
     if (!reflexOwnsPresentation) this.advanceNavigation(delta)
     const characterPosition = this.character.object.position.clone()
+    this.followWithLookingGlass(characterPosition, delta)
     const framing = cameraFraming(this.cameraPreset)
     const desiredCamera = characterPosition.clone().add(framing.offset)
     this.camera.position.lerp(desiredCamera, Math.min(1, delta * 2.8))
@@ -172,6 +187,31 @@ export class ThreeStage {
     )
     this.renderer.render(this.scene, this.camera)
     this.notifyWorldActionArrival(delta, reflexOwnsPresentation)
+  }
+
+  /**
+   * The Looking Glass views are posed around a fixed reference-space target. Moving the camera's
+   * parent keeps that target (and therefore the focal plane) on the character as she walks.
+   */
+  private followWithLookingGlass(characterPosition: Vector3, deltaSeconds: number) {
+    const presenting = this.renderer.xr.isPresenting
+    if (presenting !== this.lookingGlassPresenting) {
+      this.lookingGlassPresenting = presenting
+      if (presenting) this.lookingGlassRig.position.copy(characterPosition)
+      else this.lookingGlassRig.position.set(0, 0, 0)
+      this.applyFog(presenting)
+      return
+    }
+    if (presenting) {
+      this.lookingGlassRig.position.lerp(characterPosition, Math.min(1, deltaSeconds * 2.8))
+    }
+  }
+
+  private applyFog(lookingGlass: boolean) {
+    if (!this.fog) return
+    const range = lookingGlass ? lookingGlassFog(this.cameraPreset) : MONITOR_FOG
+    this.fog.near = range.near
+    this.fog.far = range.far
   }
 
   private advanceNavigation(deltaSeconds: number) {
@@ -214,6 +254,41 @@ export class ThreeStage {
 export type CameraPreset = 'face' | 'bust' | 'full-body'
 
 export type ThreeStageOptions = { transparent?: boolean }
+
+type LookingGlassConfigHandle = {
+  updateViewControls(controls: Partial<ReturnType<typeof lookingGlassFraming>>): void
+}
+
+const MONITOR_FOG = { near: 9, far: 24 } as const
+
+/** Vertical FOV of the Looking Glass virtual camera (the library default is 14 degrees). */
+export const LOOKING_GLASS_FOVY = 14 * Math.PI / 180
+
+/**
+ * Looking Glass framing relative to the character. The target height follows the monitor preset;
+ * `targetDiam` is the vertical extent of the focal plane (Looking Glass Go is portrait).
+ */
+export function lookingGlassFraming(preset: CameraPreset) {
+  const targetDiam = preset === 'face' ? 0.75 : preset === 'bust' ? 1.5 : 3.2
+  return { targetX: 0, targetY: cameraFraming(preset).target.y, targetZ: 0, targetDiam }
+}
+
+/** Same formula as @lookingglass/webxr: distance from the view origin to the focal plane. */
+export function lookingGlassCameraDistance(targetDiam: number, fovy = LOOKING_GLASS_FOVY) {
+  return 0.5 * targetDiam / Math.tan(0.5 * fovy)
+}
+
+/**
+ * The Looking Glass camera sits much farther away than the monitor camera (about 13 m for full
+ * body), so the monitor fog would haze the character herself. Keep the same gap between the
+ * character and the start of the fog that the monitor preset has.
+ */
+export function lookingGlassFog(preset: CameraPreset) {
+  const framing = cameraFraming(preset)
+  const monitorDistance = framing.offset.distanceTo(framing.target)
+  const shift = lookingGlassCameraDistance(lookingGlassFraming(preset).targetDiam) - monitorDistance
+  return { near: MONITOR_FOG.near + shift, far: MONITOR_FOG.far + shift }
+}
 
 export function cameraFraming(preset: CameraPreset) {
   if (preset === 'face') {
