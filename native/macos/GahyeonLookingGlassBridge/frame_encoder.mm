@@ -166,16 +166,17 @@ int main() {
     }
     id<MTLTexture> blended = (__bridge id<MTLTexture>)blendedRaw;
     id<MTLCommandQueue> queue = [device newCommandQueue];
+    // compose fills each 372x682 tile with the crop. The Unreal side crops at the
+    // Bridge view aspect (0.5625), so Bridge's tile-to-panel stretch restores it.
     NSString* shader = @"#include <metal_stdlib>\nusing namespace metal;\n"
         "struct P { uint viewIndex, copiesPerView, cropMinX, cropMinY, cropMaxX, cropMaxY; };\n"
         "kernel void compose(texture2d<float, access::read> src [[texture(0)]], texture2d<float, access::write> dst [[texture(1)]], constant P& p [[buffer(0)]], uint3 g [[thread_position_in_grid]]) {\n"
         " if (g.x>=372 || g.y>=682 || g.z>=p.copiesPerView) return;\n"
         " uint slot=p.viewIndex*p.copiesPerView+g.z; uint2 out=uint2((slot%11)*372+g.x,(slot/11)*682+g.y);\n"
         " float cw=max(1.0,float(p.cropMaxX-p.cropMinX)), ch=max(1.0,float(p.cropMaxY-p.cropMinY));\n"
-        " float scale=min(372.0/cw,682.0/ch), fw=cw*scale, fh=ch*scale;\n"
-        " float2 q=float2(g.xy)-float2((372.0-fw)*0.5,(682.0-fh)*0.5);\n"
-        " if(q.x<0||q.y<0||q.x>=fw||q.y>=fh){dst.write(float4(0,0,0,1),out);return;}\n"
-        " uint2 s=uint2(float2(p.cropMinX,p.cropMinY)+q/scale); float4 c=src.read(s);\n"
+        " float2 scale=float2(372.0/cw,682.0/ch);\n"
+        " uint2 last=uint2(max(p.cropMinX+1,p.cropMaxX)-1,max(p.cropMinY+1,p.cropMaxY)-1);\n"
+        " uint2 s=min(uint2(float2(p.cropMinX,p.cropMinY)+(float2(g.xy)+0.5)/scale),last); float4 c=src.read(s);\n"
         " dst.write(float4(c.rgb,1),out);\n}\n"
         "kernel void blendViews(texture2d<float, access::read> src [[texture(0)]], texture2d<float, access::write> dst [[texture(1)]], uint2 p [[thread_position_in_grid]]) {\n"
         " if(p.x>=src.get_width()||p.y>=src.get_height()) return;\n"
