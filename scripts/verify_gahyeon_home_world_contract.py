@@ -13,10 +13,10 @@ JAVA_POINT = re.compile(
     r'\s*(?P<x>-?\d+(?:\.\d+)?),\s*(?P<y>-?\d+(?:\.\d+)?),'
     r'\s*(?P<z>-?\d+(?:\.\d+)?),\s*(?P<activities>[^)]*)\)')
 CPP_POINT = re.compile(
-    r'(?P<variable>\w+)->SetRelativeLocation\(FVector\('
+    r'\b(?P<variable>\w+)->SetRelativeLocation\(FVector\('
     r'(?P<x>-?\d+(?:\.\d+)?),\s*(?P<y>-?\d+(?:\.\d+)?),'
     r'\s*(?P<z>-?\d+(?:\.\d+)?)\)\);.*?'
-    r'(?P=variable)->Configure\(TEXT\("(?P<id>[^"]+)"\),'
+    r'\b(?P=variable)->Configure\(TEXT\("(?P<id>[^"]+)"\),'
     r'\s*TEXT\("(?P<room>[^"]+)"\),'
     r'\s*\{(?P<activities>[^}]*)\}\);',
     re.DOTALL)

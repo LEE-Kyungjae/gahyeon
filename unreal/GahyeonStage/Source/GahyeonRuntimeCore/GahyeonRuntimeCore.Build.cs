@@ -9,6 +9,8 @@ public class GahyeonRuntimeCore : ModuleRules
         bUseUnity = false;
         bEnableExceptions = true;
 
+        ForceIncludeFiles.Add("HAL/Platform.h");
+
         PublicDependencyModuleNames.Add("Core");
         PublicDefinitions.Add("GAHYEON_RUNTIME_CORE_API=GAHYEONRUNTIMECORE_API");
     }

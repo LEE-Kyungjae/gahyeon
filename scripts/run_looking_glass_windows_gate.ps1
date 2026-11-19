@@ -21,20 +21,23 @@ foreach ($Path in @($Project, $Plugin, $Build, $Editor, $Version)) {
     }
 }
 $VersionPayload = Get-Content -LiteralPath $Version -Raw | ConvertFrom-Json
-if ($VersionPayload.MajorVersion -ne 5 -or $VersionPayload.MinorVersion -ne 6) {
-    throw "Gahyeon Looking Glass prototype requires Unreal Engine 5.6"
+if ($VersionPayload.MajorVersion -ne 5 -or $VersionPayload.MinorVersion -ne 8) {
+    throw "Gahyeon Looking Glass prototype requires Unreal Engine 5.8"
 }
 
 & $Python (Join-Path $RepoRoot "scripts\verify_looking_glass_integration.py")
 if ($LASTEXITCODE -ne 0) { throw "Looking Glass lock verification failed" }
 & $Python (Join-Path $RepoRoot "scripts\verify_looking_glass_unreal_profile.py")
 if ($LASTEXITCODE -ne 0) { throw "Looking Glass project profile verification failed" }
+& $Python (Join-Path $RepoRoot "scripts\patch_looking_glass_unreal_plugin_ue58.py") `
+    (Split-Path -Parent $Plugin)
+if ($LASTEXITCODE -ne 0) { throw "Looking Glass UE 5.8 compatibility patch failed" }
 
 New-Item -ItemType Directory -Force -Path $EvidenceRoot | Out-Null
 $BuildLog = Join-Path $EvidenceRoot "build.log"
 $AutomationLog = Join-Path $EvidenceRoot "automation.log"
 
-& $Build GahyeonStageEditor Win64 Development "-Project=$Project" -WaitMutex -NoHotReloadFromIDE *>&1 |
+& $Build GahyeonStageEditor Win64 Development "-Project=$Project" -WaitMutex -NoHotReloadFromIDE -NoUBA *>&1 |
     Tee-Object -FilePath $BuildLog
 if ($LASTEXITCODE -ne 0) { throw "Looking Glass UE Development Editor build failed" }
 
@@ -63,7 +66,7 @@ def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 value = {
   "schemaVersion": 2, "status": "passed",
   "completedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-  "engineVersion": "5.6", "platform": "Win64", "configuration": "Development",
+  "engineVersion": "5.8", "platform": "Win64", "configuration": "Development",
   "project": str(project), "projectSha256": digest(project),
   "packagedBuild": False,
   "requiredAutomationTests": [
@@ -80,7 +83,7 @@ temporary = root / "manifest.json.tmp"
 temporary.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 temporary.replace(root / "manifest.json")
 '@
-& $Python -c $ManifestScript $EvidenceRoot $Project
+$ManifestScript | & $Python - $EvidenceRoot $Project
 if ($LASTEXITCODE -ne 0) { throw "Looking Glass evidence manifest creation failed" }
 & $Python (Join-Path $RepoRoot "scripts\verify_unreal_engine_evidence.py") $EvidenceRoot
 if ($LASTEXITCODE -ne 0) { throw "Looking Glass evidence verification failed" }

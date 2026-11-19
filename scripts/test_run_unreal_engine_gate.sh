@@ -28,10 +28,10 @@ printf '%s\n' '#!/usr/bin/env bash' \
   > "$editor"
 chmod +x "$build_script" "$editor"
 
-printf '%s\n' '{"MajorVersion":5,"MinorVersion":6}' > "$version_file"
+printf '%s\n' '{"MajorVersion":5,"MinorVersion":8}' > "$version_file"
 GAHYEON_UE_ROOT="$fixture_root" \
   "$repo_root/scripts/run_unreal_engine_gate.sh" --check-only \
-  | grep -q 'Unreal gate environment OK: UE 5.6'
+  | grep -q 'Unreal gate environment OK: UE 5.8'
 
 GAHYEON_UE_ROOT="$fixture_root" \
 GAHYEON_UNREAL_EVIDENCE_ROOT="$fixture_root/evidence" \
@@ -49,7 +49,7 @@ project = pathlib.Path(sys.argv[2]).resolve()
 manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
 assert manifest["schemaVersion"] == 2
 assert manifest["status"] == "passed"
-assert manifest["engineVersion"] == "5.6"
+assert manifest["engineVersion"] == "5.8"
 assert manifest["configuration"] == "Development"
 assert manifest["packagedBuild"] is False
 assert pathlib.Path(manifest["project"]) == project
@@ -177,6 +177,6 @@ if [[ "$wrong_version_rc" -ne 5 ]]; then
   echo "wrong UE version returned $wrong_version_rc instead of 5" >&2
   exit 1
 fi
-grep -q 'requires Unreal Engine 5.6; found 5.5' "$fixture_root/wrong-version.err"
+grep -q 'requires Unreal Engine 5.8; found 5.5' "$fixture_root/wrong-version.err"
 
 echo "Unreal Engine gate contract tests passed"

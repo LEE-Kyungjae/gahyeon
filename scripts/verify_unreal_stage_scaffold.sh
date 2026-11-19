@@ -118,7 +118,7 @@ bash -n "$repo_root/scripts/test_run_unreal_engine_gate.sh"
 python3 "$repo_root/scripts/test_run_unreal_engine_windows_gate.py" >/dev/null
 python3 "$repo_root/scripts/test_verify_unreal_engine_evidence.py" >/dev/null
 python3 "$repo_root/scripts/test_run_desktop_realtime_acceptance.py" >/dev/null
-grep -q 'engine_version" != "5.6"' "$repo_root/scripts/run_unreal_engine_gate.sh"
+grep -q 'engine_version" != "5.8"' "$repo_root/scripts/run_unreal_engine_gate.sh"
 grep -q 'GahyeonStageEditor' "$repo_root/scripts/run_unreal_engine_gate.sh"
 grep -q 'Automation RunTests Gahyeon' "$repo_root/scripts/run_unreal_engine_gate.sh"
 grep -q 'VS-5 Mock Cognition Automation test did not emit a success result' \
@@ -228,11 +228,11 @@ grep -q 'input_audio_buffer' \
 
 ruby -rjson -e '
   project = JSON.parse(File.read(ARGV.fetch(0)))
-  abort "EngineAssociation must be 5.6" unless project["EngineAssociation"] == "5.6"
+  abort "EngineAssociation must be 5.8" unless project["EngineAssociation"] == "5.8"
   modules = project.fetch("Modules").map { |entry| entry.fetch("Name") }
   abort "GahyeonStage runtime module missing" unless modules.include?("GahyeonStage")
   plugins = project.fetch("Plugins").select { |entry| entry["Enabled"] }.map { |entry| entry["Name"] }
-  required = %w[WebSockets AudioCapture ControlRig FullBodyIK EnhancedInput]
+  required = %w[AudioCapture ControlRig FullBodyIK EnhancedInput]
   abort "missing plugins: #{(required - plugins).join(", ")}" unless (required - plugins).empty?
 ' "$project"
 
@@ -420,7 +420,7 @@ grep -q 'OnPostureChanged.Broadcast' \
   "$stage_root/Source/GahyeonStage/Private/Presentation/GahyeonCharacterPresentationComponent.cpp"
 grep -q 'TSoftObjectPtr<UAnimMontage>' \
   "$stage_root/Source/GahyeonStage/Public/Presentation/GahyeonCharacterPresentationProfile.h"
-grep -q 'Playback(Character, 16, &LipSync)' \
+grep -q 'Playback(Character, 16, &LipSync, &SpeechExpression)' \
   "$stage_root/Source/GahyeonStage/Private/Runtime/GahyeonRuntimeSubsystem.cpp"
 grep -q 'OnAudioSingleEnvelopeValue.AddDynamic' \
   "$stage_root/Source/GahyeonStage/Private/Audio/GahyeonSpeechAudioComponent.cpp"
@@ -435,7 +435,7 @@ grep -q 'Applied.ActionCompletion' \
 grep -q 'WorldActions.Advance' \
   "$stage_root/Source/GahyeonStage/Private/Runtime/GahyeonRuntimeSubsystem.cpp"
 grep -q '"AIModule"' "$stage_root/Source/GahyeonStage/GahyeonStage.Build.cs"
-grep -q 'UNavigationSystemV1::SimpleMoveToLocation' \
+grep -q 'UAIBlueprintHelperLibrary::SimpleMoveToLocation' \
   "$stage_root/Source/GahyeonStage/Private/World/GahyeonWorldActionComponent.cpp"
 grep -q 'AddTickPrerequisiteComponent(Presentation)' \
   "$stage_root/Source/GahyeonStage/Private/World/GahyeonWorldActionComponent.cpp"
@@ -569,7 +569,7 @@ grep -q 'SetDrawOnScreen(bEnableDiagnosticOverlayWhenNoAvatar)' \
   "$stage_root/Source/GahyeonStage/Private/Character/GahyeonCharacterPawn.cpp"
 grep -q 'CreateDefaultSubobject<USpringArmComponent>' \
   "$stage_root/Source/GahyeonStage/Private/Character/GahyeonCharacterPawn.cpp"
-grep -q 'FRotator(-8.0f, 180.0f, 0.0f)' \
+grep -q 'FRotator(-4.0f, -90.0f, 0.0f)' \
   "$stage_root/Source/GahyeonStage/Private/Character/GahyeonCharacterPawn.cpp"
 grep -q 'DefaultPawnClass = AGahyeonCharacterPawn::StaticClass()' \
   "$stage_root/Source/GahyeonStage/Private/Character/GahyeonStageGameMode.cpp"
@@ -589,7 +589,7 @@ grep -q 'GlobalDefaultGameMode=/Script/GahyeonStage.GahyeonStageGameMode' \
 grep -q 'Presentation->AddTickPrerequisiteComponent(VoiceInput)' \
   "$stage_root/Source/GahyeonStage/Private/Character/GahyeonCharacterPawn.cpp"
 grep -q '"AudioCaptureCore"' "$stage_root/Source/GahyeonStage/GahyeonStage.Build.cs"
-grep -q 'AudioCapture->OpenCaptureStream' \
+grep -q 'AudioCapture->OpenAudioCaptureStream' \
   "$stage_root/Source/GahyeonStage/Private/Voice/GahyeonVoiceInputComponent.cpp"
 grep -q 'const TSharedPtr<FGahyeonVoiceInputState, ESPMode::ThreadSafe> CallbackState' \
   "$stage_root/Source/GahyeonStage/Private/Voice/GahyeonVoiceInputComponent.cpp"
@@ -704,4 +704,4 @@ done < <(ruby -rjson -e '
   end
 ' "$repo_root"/docs/contracts/fixtures/*.json | sort -u)
 
-echo "Gahyeon Stage scaffold validation passed (static UE 5.6 checks)"
+echo "Gahyeon Stage scaffold validation passed (static UE 5.8 checks)"

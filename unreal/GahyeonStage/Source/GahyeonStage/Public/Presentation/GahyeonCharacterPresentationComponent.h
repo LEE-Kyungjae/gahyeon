@@ -9,7 +9,7 @@ class UGahyeonCharacterPresentationProfile;
 class USkeletalMeshComponent;
 class UAnimInstance;
 class UAnimMontage;
-class FStreamableHandle;
+struct FStreamableHandle;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
     FGahyeonConversationPhaseChanged,

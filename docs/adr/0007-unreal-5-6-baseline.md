@@ -1,6 +1,6 @@
 # ADR-0007: Unreal Engine 5.6을 첫 Stage 기준으로 고정
 
-- 상태: Accepted
+- 상태: Superseded by [ADR-0011](0011-unreal-5-8-baseline.md)
 - 결정일: 2026-08-11
 
 ## 맥락

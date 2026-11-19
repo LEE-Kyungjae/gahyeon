@@ -27,12 +27,12 @@ MetaHuman 선정과 G0/G1 identity gate는 실시간 런타임 검증 뒤에 진
 | VS-10 | one-room world + interaction point | look-at, chair/desk action 완료 회신 |
 | VS-11 | 성능·품질 acceptance | latency/frame time/sync/identity gate 통과 |
 
-현재 VS-2에는 UE 5.6 `.uproject`, Game/Editor target, native runtime module과 정적 검증이
-준비되어 있다. 실제 UE 5.6 Development Editor 컴파일과 Editor open 증거가 없으므로
+현재 VS-2에는 UE 5.8 `.uproject`, Game/Editor target, native runtime module과 정적 검증이
+준비되어 있다. 실제 UE 5.8 Development Editor 컴파일과 Editor open 증거가 없으므로
 VS-2를 완료로 간주하지 않는다. `AGahyeonCharacterPawn` source shell과
 `UGahyeonRuntimeDebugComponent`가 offline cadence/queue/action 상태를 노출하고 source-only
 GameMode/Pawn이 Engine basic-shape 진단 형상과 follow camera를 자동 생성한다. 그러나 실제
-UE 5.6 compile/PIE 장시간 증거가 없으므로 VS-3도 아직 완료가 아니다.
+UE 5.8 compile/PIE 장시간 증거가 없으므로 VS-3도 아직 완료가 아니다.
 기본 WebSocket/hello와 versioned async SaveGame source도 추가됐지만, 실제 Engine compile과
 typed durable event 적용, reconnect 및 save-confirmed egress의 실제 Engine 검증 전에는
 VS-6 완료로 간주하지 않는다.
@@ -42,7 +42,7 @@ source로 연결됐다. fixture에
 새 durable type이 추가되면 Stage 검증기가 decoder 누락을 실패시킨다. Invalid durable은
 ACK하지 않고 reconnect를 요구하며, Backpressure는 event를 폐기하지 않는다. source
 scaffold에는 최대 30초의 bounded exponential reconnect/backoff와 jitter도 구현되어 있다.
-남은 VS-6 gate는 UE 5.6 Editor/packaged 환경의 실제 socket·SaveGame·재연결 검증이다.
+남은 VS-6 gate는 UE 5.8 Editor/packaged 환경의 실제 socket·SaveGame·재연결 검증이다.
 
 VS-5의 엔진 비종속 `MockCognitionRuntime`은 bounded queue와 monotonic clock으로 0.5~10초
 지연, 명시적 실패, 요청 순서 역전을 재현한다. mock completion도 실제 generation admission을

@@ -91,10 +91,10 @@ Desktop 설치가 소유한 추가 표시 surface다.
 
 Looking Glass의 구체적인 채택 경계는
 [`LOOKING_GLASS_INTEGRATION.md`](LOOKING_GLASS_INTEGRATION.md)와
-[`ADR-0010`](../adr/0010-looking-glass-is-an-optional-renderer.md)을 따른다. 공식 UE 5.6
-Plugin은 실시간 렌더링 경로를 구현하지만 upstream이 실시간 제품 용도로 권장하지 않으므로
-기본 plugin으로 활성화하지 않는다. 실기기에서 latency/frame pacing gate를 통과하기 전까지는
-선택형 prototype 출력일 뿐이다.
+[`ADR-0010`](../adr/0010-looking-glass-is-an-optional-renderer.md)을 따른다. UE 5.8에서 사용할
+Plugin은 실시간 렌더링 경로를 제공해야 하지만 현재 공식 호환 증거가 없어 실기 gate 전에는
+production profile에 넣지 않는다. 실기기에서 latency/frame pacing gate를 통과해야 주요 배포
+표면의 release 조건이 충족된다. 일반 monitor Stage는 개발·진단·복구 fallback이다.
 
 TTS executor는 서로 다른 session을 병렬 처리하지만 같은 session의 utterance와
 `speech.sequence.ended`는 제출 순서대로 직렬 실행한다. session별 대기는 최대 64개로
@@ -262,8 +262,8 @@ asset 하나와 1:1로 연결하지 않는다.
 
 관련 결정은 [`../adr/`](../adr/)에, 메시지 계약은
 [`PROTOCOL_V1.md`](PROTOCOL_V1.md)에 기록한다.
-첫 Unreal 기준 버전은 [`ADR-0007`](../adr/0007-unreal-5-6-baseline.md)에 따라 UE 5.6으로
-고정한다.
+현재 Unreal 기준 버전은 [`ADR-0011`](../adr/0011-unreal-5-8-baseline.md)에 따라 UE 5.8로
+고정한다. 초기 5.6 결정의 이력은 ADR-0007에 보존한다.
 UE adapter의 thread·SaveGame·송수신 순서는
 [`ADAPTER_INTEGRATION.md`](ADAPTER_INTEGRATION.md)를 따른다.
 현재 개발 환경과 착수 조건은 [`READINESS.md`](READINESS.md)에 기록한다.

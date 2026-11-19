@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gahyeon.local/schemas/gahyeon-g2-review.schema.json",
+  "title": "Gahyeon G2 High-resolution Master Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "characterId", "gate", "status", "g1Review", "artifacts", "evidence", "topologyAudit", "findings", "approvals"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "characterId": {"const": "gahyeon"},
+    "gate": {"const": "G2"},
+    "status": {"enum": ["draft", "candidate", "approved", "rejected"]},
+    "g1Review": {
+      "type": "object", "additionalProperties": false,
+      "required": ["uri", "sha256"],
+      "properties": {
+        "uri": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "format", "uri", "sha256", "bytes"],
+        "properties": {
+          "role": {"enum": ["high-poly-master", "animation-mesh"]},
+          "format": {"enum": ["blend", "zbrush-project", "fbx", "glb", "metahuman-source", "unreal-content-zip"]},
+          "uri": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "bytes": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["view", "captureType", "authority", "uri", "sha256"],
+        "properties": {
+          "view": {"enum": [
+            "sculpt-face-front", "sculpt-face-three-quarter-left", "sculpt-face-three-quarter-right",
+            "sculpt-face-left-profile", "sculpt-face-right-profile", "sculpt-body-front",
+            "sculpt-body-profile", "sculpt-body-rear", "topology-face-neutral", "topology-eyelids",
+            "topology-mouth", "topology-body", "eye-assembly", "mouth-interior", "skin-albedo",
+            "skin-normal-displacement", "skin-roughness", "rig-eyelid-contact", "rig-lip-seal",
+            "rig-jaw-rotation", "rig-cheek-volume"
+          ]},
+          "captureType": {"enum": ["viewport-render", "wireframe", "material-channel", "deformation-test"]},
+          "authority": {"enum": ["g1-derived", "artist-authored-detail", "technical-implementation"]},
+          "uri": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "notes": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "topologyAudit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["vertexCount", "polygonCount", "nonManifoldEdges", "openBoundaryPolicy", "deformationTopologyReviewed"],
+      "properties": {
+        "vertexCount": {"type": "integer", "minimum": 0},
+        "polygonCount": {"type": "integer", "minimum": 0},
+        "nonManifoldEdges": {"type": "integer", "minimum": 0},
+        "openBoundaryPolicy": {"type": "string"},
+        "deformationTopologyReviewed": {"type": "boolean"}
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "severity", "summary", "status"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^G2-[0-9]{3}$"},
+          "severity": {"enum": ["blocking", "major", "minor", "note"]},
+          "summary": {"type": "string", "minLength": 1},
+          "status": {"enum": ["open", "resolved", "accepted-risk"]}
+        }
+      }
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "reviewer", "approvedAt"],
+        "properties": {
+          "role": {"enum": ["identity-reviewer", "topology-reviewer", "lookdev-reviewer", "operator"]},
+          "reviewer": {"type": "string", "minLength": 1},
+          "approvedAt": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  },
+  "allOf": [{
+    "if": {"properties": {"status": {"enum": ["candidate", "approved"]}}, "required": ["status"]},
+    "then": {
+      "properties": {
+        "artifacts": {"minItems": 2},
+        "evidence": {"minItems": 21},
+        "topologyAudit": {
+          "properties": {
+            "vertexCount": {"minimum": 1}, "polygonCount": {"minimum": 1},
+            "nonManifoldEdges": {"const": 0}, "openBoundaryPolicy": {"minLength": 1},
+            "deformationTopologyReviewed": {"const": true}
+          }
+        }
+      }
+    }
+  }, {
+    "if": {"properties": {"status": {"const": "approved"}}, "required": ["status"]},
+    "then": {"properties": {"approvals": {"minItems": 4}}}
+  }]
+}

@@ -1,0 +1,562 @@
+#include "CoreMinimal.h"
+#include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
+#include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
+#include "CineCameraComponent.h"
+#include "Animation/SkeletalMeshActor.h"
+#include "Animation/AnimSingleNodeInstance.h"
+#include "Engine/World.h"
+#include "EngineUtils.h"
+#include "FrameGrabber.h"
+#include "HAL/PlatformMemory.h"
+#include "Modules/ModuleManager.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Slate/SceneViewport.h"
+#include "Widgets/SViewport.h"
+#include "MacIOSurfaceBridge.h"
+#include "Async/ParallelFor.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+#include "Kismet/GameplayStatics.h"
+#include "Misc/PackageName.h"
+
+namespace
+{
+#if PLATFORM_WINDOWS
+constexpr const TCHAR* FrameRegionName = TEXT("{36cb1d68-2643-421d-85b1-61fccfda0401}");
+constexpr const TCHAR* ControlRegionName = TEXT("{36cb1d68-2643-421d-85b1-61fccfda0402}");
+#else
+constexpr const TCHAR* FrameRegionName = TEXT("gahyeon_rgba_v003");
+constexpr const TCHAR* ControlRegionName = TEXT("gahyeon_overlay_control_v001");
+#endif
+constexpr uint32 FrameMagic = 0x47485247; // GHRG
+constexpr uint32 FrameVersion = 1;
+constexpr int32 FrameWidth = 1600;
+constexpr int32 FrameHeight = 1258;
+constexpr int32 FrameStride = FrameWidth * 4;
+constexpr SIZE_T HeaderBytes = 64;
+constexpr SIZE_T FrameBytes = SIZE_T(FrameStride) * FrameHeight;
+constexpr SIZE_T RegionBytes = HeaderBytes + FrameBytes * 2;
+constexpr uint32 ControlMagic = 0x47484354; // GHCT
+constexpr SIZE_T ControlBytes = 64;
+
+struct alignas(64) FSharedFrameHeader
+{
+    uint32 Magic = FrameMagic;
+    uint32 Version = FrameVersion;
+    uint32 Width = FrameWidth;
+    uint32 Height = FrameHeight;
+    uint32 Stride = FrameStride;
+    volatile uint32 ActiveBuffer = 0;
+    volatile uint64 Sequence = 0;
+    uint32 AlphaMin = 255;
+    uint32 AlphaMax = 255;
+    uint32 BoundsMinX = 0;
+    uint32 BoundsMinY = 0;
+    uint32 BoundsMaxX = FrameWidth - 1;
+    uint32 BoundsMaxY = FrameHeight - 1;
+    uint32 ViewIndex = 0;
+    uint32 ViewCount = 1;
+};
+static_assert(sizeof(FSharedFrameHeader) == HeaderBytes);
+
+struct alignas(64) FSharedOverlayControl
+{
+    uint32 Magic = ControlMagic;
+    uint32 Version = 1;
+    volatile float YawDegrees = 0.0f;
+    uint32 Reserved0 = 0;
+    volatile uint64 Sequence = 0;
+    volatile uint64 ResetSequence = 0;
+    volatile uint32 RequestedCharacter = 0;
+    volatile uint32 AppliedCharacter = 0;
+    volatile uint32 CharacterError = 0;
+    uint32 CharacterSelectionCapability = 0x524F5354; // ROST, read-only to overlays
+    uint8 Reserved[16] = {};
+};
+static_assert(sizeof(FSharedOverlayControl) == ControlBytes);
+}
+
+class FGahyeonDesktopMetaHumanPOCModule final : public IModuleInterface
+{
+public:
+    virtual void StartupModule() override
+    {
+#if PLATFORM_MAC || PLATFORM_WINDOWS
+        StartGahyeonMacIOSurfaceBridge();
+        const bool bEnableCPUFallback = FParse::Param(FCommandLine::Get(), TEXT("GahyeonCPUAlphaFallback"));
+        bEnableLookingGlassQuilt = FParse::Param(
+            FCommandLine::Get(), TEXT("GahyeonLookingGlassQuilt"));
+        bEnableLookingGlassAnimatedQA = FPlatformMisc::GetEnvironmentVariable(
+            TEXT("GAHYEON_LOOKING_GLASS_ANIMATED_QA")) == TEXT("1");
+        if (FPlatformMisc::GetEnvironmentVariable(TEXT("GAHYEON_LOOKING_GLASS_SMOOTH_QA")) == TEXT("1"))
+        {
+            LookingGlassAnimationFrameCount = 120;
+        }
+        if (bEnableLookingGlassQuilt)
+        {
+            const FString ViewCountValue = FPlatformMisc::GetEnvironmentVariable(
+                TEXT("GAHYEON_LOOKING_GLASS_VIEW_COUNT"));
+            const FString ViewConeValue = FPlatformMisc::GetEnvironmentVariable(
+                TEXT("GAHYEON_LOOKING_GLASS_VIEW_CONE"));
+            if (!ViewCountValue.IsEmpty())
+            {
+                LookingGlassViewCount = FMath::Clamp(uint32(FCString::Atoi(*ViewCountValue)), 2u, 256u);
+            }
+            if (!ViewConeValue.IsEmpty())
+            {
+                LookingGlassViewConeDegrees = FMath::Clamp(FCString::Atof(*ViewConeValue), 1.0f, 180.0f);
+            }
+            TickHandle = FTSTicker::GetCoreTicker().AddTicker(
+                FTickerDelegate::CreateRaw(this, &FGahyeonDesktopMetaHumanPOCModule::Tick));
+        }
+        if (!bEnableCPUFallback)
+        {
+            UE_LOG(LogTemp, Display, TEXT("Gahyeon GPU IOSurface bridge active; CPU fallback disabled"));
+            return;
+        }
+        SharedRegion = FPlatformMemory::MapNamedSharedMemoryRegion(
+            FrameRegionName, true,
+            FPlatformMemory::ESharedMemoryAccess::Read | FPlatformMemory::ESharedMemoryAccess::Write,
+            RegionBytes);
+        if (SharedRegion)
+        {
+            FMemory::Memzero(SharedRegion->GetAddress(), RegionBytes);
+            new (SharedRegion->GetAddress()) FSharedFrameHeader();
+            if (!TickHandle.IsValid())
+            {
+                TickHandle = FTSTicker::GetCoreTicker().AddTicker(
+                    FTickerDelegate::CreateRaw(this, &FGahyeonDesktopMetaHumanPOCModule::Tick));
+            }
+        }
+        ControlRegion = FPlatformMemory::MapNamedSharedMemoryRegion(
+            ControlRegionName, true,
+            FPlatformMemory::ESharedMemoryAccess::Read | FPlatformMemory::ESharedMemoryAccess::Write,
+            ControlBytes);
+        if (ControlRegion)
+        {
+            FMemory::Memzero(ControlRegion->GetAddress(), ControlBytes);
+            new (ControlRegion->GetAddress()) FSharedOverlayControl();
+        }
+        UE_LOG(LogTemp, Display, TEXT("Gahyeon CPU direct-alpha fallback explicitly enabled"));
+#endif
+    }
+
+    virtual void ShutdownModule() override
+    {
+#if PLATFORM_MAC || PLATFORM_WINDOWS
+        if (LookingGlassCamera.IsValid())
+        {
+            LookingGlassCamera->SetActorLocation(OriginalCameraLocation);
+            LookingGlassCamera->SetActorRotation(OriginalCameraRotation);
+            if (UCineCameraComponent* CineCamera = Cast<UCineCameraComponent>(
+                    LookingGlassCamera->GetCameraComponent()))
+            {
+                CineCamera->Filmback.SensorHorizontalOffset = OriginalSensorHorizontalOffset;
+            }
+        }
+        for (const TPair<TWeakObjectPtr<USkeletalMeshComponent>, bool>& Entry : LookingGlassPausedMeshes)
+        {
+            if (Entry.Key.IsValid())
+            {
+                Entry.Key->bPauseAnims = Entry.Value;
+            }
+        }
+        LookingGlassPausedMeshes.Reset();
+        StopGahyeonMacIOSurfaceBridge();
+        if (TickHandle.IsValid())
+        {
+            FTSTicker::GetCoreTicker().RemoveTicker(TickHandle);
+        }
+        if (FrameGrabber)
+        {
+            FrameGrabber->StopCapturingFrames();
+            FrameGrabber->Shutdown();
+            FrameGrabber.Reset();
+        }
+        if (SharedRegion)
+        {
+            FPlatformMemory::UnmapNamedSharedMemoryRegion(SharedRegion);
+            SharedRegion = nullptr;
+        }
+        if (ControlRegion)
+        {
+            FPlatformMemory::UnmapNamedSharedMemoryRegion(ControlRegion);
+            ControlRegion = nullptr;
+        }
+#endif
+    }
+
+private:
+    bool Tick(float DeltaSeconds)
+    {
+#if PLATFORM_MAC || PLATFORM_WINDOWS
+        ApplyOverlayControl();
+        if (bEnableLookingGlassQuilt && !FrameGrabber)
+        {
+            const uint64 GPUSequence = GetGahyeonMacIOSurfaceSequence();
+            if (!bGPUViewPrepared)
+            {
+                if (PrepareLookingGlassView())
+                {
+                    // The first back buffer predates the multiview camera. Mark it as
+                    // a non-quilt warm-up frame so it cannot contaminate view zero.
+                    ConfigureGahyeonMacIOSurfaceQuilt(CurrentViewIndex, 1);
+                    LastGPUSequence = GPUSequence;
+                    bGPUViewPrepared = true;
+                    bGPUWarmupPending = true;
+                }
+            }
+            else if (GPUSequence != LastGPUSequence)
+            {
+                if (bGPUWarmupPending)
+                {
+                    ConfigureGahyeonMacIOSurfaceQuilt(CurrentViewIndex, LookingGlassViewCount);
+                    LastGPUSequence = GPUSequence;
+                    bGPUWarmupPending = false;
+                }
+                else
+                {
+                    if (bEnableLookingGlassAnimatedQA
+                        && CurrentViewIndex + 1 == LookingGlassViewCount)
+                    {
+                        LookingGlassAnimationFrameIndex =
+                            (LookingGlassAnimationFrameIndex + 1) % LookingGlassAnimationFrameCount;
+                        float PoseSeconds = 0.0f;
+                        float PoseDuration = 0.0f;
+                        FVector HeadLocation = FVector::ZeroVector;
+                        for (const TPair<TWeakObjectPtr<USkeletalMeshComponent>, bool>& Entry
+                             : LookingGlassPausedMeshes)
+                        {
+                            if (Entry.Key.IsValid())
+                            {
+                                if (UAnimSingleNodeInstance* SingleNode =
+                                        Entry.Key->GetSingleNodeInstance())
+                                {
+                                    PoseDuration = FMath::Max(PoseDuration, SingleNode->GetLength());
+                                    PoseSeconds = PoseDuration
+                                        * float(LookingGlassAnimationFrameIndex)
+                                        / float(LookingGlassAnimationFrameCount);
+                                }
+                                if (!FPlatformMisc::GetEnvironmentVariable(
+                                    TEXT("GAHYEON_LOOKING_GLASS_PROBE_DIR")).IsEmpty())
+                                {
+                                    PoseSeconds = 0.0f;
+                                }
+                                Entry.Key->SetPosition(PoseSeconds, false);
+                                Entry.Key->TickAnimation(0.0f, false);
+                                Entry.Key->RefreshBoneTransforms();
+                                Entry.Key->MarkRenderDynamicDataDirty();
+                                if (Entry.Key->DoesSocketExist(TEXT("head")))
+                                {
+                                    HeadLocation = Entry.Key->GetSocketLocation(TEXT("head"));
+                                }
+                            }
+                        }
+                        UE_LOG(LogTemp, Display,
+                            TEXT("Gahyeon Looking Glass idle pose frame=%u time=%.3f duration=%.3f head=%s"),
+                            LookingGlassAnimationFrameIndex,
+                            PoseSeconds,
+                            PoseDuration,
+                            *HeadLocation.ToCompactString());
+                    }
+                    CurrentViewIndex = (CurrentViewIndex + 1) % LookingGlassViewCount;
+                    if (PrepareLookingGlassView())
+                    {
+                        ConfigureGahyeonMacIOSurfaceQuilt(CurrentViewIndex, LookingGlassViewCount);
+                        LastGPUSequence = GPUSequence;
+                    }
+                }
+            }
+            return true;
+        }
+        if (!FrameGrabber && GEngine && GEngine->GameViewport && FSlateApplication::IsInitialized())
+        {
+            TSharedPtr<SViewport> ViewportWidget = FSlateApplication::Get().GetGameViewport();
+            TSharedPtr<FSceneViewport> Viewport = ViewportWidget.IsValid()
+                ? StaticCastSharedPtr<FSceneViewport>(ViewportWidget->GetViewportInterface().Pin())
+                : nullptr;
+            if (Viewport.IsValid())
+            {
+                FrameGrabber = MakeUnique<FFrameGrabber>(Viewport.ToSharedRef(), FIntPoint(FrameWidth, FrameHeight), PF_B8G8R8A8, 3);
+                FrameGrabber->StartCapturingFrames();
+                UE_LOG(LogTemp, Display, TEXT("Gahyeon direct-alpha bridge started"));
+            }
+        }
+        if (!FrameGrabber)
+        {
+            return true;
+        }
+
+        TArray<FCapturedFrameData> Frames = FrameGrabber->GetCapturedFrames();
+        if (Frames.Num() > 0)
+        {
+            Publish(Frames.Last(), PendingViewIndex);
+            bCapturePending = false;
+            CurrentViewIndex = (CurrentViewIndex + 1) % LookingGlassViewCount;
+        }
+        if (bEnableLookingGlassQuilt && !PrepareLookingGlassView())
+        {
+            return true;
+        }
+        if (bCapturePending)
+        {
+            return true;
+        }
+        CaptureAccumulator += DeltaSeconds;
+        if (CaptureAccumulator >= 1.0 / 30.0)
+        {
+            CaptureAccumulator = 0.0;
+            PendingViewIndex = bEnableLookingGlassQuilt ? CurrentViewIndex : 0;
+            FrameGrabber->CaptureThisFrame(nullptr);
+            bCapturePending = true;
+        }
+#endif
+        return true;
+    }
+
+    bool PrepareLookingGlassView()
+    {
+        if (!GEngine || !GEngine->GameViewport) return false;
+        UWorld* World = GEngine->GameViewport->GetWorld();
+        if (!World) return false;
+        if (!LookingGlassCamera.IsValid())
+        {
+            for (TActorIterator<ACameraActor> It(World); It; ++It)
+            {
+                if (!It->IsHidden())
+                {
+                LookingGlassCamera = *It;
+                OriginalCameraLocation = It->GetActorLocation();
+                OriginalCameraRotation = It->GetActorRotation();
+                if (UCineCameraComponent* CineCamera = Cast<UCineCameraComponent>(
+                        It->GetCameraComponent()))
+                {
+                    OriginalSensorHorizontalOffset = CineCamera->Filmback.SensorHorizontalOffset;
+                    OriginalProjectionOffset = CineCamera->GetHorizontalProjectionOffset();
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Error,
+                        TEXT("Gahyeon Looking Glass requires a CineCameraActor for off-axis projection"));
+                    return false;
+                }
+                    break;
+                }
+            }
+            ASkeletalMeshActor* Character = nullptr;
+            for (TActorIterator<ASkeletalMeshActor> It(World); It; ++It)
+            {
+                if (!It->IsHidden()) { Character = *It; break; }
+            }
+            if (!LookingGlassCamera.IsValid() || !Character) return false;
+            FVector Extent;
+            Character->GetActorBounds(false, LookingGlassFocus, Extent, true);
+            if (USkeletalMeshComponent* CharacterMesh = Character->GetSkeletalMeshComponent();
+                CharacterMesh && CharacterMesh->DoesSocketExist(TEXT("head")))
+            {
+                LookingGlassFocus = CharacterMesh->GetSocketLocation(TEXT("head"));
+            }
+            else
+            {
+                LookingGlassFocus.Z += Extent.Z * 0.6f;
+            }
+            for (TObjectIterator<USkeletalMeshComponent> It; It; ++It)
+            {
+                USkeletalMeshComponent* Mesh = *It;
+                if (Mesh->GetWorld() == World && Mesh->IsRegistered())
+                {
+                    LookingGlassPausedMeshes.Add(Mesh, Mesh->bPauseAnims);
+                    Mesh->bPauseAnims = true;
+                }
+            }
+            UE_LOG(LogTemp, Display,
+                TEXT("Gahyeon Looking Glass %u-view frozen capture: cone=%.1f degrees depth=%.2f"),
+                LookingGlassViewCount,
+                LookingGlassViewConeDegrees,
+                LookingGlassDepthScale);
+        }
+        // Looking Glass quilt slots advance from the observer's right-hand view to left-hand view.
+        const float ViewT = 1.0f
+            - (float(CurrentViewIndex) / float(LookingGlassViewCount - 1)) * 2.0f;
+        const FVector Forward = OriginalCameraRotation.Vector();
+        const FVector Right = FRotationMatrix(OriginalCameraRotation).GetUnitAxis(EAxis::Y);
+        const float FocusDistance = FVector::DotProduct(
+            LookingGlassFocus - OriginalCameraLocation, Forward);
+        if (FocusDistance <= KINDA_SMALL_NUMBER) return false;
+        const float ViewAngle = FMath::DegreesToRadians(
+            ViewT * LookingGlassViewConeDegrees * 0.5f * LookingGlassDepthScale);
+        const float LateralOffset = FocusDistance * FMath::Tan(ViewAngle);
+        const FVector ViewLocation = OriginalCameraLocation + Right * LateralOffset;
+        LookingGlassCamera->SetActorLocation(ViewLocation);
+        LookingGlassCamera->SetActorRotation(OriginalCameraRotation);
+        UCineCameraComponent* CameraComponent = Cast<UCineCameraComponent>(
+            LookingGlassCamera->GetCameraComponent());
+        if (!CameraComponent) return false;
+        const float HalfFov = FMath::DegreesToRadians(CameraComponent->FieldOfView * 0.5f);
+        const float FocusHalfWidth = FocusDistance * FMath::Tan(HalfFov);
+        if (FocusHalfWidth <= KINDA_SMALL_NUMBER) return false;
+        CameraComponent->Filmback.SensorHorizontalOffset = OriginalSensorHorizontalOffset;
+        const float BaseProjectionOffset = CameraComponent->GetHorizontalProjectionOffset();
+        CameraComponent->Filmback.SensorHorizontalOffset = OriginalSensorHorizontalOffset + 1.0f;
+        const float ProjectionOffsetPerMillimeter =
+            CameraComponent->GetHorizontalProjectionOffset() - BaseProjectionOffset;
+        if (FMath::IsNearlyZero(ProjectionOffsetPerMillimeter)) return false;
+        const float DesiredProjectionOffset = OriginalProjectionOffset
+            - LateralOffset / FocusHalfWidth;
+        CameraComponent->Filmback.SensorHorizontalOffset = OriginalSensorHorizontalOffset
+            + (DesiredProjectionOffset - BaseProjectionOffset) / ProjectionOffsetPerMillimeter;
+        return true;
+    }
+
+    void ApplyCharacterSelection(FSharedOverlayControl* Control)
+    {
+        static const TCHAR* Maps[] = {
+            TEXT("/Game/Gahyeon/Land/Gahyeon/v006/Runtime/L_GahyeonLandMac_v006"),
+            TEXT("/Game/Gahyeon/Land/Jaejae/Idle_v004/L_Character"),
+            TEXT("/Game/Gahyeon/Land/Roster_v003/rogue/L_Character"),
+            TEXT("/Game/Gahyeon/Land/Roster_v003/pirate/L_Character"),
+            TEXT("/Game/Gahyeon/Land/Roster_v003/fighter/L_Character"),
+            TEXT("/Game/Gahyeon/Land/Roster_v003/fighter_unmasked/L_Character"),
+            TEXT("/Game/Gahyeon/Land/Roster_v003/child/L_Character"),
+            TEXT("/Game/Gahyeon/Land/Roster_v003/hacker/L_Character")
+        };
+        const uint32 Requested = Control->RequestedCharacter;
+        if (Requested >= UE_ARRAY_COUNT(Maps)) { Control->CharacterError = 1; return; }
+        UWorld* World = GEngine->GameViewport->GetWorld();
+        if (!World) return;
+        const FString Target(Maps[Requested]);
+        if (World->GetOutermost()->GetName() == Target)
+        {
+            Control->AppliedCharacter = Requested;
+            Control->CharacterError = 0;
+            PendingCharacterMap.Empty();
+            return;
+        }
+        if (!PendingCharacterMap.IsEmpty()) return;
+        if (Requested == Control->AppliedCharacter) return;
+        if (!FPackageName::DoesPackageExist(Target)) { Control->CharacterError = 2; return; }
+        Control->CharacterError = 0;
+        PendingCharacterMap = Target;
+        InitialCharacterYaw.Reset();
+        UGameplayStatics::OpenLevel(World, FName(*Target));
+    }
+
+    void ApplyOverlayControl()
+    {
+        if (!ControlRegion || !GEngine || !GEngine->GameViewport)
+        {
+            return;
+        }
+        auto* Control = static_cast<FSharedOverlayControl*>(ControlRegion->GetAddress());
+        if (Control->Magic != ControlMagic) return;
+        ApplyCharacterSelection(Control);
+        if (Control->Sequence == LastControlSequence)
+        {
+            return;
+        }
+        UWorld* World = GEngine->GameViewport->GetWorld();
+        if (!World)
+        {
+            return;
+        }
+        ASkeletalMeshActor* Character = nullptr;
+        for (TActorIterator<ASkeletalMeshActor> It(World); It; ++It)
+        {
+            if (!It->IsHidden())
+            {
+                Character = *It;
+                break;
+            }
+        }
+        if (!Character)
+        {
+            return;
+        }
+        const float Yaw = FMath::Clamp(Control->YawDegrees, -75.0f, 75.0f);
+        FRotator Rotation = Character->GetActorRotation();
+        float* InitialYaw = InitialCharacterYaw.Find(Character);
+        if (!InitialYaw)
+        {
+            InitialYaw = &InitialCharacterYaw.Add(Character, Rotation.Yaw);
+        }
+        Rotation.Yaw = *InitialYaw + Yaw;
+        Character->SetActorRotation(Rotation);
+        LastControlSequence = Control->Sequence;
+    }
+
+    void Publish(const FCapturedFrameData& Frame, uint32 ViewIndex)
+    {
+        if (!SharedRegion || Frame.ColorBuffer.Num() != FrameWidth * FrameHeight)
+        {
+            return;
+        }
+        auto* Header = static_cast<FSharedFrameHeader*>(SharedRegion->GetAddress());
+        const uint32 NextBuffer = 1u - Header->ActiveBuffer;
+        uint8* Destination = static_cast<uint8*>(SharedRegion->GetAddress()) + HeaderBytes + FrameBytes * NextBuffer;
+        FColor* Output = reinterpret_cast<FColor*>(Destination);
+        ParallelFor(FrameHeight, [&Frame, Output](int32 Y)
+        {
+            const int32 RowStart = Y * FrameWidth;
+            for (int32 X = 0; X < FrameWidth; ++X)
+            {
+                const int32 Index = RowStart + X;
+                const FColor Source = Frame.ColorBuffer[Index];
+                const uint8 Alpha = 255 - Source.A;
+                Output[Index] = FColor(
+                    uint8((uint16(Source.R) * Alpha) / 255),
+                    uint8((uint16(Source.G) * Alpha) / 255),
+                    uint8((uint16(Source.B) * Alpha) / 255),
+                    Alpha);
+            }
+        });
+        FPlatformMisc::MemoryBarrier();
+        Header->AlphaMin = 0;
+        Header->AlphaMax = 255;
+        Header->BoundsMinX = uint32(FrameWidth * 0.25);
+        Header->BoundsMinY = uint32(FrameHeight * 0.12);
+        Header->BoundsMaxX = uint32(FrameWidth * 0.70);
+        Header->BoundsMaxY = uint32(FrameHeight * 0.89);
+        Header->ViewIndex = ViewIndex;
+        Header->ViewCount = bEnableLookingGlassQuilt ? LookingGlassViewCount : 1;
+        Header->ActiveBuffer = NextBuffer;
+        ++Header->Sequence;
+        if ((Header->Sequence % 300) == 1)
+        {
+            UE_LOG(LogTemp, Display, TEXT("Gahyeon parallel direct-alpha frame %llu"), Header->Sequence);
+        }
+    }
+
+    FTSTicker::FDelegateHandle TickHandle;
+    TUniquePtr<FFrameGrabber> FrameGrabber;
+    FPlatformMemory::FSharedMemoryRegion* SharedRegion = nullptr;
+    FPlatformMemory::FSharedMemoryRegion* ControlRegion = nullptr;
+    TMap<TWeakObjectPtr<ASkeletalMeshActor>, float> InitialCharacterYaw;
+    TWeakObjectPtr<ACameraActor> LookingGlassCamera;
+    TMap<TWeakObjectPtr<USkeletalMeshComponent>, bool> LookingGlassPausedMeshes;
+    FVector OriginalCameraLocation = FVector::ZeroVector;
+    FRotator OriginalCameraRotation = FRotator::ZeroRotator;
+    float OriginalProjectionOffset = 0.0f;
+    float OriginalSensorHorizontalOffset = 0.0f;
+    FVector LookingGlassFocus = FVector::ZeroVector;
+    uint32 LookingGlassViewCount = 66;
+    uint32 LookingGlassAnimationFrameCount = 12;
+    static constexpr float LookingGlassAnimationFPS = 12.0f;
+    float LookingGlassViewConeDegrees = 54.0f;
+    float LookingGlassDepthScale = 0.45f;
+    FString PendingCharacterMap;
+    uint64 LastControlSequence = 0;
+    uint32 CurrentViewIndex = 0;
+    uint32 PendingViewIndex = 0;
+    bool bCapturePending = false;
+    bool bEnableLookingGlassQuilt = false;
+    bool bEnableLookingGlassAnimatedQA = false;
+    bool bGPUViewPrepared = false;
+    bool bGPUWarmupPending = false;
+    uint32 LookingGlassAnimationFrameIndex = 0;
+    uint64 LastGPUSequence = 0;
+    double CaptureAccumulator = 0.0;
+};
+
+IMPLEMENT_MODULE(FGahyeonDesktopMetaHumanPOCModule, GahyeonDesktopMetaHumanPOC)
