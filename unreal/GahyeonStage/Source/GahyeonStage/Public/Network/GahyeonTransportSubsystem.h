@@ -15,6 +15,12 @@ enum class EGahyeonTransportCallbackDisposition : uint8
     ReplacedRuntime,
 };
 
+enum class EGahyeonConnectionBootstrap : uint8
+{
+    RestorePersistentState,
+    ReuseLiveRuntime,
+};
+
 /** WebSocket lifecycle only; protocol state remains owned by RuntimeCore/runtime subsystem. */
 UCLASS()
 class GAHYEONSTAGE_API UGahyeonTransportSubsystem final : public UGameInstanceSubsystem
@@ -33,6 +39,10 @@ public:
         const FString& InInstallationId,
         const FString& InDisplayName,
         const FString& InBearerToken);
+
+    /** Selects the persona rendered by this connection before Connect(). */
+    UFUNCTION(BlueprintCallable, Category = "Gahyeon|Network")
+    bool SetCharacterId(const FString& InCharacterId);
 
     UFUNCTION(BlueprintCallable, Category = "Gahyeon|Network")
     bool Connect();
@@ -85,6 +95,10 @@ public:
         const FString& PendingCorrelationId,
         const FString& ReceivedCorrelationId);
 
+    /** Persistence is a GameInstance bootstrap, never a socket reconnect step. */
+    static EGahyeonConnectionBootstrap SelectConnectionBootstrap(
+        bool bPersistentStateRestored);
+
 private:
     void OpenSocket(uint64 Generation, uint64 RuntimeEpoch, int64 LastSequence);
     void SendHello(uint64 Generation, uint64 RuntimeEpoch, int64 LastSequence);
@@ -114,12 +128,17 @@ private:
     FString WorldId;
     FString InstallationId;
     FString DisplayName;
+    FString CharacterId = TEXT("gahyeon");
     FString BearerToken;
     bool bConnectPending = false;
     bool bShouldReconnect = false;
+    // A socket reconnect must not replace the live RuntimeCore. Persistence is
+    // restored once for this GameInstance; later loads only supply the latest
+    // durable replay cursor used by the new hello.
+    bool bPersistentStateRestored = false;
     int32 ReconnectAttempt = 0;
-    FDelegateHandle ReconnectTickerHandle;
-    FDelegateHandle HeartbeatTickerHandle;
+    FTSTicker::FDelegateHandle ReconnectTickerHandle;
+    FTSTicker::FDelegateHandle HeartbeatTickerHandle;
     uint64 ConnectionGeneration = 0;
     FString PendingHeartbeatCorrelationId;
     double PendingHeartbeatSentAtSeconds = 0.0;

@@ -1,6 +1,6 @@
 {
   "FileVersion": 3,
-  "EngineAssociation": "5.6",
+	"EngineAssociation": "5.8",
   "Category": "AI Character",
   "Description": "Opt-in Win64 Looking Glass Go prototype for Gahyeon Stage",
   "Modules": [
@@ -18,10 +18,15 @@
   ],
   "Plugins": [
     {"Name": "AudioCapture", "Enabled": true},
-    {"Name": "WebSockets", "Enabled": true},
+    {"Name": "LiveLink", "Enabled": true},
     {"Name": "ControlRig", "Enabled": true},
+    {"Name": "ControlRigDynamics", "Enabled": true},
     {"Name": "FullBodyIK", "Enabled": true},
     {"Name": "EnhancedInput", "Enabled": true},
+    {"Name": "LiveLinkControlRig", "Enabled": true},
+    {"Name": "MovieRenderPipeline", "Enabled": true},
+    {"Name": "MetaHumanCharacter", "Enabled": true},
+    {"Name": "AppleARKitFaceSupport", "Enabled": true, "SupportedTargetPlatforms": ["IOS", "Win64", "Mac", "Linux", "Android"]},
     {"Name": "LookingGlass", "Enabled": true, "SupportedTargetPlatforms": ["Win64"]}
   ]
 }

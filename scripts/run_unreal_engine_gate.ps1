@@ -29,8 +29,8 @@ if ($Package -and -not (Test-Path -LiteralPath $RunUAT -PathType Leaf)) {
     throw "Unreal packaging prerequisite is missing: $RunUAT"
 }
 $VersionPayload = Get-Content -LiteralPath $Version -Raw | ConvertFrom-Json
-if ($VersionPayload.MajorVersion -ne 5 -or $VersionPayload.MinorVersion -ne 6) {
-    throw "GahyeonStage requires Unreal Engine 5.6"
+if ($VersionPayload.MajorVersion -ne 5 -or $VersionPayload.MinorVersion -ne 8) {
+    throw "GahyeonStage requires Unreal Engine 5.8"
 }
 if ($HeroManifest) {
     & $Python (Join-Path $RepoRoot "scripts\verify_gahyeon_hero_asset.py") `
@@ -41,14 +41,14 @@ if ($HeroManifest) {
     if ($LASTEXITCODE -ne 0) { throw "Hero content installation check failed" }
 }
 
-Write-Host "Unreal gate environment OK: UE 5.6 (Win64) at $UnrealRoot"
+Write-Host "Unreal gate environment OK: UE 5.8 (Win64) at $UnrealRoot"
 if ($CheckOnly) { exit 0 }
 
 New-Item -ItemType Directory -Force -Path $EvidenceRoot | Out-Null
 $BuildLog = Join-Path $EvidenceRoot "build.log"
 $AutomationLog = Join-Path $EvidenceRoot "automation.log"
 & $Build GahyeonStageEditor Win64 Development "-Project=$Project" `
-    -WaitMutex -NoHotReloadFromIDE *>&1 | Tee-Object -FilePath $BuildLog
+    -WaitMutex -NoHotReloadFromIDE -NoUBA *>&1 | Tee-Object -FilePath $BuildLog
 if ($LASTEXITCODE -ne 0) { throw "GahyeonStage UE Development Editor build failed" }
 if ($BuildOnly) { exit 0 }
 
@@ -61,6 +61,8 @@ if ($Package) {
     }
     & $RunUAT BuildCookRun "-project=$Project" -noP4 -platform=Win64 `
         -clientconfig=Development -build -cook -stage -pak -archive `
+        '-ubtargs=-NoUBA' `
+        '-AdditionalCookerOptions=-NoAssetRegistryCache' `
         "-archivedirectory=$PackageRoot" *>&1 | Tee-Object -FilePath $PackageLog
     if ($LASTEXITCODE -ne 0) { throw "GahyeonStage packaged Development build failed" }
     $InventoryScript = @'
@@ -75,7 +77,9 @@ if not files:
     raise SystemExit("packaged output contains no regular files")
 pathlib.Path(sys.argv[2]).write_text(json.dumps({"schemaVersion": 1, "files": files}, indent=2) + "\n", encoding="utf-8")
 '@
-    & $Python -c $InventoryScript $PackageRoot (Join-Path $EvidenceRoot "package-files.json")
+    # Windows PowerShell 5.1 rewrites quotes in multiline native `-c` arguments.
+    # Feed the program over stdin so Python receives it byte-for-byte.
+    $InventoryScript | & $Python - $PackageRoot (Join-Path $EvidenceRoot "package-files.json")
     if ($LASTEXITCODE -ne 0) { throw "packaged build inventory creation failed" }
     $PackagedBuild = $true
 }
@@ -103,7 +107,7 @@ def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 value = {
   "schemaVersion": 2, "status": "passed",
   "completedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-  "engineVersion": "5.6", "platform": "Win64", "configuration": "Development",
+  "engineVersion": "5.8", "platform": "Win64", "configuration": "Development",
   "project": str(project), "projectSha256": digest(project),
   "packagedBuild": packaged,
   "requiredAutomationTests": [
@@ -122,7 +126,7 @@ temporary = root / "manifest.json.tmp"
 temporary.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 temporary.replace(root / "manifest.json")
 '@
-& $Python -c $ManifestScript $EvidenceRoot $Project $PackagedBuild
+$ManifestScript | & $Python - $EvidenceRoot $Project $PackagedBuild
 if ($LASTEXITCODE -ne 0) { throw "Unreal evidence manifest creation failed" }
 & $Python (Join-Path $RepoRoot "scripts\verify_unreal_engine_evidence.py") $EvidenceRoot
 if ($LASTEXITCODE -ne 0) { throw "Unreal evidence verification failed" }

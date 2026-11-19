@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gahyeon.local/schemas/gahyeon-g4-review.schema.json",
+  "title": "Gahyeon G4 Facial and Body Performance Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "characterId", "gate", "status", "g3Review", "artifacts", "evidence", "performanceAudit", "findings", "approvals"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "characterId": {"const": "gahyeon"},
+    "gate": {"const": "G4"},
+    "status": {"enum": ["draft", "candidate", "approved", "rejected"]},
+    "g3Review": {"$ref": "#/$defs/fileIdentity"},
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "format", "uri", "sha256", "bytes"],
+        "properties": {
+          "role": {"enum": ["facial-rig", "body-rig", "animation-set"]},
+          "format": {"enum": ["fbx", "glb", "blend", "metahuman-source", "unreal-content-zip"]},
+          "uri": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "bytes": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["view", "captureType", "uri", "sha256"],
+        "properties": {
+          "view": {"enum": [
+            "face-neutral-zero", "expression-happy", "expression-curious", "expression-surprised",
+            "expression-sad", "expression-angry", "expression-combination", "viseme-set",
+            "korean-lipsync-front", "korean-lipsync-profile", "secondary-blink", "secondary-saccade",
+            "secondary-breathing", "secondary-micro-head", "secondary-weight-shift",
+            "secondary-fingers", "secondary-shoulders", "lookat-eyes", "lookat-head",
+            "state-listening", "state-thinking", "state-speaking", "locomotion-idle",
+            "locomotion-walk", "locomotion-sit", "locomotion-talk", "locomotion-foot-slide"
+          ]},
+          "captureType": {"enum": ["viewport-video", "deformation-test", "timing-trace", "layer-debug", "closeup-render"]},
+          "uri": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "notes": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "performanceAudit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["visemes", "animationLayers", "neutralControlMaxAbs", "lipSyncMaxAbsOffsetMs", "footSlideMaxCm", "idleContinuesWithoutBackend", "reflexContinuesDuringCognition"],
+      "properties": {
+        "visemes": {"type": "array", "uniqueItems": true, "items": {"enum": ["sil", "aa", "ih", "ou", "ee", "oh", "fv", "l", "mbp", "wq"]}},
+        "animationLayers": {"type": "array", "uniqueItems": true, "items": {"enum": ["base-locomotion", "posture", "upper-body-gesture", "head", "eyes", "face", "lip-sync", "secondary-motion"]}},
+        "neutralControlMaxAbs": {"type": "number", "minimum": 0},
+        "lipSyncMaxAbsOffsetMs": {"type": "number", "minimum": 0},
+        "footSlideMaxCm": {"type": "number", "minimum": 0},
+        "idleContinuesWithoutBackend": {"type": "boolean"},
+        "reflexContinuesDuringCognition": {"type": "boolean"}
+      }
+    },
+    "findings": {"$ref": "#/$defs/findings"},
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "reviewer", "approvedAt"],
+        "properties": {
+          "role": {"enum": ["facial-reviewer", "animation-reviewer", "audio-reviewer", "operator"]},
+          "reviewer": {"type": "string", "minLength": 1},
+          "approvedAt": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "fileIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["uri", "sha256"],
+      "properties": {
+        "uri": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "severity", "summary", "status"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^G4-[0-9]{3}$"},
+          "severity": {"enum": ["blocking", "major", "minor", "note"]},
+          "summary": {"type": "string", "minLength": 1},
+          "status": {"enum": ["open", "resolved", "accepted-risk"]}
+        }
+      }
+    }
+  },
+  "allOf": [{
+    "if": {"properties": {"status": {"enum": ["candidate", "approved"]}}, "required": ["status"]},
+    "then": {
+      "properties": {
+        "artifacts": {"minItems": 3},
+        "evidence": {"minItems": 27},
+        "performanceAudit": {
+          "properties": {
+            "visemes": {"minItems": 10},
+            "animationLayers": {"minItems": 8},
+            "neutralControlMaxAbs": {"maximum": 0.001},
+            "lipSyncMaxAbsOffsetMs": {"maximum": 80},
+            "footSlideMaxCm": {"maximum": 2},
+            "idleContinuesWithoutBackend": {"const": true},
+            "reflexContinuesDuringCognition": {"const": true}
+          }
+        }
+      }
+    }
+  }, {
+    "if": {"properties": {"status": {"const": "approved"}}, "required": ["status"]},
+    "then": {"properties": {"approvals": {"minItems": 4}}}
+  }]
+}

@@ -25,7 +25,7 @@ class LookingGlassIntegrationTest(unittest.TestCase):
         callback(payload)
         path.write_text(json.dumps(payload), encoding="utf-8")
 
-    def test_current_optional_integration_contract_is_valid(self):
+    def test_current_primary_release_integration_contract_is_valid(self):
         self.assertEqual("2.1.1", verify(self.lock, self.project)["release"])
 
     def test_enabling_plugin_before_acceptance_is_rejected(self):

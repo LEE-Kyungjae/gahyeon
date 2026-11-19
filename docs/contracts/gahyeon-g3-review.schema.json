@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gahyeon.local/schemas/gahyeon-g3-review.schema.json",
+  "title": "Gahyeon G3 Groom Clothing and LOD Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "characterId", "gate", "status", "g2Review", "artifacts", "evidence", "runtimeAudit", "findings", "approvals"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "characterId": {"const": "gahyeon"},
+    "gate": {"const": "G3"},
+    "status": {"enum": ["draft", "candidate", "approved", "rejected"]},
+    "g2Review": {"$ref": "#/$defs/fileIdentity"},
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {"$ref": "#/$defs/fileIdentity"},
+          {
+            "type": "object",
+            "required": ["role", "format", "bytes"],
+            "properties": {
+              "role": {"enum": ["groom-master", "outfit-master", "runtime-lod-package"]},
+              "format": {"enum": ["alembic-groom", "blend", "fbx", "glb", "unreal-content-zip"]},
+              "bytes": {"type": "integer", "minimum": 1}
+            }
+          }
+        ]
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {"$ref": "#/$defs/fileIdentity"},
+          {
+            "type": "object",
+            "required": ["view", "captureType"],
+            "properties": {
+              "view": {"enum": [
+                "groom-front", "groom-side", "groom-rear", "groom-top", "groom-hairline",
+                "groom-brows", "groom-lashes", "groom-flyaways", "groom-group-inventory",
+                "groom-motion", "lod-strands", "lod-cards", "lod-transition",
+                "outfit-front", "outfit-side", "outfit-rear", "outfit-shoulder-deformation",
+                "outfit-hip-deformation", "outfit-seated", "outfit-extreme-pose",
+                "outfit-cloth-collision", "outfit-closure", "outfit-footwear"
+              ]},
+              "captureType": {"enum": ["viewport-render", "group-inspection", "simulation-capture", "lod-comparison", "deformation-test"]},
+              "notes": {"type": "string", "minLength": 1}
+            }
+          }
+        ]
+      }
+    },
+    "runtimeAudit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["groomGroups", "lods", "observedBodyPenetrations", "seatedPoseReviewed", "extremePoseReviewed"],
+      "properties": {
+        "groomGroups": {"type": "array", "uniqueItems": true, "items": {"enum": ["scalp", "brows", "lashes", "flyaways"]}},
+        "lods": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["name", "mode", "screenSize"],
+            "properties": {
+              "name": {"type": "string", "minLength": 1},
+              "mode": {"enum": ["strands", "cards", "mesh"]},
+              "screenSize": {"type": "number", "minimum": 0, "maximum": 1}
+            }
+          }
+        },
+        "observedBodyPenetrations": {"type": "integer", "minimum": 0},
+        "seatedPoseReviewed": {"type": "boolean"},
+        "extremePoseReviewed": {"type": "boolean"}
+      }
+    },
+    "findings": {"$ref": "#/$defs/findings"},
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "reviewer", "approvedAt"],
+        "properties": {
+          "role": {"enum": ["groom-reviewer", "clothing-reviewer", "technical-art-reviewer", "operator"]},
+          "reviewer": {"type": "string", "minLength": 1},
+          "approvedAt": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "fileIdentity": {
+      "type": "object",
+      "required": ["uri", "sha256"],
+      "properties": {
+        "uri": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "severity", "summary", "status"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^G3-[0-9]{3}$"},
+          "severity": {"enum": ["blocking", "major", "minor", "note"]},
+          "summary": {"type": "string", "minLength": 1},
+          "status": {"enum": ["open", "resolved", "accepted-risk"]}
+        }
+      }
+    }
+  },
+  "allOf": [{
+    "if": {"properties": {"status": {"enum": ["candidate", "approved"]}}, "required": ["status"]},
+    "then": {
+      "properties": {
+        "artifacts": {"minItems": 3},
+        "evidence": {"minItems": 23},
+        "runtimeAudit": {
+          "properties": {
+            "groomGroups": {"minItems": 4},
+            "lods": {"minItems": 2},
+            "observedBodyPenetrations": {"const": 0},
+            "seatedPoseReviewed": {"const": true},
+            "extremePoseReviewed": {"const": true}
+          }
+        }
+      }
+    }
+  }, {
+    "if": {"properties": {"status": {"const": "approved"}}, "required": ["status"]},
+    "then": {"properties": {"approvals": {"minItems": 4}}}
+  }]
+}

@@ -10,6 +10,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "GameFramework/Character.h"
+#include "Character/GahyeonCharacterPawn.h"
 #include "Presentation/GahyeonCharacterPresentationProfile.h"
 #include "Presentation/GahyeonFacialControlRigBridge.h"
 
@@ -189,6 +190,26 @@ USkeletalMeshComponent* UGahyeonCharacterPresentationComponent::ResolveGestureMe
     {
         GestureMesh = Character->GetMesh();
     }
+    if (!IsValid(GestureMesh))
+    {
+        if (const AGahyeonCharacterPawn* Pawn = Cast<AGahyeonCharacterPawn>(GetOwner()))
+        {
+            if (AActor* Visual = Pawn->GetVisualActor())
+            {
+                TArray<USkeletalMeshComponent*> Meshes;
+                Visual->GetComponents<USkeletalMeshComponent>(Meshes);
+                GestureMesh = Meshes.FindByPredicate([](const USkeletalMeshComponent* Mesh)
+                {
+                    return Mesh != nullptr && Mesh->GetName().Contains(TEXT("Body"));
+                }) != nullptr
+                    ? *Meshes.FindByPredicate([](const USkeletalMeshComponent* Mesh)
+                    {
+                        return Mesh != nullptr && Mesh->GetName().Contains(TEXT("Body"));
+                    })
+                    : (Meshes.IsEmpty() ? nullptr : Meshes[0]);
+            }
+        }
+    }
     if (!IsValid(GestureMesh) && GetOwner() != nullptr)
     {
         GestureMesh = GetOwner()->FindComponentByClass<USkeletalMeshComponent>();
@@ -257,6 +278,23 @@ USkeletalMeshComponent* UGahyeonCharacterPresentationComponent::ResolveFaceMesh(
     if (IsValid(FaceMesh)) return FaceMesh;
     AActor* Owner = GetOwner();
     if (Owner == nullptr) return nullptr;
+    if (const AGahyeonCharacterPawn* Pawn = Cast<AGahyeonCharacterPawn>(Owner))
+    {
+        if (AActor* Visual = Pawn->GetVisualActor())
+        {
+            TArray<USkeletalMeshComponent*> Meshes;
+            Visual->GetComponents<USkeletalMeshComponent>(Meshes);
+            if (USkeletalMeshComponent** Match = Meshes.FindByPredicate(
+                [](const USkeletalMeshComponent* Mesh)
+                {
+                    return Mesh != nullptr && Mesh->GetName().Contains(TEXT("Face"));
+                }))
+            {
+                FaceMesh = *Match;
+                return FaceMesh;
+            }
+        }
+    }
     FaceMesh = Owner->FindComponentByClass<USkeletalMeshComponent>();
     return FaceMesh;
 }

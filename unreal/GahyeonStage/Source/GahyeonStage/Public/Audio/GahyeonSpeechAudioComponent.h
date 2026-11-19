@@ -54,6 +54,7 @@ private:
     void TryAcquireNext();
     void RefreshTransportConfiguration();
     void StartDownload(const FGahyeonPreparedSpeechSegment& Segment);
+    void DrainPcmStream();
     void HandleDownload(
         FHttpRequestPtr Request,
         FHttpResponsePtr Response,
@@ -64,6 +65,8 @@ private:
     void ClearDeviceState(bool bStopAudio);
     FString ResolveAudioUrl(const FString& AudioUrl) const;
     static bool ParsePcm16Wav(const TArray<uint8>& Bytes, FWavPcmView& Out);
+
+    struct FStreamIngress;
 
     UFUNCTION()
     void HandleAudioFinished();
@@ -85,6 +88,8 @@ private:
 
     FGahyeonPreparedSpeechSegment ReservedSegment;
     TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> ActiveRequest;
+    TSharedPtr<FStreamIngress, ESPMode::ThreadSafe> StreamIngress;
+    TArray<uint8> StreamPendingPcm;
     FString HttpBaseUrl;
     FString BearerToken;
     uint64 RequestSerial = 0;
@@ -94,10 +99,14 @@ private:
     double CurrentEnvelopeAmplitude = 0.0;
     bool bHasReservedSegment = false;
     bool bPlaybackReported = false;
+    bool bStreamingPcm = false;
 
     /** Bounds reservation ownership when the audio cache endpoint is half-open. */
     UPROPERTY(EditAnywhere, Category = "Gahyeon|Audio", meta = (ClampMin = "1.0", ClampMax = "30.0"))
     float AudioDownloadTimeoutSeconds = 8.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Gahyeon|Audio", meta = (ClampMin = "4800", ClampMax = "48000"))
+    int32 StreamPrebufferBytes = 9600;
 
     static constexpr int32 MaxAudioBytes = 32 * 1024 * 1024;
 };

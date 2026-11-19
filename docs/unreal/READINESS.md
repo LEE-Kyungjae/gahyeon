@@ -55,7 +55,7 @@
   SaveGame contract
 - RT-01~RT-10 reference evidence matrix와 UE 실기기 미검증 항목 분리
 - Desktop 테스트와 production build
-- UE 5.6 source-only `GahyeonStage.uproject`, Development/Editor target와 native module 골격
+- UE 5.8 source-only `GahyeonStage.uproject`, Development/Editor target와 native module 골격
 - Backend 없이 진행되는 Unreal GameInstance runtime cadence와 bounded MPSC ingress 경계
 - Unreal 설치 없이 실행 가능한 Stage scaffold 정적 검증기
 - UE protocol envelope parser, callback→Game Thread bounded ingress와 `client.hello` transport 골격
@@ -98,7 +98,7 @@
 - Unreal Engine: 설치 흔적 없음
 
 이 머신에서는 Unreal project를 컴파일하거나 Editor로 열 수 없다. 다만 MetaHuman 제작이
-에디터에 통합된 첫 버전인 UE 5.6을 초기 지원 기준으로 고정하고, source-only project와
+현재 운영 기준인 UE 5.8(검증 설치 5.8.1)을 지원 기준으로 고정하고, source-only project와
 C++ runtime module을 생성했다. `scripts/verify_unreal_stage_scaffold.sh`는 구조와 필수 plugin,
 Game Thread/MPSC 경계를 정적으로 검사한다. 이는 UE 컴파일 증거를 대신하지 않는다.
 
@@ -107,19 +107,19 @@ Game Thread/MPSC 경계를 정적으로 검사한다. 이는 UE 컴파일 증거
 1. 실제 Unreal 개발/실행 머신을 정한다. M3 16GB는 headless/runtime 구조와 경량
    placeholder 검증에는 사용할 수 있지만 AAA MetaHuman 품질의 주 목표 머신으로
    간주하지 않는다.
-2. 해당 머신에 기준 버전 Unreal Engine 5.6과 C++ toolchain을 설치한다.
-3. UE 5.6의 MetaHuman, Control Rig, Full Body IK, WebSocket plugin을 실제 Editor에서
+2. 해당 머신에 기준 버전 Unreal Engine 5.8과 C++ toolchain을 설치한다.
+3. UE 5.8의 MetaHuman, Control Rig, Full Body IK, WebSocket plugin을 실제 Editor에서
    로드하고 Development Editor target을 컴파일한다.
 4. Development Editor와 packaged Development build의 목표 OS를 정한다.
 5. Unreal binary asset은 Git LFS 또는 별도 artifact storage 중 하나를 선택한다.
 6. 생성물(`Binaries`, `DerivedDataCache`, `Intermediate`, `Saved`) 제외 규칙은 준비됐으며,
    첫 Editor build 뒤 누락 항목을 재검사한다.
 
-Windows/GTX 1660 Ti 머신에서는 다음 명령이 canonical 일반 모니터 Stage를 Win64 Development로
+Windows/GTX 1660 Ti 머신에서는 다음 명령이 개발·복구용 일반 모니터 Stage를 Win64 Development로
 빌드하고 VS-5/VS-8 Automation을 실행한 뒤 checksum-bound evidence manifest v2를 남긴다.
 
 ```powershell
-.\scripts\run_unreal_engine_gate.ps1 -UnrealRoot "C:\Program Files\Epic Games\UE_5.6"
+.\scripts\run_unreal_engine_gate.ps1 -UnrealRoot "C:\Program Files\Epic Games\UE_5.8"
 ```
 
 `-Package`를 추가하면 UAT `BuildCookRun`으로 Win64 Development를 cook/stage/pak/archive한다.
@@ -150,5 +150,5 @@ Streaming STT 구현 방향은
 STT provider와 credential은 Core가 소유하고 Unreal은 별도 bounded duplex channel로 PCM만
 운반한다. `IGahyeonStreamingSttAudioSink`에서 별도 인증 WebSocket과 Backend provider
 session까지 source 연결되어 있으며, 재접속 이전 socket의 connected/message/closed callback은
-connection generation으로 폐기한다. 다만 실제 UE 5.6 compile/PIE와 한국어 microphone provider
+connection generation으로 폐기한다. 다만 실제 UE 5.8 compile/PIE와 한국어 microphone provider
 평가 전에는 batch fallback을 운영 기본값으로 유지한다.

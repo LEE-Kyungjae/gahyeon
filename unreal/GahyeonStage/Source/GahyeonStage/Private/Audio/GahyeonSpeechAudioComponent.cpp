@@ -5,7 +5,9 @@
 #include "Http.h"
 #include "HttpModule.h"
 #include "HAL/PlatformTime.h"
+#include "HAL/CriticalSection.h"
 #include "Interfaces/IHttpResponse.h"
+#include "Containers/Queue.h"
 #include "Network/GahyeonTransportSubsystem.h"
 #include "Sound/SoundWaveProcedural.h"
 
@@ -16,7 +18,98 @@ uint16 ReadU16(const uint8* Data)
     return static_cast<uint16>(Data[0])
         | static_cast<uint16>(static_cast<uint16>(Data[1]) << 8);
 }
+}
 
+struct UGahyeonSpeechAudioComponent::FStreamIngress
+{
+    void Status(int32 InStatus)
+    {
+        FScopeLock Lock(&Mutex);
+        StatusCode = InStatus;
+    }
+
+    void Header(const FString& Name, const FString& Value)
+    {
+        FScopeLock Lock(&Mutex);
+        Headers.Add(Name.ToLower(), Value.TrimStartAndEnd().ToLower());
+    }
+
+    bool Offer(const void* Data, int64 Bytes)
+    {
+        if (Data == nullptr || Bytes <= 0 || Bytes > MaxAudioBytes) return false;
+        FScopeLock Lock(&Mutex);
+        if (bCancelled || bFailed || TotalBytes > MaxAudioBytes - Bytes) return false;
+        TArray<uint8> Chunk;
+        Chunk.Append(static_cast<const uint8*>(Data), static_cast<int32>(Bytes));
+        Chunks.Enqueue(MoveTemp(Chunk));
+        TotalBytes += Bytes;
+        if (TotalBytes >= NextLogBytes)
+        {
+            UE_LOG(LogTemp, Display, TEXT("Gahyeon PCM HTTP received bytes=%lld"), TotalBytes);
+            NextLogBytes += 64 * 1024;
+        }
+        return true;
+    }
+
+    void Finish(bool bSucceeded)
+    {
+        FScopeLock Lock(&Mutex);
+        bCompleted = bSucceeded && StatusCode == 200 && TotalBytes > 0;
+        bFailed = !bCompleted;
+        UE_LOG(LogTemp, Display,
+            TEXT("Gahyeon PCM HTTP finished success=%s status=%d bytes=%lld"),
+            bCompleted ? TEXT("true") : TEXT("false"), StatusCode, TotalBytes);
+    }
+
+    void Cancel()
+    {
+        FScopeLock Lock(&Mutex);
+        bCancelled = true;
+        UE_LOG(LogTemp, Display, TEXT("Gahyeon PCM HTTP cancelled bytes=%lld"), TotalBytes);
+    }
+
+    bool Drain(TArray<uint8>& Out)
+    {
+        TArray<uint8> Chunk;
+        bool bAny = false;
+        while (Chunks.Dequeue(Chunk))
+        {
+            Out.Append(Chunk);
+            bAny = true;
+        }
+        return bAny;
+    }
+
+    void Snapshot(bool& bOutFormatReady, bool& bOutComplete, bool& bOutFailed, int64& OutBytes)
+    {
+        FScopeLock Lock(&Mutex);
+        const FString* ContentType = Headers.Find(TEXT("content-type"));
+        const FString* SampleRate = Headers.Find(TEXT("x-sample-rate"));
+        const FString* SampleFormat = Headers.Find(TEXT("x-sample-format"));
+        const FString* Channels = Headers.Find(TEXT("x-channels"));
+        bOutFormatReady = StatusCode == 200 && ContentType != nullptr
+            && ContentType->StartsWith(TEXT("audio/pcm"))
+            && SampleRate != nullptr && *SampleRate == TEXT("24000")
+            && SampleFormat != nullptr && *SampleFormat == TEXT("s16le")
+            && Channels != nullptr && *Channels == TEXT("1");
+        bOutComplete = bCompleted;
+        bOutFailed = bFailed || bCancelled;
+        OutBytes = TotalBytes;
+    }
+
+    FCriticalSection Mutex;
+    TQueue<TArray<uint8>, EQueueMode::Mpsc> Chunks;
+    TMap<FString, FString> Headers;
+    int64 TotalBytes = 0;
+    int64 NextLogBytes = 64 * 1024;
+    int32 StatusCode = 0;
+    bool bCompleted = false;
+    bool bFailed = false;
+    bool bCancelled = false;
+};
+
+namespace
+{
 uint32 ReadU32(const uint8* Data)
 {
     return static_cast<uint32>(Data[0])
@@ -71,6 +164,8 @@ void UGahyeonSpeechAudioComponent::BeginPlay()
 
 void UGahyeonSpeechAudioComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    UE_LOG(LogTemp, Display, TEXT("Gahyeon speech device EndPlay reason=%d"),
+        static_cast<int32>(EndPlayReason));
     ++RequestSerial;
     if (ActiveRequest.IsValid()) ActiveRequest->CancelRequest();
     ActiveRequest.Reset();
@@ -102,6 +197,9 @@ void UGahyeonSpeechAudioComponent::TickComponent(
     {
         // RuntimeCore replacement revokes every reservation owned by the old
         // coordinator. Serial invalidation also makes a late HTTP callback inert.
+        UE_LOG(LogTemp, Display,
+            TEXT("Gahyeon speech device runtime epoch changed old=%llu new=%llu"),
+            ObservedRuntimeEpoch, Runtime->GetRuntimeEpoch());
         ClearDeviceState(true);
         ObservedRuntimeEpoch = Runtime->GetRuntimeEpoch();
     }
@@ -119,6 +217,7 @@ void UGahyeonSpeechAudioComponent::TickComponent(
             0.0, FPlatformTime::Seconds() - PlaybackStartedSeconds) * 1000.0);
         Runtime->UpdateSpeechPlaybackSample(PositionMs, CurrentEnvelopeAmplitude);
     }
+    DrainPcmStream();
     TryAcquireNext();
 }
 
@@ -169,7 +268,9 @@ void UGahyeonSpeechAudioComponent::StartDownload(
     const FGahyeonPreparedSpeechSegment& Segment)
 {
     if (HttpBaseUrl.IsEmpty()) RefreshTransportConfiguration();
-    if (!Segment.MimeType.Equals(TEXT("audio/wav"), ESearchCase::IgnoreCase)
+    bStreamingPcm = Segment.MimeType.Equals(TEXT("audio/pcm"), ESearchCase::IgnoreCase);
+    if (!bStreamingPcm
+        && !Segment.MimeType.Equals(TEXT("audio/wav"), ESearchCase::IgnoreCase)
         && !Segment.MimeType.Equals(TEXT("audio/x-wav"), ESearchCase::IgnoreCase))
     {
         FailReservedSegment();
@@ -185,11 +286,34 @@ void UGahyeonSpeechAudioComponent::StartDownload(
     ActiveRequest = FHttpModule::Get().CreateRequest();
     ActiveRequest->SetURL(Url);
     ActiveRequest->SetVerb(TEXT("GET"));
-    ActiveRequest->SetHeader(TEXT("Accept"), TEXT("audio/wav"));
+    ActiveRequest->SetHeader(TEXT("Accept"), bStreamingPcm ? TEXT("audio/pcm") : TEXT("audio/wav"));
     ActiveRequest->SetTimeout(FMath::Clamp(AudioDownloadTimeoutSeconds, 1.0f, 30.0f));
     if (!BearerToken.IsEmpty())
     {
         ActiveRequest->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + BearerToken);
+    }
+    if (bStreamingPcm)
+    {
+        StreamIngress = MakeShared<FStreamIngress, ESPMode::ThreadSafe>();
+        const TSharedPtr<FStreamIngress, ESPMode::ThreadSafe> Ingress = StreamIngress;
+        ActiveRequest->OnStatusCodeReceived().BindLambda(
+            [Ingress](FHttpRequestPtr, int32 StatusCode) { Ingress->Status(StatusCode); });
+        ActiveRequest->OnHeaderReceived().BindLambda(
+            [Ingress](FHttpRequestPtr, const FString& Name, const FString& Value)
+            { Ingress->Header(Name, Value); });
+        const bool bStreamBound = ActiveRequest->SetResponseBodyReceiveStreamDelegateV2(
+            FHttpRequestStreamDelegateV2::CreateLambda(
+                [Ingress](void* Data, int64& Bytes)
+                {
+                    if (!Ingress->Offer(Data, Bytes)) Bytes = 0;
+                }));
+        if (!bStreamBound)
+        {
+            ActiveRequest.Reset();
+            StreamIngress.Reset();
+            FailReservedSegment();
+            return;
+        }
     }
     ActiveRequest->OnProcessRequestComplete().BindUObject(
         this, &UGahyeonSpeechAudioComponent::HandleDownload, Serial);
@@ -209,6 +333,15 @@ void UGahyeonSpeechAudioComponent::HandleDownload(
     (void)Request;
     if (Serial != RequestSerial || !bHasReservedSegment) return;
     ActiveRequest.Reset();
+    if (bStreamingPcm)
+    {
+        if (StreamIngress.IsValid())
+        {
+            StreamIngress->Finish(bSucceeded && Response.IsValid()
+                && EHttpResponseCodes::IsOk(Response->GetResponseCode()));
+        }
+        return;
+    }
     const int32 ContentBytes = Response.IsValid() ? Response->GetContent().Num() : 0;
     if (!bSucceeded || !Response.IsValid()
         || !EHttpResponseCodes::IsOk(Response->GetResponseCode())
@@ -216,6 +349,72 @@ void UGahyeonSpeechAudioComponent::HandleDownload(
         || !StartPcmPlayback(Response->GetContent()))
     {
         FailReservedSegment();
+    }
+}
+
+void UGahyeonSpeechAudioComponent::DrainPcmStream()
+{
+    if (!bStreamingPcm || !StreamIngress.IsValid() || !bHasReservedSegment) return;
+    bool bFormatReady = false;
+    bool bComplete = false;
+    bool bFailed = false;
+    int64 TotalBytes = 0;
+    StreamIngress->Drain(StreamPendingPcm);
+    StreamIngress->Snapshot(bFormatReady, bComplete, bFailed, TotalBytes);
+    if (bFailed || (bComplete && !bFormatReady)
+        || StreamPendingPcm.Num() > MaxAudioBytes)
+    {
+        FailReservedSegment();
+        return;
+    }
+    const int32 FrameBytes = sizeof(int16);
+    const int32 ReadyBytes = StreamPendingPcm.Num() - (StreamPendingPcm.Num() % FrameBytes);
+    if (!bFormatReady || ReadyBytes <= 0) return;
+    if (ActiveWave == nullptr)
+    {
+        if (ReadyBytes < StreamPrebufferBytes && !bComplete) return;
+        ActiveWave = NewObject<USoundWaveProcedural>(this);
+        if (ActiveWave == nullptr)
+        {
+            FailReservedSegment();
+            return;
+        }
+        ActiveWave->NumChannels = 1;
+        ActiveWave->SetSampleRate(24000);
+        ActiveWave->Duration = INDEFINITELY_LOOPING_DURATION;
+        ActiveWave->SoundGroup = SOUNDGROUP_Voice;
+        ActiveWave->bLooping = false;
+        ActiveWave->QueueAudio(StreamPendingPcm.GetData(), ReadyBytes);
+        StreamPendingPcm.RemoveAt(0, ReadyBytes, EAllowShrinking::No);
+        AudioComponent->SetSound(ActiveWave);
+        AudioComponent->Play();
+        if (!AudioComponent->IsPlaying() || Runtime == nullptr
+            || !Runtime->NotifySpeechPlaybackStarted(ReservedSegment.UtteranceId))
+        {
+            FailReservedSegment();
+            return;
+        }
+        bPlaybackReported = true;
+        PlaybackStartedSeconds = FPlatformTime::Seconds();
+    }
+    else
+    {
+        ActiveWave->QueueAudio(StreamPendingPcm.GetData(), ReadyBytes);
+        StreamPendingPcm.RemoveAt(0, ReadyBytes, EAllowShrinking::No);
+        if (bPlaybackReported && AudioComponent != nullptr
+            && !AudioComponent->IsPlaying())
+        {
+            // Procedural sources may report an underflow as finished before
+            // the HTTP producer closes. Keep the RuntimeCore reservation and
+            // resume from the next bounded chunk instead of truncating speech.
+            AudioComponent->Play();
+        }
+    }
+    if (bComplete && StreamPendingPcm.IsEmpty() && TotalBytes > 0 && bPlaybackReported)
+    {
+        const double DurationSeconds = static_cast<double>(TotalBytes) / (24000.0 * sizeof(int16));
+        PlaybackDeadlineSeconds = PlaybackStartedSeconds + DurationSeconds + 0.5;
+        StreamIngress.Reset();
     }
 }
 
@@ -251,6 +450,8 @@ bool UGahyeonSpeechAudioComponent::StartPcmPlayback(const TArray<uint8>& Bytes)
 
 void UGahyeonSpeechAudioComponent::FailReservedSegment()
 {
+    UE_LOG(LogTemp, Display, TEXT("Gahyeon speech segment failed utterance=%s streaming=%s"),
+        *ReservedSegment.UtteranceId, bStreamingPcm ? TEXT("true") : TEXT("false"));
     if (bHasReservedSegment && Runtime != nullptr)
     {
         Runtime->NotifySpeechPlaybackFailed(ReservedSegment.UtteranceId);
@@ -263,6 +464,10 @@ void UGahyeonSpeechAudioComponent::ClearDeviceState(bool bStopAudio)
     ++RequestSerial;
     if (ActiveRequest.IsValid()) ActiveRequest->CancelRequest();
     ActiveRequest.Reset();
+    if (StreamIngress.IsValid()) StreamIngress->Cancel();
+    StreamIngress.Reset();
+    StreamPendingPcm.Reset();
+    bStreamingPcm = false;
     bHasReservedSegment = false;
     bPlaybackReported = false;
     PlaybackDeadlineSeconds = 0.0;
@@ -342,6 +547,13 @@ bool UGahyeonSpeechAudioComponent::ParsePcm16Wav(
 void UGahyeonSpeechAudioComponent::HandleAudioFinished()
 {
     if (!bHasReservedSegment) return;
+    if (bStreamingPcm && StreamIngress.IsValid())
+    {
+        // This is an underflow boundary, not utterance completion. The HTTP
+        // request still owns future PCM and DrainPcmStream will resume it.
+        UE_LOG(LogTemp, Display, TEXT("Gahyeon PCM procedural underflow; awaiting HTTP"));
+        return;
+    }
     const FString UtteranceId = ReservedSegment.UtteranceId;
     const bool bWasReported = bPlaybackReported;
     ClearDeviceState(false);
@@ -366,6 +578,8 @@ void UGahyeonSpeechAudioComponent::HandleEnvelopeValue(
 void UGahyeonSpeechAudioComponent::HandleInterruptRequested(const FString& UtteranceId)
 {
     if (!bHasReservedSegment || ReservedSegment.UtteranceId != UtteranceId) return;
+    UE_LOG(LogTemp, Display, TEXT("Gahyeon speech interrupt requested utterance=%s"),
+        *UtteranceId);
     // RuntimeCore has already revoked this ownership. Clear our identity before
     // Stop(), so a synchronous OnAudioFinished cannot report a false completion.
     ClearDeviceState(true);

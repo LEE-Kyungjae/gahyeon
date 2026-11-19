@@ -1,0 +1,20 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "Gahyeon MetaHuman QA",
+  "Description": "Project-local automation bridge for deterministic MetaHuman Identity QA.",
+  "Category": "Gahyeon",
+  "CanContainContent": false,
+  "Plugins": [
+    { "Name": "MetaHuman", "Enabled": true },
+    { "Name": "MetaHumanCharacter", "Enabled": true }
+  ],
+  "Modules": [
+    {
+      "Name": "GahyeonMetaHumanQA",
+      "Type": "Editor",
+      "LoadingPhase": "PostEngineInit"
+    }
+  ]
+}

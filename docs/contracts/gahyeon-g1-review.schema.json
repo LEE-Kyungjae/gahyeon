@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gahyeon.local/schemas/gahyeon-g1-review.schema.json",
+  "title": "Gahyeon G1 Model Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "characterId", "gate", "status", "sourceManifests", "evidence", "artistAuthoredRegions", "findings", "approvals"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "characterId": {"const": "gahyeon"},
+    "gate": {"const": "G1"},
+    "status": {"enum": ["draft", "candidate", "approved", "rejected"]},
+    "sourceManifests": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "uri", "sha256"],
+        "properties": {
+          "kind": {"enum": ["identity-reference", "modeling-input"]},
+          "uri": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    },
+    "modelArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "uri", "sha256", "bytes"],
+      "properties": {
+        "format": {"enum": ["fbx", "glb", "blend", "zbrush-project", "metahuman-source", "unreal-content-zip"]},
+        "uri": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["view", "captureType", "designAuthority", "uri", "sha256"],
+        "properties": {
+          "view": {
+            "enum": [
+              "face-neutral-front", "face-neutral-three-quarter-left", "face-neutral-three-quarter-right",
+              "face-neutral-left-profile", "face-neutral-right-profile", "body-neutral-front",
+              "body-neutral-profile", "body-neutral-rear", "hair-front", "hair-side", "hair-rear",
+              "hair-top", "outfit-front", "outfit-side", "outfit-rear"
+            ]
+          },
+          "captureType": {"enum": ["viewport-render", "model-sheet", "wireframe"]},
+          "designAuthority": {"enum": ["canonical-observed", "artist-authored-completion"]},
+          "uri": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "notes": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "artistAuthoredRegions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": ["rear-body", "rear-hair", "top-hair", "ears", "hands", "eye-interior", "mouth-interior", "rear-outfit"]
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "severity", "summary", "status"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^G1-[0-9]{3}$"},
+          "severity": {"enum": ["blocking", "major", "minor", "note"]},
+          "summary": {"type": "string", "minLength": 1},
+          "status": {"enum": ["open", "resolved", "accepted-risk"]}
+        }
+      }
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "reviewer", "approvedAt"],
+        "properties": {
+          "role": {"enum": ["identity-reviewer", "technical-reviewer", "operator"]},
+          "reviewer": {"type": "string", "minLength": 1},
+          "approvedAt": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"enum": ["candidate", "approved"]}}, "required": ["status"]},
+      "then": {
+        "required": ["modelArtifact"],
+        "properties": {
+          "evidence": {"minItems": 15},
+          "artistAuthoredRegions": {"contains": {"const": "rear-body"}}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "approved"}}, "required": ["status"]},
+      "then": {"properties": {"approvals": {"minItems": 3}}}
+    }
+  ]
+}

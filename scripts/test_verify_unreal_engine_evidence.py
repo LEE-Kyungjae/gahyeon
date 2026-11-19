@@ -52,7 +52,7 @@ class UnrealEngineEvidenceVerifierTest(unittest.TestCase):
         payload = {
             "schemaVersion": 2,
             "status": "passed",
-            "engineVersion": "5.6",
+            "engineVersion": "5.8",
             "platform": "Win64",
             "configuration": "Development",
             "project": str(self.project),
@@ -64,6 +64,15 @@ class UnrealEngineEvidenceVerifierTest(unittest.TestCase):
         (self.root / "manifest.json").write_text(json.dumps(payload))
 
     def test_packaged_output_is_fully_verified(self):
+        self.assertTrue(verify(self.root)["packagedBuild"])
+
+    def test_windows_powershell_utf16_automation_log_is_verified(self):
+        automation = "\r\n".join(
+            f"Test Completed. Result={{Success}} Name={name} Path={name}"
+            for name in REQUIRED_TESTS
+        ) + "\r\n"
+        (self.root / "automation.log").write_text(automation, encoding="utf-16")
+        self.write_manifest(True)
         self.assertTrue(verify(self.root)["packagedBuild"])
 
     def test_tampered_packaged_file_is_rejected(self):
