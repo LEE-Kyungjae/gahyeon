@@ -7,5 +7,8 @@
   "dependencies": {
     "@lookingglass/bridge": "^0.0.8-alpha.4",
     "holoplay-core": "0.0.11"
+  },
+  "overrides": {
+    "zod": "^4.6.6"
   }
 }
