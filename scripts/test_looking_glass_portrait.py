@@ -17,6 +17,19 @@ class PortraitEnvironmentTests(baseline.RoomEnvironmentTests):
         self.assertEqual(before['GAHYEON_LOOKING_GLASS_RUNTIME_MAP'], after['GAHYEON_LOOKING_GLASS_RUNTIME_MAP'])
         self.assertEqual(after['GAHYEON_LOOKING_GLASS_RENDER_PROFILE'], 'portrait-v001')
 
+    def test_ram_cap_is_bounded_and_does_not_invalidate_quilts(self):
+        before = room.environment(self.profile, self.manifest, True)
+        self.scene['compressedCacheMiB'] = 1792
+        self.save_scene()
+        after = room.environment(self.profile, self.manifest, True)
+        self.assertEqual(before['GAHYEON_LOOKING_GLASS_CACHE_DIR'], after['GAHYEON_LOOKING_GLASS_CACHE_DIR'])
+        self.assertEqual(after['GAHYEON_LOOKING_GLASS_COMPRESSED_CACHE_MIB'], '1792')
+        for invalid in (-1, 1793, 1.5, True):
+            self.scene['compressedCacheMiB'] = invalid
+            self.save_scene()
+            with self.assertRaises(ValueError):
+                room.environment(self.profile, self.manifest, True)
+
     def test_unknown_profile_rejected(self):
         self.scene['renderProfile'] = 'typo'
         self.save_scene()

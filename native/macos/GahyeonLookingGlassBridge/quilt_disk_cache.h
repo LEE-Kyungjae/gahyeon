@@ -23,6 +23,7 @@ public:
         }
     }
     bool append(const uint8_t* bytes) {
+        if (!retained_.empty()) return false;
         size_t n = compression_encode_buffer(packed_.data(), packed_.size(), bytes,
             frameBytes_, nullptr, COMPRESSION_LZ4);
         if (!n || n > budgetBytes_-usedBytes_) return false;
@@ -37,17 +38,30 @@ public:
     }
     bool decode(size_t index, uint8_t* bytes) {
         if (index >= size()) return false;
-        FILE* f = std::fopen(path(index).c_str(), "rb");
-        if (!f) return false;
-        bool ok = std::fread(packed_.data(),1,sizes_[index],f)==sizes_[index];
-        std::fclose(f);
-        return ok && compression_decode_buffer(bytes,frameBytes_,packed_.data(),
+        const bool retained = !retained_.empty() && !retained_[index].empty();
+        auto& packed = retained_.empty() ? packed_ : retained_[index];
+        if (!retained) {
+            if (packed.size() < sizes_[index]) packed.resize(sizes_[index]);
+            FILE* f = std::fopen(path(index).c_str(), "rb");
+            if (!f) { if (!retained_.empty()) packed.clear(); return false; }
+            const bool ok = std::fread(packed.data(),1,sizes_[index],f)==sizes_[index];
+            std::fclose(f);
+            if (!ok) { if (!retained_.empty()) packed.clear(); return false; }
+        }
+        return compression_decode_buffer(bytes,frameBytes_,packed.data(),
             sizes_[index],nullptr,COMPRESSION_LZ4)==frameBytes_;
+    }
+    // Admit the complete compressed loop only if it fits the explicit RAM cap.
+    // Fill lazily while decoding; never keep uncompressed quilts in memory.
+    bool retainCompressed(size_t expected, size_t memoryBudgetBytes) {
+        if (size() != expected || usedBytes_ > memoryBudgetBytes) return false;
+        retained_.resize(size());
+        return true;
     }
     void discardIncomplete(size_t expected) {
         if (size()==expected) return;
         for(size_t i=0;i<size();++i) std::filesystem::remove(path(i));
-        sizes_.clear(); usedBytes_=0;
+        sizes_.clear(); retained_.clear(); usedBytes_=0;
     }
     size_t size() const { return sizes_.size(); }
     size_t bytes() const { return usedBytes_; }
@@ -56,5 +70,6 @@ private:
     size_t frameBytes_, budgetBytes_, usedBytes_=0;
     std::string directory_;
     std::vector<size_t> sizes_;
+    std::vector<std::vector<uint8_t>> retained_;
     std::vector<uint8_t> packed_;
 };

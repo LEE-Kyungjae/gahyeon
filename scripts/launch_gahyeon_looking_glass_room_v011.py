@@ -110,6 +110,10 @@ def environment(profile: dict, manifest: dict, smooth: bool, room_config: str = 
     # Preserve existing 0.45 caches; other baselines must never reuse their quilts.
     if depth != 0.45:
         signature_bytes += (';capture-depth=' + repr(depth)).encode()
+    memory_mib = scene.get('compressedCacheMiB', 0)
+    if type(memory_mib) is not int or not 0 <= memory_mib <= 1792:
+        raise ValueError('Compressed cache memory cap must be an integer from 0 to 1792 MiB')
+    env['GAHYEON_LOOKING_GLASS_COMPRESSED_CACHE_MIB'] = str(memory_mib)
     render_profile = scene.get('renderProfile', 'tile-v001')
     if render_profile not in ('tile-v001', 'portrait-v001'):
         raise ValueError('Unsupported room render profile')

@@ -14,5 +14,6 @@
   "captureDepthScale": 0.12,
   "fallbackConfig": "looking-glass-room-v015.json",
   "backgroundParallaxScale": 0.1,
-  "renderProfile": "portrait-v001"
+  "renderProfile": "portrait-v001",
+  "compressedCacheMiB": 1792
 }

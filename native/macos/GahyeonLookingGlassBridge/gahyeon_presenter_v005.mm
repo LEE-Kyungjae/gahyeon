@@ -248,6 +248,7 @@ int main() {
         if (!header || header == MAP_FAILED) return 8;
     }
     bool playbackNotified = false;
+    bool compressedRetentionConfigured = false;
     int exitCode = 0;
     auto playbackStarted = std::chrono::steady_clock::now();
     size_t lastPlaybackFrame = frameCount;
@@ -260,6 +261,16 @@ int main() {
     while (Running.load()) @autoreleasepool {
         PumpAppEvents();
         if (animatedCaptured) {
+            if (smoothMode && !compressedRetentionConfigured) {
+                const char* setting = std::getenv("GAHYEON_LOOKING_GLASS_COMPRESSED_CACHE_MIB");
+                char* end = nullptr;
+                const unsigned long mib = setting ? std::strtoul(setting, &end, 10) : 0;
+                if (mib > 0 && mib <= 1792 && end && !*end
+                    && compressedFrames.retainCompressed(frameCount, size_t(mib) * 1024 * 1024)) {
+                    std::fprintf(stderr, "GAHYEON_LKG_COMPRESSED_RAM_CACHE bytes=%zu cap_mib=%lu\n", compressedFrames.bytes(), mib);
+                }
+                compressedRetentionConfigured = true;
+            }
             const double seconds = std::chrono::duration<double>(
                 std::chrono::steady_clock::now() - playbackStarted).count();
             if (smoothMode && seconds < nextSmoothTime) {
