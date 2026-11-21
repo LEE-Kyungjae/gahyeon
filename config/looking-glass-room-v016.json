@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate",
+  "humanApproved": false,
+  "map": "/Game/Gahyeon/Land/Gahyeon/v015/Runtime/L_GahyeonRoom_v015",
+  "character": "/Game/Gahyeon/Land/Gahyeon/v002/Source/Gahyeon_Land_Idle_v001.Gahyeon_Land_Idle_v001",
+  "sampleSeconds": 4.0,
+  "cachedFrames": 120,
+  "fallbackMap": "/Game/Gahyeon/Land/Gahyeon/v015/Runtime/L_GahyeonRoom_v015",
+  "roomDepthScale": 0.35,
+  "viewBlendAdjacent": 0,
+  "environmentMode": "static-art-direction-preview",
+  "liveWeather": false,
+  "captureDepthScale": 0.12,
+  "fallbackConfig": "looking-glass-room-v015.json",
+  "backgroundParallaxScale": 0.1,
+  "renderProfile": "portrait-v001"
+}

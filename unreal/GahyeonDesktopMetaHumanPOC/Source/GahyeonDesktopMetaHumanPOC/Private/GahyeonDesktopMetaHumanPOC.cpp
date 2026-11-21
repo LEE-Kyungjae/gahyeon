@@ -361,6 +361,25 @@ private:
                 if (UCineCameraComponent* CineCamera = Cast<UCineCameraComponent>(
                         It->GetCameraComponent()))
                 {
+                    if (FPlatformMisc::GetEnvironmentVariable(TEXT("GAHYEON_LOOKING_GLASS_RENDER_PROFILE")) == TEXT("portrait-v001"))
+                    {
+                        // Match the exact old 800x629 presenter crop [302,91,553,537].
+                        // Keep the camera origin unchanged: room WPO depends on it.
+                        FCameraFilmbackSettings Filmback = CineCamera->Filmback;
+                        const float Width = Filmback.SensorWidth;
+                        const float EffectiveHeight = Width * 629.0f / 800.0f;
+                        Filmback.SensorHorizontalOffset += Width * (428.0f / 800.0f - 0.5f);
+                        Filmback.SensorVerticalOffset = Filmback.SensorVerticalOffset
+                            * EffectiveHeight / Filmback.SensorHeight - Width * 0.5f / 800.0f;
+                        Filmback.SensorWidth = Width * 252.0f / 800.0f;
+                        Filmback.SensorHeight = Width * 448.0f / 800.0f;
+                        CineCamera->SetFilmback(Filmback);
+                        CineCamera->bConstrainAspectRatio = false;
+                        CineCamera->bOverrideAspectRatioAxisConstraint = true;
+                        CineCamera->SetAspectRatioAxisConstraint(AspectRatio_MaintainXFOV);
+                        UE_LOG(LogTemp, Display, TEXT("Gahyeon portrait capture: 252x448 sensor=%.4fx%.4f"),
+                            Filmback.SensorWidth, Filmback.SensorHeight);
+                    }
                     OriginalSensorHorizontalOffset = CineCamera->Filmback.SensorHorizontalOffset;
                     OriginalProjectionOffset = CineCamera->GetHorizontalProjectionOffset();
                 }

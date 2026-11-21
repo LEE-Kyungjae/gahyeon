@@ -212,15 +212,6 @@ int main() {
         uninitialize_bridge(); return 7;
     }
 
-    int fd = -1;
-    while (Running.load() && fd < 0) {
-        fd = shm_open("/gahyeon_iosurface_v001", O_RDWR, 0);
-        if (fd < 0) std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-    auto* header = fd >= 0 ? static_cast<SurfaceHeader*>(mmap(
-        nullptr, 64, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) : nullptr;
-    if (!header || header == MAP_FAILED) return 8;
-
     uint64_t lastSequence = 0;
     uint32_t activeSurfaceID = 0;
     IOSurfaceRef surface = nullptr;
@@ -234,11 +225,29 @@ int main() {
     const char* cacheDirectory = std::getenv("GAHYEON_LOOKING_GLASS_CACHE_DIR");
     if (!cacheDirectory) return 9;
     QuiltDiskCache compressedFrames(OutputWidth * OutputHeight * 4, 6ull * 1024 * 1024 * 1024, cacheDirectory);
-    compressedFrames.discardIncomplete(frameCount);
+    const bool cacheOnly = std::getenv("GAHYEON_LOOKING_GLASS_CACHE_ONLY") != nullptr;
+    if (!cacheOnly) compressedFrames.discardIncomplete(frameCount);
     if (smoothMode && compressedFrames.size() == frameCount) {
         animatedCaptured = true;
         std::fprintf(stderr, "GAHYEON_LKG_CACHE_RESTORED frames=%zu fps=%.1f\n", frameCount, poseFPS);
     }
+    if (cacheOnly && !animatedCaptured) {
+        std::fprintf(stderr, "GAHYEON_LKG_CACHE_ONLY_INVALID\n");
+        releaseTexture(blendedRaw); releaseTexture(outputRaw); uninitialize_bridge();
+        return 9;
+    }
+    int fd = -1;
+    SurfaceHeader* header = nullptr;
+    if (!animatedCaptured) {
+        while (Running.load() && fd < 0) {
+            fd = shm_open("/gahyeon_iosurface_v001", O_RDWR, 0);
+            if (fd < 0) std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+        header = fd >= 0 ? static_cast<SurfaceHeader*>(mmap(
+            nullptr, 64, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) : nullptr;
+        if (!header || header == MAP_FAILED) return 8;
+    }
+    bool playbackNotified = false;
     int exitCode = 0;
     auto playbackStarted = std::chrono::steady_clock::now();
     size_t lastPlaybackFrame = frameCount;
@@ -297,6 +306,17 @@ int main() {
                     }
                 } else if (!presentQuilt(animatedFrames[frame])) break;
                 if (!shown) shown = show_window(window, true);
+                if (!playbackNotified && shown) {
+                    const char* readyPath = std::getenv("GAHYEON_LOOKING_GLASS_PLAYBACK_READY_FILE");
+                    if (readyPath) {
+                        FILE* ready = std::fopen(readyPath, "wb");
+                        if (!ready) { exitCode = 9; break; }
+                        const bool written = std::fputs("playing\n", ready) >= 0;
+                        const bool closed = std::fclose(ready) == 0;
+                        if (!written || !closed) { exitCode = 9; break; }
+                    }
+                    playbackNotified = true;
+                }
                 std::fprintf(stderr, "GAHYEON_LKG_IDLE_PLAYBACK frame=%zu time=%.6f\n", frame, seconds);
                 lastPlaybackFrame = frame;
                 if (smoothMode) {
@@ -390,6 +410,17 @@ int main() {
         ComposeParameters parameters{flatMode ? 0u : viewIndex,
             flatMode ? uint32_t(QuiltColumns * QuiltRows) : uint32_t((QuiltColumns * QuiltRows) / viewCount),
             cropX, cropY, cropX + uint32_t(cropW), cropY + uint32_t(cropH)};
+        const char* renderProfile = std::getenv("GAHYEON_LOOKING_GLASS_RENDER_PROFILE");
+        if (renderProfile && std::string(renderProfile) == "portrait-v001") {
+            if (header->width != 252 || header->height != 448) {
+                std::fprintf(stderr, "GAHYEON_LKG_PORTRAIT_SIZE_MISMATCH %ux%u\n", header->width, header->height);
+                exitCode = 9; break;
+            }
+            // IOSurface needs a 16-byte row stride. Exclude alignment padding.
+            parameters.cropMinX = parameters.cropMinY = 0;
+            parameters.cropMaxX = 251;
+            parameters.cropMaxY = 446;
+        }
         id<MTLCommandBuffer> command = [queue commandBuffer];
         id<MTLComputeCommandEncoder> encoder = [command computeCommandEncoder];
         [encoder setComputePipelineState:pipeline];
@@ -512,7 +543,8 @@ int main() {
     show_window(window, false);
     [[NSProcessInfo processInfo] endActivity:playbackActivity];
     if (surface) CFRelease(surface);
-    munmap(header, 64); close(fd);
+    if (header) munmap(header, 64);
+    if (fd >= 0) close(fd);
     for (void* frameRaw : animatedFrames) releaseTexture(frameRaw);
     if (uploadTexture) { [glContext makeCurrentContext]; glDeleteTextures(1, &uploadTexture); }
     if (pendingDecode.valid()) pendingDecode.wait();

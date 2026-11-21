@@ -110,9 +110,60 @@ def environment(profile: dict, manifest: dict, smooth: bool, room_config: str = 
     # Preserve existing 0.45 caches; other baselines must never reuse their quilts.
     if depth != 0.45:
         signature_bytes += (';capture-depth=' + repr(depth)).encode()
+    render_profile = scene.get('renderProfile', 'tile-v001')
+    if render_profile not in ('tile-v001', 'portrait-v001'):
+        raise ValueError('Unsupported room render profile')
+    env['GAHYEON_LOOKING_GLASS_RENDER_PROFILE'] = render_profile
+    if render_profile != 'tile-v001':
+        signature_bytes += (';render-profile=' + render_profile).encode()
     signature = hashlib.sha256(signature_bytes).hexdigest()[:16]
     env['GAHYEON_LOOKING_GLASS_CACHE_DIR'] = str(ROOT / '.build/looking-glass-room-cache' / signature)
     return env
+
+def process_group_alive(group: int) -> bool:
+    # Darwin can return EPERM for a group containing only reaping zombies.
+    rows = subprocess.run(['ps', '-axo', 'pgid=,stat='], check=True,
+                          text=True, capture_output=True).stdout.splitlines()
+    return any(len(parts := row.split()) == 2 and parts[0] == str(group)
+               and not parts[1].startswith('Z') for row in rows)
+
+
+def stop_process(process) -> None:
+    if process.poll() is not None:
+        return
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+        # The launcher may exit before Unreal finishes shutdown. Wait for the
+        # entire owned process group, including a renderer stuck in a crash dialog.
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            process.poll()
+            if not process_group_alive(process.pid):
+                process.wait(timeout=5)
+                return
+            time.sleep(.05)
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait(timeout=5)
+    except ProcessLookupError:
+        pass
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait()
+
+
+def supervise_playback(runtime, stream, playback_ready: Path) -> int:
+    while stream.poll() is None:
+        if runtime is not None:
+            if playback_ready.is_file():
+                # The presenter has decoded and displayed a cached pose, and no
+                # longer consumes the producer's IOSurface.
+                stop_process(runtime)
+                runtime = None
+                print('GAHYEON_LKG_RENDERER_STOPPED cached_playback=1', flush=True)
+            elif runtime.poll() is not None:
+                raise RuntimeError('Renderer exited before cached playback')
+        time.sleep(.25)
+    return stream.returncode
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -135,35 +186,34 @@ def main() -> int:
     children = []
     def stop(*_):
         for process in reversed(children):
-            try:
-                os.killpg(process.pid, signal.SIGTERM)
-                process.wait(timeout=5)
-            except ProcessLookupError:
-                pass
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
-                process.wait()
+            stop_process(process)
     signal.signal(signal.SIGINT, lambda *_: sys.exit(130))
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
     try:
         with tempfile.TemporaryDirectory(prefix='gahyeon-lg-') as tmp:
-            ready = Path(tmp) / 'ready'
-            env['GAHYEON_RUNTIME_READY_FILE'] = str(ready)
-            runtime = subprocess.Popen([sys.executable, str(ROOT / 'scripts/launch_canonical_macos_runtime.py')], cwd=ROOT, env=env, start_new_session=True)
-            children.append(runtime)
-            deadline = time.monotonic() + 120
-            while not ready.exists():
-                if runtime.poll() is not None or time.monotonic() > deadline:
-                    raise RuntimeError('Canonical renderer failed to become ready')
-                time.sleep(.1)
+            playback_ready = Path(tmp) / 'playback-ready'
+            env['GAHYEON_LOOKING_GLASS_PLAYBACK_READY_FILE'] = str(playback_ready)
             cache = Path(env['GAHYEON_LOOKING_GLASS_CACHE_DIR'])
             cache_ready = all((cache / f'pose-{i}.lz4').is_file() for i in range(120))
-            time.sleep(2 if cache_ready else 30)
+            runtime = None
+            if cache_ready:
+                # The presenter still checks cache sizes and decodes each pose.
+                # A broken cache fails visibly; it never waits for a missing UE.
+                env['GAHYEON_LOOKING_GLASS_CACHE_ONLY'] = '1'
+            else:
+                ready = Path(tmp) / 'ready'
+                env['GAHYEON_RUNTIME_READY_FILE'] = str(ready)
+                runtime = subprocess.Popen([sys.executable, str(ROOT / 'scripts/launch_canonical_macos_runtime.py')], cwd=ROOT, env=env, start_new_session=True)
+                children.append(runtime)
+                deadline = time.monotonic() + 120
+                while not ready.exists():
+                    if runtime.poll() is not None or time.monotonic() > deadline:
+                        raise RuntimeError('Canonical renderer failed to become ready')
+                    time.sleep(.1)
+                time.sleep(30)
             stream = subprocess.Popen([str(BINARY)], cwd=ROOT, env=env, start_new_session=True)
             children.append(stream)
-            while all(p.poll() is None for p in children):
-                time.sleep(.25)
-            return next(p.returncode for p in children if p.poll() is not None)
+            return supervise_playback(runtime, stream, playback_ready)
     finally:
         stop()
 
