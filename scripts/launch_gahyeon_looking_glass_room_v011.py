@@ -87,9 +87,11 @@ def build() -> None:
     command += ['-lcompression', str(legacy.BRIDGE_LIBRARY), '-Wl,-rpath,' + str(legacy.BRIDGE_APP / 'MacOS'), '-o', str(BINARY)]
     subprocess.run(command, cwd=ROOT, check=True)
 
-def environment(profile: dict, manifest: dict, smooth: bool) -> dict:
+def environment(profile: dict, manifest: dict, smooth: bool, room_config: str = 'looking-glass-room-v011.json') -> dict:
     env = baseline_environment(profile, manifest, True)
-    scene = json.loads((ROOT / 'config/looking-glass-room-v011.json').read_text())
+    if Path(room_config).name != room_config:
+        raise ValueError('Room config must be a filename inside config/')
+    scene = json.loads((ROOT / 'config' / room_config).read_text())
     if not scene['character'].split('.')[-1] == 'Gahyeon_Land_Idle_v001':
         raise RuntimeError('Room character identity mismatch')
     sample = min(float(scene['sampleSeconds']), float(env['GAHYEON_LOOKING_GLASS_CLIP_SECONDS']))
@@ -106,13 +108,15 @@ def environment(profile: dict, manifest: dict, smooth: bool) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--serial', required=True)
+    parser.add_argument('--room-config', default='looking-glass-room-v011.json')
+    parser.add_argument('--evidence-dir', default='artifacts/looking-glass-room-v006')
     parser.add_argument('--smooth', action='store_true', help='Cache 120 poses instead of 12; longer preparation')
     parser.add_argument('--check', action='store_true', help='Validate calibration and compile without launching Unreal')
     args = parser.parse_args()
     profile = display_profile(args.serial)
-    env = environment(profile, canonical.load_manifest(), True)
+    env = environment(profile, canonical.load_manifest(), True, args.room_config)
     build()
-    evidence = ROOT / 'artifacts/looking-glass-room-v006'
+    evidence = ROOT / args.evidence_dir
     evidence.mkdir(parents=True, exist_ok=True)
     env['GAHYEON_LOOKING_GLASS_CENTER_RGBA'] = str(evidence / 'center.rgba')
     print(json.dumps(dict(display=profile, map=env['GAHYEON_LOOKING_GLASS_RUNTIME_MAP'], mode='cached-idle-preview', frames=120)), flush=True)
