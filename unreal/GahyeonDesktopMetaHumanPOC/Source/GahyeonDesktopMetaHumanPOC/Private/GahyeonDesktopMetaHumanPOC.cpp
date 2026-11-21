@@ -20,6 +20,9 @@
 #include "Misc/Parse.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/PackageName.h"
+#if WITH_EDITOR
+#include "ShaderCompiler.h"
+#endif
 
 namespace
 {
@@ -402,6 +405,14 @@ private:
                 LookingGlassViewConeDegrees,
                 LookingGlassDepthScale);
         }
+#if WITH_EDITOR
+        // Freeze the initial pose first, but never publish fallback-material tiles
+        // while a newly generated room is still compiling its shaders.
+        if (!bGPUViewPrepared && GShaderCompilingManager && GShaderCompilingManager->IsCompiling())
+        {
+            return false;
+        }
+#endif
         // Looking Glass quilt slots advance from the observer's right-hand view to left-hand view.
         const float ViewT = 1.0f
             - (float(CurrentViewIndex) / float(LookingGlassViewCount - 1)) * 2.0f;
