@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate",
+  "humanApproved": false,
+  "map": "/Game/Gahyeon/Land/Gahyeon/v011/Runtime/L_GahyeonRoom_v011",
+  "character": "/Game/Gahyeon/Land/Gahyeon/v002/Source/Gahyeon_Land_Idle_v001.Gahyeon_Land_Idle_v001",
+  "sampleSeconds": 4.0,
+  "cachedFrames": 120,
+  "fallbackMap": "/Game/Gahyeon/Land/Gahyeon/v009/Runtime/L_GahyeonRoom_v009",
+  "roomDepthScale": 0.35,
+  "viewBlendAdjacent": 0
+}

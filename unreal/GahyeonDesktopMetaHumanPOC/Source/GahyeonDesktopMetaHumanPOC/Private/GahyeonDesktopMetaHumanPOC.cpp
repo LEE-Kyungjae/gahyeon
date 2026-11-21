@@ -84,6 +84,8 @@ public:
     virtual void StartupModule() override
     {
 #if PLATFORM_MAC || PLATFORM_WINDOWS
+        // Asset commandlets have no Slate application or display to present.
+        if (IsRunningCommandlet()) return;
         StartGahyeonMacIOSurfaceBridge();
         const bool bEnableCPUFallback = FParse::Param(FCommandLine::Get(), TEXT("GahyeonCPUAlphaFallback"));
         bEnableLookingGlassQuilt = FParse::Param(
@@ -93,6 +95,12 @@ public:
         if (FPlatformMisc::GetEnvironmentVariable(TEXT("GAHYEON_LOOKING_GLASS_SMOOTH_QA")) == TEXT("1"))
         {
             LookingGlassAnimationFrameCount = 120;
+        }
+        const FString SampleDuration = FPlatformMisc::GetEnvironmentVariable(
+            TEXT("GAHYEON_LOOKING_GLASS_SAMPLE_SECONDS"));
+        if (!SampleDuration.IsEmpty())
+        {
+            LookingGlassSampleSeconds = FMath::Clamp(FCString::Atof(*SampleDuration), 0.1f, 60.0f);
         }
         if (bEnableLookingGlassQuilt)
         {
@@ -235,7 +243,8 @@ private:
                                         Entry.Key->GetSingleNodeInstance())
                                 {
                                     PoseDuration = FMath::Max(PoseDuration, SingleNode->GetLength());
-                                    PoseSeconds = PoseDuration
+                                    PoseSeconds = (LookingGlassSampleSeconds > 0.0f
+                                        ? FMath::Min(PoseDuration, LookingGlassSampleSeconds) : PoseDuration)
                                         * float(LookingGlassAnimationFrameIndex)
                                         / float(LookingGlassAnimationFrameCount);
                                 }
@@ -542,6 +551,7 @@ private:
     FVector LookingGlassFocus = FVector::ZeroVector;
     uint32 LookingGlassViewCount = 66;
     uint32 LookingGlassAnimationFrameCount = 12;
+    float LookingGlassSampleSeconds = 0.0f;
     static constexpr float LookingGlassAnimationFPS = 12.0f;
     float LookingGlassViewConeDegrees = 54.0f;
     float LookingGlassDepthScale = 0.45f;
