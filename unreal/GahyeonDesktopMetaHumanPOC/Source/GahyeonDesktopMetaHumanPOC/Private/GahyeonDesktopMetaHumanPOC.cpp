@@ -116,6 +116,22 @@ public:
             {
                 LookingGlassViewConeDegrees = FMath::Clamp(FCString::Atof(*ViewConeValue), 1.0f, 180.0f);
             }
+            const FString DepthScaleValue = FPlatformMisc::GetEnvironmentVariable(
+                TEXT("GAHYEON_LOOKING_GLASS_DEPTH_SCALE"));
+            float RequestedDepthScale = 0.0f;
+            if (!DepthScaleValue.IsEmpty())
+            {
+                if (LexTryParseString(RequestedDepthScale, *DepthScaleValue)
+                    && FMath::IsFinite(RequestedDepthScale)
+                    && RequestedDepthScale >= 0.01f && RequestedDepthScale <= 1.0f)
+                {
+                    LookingGlassDepthScale = RequestedDepthScale;
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Invalid Looking Glass depth scale; using 0.45"));
+                }
+            }
             TickHandle = FTSTicker::GetCoreTicker().AddTicker(
                 FTickerDelegate::CreateRaw(this, &FGahyeonDesktopMetaHumanPOCModule::Tick));
         }
