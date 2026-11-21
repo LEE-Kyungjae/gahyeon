@@ -46,10 +46,12 @@ def build_command(value: dict) -> list[str]:
         raise RuntimeError(f"canonical Unreal prerequisites missing: {missing}")
     looking_glass_mode = os.environ.get("GAHYEON_LOOKING_GLASS_QUILT") == "1"
     render_profile = os.environ.get("GAHYEON_LOOKING_GLASS_RENDER_PROFILE", "baseline")
-    if looking_glass_mode and render_profile not in ("baseline", "tile-v001"):
+    if looking_glass_mode and render_profile not in ("baseline", "tile-v001", "portrait-v001"):
         raise RuntimeError(f"unknown Looking Glass render profile: {render_profile}")
-    tile_resolution = looking_glass_mode and render_profile == "tile-v001"
+    tile_resolution = looking_glass_mode and render_profile in ("tile-v001", "portrait-v001")
     width, height = (800, 629) if tile_resolution else (1600, 1258)
+    if looking_glass_mode and render_profile == "portrait-v001":
+        width, height = 252, 448
     runtime_map = macos["runtimeMap"]
     if looking_glass_mode:
         runtime_map = os.environ.get("GAHYEON_LOOKING_GLASS_RUNTIME_MAP", runtime_map)

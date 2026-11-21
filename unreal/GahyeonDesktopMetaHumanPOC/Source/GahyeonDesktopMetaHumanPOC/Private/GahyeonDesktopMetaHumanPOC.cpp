@@ -20,6 +20,9 @@
 #include "Misc/Parse.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/PackageName.h"
+#if WITH_EDITOR
+#include "ShaderCompiler.h"
+#endif
 
 namespace
 {
@@ -84,6 +87,8 @@ public:
     virtual void StartupModule() override
     {
 #if PLATFORM_MAC || PLATFORM_WINDOWS
+        // Asset commandlets have no Slate application or display to present.
+        if (IsRunningCommandlet()) return;
         StartGahyeonMacIOSurfaceBridge();
         const bool bEnableCPUFallback = FParse::Param(FCommandLine::Get(), TEXT("GahyeonCPUAlphaFallback"));
         bEnableLookingGlassQuilt = FParse::Param(
@@ -93,6 +98,12 @@ public:
         if (FPlatformMisc::GetEnvironmentVariable(TEXT("GAHYEON_LOOKING_GLASS_SMOOTH_QA")) == TEXT("1"))
         {
             LookingGlassAnimationFrameCount = 120;
+        }
+        const FString SampleDuration = FPlatformMisc::GetEnvironmentVariable(
+            TEXT("GAHYEON_LOOKING_GLASS_SAMPLE_SECONDS"));
+        if (!SampleDuration.IsEmpty())
+        {
+            LookingGlassSampleSeconds = FMath::Clamp(FCString::Atof(*SampleDuration), 0.1f, 60.0f);
         }
         if (bEnableLookingGlassQuilt)
         {
@@ -107,6 +118,22 @@ public:
             if (!ViewConeValue.IsEmpty())
             {
                 LookingGlassViewConeDegrees = FMath::Clamp(FCString::Atof(*ViewConeValue), 1.0f, 180.0f);
+            }
+            const FString DepthScaleValue = FPlatformMisc::GetEnvironmentVariable(
+                TEXT("GAHYEON_LOOKING_GLASS_DEPTH_SCALE"));
+            float RequestedDepthScale = 0.0f;
+            if (!DepthScaleValue.IsEmpty())
+            {
+                if (LexTryParseString(RequestedDepthScale, *DepthScaleValue)
+                    && FMath::IsFinite(RequestedDepthScale)
+                    && RequestedDepthScale >= 0.01f && RequestedDepthScale <= 1.0f)
+                {
+                    LookingGlassDepthScale = RequestedDepthScale;
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("Invalid Looking Glass depth scale; using 0.45"));
+                }
             }
             TickHandle = FTSTicker::GetCoreTicker().AddTicker(
                 FTickerDelegate::CreateRaw(this, &FGahyeonDesktopMetaHumanPOCModule::Tick));
@@ -235,7 +262,8 @@ private:
                                         Entry.Key->GetSingleNodeInstance())
                                 {
                                     PoseDuration = FMath::Max(PoseDuration, SingleNode->GetLength());
-                                    PoseSeconds = PoseDuration
+                                    PoseSeconds = (LookingGlassSampleSeconds > 0.0f
+                                        ? FMath::Min(PoseDuration, LookingGlassSampleSeconds) : PoseDuration)
                                         * float(LookingGlassAnimationFrameIndex)
                                         / float(LookingGlassAnimationFrameCount);
                                 }
@@ -333,6 +361,25 @@ private:
                 if (UCineCameraComponent* CineCamera = Cast<UCineCameraComponent>(
                         It->GetCameraComponent()))
                 {
+                    if (FPlatformMisc::GetEnvironmentVariable(TEXT("GAHYEON_LOOKING_GLASS_RENDER_PROFILE")) == TEXT("portrait-v001"))
+                    {
+                        // Match the exact old 800x629 presenter crop [302,91,553,537].
+                        // Keep the camera origin unchanged: room WPO depends on it.
+                        FCameraFilmbackSettings Filmback = CineCamera->Filmback;
+                        const float Width = Filmback.SensorWidth;
+                        const float EffectiveHeight = Width * 629.0f / 800.0f;
+                        Filmback.SensorHorizontalOffset += Width * (428.0f / 800.0f - 0.5f);
+                        Filmback.SensorVerticalOffset = Filmback.SensorVerticalOffset
+                            * EffectiveHeight / Filmback.SensorHeight - Width * 0.5f / 800.0f;
+                        Filmback.SensorWidth = Width * 252.0f / 800.0f;
+                        Filmback.SensorHeight = Width * 448.0f / 800.0f;
+                        CineCamera->SetFilmback(Filmback);
+                        CineCamera->bConstrainAspectRatio = false;
+                        CineCamera->bOverrideAspectRatioAxisConstraint = true;
+                        CineCamera->SetAspectRatioAxisConstraint(AspectRatio_MaintainXFOV);
+                        UE_LOG(LogTemp, Display, TEXT("Gahyeon portrait capture: 252x448 sensor=%.4fx%.4f"),
+                            Filmback.SensorWidth, Filmback.SensorHeight);
+                    }
                     OriginalSensorHorizontalOffset = CineCamera->Filmback.SensorHorizontalOffset;
                     OriginalProjectionOffset = CineCamera->GetHorizontalProjectionOffset();
                 }
@@ -377,6 +424,14 @@ private:
                 LookingGlassViewConeDegrees,
                 LookingGlassDepthScale);
         }
+#if WITH_EDITOR
+        // Freeze the initial pose first, but never publish fallback-material tiles
+        // while a newly generated room is still compiling its shaders.
+        if (!bGPUViewPrepared && GShaderCompilingManager && GShaderCompilingManager->IsCompiling())
+        {
+            return false;
+        }
+#endif
         // Looking Glass quilt slots advance from the observer's right-hand view to left-hand view.
         const float ViewT = 1.0f
             - (float(CurrentViewIndex) / float(LookingGlassViewCount - 1)) * 2.0f;
@@ -542,6 +597,7 @@ private:
     FVector LookingGlassFocus = FVector::ZeroVector;
     uint32 LookingGlassViewCount = 66;
     uint32 LookingGlassAnimationFrameCount = 12;
+    float LookingGlassSampleSeconds = 0.0f;
     static constexpr float LookingGlassAnimationFPS = 12.0f;
     float LookingGlassViewConeDegrees = 54.0f;
     float LookingGlassDepthScale = 0.45f;
