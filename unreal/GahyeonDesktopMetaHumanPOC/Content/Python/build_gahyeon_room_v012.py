@@ -1,15 +1,18 @@
 """Shallow architectural room; original procedural textures, no third-party assets."""
 import hashlib
+import os
 import json
 from pathlib import Path
 import unreal
 
 assert '-run=pythonscript' in unreal.SystemLibrary.get_command_line().lower()
 ROOT = Path(__file__).resolve().parents[4]
-OUT = ROOT / 'artifacts/looking-glass-room-v012'
+ITERATION = os.environ.get('GAHYEON_ROOM_DETAIL_ITERATION', 'v013')
+assert ITERATION in ('v012', 'v013')
+OUT = ROOT / ('artifacts/looking-glass-room-' + ITERATION)
 SOURCE = '/Game/Gahyeon/Land/Gahyeon/v011/Runtime/L_GahyeonRoom_v011'
-DEST = '/Game/Gahyeon/Land/Gahyeon/v012/Runtime/L_GahyeonRoom_v012'
-ASSETS = '/Game/Gahyeon/Land/Gahyeon/v012/Room'
+DEST = '/Game/Gahyeon/Land/Gahyeon/' + ITERATION + '/Runtime/L_GahyeonRoom_' + ITERATION
+ASSETS = '/Game/Gahyeon/Land/Gahyeon/' + ITERATION + '/Room'
 assert not unreal.EditorAssetLibrary.does_asset_exist(DEST), 'Preserve existing iteration'
 assert unreal.EditorLoadingAndSavingUtils.load_map(SOURCE)
 actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
@@ -165,6 +168,22 @@ for x in (-29,39):
     shape('RugBinding%s'%x,(x,-5,-1),(1,54,.25),oak)
 for y in (-26,16):
     shape('RugBand%s'%y,(5,y,-1),(67,1.5,.25),oak)
+# Fit the complete window in the narrow portrait composition, preserving camera/hero.
+if ITERATION == 'v013':
+    prefixes = ('Room_Window', 'Room_Detail_Window', 'Room_Detail_Curtain',
+                'Room_Detail_Skyline', 'Room_Detail_CityWindow',
+                'Room_Detail_Branch', 'Room_Detail_Leaf')
+    for a in original + created:
+        if not isinstance(a, unreal.StaticMeshActor) or not a.get_actor_label().startswith(prefixes):
+            continue
+        loc = a.get_actor_location()
+        scale = a.get_actor_scale3d()
+        uncompressed_y = anchor + (loc.y-anchor)/.35
+        ratio = (origin.y-loc.y)/(origin.y-uncompressed_y)
+        original_x = origin.x + (loc.x-origin.x)/ratio
+        new_x = -20 + (original_x+37)*.52
+        a.set_actor_location(unreal.Vector(origin.x+(new_x-origin.x)*ratio,loc.y,loc.z),False,False)
+        a.set_actor_scale3d(unreal.Vector(scale.x*.52,scale.y,scale.z))
 world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
 assert unreal.EditorLoadingAndSavingUtils.save_map(world, DEST)
 OUT.mkdir(parents=True, exist_ok=True)

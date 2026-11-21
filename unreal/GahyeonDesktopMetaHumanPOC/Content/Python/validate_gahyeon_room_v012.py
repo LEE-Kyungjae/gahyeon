@@ -1,9 +1,12 @@
 import json
+import os
 from pathlib import Path
 import unreal
 
 root = Path(__file__).resolve().parents[4]
-config = json.loads((root/'config/looking-glass-room-v012.json').read_text())
+iteration = os.environ.get('GAHYEON_ROOM_DETAIL_ITERATION', 'v013')
+assert iteration in ('v012', 'v013')
+config = json.loads((root/('config/looking-glass-room-' + iteration + '.json')).read_text())
 subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 assert unreal.EditorLoadingAndSavingUtils.load_map(config['fallbackMap'])
 old = subsystem.get_all_level_actors()
@@ -26,6 +29,6 @@ details = [a for a in actors if a.get_actor_label().startswith('Room_Detail_')]
 assert 70 <= len(details) <= 150
 assert all(a.static_mesh_component.get_material(0) is not None for a in details)
 assert all(min(a.get_actor_scale3d().x, a.get_actor_scale3d().y, a.get_actor_scale3d().z) > 0 for a in details)
-(root/'artifacts/looking-glass-room-v012/scene-validation.json').write_text(json.dumps(dict(
+(root/('artifacts/looking-glass-room-' + iteration)/'scene-validation.json').write_text(json.dumps(dict(
     passed=True,characterIdentityPreserved=True,originalMaterialsPreserved=True,cameraPreserved=True,
     detailActors=len(details),liveWeather=False,humanApproved=False),indent=2)+'\n')
