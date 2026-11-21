@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import ctypes as C
 import json
+import math
 import os
 from pathlib import Path
 import signal
@@ -94,6 +95,10 @@ def environment(profile: dict, manifest: dict, smooth: bool, room_config: str = 
     scene = json.loads((ROOT / 'config' / room_config).read_text())
     if not scene['character'].split('.')[-1] == 'Gahyeon_Land_Idle_v001':
         raise RuntimeError('Room character identity mismatch')
+    depth = float(scene.get('captureDepthScale', 0.45))
+    if not math.isfinite(depth) or not 0.01 <= depth <= 1.0:
+        raise ValueError('Capture depth scale must be finite and between 0.01 and 1.0')
+    env['GAHYEON_LOOKING_GLASS_DEPTH_SCALE'] = str(depth)
     sample = min(float(scene['sampleSeconds']), float(env['GAHYEON_LOOKING_GLASS_CLIP_SECONDS']))
     if not 0 < sample <= 60 or scene['cachedFrames'] != 120:
         raise RuntimeError('Unsupported room sample settings')
@@ -101,7 +106,11 @@ def environment(profile: dict, manifest: dict, smooth: bool, room_config: str = 
     env['GAHYEON_LOOKING_GLASS_CLIP_SECONDS'] = str(sample)
     env['GAHYEON_LOOKING_GLASS_RUNTIME_MAP'] = scene['map']
     mapfile = ROOT / 'unreal/GahyeonDesktopMetaHumanPOC/Content' / (scene['map'].removeprefix('/Game/') + '.umap')
-    signature = hashlib.sha256(mapfile.read_bytes() + str(sample).encode() + b'room-v005-unmixed-248x454-lz4').hexdigest()[:16]
+    signature_bytes = mapfile.read_bytes() + str(sample).encode() + b'room-v005-unmixed-248x454-lz4'
+    # Preserve existing 0.45 caches; other baselines must never reuse their quilts.
+    if depth != 0.45:
+        signature_bytes += (';capture-depth=' + repr(depth)).encode()
+    signature = hashlib.sha256(signature_bytes).hexdigest()[:16]
     env['GAHYEON_LOOKING_GLASS_CACHE_DIR'] = str(ROOT / '.build/looking-glass-room-cache' / signature)
     return env
 
