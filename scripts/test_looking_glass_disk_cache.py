@@ -34,6 +34,15 @@ int main(int, char** argv) {
     size_t before=bounded.bytes();
     assert(!bounded.append(noise.data()) && bounded.bytes()==before && bounded.size()==1);
     assert(bounded.decode(0,out.data()) && out==zero);
+    assert(!bounded.retainCompressed(2,8192));
+    assert(!bounded.retainCompressed(1,1));
+    assert(bounded.retainCompressed(1,8192));
+    assert(bounded.decode(0,out.data()) && out==zero);
+    assert(!bounded.append(zero.data()));
+    std::filesystem::remove(dir+"/bounded/pose-0.lz4");
+    assert(bounded.decode(0,out.data()) && out==zero); // no disk dependency after first read
+    bounded.discardIncomplete(2);
+    assert(bounded.size()==0 && bounded.append(zero.data()));
 }
 '''
         with tempfile.TemporaryDirectory() as directory:
