@@ -38,7 +38,8 @@ No source code, textures or models were copied from that repository. The scene
 uses Unreal engine basic shapes and newly generated surface textures.
 
 The retained v012 comparison exposed overly dense wood grain and a cropped window.
-v013 reduces the texture contrast/frequency and fits the window assembly inside
-the portrait composition without changing the character camera. Build scripts
+v013 reduces the texture contrast/frequency and brings more of the window assembly into
+the portrait composition without changing the character camera. The window remains partly cropped
+at the top and left; this is a candidate, not an approved final composition. Build scripts
 retain their v012 filenames and default to v013; `--iteration v012` is available
 for inspecting the earlier map with `--validate`.
